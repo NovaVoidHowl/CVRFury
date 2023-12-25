@@ -14,7 +14,7 @@ repos:
       - id: mdformat
         exclude: |
             (?x)^(
-              LICENCE.md
+              LICENCE
             )$
         additional_dependencies: [mdformat-gfm, mdformat-frontmatter]
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
