@@ -1,0 +1,16 @@
+{
+  "name": "uk.novavoidhowl.dev.cvrfury.editor",
+  "references": [
+    "UnityEngine.CoreModule",
+    "UnityEditor.CoreModule",
+    "uk.novavoidhowl.dev.cvrfury.runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": []
+}

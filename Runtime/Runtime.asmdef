@@ -1,0 +1,14 @@
+{
+  "name": "uk.novavoidhowl.dev.cvrfury.runtime",
+  "references": [
+    "UnityEngine.CoreModule"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": []
+}
