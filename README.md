@@ -89,7 +89,15 @@ TBC
 
 ### Installation
 
-TBC
+1> In unity open the `Package Manager` window
+
+2> Click the plus button in the top left of that window and choose the `Add packages from git URL` option
+
+3> Paste in the git url of this repo `https://github.com/NovaVoidHowl/CVRFury.git`
+
+4> Click the add button
+
+The script should then be ready to use.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
