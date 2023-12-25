@@ -1,0 +1,21 @@
+{
+  "author": {
+    "email": "me@novavoidhowl.com",
+    "name": "NovaVoidHowl",
+    "url": "https://novavoidhowl.uk/"
+  },
+  "changelogUrl": "https://github.com/NovaVoidHowl/CVRFury/releases",
+  "description": "The aim of this project is to create a tool kit that can process VRCFury supported content for use in Chillout VR.",
+  "displayName": "CVRFury",
+  "documentationUrl": "https://github.com/NovaVoidHowl/CVRFury/blob/main/README.md",
+  "keywords": [],
+  "licensesUrl": "https://github.com/NovaVoidHowl/CVRFury/blob/main/LICENSE.md",
+  "name": "uk.novavoidhowl.dev.cvrfury",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NovaVoidHowl/CVRFury.git"
+  },
+  "unity": "2021.3",
+  "unityRelease": "23f1",
+  "version": "0.0.1"
+}
