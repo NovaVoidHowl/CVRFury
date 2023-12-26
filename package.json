@@ -5,6 +5,9 @@
     "url": "https://novavoidhowl.uk/"
   },
   "changelogUrl": "https://github.com/NovaVoidHowl/CVRFury/releases",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
+  },
   "description": "The aim of this project is to create a tool kit that can process VRCFury supported content for use in Chillout VR.",
   "displayName": "CVRFury",
   "documentationUrl": "https://github.com/NovaVoidHowl/CVRFury/blob/main/README.md",
@@ -17,8 +20,5 @@
   },
   "unity": "2021.3",
   "unityRelease": "23f1",
-  "version": "0.0.2",
-  "dependencies": {
-    "com.unity.nuget.newtonsoft-json": "3.0.2"
-  }
+  "version": "0.0.2"
 }
