@@ -1,5 +1,3 @@
-<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
-
 <a name="readme-top"></a>
 
 <!-- PROJECT SHIELDS -->
@@ -67,9 +65,9 @@
 
 ## About The Project
 
-The aim of this project is to create a tool kit that can process VRCFury supported content for use in Chillout VR.
+The aim of this project is to create a tool kit that can process VRCFury supported content for use in ChilloutVR.
 
-Note this progject is in a pre-alpha state and not ready for any use yet.
+Note this project is in a pre-alpha state and not ready for any use yet.
 
 ______________________________________________________________________
 
@@ -125,10 +123,11 @@ See the [open issues](https://github.com/NovaVoidHowl/CVRFury/issues) for a full
 
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **appreciated**. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for more detailes.
+Contributions are what make the open source community such an amazing place to learn, inspire, and create.
+Any contributions you make are **appreciated**. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+If you have a suggestion that would make this better, please fork the repo and create a pull request.
+You can also simply open an issue with the tag "enhancement".
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -174,7 +173,7 @@ TBC
 [forks-url]: https://github.com/NovaVoidHowl/CVRFury/network/members
 [issues-shield]: https://img.shields.io/github/issues/NovaVoidHowl/CVRFury.svg?style=plastic
 [issues-url]: https://github.com/NovaVoidHowl/CVRFury/issues
-[license-shield]: https://img.shields.io/github/license/NovaVoidHowl/CVRFury.svg?style=plastic
+[license-shield]: https://img.shields.io/badge/License-LGPL_2.1-blue
 [license-url]: https://github.com/NovaVoidHowl/CVRFury/blob/master/LICENSE.md
 [stars-shield]: https://img.shields.io/github/stars/NovaVoidHowl/CVRFury.svg?style=plastic
 [stars-url]: https://github.com/NovaVoidHowl/CVRFury/stargazers
