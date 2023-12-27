@@ -101,9 +101,13 @@ The script should then be ready to use.
 
 <!-- USAGE EXAMPLES -->
 
-## Usage
+## Things that are not included
 
-TBC
+The following are not features of this project, you will need to handle the following conversions by hand,
+or find a tool that can do them.
+
+- PhysBone to Dynamic Bone conversion
+- PhysBone to Magica Cloth (1 or 2) conversion
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
