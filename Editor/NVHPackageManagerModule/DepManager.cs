@@ -12,191 +12,17 @@ using UnityEditor.PackageManager.Requests;
 using UnityEditor.UIElements;
 using UnityEngine;
 
-// better hope to goodness that unity does not miss picking up the newtonsoft.json package when installing this package
-// TODO: adding some sort of test here would be good
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-// only need to change this line (and the asmdef) to bind to project specific constants
+// only need to change the following line, here
+// in 'supportingClasses\AppInternalPackages.cs'
+// and the asmdef, to bind to project specific constants
+
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
 namespace uk.novavoidhowl.dev.nvhpmm
 {
-  public static class SharedData
-  {
-    public const string NVHPMM_VERSION = "2.0.0";
-    public static List<string> appComponentsList = new List<string>();
-    public static List<PrimaryPackageDependency> PrimaryDependencies = new List<PrimaryPackageDependency>();
-    public static List<ThirdPartyPackageDependency> ThirdPartyDependencies = new List<ThirdPartyPackageDependency>();
-  }
-
-  [InitializeOnLoad]
-  public class primaryDependenciesPackage
-  {
-    static primaryDependenciesPackage()
-    {
-      EditorApplication.delayCall += refreshPrimaryDependencies;
-    }
-
-    public static void refreshPrimaryDependencies()
-    {
-      EditorApplication.delayCall -= refreshPrimaryDependencies;
-
-      TextAsset jsonFile = Resources.Load<TextAsset>("dependencies/PrimaryDependencies");
-
-      if (jsonFile == null)
-      {
-        Debug.LogError("File not found: Assets/Resources/dependencies/PrimaryDependencies.json");
-        SharedData.PrimaryDependencies = new List<PrimaryPackageDependency>(); // Set to empty list
-        return;
-      }
-
-      try
-      {
-        var jsonArray = Newtonsoft.Json.Linq.JArray.Parse(jsonFile.text);
-      }
-      catch (Newtonsoft.Json.JsonReaderException ex)
-      {
-        Debug.LogError("Invalid JSON: " + ex.Message);
-        return;
-      }
-
-      SharedData.PrimaryDependencies = JsonConvert.DeserializeObject<List<PrimaryPackageDependency>>(jsonFile.text);
-    }
-  }
-
-  public sealed class PrimaryPackageDependency
-  {
-    public string Name { get; }
-    public string Version { get; }
-    public string InstalledVersion { get; set; }
-
-    public PrimaryPackageDependency(string name, string version)
-    {
-      Name = name;
-      Version = version;
-      InstalledVersion = GetInstalledVersion(name);
-    }
-
-    private string GetInstalledVersion(string packageName)
-    {
-      string manifestPath = "Packages/manifest.json";
-      string manifestContent = File.ReadAllText(manifestPath);
-      string pattern = $"\"{packageName}\": \"([^\"]+)\"";
-
-      Match match = Regex.Match(manifestContent, pattern);
-      return match.Success ? match.Groups[1].Value : "Not installed";
-    }
-  }
-
-  [InitializeOnLoad]
-  public class appInternalPackage
-  {
-    static appInternalPackage()
-    {
-      EditorApplication.delayCall += refreshAppComponentsList;
-    }
-
-    public static void refreshAppComponentsList()
-    {
-      EditorApplication.delayCall -= refreshAppComponentsList;
-
-      // empty the list
-      SharedData.appComponentsList.Clear();
-      // look at all all the files in the appComponents folder under Resources and add them to the list if they are .source files
-      string[] files = Directory.GetFiles(
-        "Packages/" + Constants.PACKAGE_NAME + "/Assets/Resources/appComponents/Editor/",
-        "*.source"
-      );
-
-      foreach (string file in files)
-      {
-        // get the filename without the extension
-        string fileName = Path.GetFileNameWithoutExtension(file);
-        // add the filename to the list
-        SharedData.appComponentsList.Add(fileName);
-      }
-    }
-  }
-
-  public sealed class ThirdPartyPackageDependency
-  {
-    public string Name { get; }
-    public string Description { get; }
-    public string DependencyType { get; }
-    public string InstallCheckMode { get; }
-    public string InstallCheckValue { get; }
-    public List<Button> Buttons { get; set; }
-
-    public ThirdPartyPackageDependency(
-      string name,
-      string description,
-      string dependencyType,
-      string installCheckMode,
-      string installCheckValue,
-      List<Button> buttons
-    )
-    {
-      Name = name;
-      Description = description;
-      DependencyType = dependencyType;
-      InstallCheckMode = installCheckMode;
-      InstallCheckValue = installCheckValue;
-      Buttons = buttons;
-    }
-  }
-
-  public sealed class Button
-  {
-    public string ButtonText { get; }
-    public string ButtonLink { get; }
-
-    public Button(string buttonText, string buttonLink)
-    {
-      ButtonText = buttonText;
-      ButtonLink = buttonLink;
-    }
-  }
-
-  [InitializeOnLoad]
-  public class ThirdPartyDependenciesPackage
-  {
-    static ThirdPartyDependenciesPackage()
-    {
-      EditorApplication.delayCall += refreshThirdPartyDependencies;
-    }
-
-    public static void refreshThirdPartyDependencies()
-    {
-      EditorApplication.delayCall -= refreshThirdPartyDependencies;
-
-      TextAsset jsonFile = Resources.Load<TextAsset>("dependencies/ThirdPartyDependencies");
-
-      if (jsonFile == null)
-      {
-        Debug.LogError("File not found: Assets/Resources/dependencies/ThirdPartyDependencies.json");
-        SharedData.ThirdPartyDependencies = new List<ThirdPartyPackageDependency>(); // Set to empty list
-        return;
-      }
-
-      try
-      {
-        var jsonArray = Newtonsoft.Json.Linq.JArray.Parse(jsonFile.text);
-      }
-      catch (Newtonsoft.Json.JsonReaderException ex)
-      {
-        Debug.LogError("Invalid JSON: " + ex.Message);
-        return;
-      }
-
-      SharedData.ThirdPartyDependencies = JsonConvert.DeserializeObject<List<ThirdPartyPackageDependency>>(
-        jsonFile.text
-      );
-    }
-  }
-
-  //--------------------------------------------------------------------------------------------------------------------
-
   [ExecuteInEditMode]
   public class ToolSetup : EditorWindow
   {
@@ -378,7 +204,7 @@ namespace uk.novavoidhowl.dev.nvhpmm
       // button to refresh the list of 3rd party dependencies
       if (GUILayout.Button("Refresh Dependencies List"))
       {
-        ThirdPartyDependenciesPackage.refreshThirdPartyDependencies();
+        ThirdPartyDependenciesPackages.refreshThirdPartyDependencies();
       }
       // end horizontal layout
       EditorGUILayout.EndHorizontal();
@@ -588,7 +414,7 @@ namespace uk.novavoidhowl.dev.nvhpmm
       // button to refresh the list of Primary dependencies
       if (GUILayout.Button("Refresh Dependencies List"))
       {
-        primaryDependenciesPackage.refreshPrimaryDependencies();
+        PrimaryDependenciesPackages.refreshPrimaryDependencies();
       }
       // end horizontal layout
       EditorGUILayout.EndHorizontal();
@@ -771,8 +597,8 @@ namespace uk.novavoidhowl.dev.nvhpmm
       // button to refresh the list of app components
       if (GUILayout.Button("Refresh Components List"))
       {
-        // use the appInternalPackage class to refresh the list of app components
-        appInternalPackage.refreshAppComponentsList();
+        // use the AppInternalPackages class to refresh the list of app components
+        AppInternalPackages.refreshAppComponentsList();
       }
       // end box
       EditorGUILayout.EndHorizontal();
