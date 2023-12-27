@@ -1,0 +1,23 @@
+[
+  {
+    "Buttons": [
+      {
+        "ButtonLink": "https://docs.abinteractive.net/cck/setup/",
+        "ButtonText": "View CVR CCK Website"
+      }
+    ],
+    "DependencyType": "Mandatory",
+    "Description": "CVR CCK package",
+    "InstallCheckMode": "Scripting Define Symbol",
+    "InstallCheckValue": "CVR_CCK_EXISTS",
+    "Name": "CVR CCK"
+  },
+  {
+    "Buttons": [],
+    "DependencyType": "Mandatory",
+    "Description": "Newtonsoft.Json package from unity registry",
+    "InstallCheckMode": "Package Manager Implicit",
+    "InstallCheckValue": "com.unity.nuget.newtonsoft-json",
+    "Name": "Newtonsoft.Json"
+  }
+]
