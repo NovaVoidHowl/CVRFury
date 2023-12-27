@@ -149,7 +149,7 @@ Distributed under the LGPL License. See `LICENSE.md` for more information.
 
 ## Contact
 
-Your Name - [@NovaVoidHowl](https://novavoidhowl.uk/)
+[@NovaVoidHowl](https://novavoidhowl.uk/)
 
 Project Link: [https://repo.cvrfury.uk](https://repo.cvrfury.uk)
 
