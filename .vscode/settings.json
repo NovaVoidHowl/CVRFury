@@ -4,9 +4,15 @@
     "autofix",
     "Behaviour",
     "Chillout",
+    "converttools",
     "cvrfury",
+    "Magica",
     "Newtonsoft",
-    "novavoidhowl"
+    "novavoidhowl",
+    "nvhpmm",
+    "packagecore",
+    "recognised",
+    "vrcfury"
   ],
   "editor.detectIndentation": false,
   "editor.insertSpaces": true,
