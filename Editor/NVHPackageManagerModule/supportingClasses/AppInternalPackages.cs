@@ -22,7 +22,7 @@ namespace uk.novavoidhowl.dev.nvhpmm
       SharedData.appComponentsList.Clear();
       // look at all all the files in the appComponents folder under Resources and add them to the list if they are .source files
       string[] files = Directory.GetFiles(
-        "Packages/" + Constants.PACKAGE_NAME + "/Assets/Resources/appComponents/Editor/",
+        "Packages/" + Constants.PACKAGE_NAME + "/Assets/Resources/AppComponents/Editor/",
         "*.source"
       );
 

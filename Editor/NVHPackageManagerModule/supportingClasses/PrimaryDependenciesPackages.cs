@@ -18,11 +18,11 @@ namespace uk.novavoidhowl.dev.nvhpmm
     {
       EditorApplication.delayCall -= refreshPrimaryDependencies;
 
-      TextAsset jsonFile = Resources.Load<TextAsset>("dependencies/PrimaryDependencies");
+      TextAsset jsonFile = Resources.Load<TextAsset>("Dependencies/PrimaryDependencies");
 
       if (jsonFile == null)
       {
-        Debug.LogError("File not found: Assets/Resources/dependencies/PrimaryDependencies.json");
+        Debug.LogError("File not found: Assets/Resources/Dependencies/PrimaryDependencies.json");
         SharedData.PrimaryDependencies = new List<PrimaryPackageDependency>(); // Set to empty list
         return;
       }

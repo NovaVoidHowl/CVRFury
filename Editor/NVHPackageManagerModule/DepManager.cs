@@ -8,6 +8,7 @@ using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -27,6 +28,91 @@ namespace uk.novavoidhowl.dev.nvhpmm
     private const float MIN_WIDTH = 700f;
     private const float MIN_HEIGHT = 600f;
 
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Tool Setup")]
+    public static void ShowWindow()
+    {
+      ToolSetup window = (ToolSetup)EditorWindow.GetWindow(typeof(ToolSetup), true, "Tool Setup");
+      window.maxSize = new Vector2(2000, 2000);
+      window.minSize = new Vector2(600, 300);
+      window.Show();
+    }
+
+    private void OnEnable()
+    {
+      // Get the scripting defines
+      string scriptingDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(
+        EditorUserBuildSettings.selectedBuildTargetGroup
+      );
+
+      // load base UXML
+      var baseTree = Resources.Load<VisualTreeAsset>("UnityUXML/ToolSetup");
+
+      // Check if the UXML file was loaded
+      if (baseTree == null)
+      {
+        Debug.LogError(
+          "Failed to load UXML file at 'UnityUXML/ToolSetup'. Please ensure the file exists at the specified path."
+        );
+        // If the UXML file was not loaded add a new label to the root.
+        rootVisualElement.Add(new Label("CRITICAL ERROR : UXML could not be loaded."));
+        return;
+      }
+
+      // Load and apply the stylesheet
+      var stylesheet = Resources.Load<StyleSheet>("UnityStyleSheets/DepManager");
+
+      // Check if the StyleSheet was loaded
+      if (stylesheet == null)
+      {
+        Debug.LogError(
+          "Failed to load StyleSheet at 'UnityStyleSheets/DepManager'. Please ensure the file exists at the specified path."
+        );
+        // If the StyleSheet was not loaded add a new label to the root.
+        rootVisualElement.Add(new Label("CRITICAL ERROR : StyleSheet could not be loaded."));
+        return;
+      }
+
+      // Instantiate the UXML tree and add it to the root
+      var ToolSetup = baseTree.Instantiate();
+
+      // apply the UXML to the root
+      rootVisualElement.Add(ToolSetup);
+
+      // Apply the StyleSheet
+      rootVisualElement.styleSheets.Add(stylesheet);
+
+      // Get the containers
+      var primaryDependenciesContainer = ToolSetup.Q("primaryDependenciesContainer");
+      var appComponentsContainer = ToolSetup.Q("appComponentsContainer");
+      var thirdPartyDependenciesContainer = ToolSetup.Q("thirdPartyDependenciesContainer");
+
+      // Check if the containers were found
+      if (primaryDependenciesContainer == null)
+      {
+        Debug.LogError(
+          "Failed to find 'primaryDependenciesContainer'. Please ensure the element exists in the UXML file."
+        );
+        return;
+      }
+      if (appComponentsContainer == null)
+      {
+        Debug.LogError("Failed to find 'appComponentsContainer'. Please ensure the element exists in the UXML file.");
+        return;
+      }
+      if (thirdPartyDependenciesContainer == null)
+      {
+        Debug.LogError(
+          "Failed to find 'thirdPartyDependenciesContainer'. Please ensure the element exists in the UXML file."
+        );
+        return;
+      }
+
+      // Add the IMGUIContainers
+      primaryDependenciesContainer.Add(new IMGUIContainer(() => renderPrimaryDependencies()));
+      appComponentsContainer.Add(new IMGUIContainer(() => renderInternalDependencies(scriptingDefines)));
+      thirdPartyDependenciesContainer.Add(new IMGUIContainer(() => renderThirdPartyDependencies(scriptingDefines)));
+    }
+
     Texture2D MakeTex(int width, int height, Color col)
     {
       Color[] pix = new Color[width * height];
@@ -36,44 +122,6 @@ namespace uk.novavoidhowl.dev.nvhpmm
       result.SetPixels(pix);
       result.Apply();
       return result;
-    }
-
-    private void OnEnable()
-    {
-      minSize = new Vector2(MIN_WIDTH, position.height);
-    }
-
-    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Tool Setup")]
-    public static void ShowWindow()
-    {
-      Rect rect = new Rect(0, 0, 800, 600);
-      ToolSetup window = (ToolSetup)
-        EditorWindow.GetWindowWithRect(typeof(ToolSetup), rect, true, Constants.PROGRAM_DISPLAY_NAME + " Tool Setup");
-      window.minSize = new Vector2(MIN_WIDTH, MIN_HEIGHT);
-    }
-
-    private void OnGUI()
-    {
-      string scriptingDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(
-        EditorUserBuildSettings.selectedBuildTargetGroup
-      );
-
-      scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
-
-      EditorGUILayout.Space(10);
-
-      renderPrimaryDependencies();
-
-      EditorGUILayout.Space(20);
-
-      renderInternalDependencies(scriptingDefines);
-
-      EditorGUILayout.Space(20);
-
-      renderThirdPartyDependencies(scriptingDefines);
-
-      EditorGUILayout.Space(20);
-      EditorGUILayout.EndScrollView();
     }
 
     private void renderThirdPartyDependencies(string scriptingDefines)
@@ -135,26 +183,6 @@ namespace uk.novavoidhowl.dev.nvhpmm
 
         // end horizontal layout
         EditorGUILayout.EndHorizontal();
-
-        // // start horizontal layout
-        // EditorGUILayout.BeginHorizontal();
-
-        // // label for dependency install check mode
-        // EditorGUILayout.LabelField("Install Check Mode: " + dependency.InstallCheckMode, EditorStyles.wordWrappedLabel);
-
-        // // end horizontal layout
-        // EditorGUILayout.EndHorizontal();
-
-        // // start horizontal layout
-        // EditorGUILayout.BeginHorizontal();
-
-        // // label for dependency install check value
-        // EditorGUILayout.LabelField("Install Check Value: " + dependency.InstallCheckValue, EditorStyles.wordWrappedLabel);
-
-        // // end horizontal layout
-        // EditorGUILayout.EndHorizontal();
-
-        // section to handel install checks
 
         // bool for install status
         bool installStatus = false;
@@ -520,7 +548,7 @@ namespace uk.novavoidhowl.dev.nvhpmm
 
         string targetFile = Constants.ASSETS_MANAGED_FOLDER + "/Editor/" + appComponent;
         string sourceFile =
-          "Packages/" + Constants.PACKAGE_NAME + "/Assets/Resources/appComponents/Editor/" + appComponent + ".source";
+          "Packages/" + Constants.PACKAGE_NAME + "/Assets/Resources/AppComponents/Editor/" + appComponent + ".source";
         bool notInstalled = false;
         bool canInstall = true; // true by default, set to false if the source file has the line 'canInstall: false'
 
