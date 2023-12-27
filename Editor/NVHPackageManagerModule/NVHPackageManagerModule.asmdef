@@ -1,7 +1,9 @@
 {
-  "name": "uk.novavoidhowl.dev.cvrfury.runtime",
+  "name": "uk.novavoidhowl.dev.nvhpmm",
   "references": [
-    "UnityEngine.CoreModule"
+    "UnityEngine.CoreModule",
+    "UnityEditor.CoreModule",
+    "uk.novavoidhowl.dev.cvrfury.packagecore"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

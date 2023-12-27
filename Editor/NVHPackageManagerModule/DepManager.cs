@@ -8,28 +8,99 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
+using UnityEditor.UIElements;
 using UnityEngine;
+
+// better hope to goodness that unity does not miss picking up the newtonsoft.json package when installing this package
+// TODO: adding some sort of test here would be good
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
-using Constants = uk.novavoidhowl.dev.cvrfury.Constants;
+// only need to change this line (and the asmdef) to bind to project specific constants
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
-namespace uk.novavoidhowl.dev.cvrfury
+namespace uk.novavoidhowl.dev.nvhpmm
 {
   public static class SharedData
   {
+    public const string NVHPMM_VERSION = "2.0.0";
     public static List<string> appComponentsList = new List<string>();
+    public static List<PrimaryPackageDependency> PrimaryDependencies = new List<PrimaryPackageDependency>();
+    public static List<ThirdPartyPackageDependency> ThirdPartyDependencies = new List<ThirdPartyPackageDependency>();
   }
 
   [InitializeOnLoad]
-  public class internalPackageReader
+  public class primaryDependenciesPackage
   {
-    static internalPackageReader()
+    static primaryDependenciesPackage()
     {
-      refreshList();
+      EditorApplication.delayCall += refreshPrimaryDependencies;
     }
 
-    public static void refreshList()
+    public static void refreshPrimaryDependencies()
     {
+      EditorApplication.delayCall -= refreshPrimaryDependencies;
+
+      TextAsset jsonFile = Resources.Load<TextAsset>("dependencies/PrimaryDependencies");
+
+      if (jsonFile == null)
+      {
+        Debug.LogError("File not found: Assets/Resources/dependencies/PrimaryDependencies.json");
+        SharedData.PrimaryDependencies = new List<PrimaryPackageDependency>(); // Set to empty list
+        return;
+      }
+
+      try
+      {
+        var jsonArray = Newtonsoft.Json.Linq.JArray.Parse(jsonFile.text);
+      }
+      catch (Newtonsoft.Json.JsonReaderException ex)
+      {
+        Debug.LogError("Invalid JSON: " + ex.Message);
+        return;
+      }
+
+      SharedData.PrimaryDependencies = JsonConvert.DeserializeObject<List<PrimaryPackageDependency>>(jsonFile.text);
+    }
+  }
+
+  public sealed class PrimaryPackageDependency
+  {
+    public string Name { get; }
+    public string Version { get; }
+    public string InstalledVersion { get; set; }
+
+    public PrimaryPackageDependency(string name, string version)
+    {
+      Name = name;
+      Version = version;
+      InstalledVersion = GetInstalledVersion(name);
+    }
+
+    private string GetInstalledVersion(string packageName)
+    {
+      string manifestPath = "Packages/manifest.json";
+      string manifestContent = File.ReadAllText(manifestPath);
+      string pattern = $"\"{packageName}\": \"([^\"]+)\"";
+
+      Match match = Regex.Match(manifestContent, pattern);
+      return match.Success ? match.Groups[1].Value : "Not installed";
+    }
+  }
+
+  [InitializeOnLoad]
+  public class appInternalPackage
+  {
+    static appInternalPackage()
+    {
+      EditorApplication.delayCall += refreshAppComponentsList;
+    }
+
+    public static void refreshAppComponentsList()
+    {
+      EditorApplication.delayCall -= refreshAppComponentsList;
+
       // empty the list
       SharedData.appComponentsList.Clear();
       // look at all all the files in the appComponents folder under Resources and add them to the list if they are .source files
@@ -48,6 +119,84 @@ namespace uk.novavoidhowl.dev.cvrfury
     }
   }
 
+  public sealed class ThirdPartyPackageDependency
+  {
+    public string Name { get; }
+    public string Description { get; }
+    public string DependencyType { get; }
+    public string InstallCheckMode { get; }
+    public string InstallCheckValue { get; }
+    public List<Button> Buttons { get; set; }
+
+    public ThirdPartyPackageDependency(
+      string name,
+      string description,
+      string dependencyType,
+      string installCheckMode,
+      string installCheckValue,
+      List<Button> buttons
+    )
+    {
+      Name = name;
+      Description = description;
+      DependencyType = dependencyType;
+      InstallCheckMode = installCheckMode;
+      InstallCheckValue = installCheckValue;
+      Buttons = buttons;
+    }
+  }
+
+  public sealed class Button
+  {
+    public string ButtonText { get; }
+    public string ButtonLink { get; }
+
+    public Button(string buttonText, string buttonLink)
+    {
+      ButtonText = buttonText;
+      ButtonLink = buttonLink;
+    }
+  }
+
+  [InitializeOnLoad]
+  public class ThirdPartyDependenciesPackage
+  {
+    static ThirdPartyDependenciesPackage()
+    {
+      EditorApplication.delayCall += refreshThirdPartyDependencies;
+    }
+
+    public static void refreshThirdPartyDependencies()
+    {
+      EditorApplication.delayCall -= refreshThirdPartyDependencies;
+
+      TextAsset jsonFile = Resources.Load<TextAsset>("dependencies/ThirdPartyDependencies");
+
+      if (jsonFile == null)
+      {
+        Debug.LogError("File not found: Assets/Resources/dependencies/ThirdPartyDependencies.json");
+        SharedData.ThirdPartyDependencies = new List<ThirdPartyPackageDependency>(); // Set to empty list
+        return;
+      }
+
+      try
+      {
+        var jsonArray = Newtonsoft.Json.Linq.JArray.Parse(jsonFile.text);
+      }
+      catch (Newtonsoft.Json.JsonReaderException ex)
+      {
+        Debug.LogError("Invalid JSON: " + ex.Message);
+        return;
+      }
+
+      SharedData.ThirdPartyDependencies = JsonConvert.DeserializeObject<List<ThirdPartyPackageDependency>>(
+        jsonFile.text
+      );
+    }
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+
   [ExecuteInEditMode]
   public class ToolSetup : EditorWindow
   {
@@ -65,15 +214,6 @@ namespace uk.novavoidhowl.dev.cvrfury
       result.Apply();
       return result;
     }
-
-    private readonly List<PackageDependency> predefinedDependencies = new List<PackageDependency>
-    {
-      new PackageDependency(
-        "uk.novavoidhowl.dev.common",
-        "https://github.com/NovaVoidHowl/Common-Unity-Resources.git#1.0.2"
-      ),
-      // Add more dependencies as needed
-    };
 
     private void OnEnable()
     {
@@ -99,7 +239,7 @@ namespace uk.novavoidhowl.dev.cvrfury
 
       EditorGUILayout.Space(10);
 
-      renderExternalDependencies();
+      renderPrimaryDependencies();
 
       EditorGUILayout.Space(20);
 
@@ -111,6 +251,40 @@ namespace uk.novavoidhowl.dev.cvrfury
 
       EditorGUILayout.Space(20);
       EditorGUILayout.EndScrollView();
+    }
+
+    public static bool IsImplicitPackageInstalled(string packageName)
+    {
+      string path = Path.Combine(Application.dataPath, "..", "Packages", "packages-lock.json");
+      if (File.Exists(path))
+      {
+        JObject packagesLock = JObject.Parse(File.ReadAllText(path));
+        return packagesLock["dependencies"]?[packageName] != null;
+      }
+      return false;
+    }
+
+    public static bool IsPackageInstalled(string packageName)
+    {
+      ListRequest request = Client.List(); // List packages installed in the project
+      while (!request.IsCompleted) { } // Wait for the request to complete
+
+      if (request.Status == StatusCode.Success)
+      {
+        foreach (var package in request.Result)
+        {
+          if (package.name == packageName)
+          {
+            return true; // Package is installed
+          }
+        }
+      }
+      else if (request.Status >= StatusCode.Failure)
+      {
+        Debug.LogError("Failed to list packages: " + request.Error.message);
+      }
+
+      return false; // Package is not installed
     }
 
     private static bool checkIfValidVersion(string version)
@@ -132,7 +306,7 @@ namespace uk.novavoidhowl.dev.cvrfury
     {
       string manifestPath = "Packages/manifest.json";
       string manifestContent = File.ReadAllText(manifestPath);
-      foreach (var dependency in predefinedDependencies)
+      foreach (var dependency in SharedData.PrimaryDependencies)
       {
         manifestContent = AddOrUpdatePackage(manifestContent, dependency.Name, dependency.Version);
       }
@@ -197,54 +371,243 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private void renderThirdPartyDependencies(string scriptingDefines)
     {
+      // start horizontal layout
+      EditorGUILayout.BeginHorizontal();
       // label for 3rd party dependencies
       EditorGUILayout.LabelField("3rd Party Dependencies", EditorStyles.boldLabel);
+      // button to refresh the list of 3rd party dependencies
+      if (GUILayout.Button("Refresh Dependencies List"))
+      {
+        ThirdPartyDependenciesPackage.refreshThirdPartyDependencies();
+      }
+      // end horizontal layout
+      EditorGUILayout.EndHorizontal();
+
       EditorGUILayout.Space(5);
 
-      // start box
-      EditorGUILayout.BeginVertical("box");
-      // label for CVR CCK section
-      EditorGUILayout.LabelField("CVR CCK", EditorStyles.boldLabel);
-      EditorGUILayout.Space(5);
-      // check if CVR CCK is installed, by checking the scripting define symbol 'CVR_CCK_EXISTS'
-      if (scriptingDefines.Contains("CVR_CCK_EXISTS"))
-      { // CVR CCK is installed
-        EditorGUILayout.LabelField("CVR CCK state: installed.", EditorStyles.wordWrappedLabel);
-      }
-      else
-      { // CVR CCK is not installed
-        EditorGUILayout.LabelField("CVR CCK state: not installed.", EditorStyles.wordWrappedLabel);
-      }
-      EditorGUILayout.Space(2);
-      // button to view CVR CCK website
-      if (GUILayout.Button("View CVR CCK Website (free asset)"))
-      {
-        Application.OpenURL(Constants.CCK_URL);
-      }
+      // get count of 3rd party dependencies
+      int thirdPartyDependenciesCount = SharedData.ThirdPartyDependencies.Count;
 
-      EditorGUILayout.Space(2);
-      // end box
-      EditorGUILayout.EndVertical();
-    }
-
-    private void renderExternalDependencies()
-    {
-      if (predefinedDependencies.Count == 0)
+      // if there are no 3rd party dependencies
+      if (thirdPartyDependenciesCount == 0)
       {
-        EditorGUILayout.HelpBox("No dependencies found", MessageType.Info);
+        // show message to say that there are no 3rd party dependencies
+        EditorGUILayout.HelpBox("No 3rd party dependencies found.", MessageType.Info);
         return;
       }
-      else
+
+      // for each 3rd party dependency in SharedData.ThirdPartyDependencies
+      foreach (var dependency in SharedData.ThirdPartyDependencies)
       {
-        EditorGUILayout.LabelField("Dependencies", EditorStyles.boldLabel);
+        // start box
+        EditorGUILayout.BeginVertical("box");
+
+        // start horizontal layout
+        EditorGUILayout.BeginHorizontal();
+
+        // label for dependency name
+        EditorGUILayout.LabelField(dependency.Name, EditorStyles.boldLabel);
+
+        // end horizontal layout
+        EditorGUILayout.EndHorizontal();
+
+        // start horizontal layout
+        EditorGUILayout.BeginHorizontal();
+
+        // label for dependency description
+        EditorGUILayout.LabelField("Description: \n" + dependency.Description + "\n", EditorStyles.wordWrappedLabel);
+
+        // end horizontal layout
+        EditorGUILayout.EndHorizontal();
+
+        // start horizontal layout
+        EditorGUILayout.BeginHorizontal();
+
+        // label for dependency type
+        EditorGUILayout.LabelField("Type: " + dependency.DependencyType + "\n", EditorStyles.wordWrappedLabel);
+
+        // end horizontal layout
+        EditorGUILayout.EndHorizontal();
+
+        // // start horizontal layout
+        // EditorGUILayout.BeginHorizontal();
+
+        // // label for dependency install check mode
+        // EditorGUILayout.LabelField("Install Check Mode: " + dependency.InstallCheckMode, EditorStyles.wordWrappedLabel);
+
+        // // end horizontal layout
+        // EditorGUILayout.EndHorizontal();
+
+        // // start horizontal layout
+        // EditorGUILayout.BeginHorizontal();
+
+        // // label for dependency install check value
+        // EditorGUILayout.LabelField("Install Check Value: " + dependency.InstallCheckValue, EditorStyles.wordWrappedLabel);
+
+        // // end horizontal layout
+        // EditorGUILayout.EndHorizontal();
+
+        // section to handel install checks
+
+        // bool for install status
+        bool installStatus = false;
+
+        // case statement to handle the different install check modes
+        switch (dependency.InstallCheckMode)
+        {
+          case "Scripting Define Symbol":
+            // check if the scripting define symbol is defined
+            if (scriptingDefines.Contains(dependency.InstallCheckValue))
+            {
+              // if it is, set installStatus to true
+              installStatus = true;
+            }
+            break;
+          case "Package Manager":
+            // check if the package is installed
+            if (IsPackageInstalled(dependency.InstallCheckValue))
+            {
+              // if it is, set installStatus to true
+              installStatus = true;
+            }
+            break;
+          case "Package Manager Implicit":
+            // check if the package is installed
+            if (IsImplicitPackageInstalled(dependency.InstallCheckValue))
+            {
+              // if it is, set installStatus to true
+              installStatus = true;
+            }
+            break;
+          case "File Exists":
+            // check if the file exists
+            if (File.Exists(dependency.InstallCheckValue))
+            {
+              // if it does, set installStatus to true
+              installStatus = true;
+            }
+            break;
+          case "Folder Exists":
+            // check if the folder exists
+            if (Directory.Exists(dependency.InstallCheckValue))
+            {
+              // if it does, set installStatus to true
+              installStatus = true;
+            }
+            break;
+          default:
+            // if the install check mode is not recognised, show error
+            EditorGUILayout.HelpBox("ERROR: Install Check Mode not recognised", MessageType.Error);
+            break;
+        }
+
+        // start horizontal layout
+        EditorGUILayout.BeginHorizontal();
+        if (installStatus)
+        {
+          if (dependency.InstallCheckMode == "Package Manager Implicit")
+          {
+            // if installStatus is true, show label to say that the dependency is installed
+            EditorGUILayout.LabelField("Install Status: Installed (Package Dependency)", EditorStyles.wordWrappedLabel);
+          }
+          else
+          {
+            // if installStatus is true, show label to say that the dependency is installed
+            EditorGUILayout.LabelField("Install Status: Installed", EditorStyles.wordWrappedLabel);
+          }
+        }
+        else
+        {
+          if (dependency.InstallCheckMode == "Package Manager Implicit")
+          {
+            // start vertical layout
+            EditorGUILayout.BeginVertical();
+            // if installStatus is false, show label to say that the dependency is not installed
+            EditorGUILayout.LabelField(
+              "Install Status: Not Installed (Package Dependency)",
+              EditorStyles.wordWrappedLabel
+            );
+            // add warning message to say that the dependency is not installed, and the user should restart unity to
+            // try and get unity to install the package
+            EditorGUILayout.HelpBox(
+              "Package Manager Implicit dependency not installed\n"
+                + "Please restart Unity to trigger a package manager refresh/install run",
+              MessageType.Error
+            );
+            // end vertical layout
+            EditorGUILayout.EndVertical();
+          }
+          else
+          {
+            // if installStatus is false, show label to say that the dependency is not installed
+            EditorGUILayout.LabelField("Install Status: Not Installed", EditorStyles.wordWrappedLabel);
+          }
+        }
+
+        // end horizontal layout
+        EditorGUILayout.EndHorizontal();
+
+        // start horizontal layout
+        EditorGUILayout.BeginHorizontal();
+
+        // start vertical layout
+        EditorGUILayout.BeginVertical();
+
+        // for each button in dependency.Buttons
+        foreach (var button in dependency.Buttons)
+        {
+          // button to open link
+          if (GUILayout.Button(button.ButtonText))
+          {
+            Application.OpenURL(button.ButtonLink);
+          }
+          // gap
+          EditorGUILayout.Space(4);
+        }
+
+        // end vertical layout
+        EditorGUILayout.EndVertical();
+
+        // end horizontal layout
+        EditorGUILayout.EndHorizontal();
+
+        // end box
+        EditorGUILayout.EndVertical();
       }
+    }
+
+    /// <summary>
+    /// Renders the primary/1st party dependencies
+    /// </summary>
+    private void renderPrimaryDependencies()
+    {
+      // begin horizontal layout
+      EditorGUILayout.BeginHorizontal();
+
+      EditorGUILayout.LabelField("1st Party Dependencies", EditorStyles.boldLabel);
+      // button to refresh the list of Primary dependencies
+      if (GUILayout.Button("Refresh Dependencies List"))
+      {
+        primaryDependenciesPackage.refreshPrimaryDependencies();
+      }
+      // end horizontal layout
+      EditorGUILayout.EndHorizontal();
+      // gap
+      EditorGUILayout.Space(5);
+      if (SharedData.PrimaryDependencies.Count == 0)
+      {
+        EditorGUILayout.HelpBox("No first party dependencies required", MessageType.Info);
+        return;
+      }
+      // gap
+      EditorGUILayout.Space(5);
 
       // bool to check if there are any version mismatches
       bool versionsMismatch = false;
 
       // start box
       EditorGUILayout.BeginVertical("box");
-      foreach (var dependency in predefinedDependencies)
+      foreach (var dependency in SharedData.PrimaryDependencies)
       {
         // Get versions, part after the '#' character in the version
         string displayedVersion = dependency.Version.Contains("#")
@@ -408,8 +771,8 @@ namespace uk.novavoidhowl.dev.cvrfury
       // button to refresh the list of app components
       if (GUILayout.Button("Refresh Components List"))
       {
-        // use the internalPackageReader class to refresh the list of app components
-        internalPackageReader.refreshList();
+        // use the appInternalPackage class to refresh the list of app components
+        appInternalPackage.refreshAppComponentsList();
       }
       // end box
       EditorGUILayout.EndHorizontal();
@@ -432,6 +795,15 @@ namespace uk.novavoidhowl.dev.cvrfury
       {
         //disable gui
         GUI.enabled = false;
+      }
+      // get count of app components
+      int appComponentsCount = SharedData.appComponentsList.Count;
+
+      // if there are no app components
+      if (appComponentsCount == 0)
+      {
+        // show message to say that there are no app components
+        EditorGUILayout.HelpBox("No extra app components found.", MessageType.Info);
       }
 
       // for each app component in SharedData.appComponentsList, check if it exists
@@ -819,30 +1191,6 @@ namespace uk.novavoidhowl.dev.cvrfury
       }
 
       return buttonText;
-    }
-
-    private sealed class PackageDependency
-    {
-      public string Name { get; }
-      public string Version { get; }
-      public string InstalledVersion { get; set; }
-
-      public PackageDependency(string name, string version)
-      {
-        Name = name;
-        Version = version;
-        InstalledVersion = GetInstalledVersion(name);
-      }
-
-      private string GetInstalledVersion(string packageName)
-      {
-        string manifestPath = "Packages/manifest.json";
-        string manifestContent = File.ReadAllText(manifestPath);
-        string pattern = $"\"{packageName}\": \"([^\"]+)\"";
-
-        Match match = Regex.Match(manifestContent, pattern);
-        return match.Success ? match.Groups[1].Value : "Not installed";
-      }
     }
   }
 }
