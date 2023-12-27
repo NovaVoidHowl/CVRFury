@@ -12,6 +12,7 @@
     "nvhpmm",
     "packagecore",
     "recognised",
+    "stylesheet",
     "vrcfury"
   ],
   "editor.detectIndentation": false,
