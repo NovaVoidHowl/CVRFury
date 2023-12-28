@@ -1,7 +1,69 @@
 #scrollViewContainer{
-  background-color: #11111;
+  background-color: #555555;
+}
+
+#thirdPartyDependenciesContainer{
+  background-color: #2C3E50;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+#dependencyContainer{
+  background-color: #283747;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  border-width: 1px;
+}
+
+#ButtonsContainer{
+  margin-top: 10px;
+  margin-bottom: 10px;
+  flex-direction: column;
+  justify-content: space-between;
+
+}
+
+.installedDependency{
+  border-color: #00ff00;
+}
+.optionalDependencyNotInstalled{
+  border-color: #0000ff;
+}
+.mandatoryDependencyNotInstalled{
+  border-color: #ff0000;
 }
 
 #scroll-view {
   flex-grow: 1;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.refreshButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #222222;
+  border-radius: 10px;
+  padding: 6px;
+  margin-bottom: 10px;
+  margin-top: 0px;
+  border-width: 1px;
+  border-color: #ffffff;
+}
+
+.linkButton {
+  background-color: #222222;
+  border-radius: 20px;
+  padding: 6px;
+  margin-bottom: 10px;
+  margin-top: 0px;
 }

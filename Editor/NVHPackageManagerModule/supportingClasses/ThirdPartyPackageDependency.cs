@@ -9,7 +9,7 @@ namespace uk.novavoidhowl.dev.nvhpmm
     public string DependencyType { get; }
     public string InstallCheckMode { get; }
     public string InstallCheckValue { get; }
-    public List<Button> Buttons { get; set; }
+    public List<DependencyLinkButton> Buttons { get; set; }
 
     public ThirdPartyPackageDependency(
       string name,
@@ -17,7 +17,7 @@ namespace uk.novavoidhowl.dev.nvhpmm
       string dependencyType,
       string installCheckMode,
       string installCheckValue,
-      List<Button> buttons
+      List<DependencyLinkButton> buttons
     )
     {
       Name = name;

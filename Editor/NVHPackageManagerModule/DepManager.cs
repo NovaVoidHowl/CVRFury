@@ -39,6 +39,19 @@ namespace uk.novavoidhowl.dev.nvhpmm
 
     private void OnEnable()
     {
+      renderDepMgrUI();
+    }
+
+    private void refreshDepMgrUI()
+    {
+      // remove all children from the root
+      rootVisualElement.Clear();
+      // re-render the UI
+      renderDepMgrUI();
+    }
+
+    private void renderDepMgrUI()
+    {
       // Get the scripting defines
       string scriptingDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(
         EditorUserBuildSettings.selectedBuildTargetGroup
@@ -110,7 +123,8 @@ namespace uk.novavoidhowl.dev.nvhpmm
       // Add the IMGUIContainers
       primaryDependenciesContainer.Add(new IMGUIContainer(() => renderPrimaryDependencies()));
       appComponentsContainer.Add(new IMGUIContainer(() => renderInternalDependencies(scriptingDefines)));
-      thirdPartyDependenciesContainer.Add(new IMGUIContainer(() => renderThirdPartyDependencies(scriptingDefines)));
+      //thirdPartyDependenciesContainer.Add(new IMGUIContainer(() => renderThirdPartyDependencies(scriptingDefines)));
+      thirdPartyDependenciesContainer.Add(RenderThirdPartyDependencies(scriptingDefines));
     }
 
     Texture2D MakeTex(int width, int height, Color col)
@@ -124,191 +138,129 @@ namespace uk.novavoidhowl.dev.nvhpmm
       return result;
     }
 
-    private void renderThirdPartyDependencies(string scriptingDefines)
+    private VisualElement RenderThirdPartyDependencies(string scriptingDefines)
     {
-      // start horizontal layout
-      EditorGUILayout.BeginHorizontal();
-      // label for 3rd party dependencies
-      EditorGUILayout.LabelField("3rd Party Dependencies", EditorStyles.boldLabel);
-      // button to refresh the list of 3rd party dependencies
-      if (GUILayout.Button("Refresh Dependencies List"))
+      var root = new VisualElement();
+
+      var title = new Label("3rd Party Dependencies");
+      // add the sectionTitle class to the title
+      title.AddToClassList("sectionTitle");
+      root.Add(title);
+
+      // UIElements button to refresh the list of Third Party dependencies
+      var refreshButton = new Button(() =>
       {
         ThirdPartyDependenciesPackages.refreshThirdPartyDependencies();
-      }
-      // end horizontal layout
-      EditorGUILayout.EndHorizontal();
+        refreshDepMgrUI();
+      })
+      {
+        text = "Refresh Dependencies List"
+      };
 
-      EditorGUILayout.Space(5);
+      // add the refreshButton class to the refreshButton
+      refreshButton.AddToClassList("refreshButton");
+      root.Add(refreshButton);
 
-      // get count of 3rd party dependencies
       int thirdPartyDependenciesCount = SharedData.ThirdPartyDependencies.Count;
 
-      // if there are no 3rd party dependencies
       if (thirdPartyDependenciesCount == 0)
       {
-        // show message to say that there are no 3rd party dependencies
-        EditorGUILayout.HelpBox("No 3rd party dependencies found.", MessageType.Info);
-        return;
+        var helpBox = new Label("No 3rd party dependencies found.");
+        // add the help box class to the help box
+        helpBox.AddToClassList("helpBox");
+        root.Add(helpBox);
       }
-
-      // for each 3rd party dependency in SharedData.ThirdPartyDependencies
-      foreach (var dependency in SharedData.ThirdPartyDependencies)
+      else
       {
-        // start box
-        EditorGUILayout.BeginVertical("box");
-
-        // start horizontal layout
-        EditorGUILayout.BeginHorizontal();
-
-        // label for dependency name
-        EditorGUILayout.LabelField(dependency.Name, EditorStyles.boldLabel);
-
-        // end horizontal layout
-        EditorGUILayout.EndHorizontal();
-
-        // start horizontal layout
-        EditorGUILayout.BeginHorizontal();
-
-        // label for dependency description
-        EditorGUILayout.LabelField("Description: \n" + dependency.Description + "\n", EditorStyles.wordWrappedLabel);
-
-        // end horizontal layout
-        EditorGUILayout.EndHorizontal();
-
-        // start horizontal layout
-        EditorGUILayout.BeginHorizontal();
-
-        // label for dependency type
-        EditorGUILayout.LabelField("Type: " + dependency.DependencyType + "\n", EditorStyles.wordWrappedLabel);
-
-        // end horizontal layout
-        EditorGUILayout.EndHorizontal();
-
-        // bool for install status
-        bool installStatus = false;
-
-        // case statement to handle the different install check modes
-        switch (dependency.InstallCheckMode)
+        var visualTree = Resources.Load<VisualTreeAsset>("UnityUXML/ThirdPartyDependency");
+        foreach (var dependency in SharedData.ThirdPartyDependencies)
         {
-          case "Scripting Define Symbol":
-            // check if the scripting define symbol is defined
-            if (scriptingDefines.Contains(dependency.InstallCheckValue))
+          var dependencyContainer = visualTree.CloneTree().Q<VisualElement>("dependencyContainer");
+
+          // set the name of the dependency
+          dependencyContainer.Q<Label>("dependencyName").text = dependency.Name;
+          // set the description of the dependency
+          dependencyContainer.Q<Label>("dependencyDescription").text =
+            "Description: \n" + dependency.Description + "\n";
+          // set the type of the dependency
+          dependencyContainer.Q<Label>("dependencyType").text = "Type: " + dependency.DependencyType + "\n";
+
+          // logic to check if the dependency is installed
+          bool installStatus = false;
+          switch (dependency.InstallCheckMode)
+          {
+            case "Scripting Define Symbol":
+              if (scriptingDefines.Contains(dependency.InstallCheckValue))
+              {
+                installStatus = true;
+              }
+              break;
+            case "Package Manager":
+              if (IsPackageInstalled(dependency.InstallCheckValue))
+              {
+                installStatus = true;
+              }
+              break;
+            case "Package Manager Implicit":
+              if (IsImplicitPackageInstalled(dependency.InstallCheckValue))
+              {
+                installStatus = true;
+              }
+              break;
+            case "File Exists":
+              if (File.Exists(dependency.InstallCheckValue))
+              {
+                installStatus = true;
+              }
+              break;
+            case "Folder Exists":
+              if (Directory.Exists(dependency.InstallCheckValue))
+              {
+                installStatus = true;
+              }
+              break;
+            default:
+              var errorBox = new Label("ERROR: Install Check Mode not recognised");
+              // add the error box class to the error box
+              errorBox.AddToClassList("errorBox");
+              dependencyContainer.Add(errorBox);
+              break;
+          }
+          // set the install status of the dependency
+          dependencyContainer.Q<Label>("installStatusLabel").text = installStatus
+            ? "Install Status: Installed"
+            : "Install Status: Not Installed";
+
+          // if the dependency is installed, set the class to installed
+          if (installStatus)
+          {
+            dependencyContainer.AddToClassList("installedDependency");
+          }
+          if (!installStatus)
+          {
+            if (dependency.DependencyType == "Optional")
             {
-              // if it is, set installStatus to true
-              installStatus = true;
+              dependencyContainer.AddToClassList("optionalDependencyNotInstalled");
             }
-            break;
-          case "Package Manager":
-            // check if the package is installed
-            if (IsPackageInstalled(dependency.InstallCheckValue))
+            else
             {
-              // if it is, set installStatus to true
-              installStatus = true;
+              dependencyContainer.AddToClassList("mandatoryDependencyNotInstalled");
             }
-            break;
-          case "Package Manager Implicit":
-            // check if the package is installed
-            if (IsImplicitPackageInstalled(dependency.InstallCheckValue))
-            {
-              // if it is, set installStatus to true
-              installStatus = true;
-            }
-            break;
-          case "File Exists":
-            // check if the file exists
-            if (File.Exists(dependency.InstallCheckValue))
-            {
-              // if it does, set installStatus to true
-              installStatus = true;
-            }
-            break;
-          case "Folder Exists":
-            // check if the folder exists
-            if (Directory.Exists(dependency.InstallCheckValue))
-            {
-              // if it does, set installStatus to true
-              installStatus = true;
-            }
-            break;
-          default:
-            // if the install check mode is not recognised, show error
-            EditorGUILayout.HelpBox("ERROR: Install Check Mode not recognised", MessageType.Error);
-            break;
+          }
+
+          foreach (var button in dependency.Buttons)
+          {
+            var linkButton = new Button(() => Application.OpenURL(button.ButtonLink)) { text = button.ButtonText };
+            // add the linkButton class to the button
+            linkButton.AddToClassList("linkButton");
+            dependencyContainer.Q<VisualElement>("ButtonsContainer").Add(linkButton);
+          }
+
+          root.Add(dependencyContainer);
         }
-
-        // start horizontal layout
-        EditorGUILayout.BeginHorizontal();
-        if (installStatus)
-        {
-          if (dependency.InstallCheckMode == "Package Manager Implicit")
-          {
-            // if installStatus is true, show label to say that the dependency is installed
-            EditorGUILayout.LabelField("Install Status: Installed (Package Dependency)", EditorStyles.wordWrappedLabel);
-          }
-          else
-          {
-            // if installStatus is true, show label to say that the dependency is installed
-            EditorGUILayout.LabelField("Install Status: Installed", EditorStyles.wordWrappedLabel);
-          }
-        }
-        else
-        {
-          if (dependency.InstallCheckMode == "Package Manager Implicit")
-          {
-            // start vertical layout
-            EditorGUILayout.BeginVertical();
-            // if installStatus is false, show label to say that the dependency is not installed
-            EditorGUILayout.LabelField(
-              "Install Status: Not Installed (Package Dependency)",
-              EditorStyles.wordWrappedLabel
-            );
-            // add warning message to say that the dependency is not installed, and the user should restart unity to
-            // try and get unity to install the package
-            EditorGUILayout.HelpBox(
-              "Package Manager Implicit dependency not installed\n"
-                + "Please restart Unity to trigger a package manager refresh/install run",
-              MessageType.Error
-            );
-            // end vertical layout
-            EditorGUILayout.EndVertical();
-          }
-          else
-          {
-            // if installStatus is false, show label to say that the dependency is not installed
-            EditorGUILayout.LabelField("Install Status: Not Installed", EditorStyles.wordWrappedLabel);
-          }
-        }
-
-        // end horizontal layout
-        EditorGUILayout.EndHorizontal();
-
-        // start horizontal layout
-        EditorGUILayout.BeginHorizontal();
-
-        // start vertical layout
-        EditorGUILayout.BeginVertical();
-
-        // for each button in dependency.Buttons
-        foreach (var button in dependency.Buttons)
-        {
-          // button to open link
-          if (GUILayout.Button(button.ButtonText))
-          {
-            Application.OpenURL(button.ButtonLink);
-          }
-          // gap
-          EditorGUILayout.Space(4);
-        }
-
-        // end vertical layout
-        EditorGUILayout.EndVertical();
-
-        // end horizontal layout
-        EditorGUILayout.EndHorizontal();
-
-        // end box
-        EditorGUILayout.EndVertical();
       }
+      // send the root VisualElement back to the calling function
+      return root;
     }
 
     /// <summary>
