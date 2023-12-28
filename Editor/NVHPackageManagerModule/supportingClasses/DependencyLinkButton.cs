@@ -1,11 +1,11 @@
 namespace uk.novavoidhowl.dev.nvhpmm
 {
-  public sealed class Button
+  public sealed class DependencyLinkButton
   {
     public string ButtonText { get; }
     public string ButtonLink { get; }
 
-    public Button(string buttonText, string buttonLink)
+    public DependencyLinkButton(string buttonText, string buttonLink)
     {
       ButtonText = buttonText;
       ButtonLink = buttonLink;
