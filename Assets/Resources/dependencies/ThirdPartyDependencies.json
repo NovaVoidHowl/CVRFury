@@ -19,5 +19,13 @@
     "InstallCheckMode": "Package Manager Implicit",
     "InstallCheckValue": "com.unity.nuget.newtonsoft-json",
     "Name": "Newtonsoft.Json"
+  },
+  {
+    "Buttons": [],
+    "DependencyType": "Mandatory",
+    "Description": "Unity vector graphics package from unity registry",
+    "InstallCheckMode": "Package Manager Implicit",
+    "InstallCheckValue": "com.unity.vectorgraphics",
+    "Name": "Unity Vector Graphics"
   }
 ]

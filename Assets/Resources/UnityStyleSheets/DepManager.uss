@@ -12,23 +12,115 @@
 
 #dependencyContainer{
   background-color: #283747;
-  padding: 10px;
+
   border-radius: 10px;
   margin-bottom: 10px;
   margin-top: 10px;
   border-width: 1px;
 }
 
-#ButtonsContainer{
+#dependencyInfoLower{
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  top: 0;
+}
+
+#dependencyInfo{
+  flex: 1;
   margin-top: 10px;
+  margin-left: 10px;
   margin-bottom: 10px;
-  flex-direction: column;
-  justify-content: space-between;
+  margin-right: 20px;
 
 }
 
+#ButtonsContainer{
+  margin-top: 10px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#installStateSideBubble{
+  right: 0;
+  top: 0;
+  width: 20px;
+}
+#installStateSideBubble.installedDependency{
+  background-color: #009000;
+}
+#installStateSideBubble.optionalDependencyNotInstalled{
+  background-color: #0000ff;
+}
+#installStateSideBubble.mandatoryDependencyNotInstalled{
+  background-color: #ff0000;
+}
+
+#installStateSideBubble.withMessage{
+  border-radius: 0px 0px 0px 10px;
+}
+#installStateSideBubble.noMessage{
+  border-radius: 0px 10px 0px 10px;
+}
+
+#installStateSideBubble.installed{
+  height: 90px;
+}
+#installStateSideBubble.notInstalled{
+  height: 120px;
+}
+
+#dependencyContainer #detectionTypeBubble {
+  top: 4px;
+  right: 10px;
+  width: auto;
+  height: 40px;
+  border-radius: 10px 10px 10px 10px;
+  background-color: #333333;
+}
+
+#dependencyContainer #detectionTypeBubble #detectionTypeBubbleLabel{
+  font-size: 12px;
+  padding-top: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#dependencyContainer #messageBox {
+  display: flex;
+  align-items: center;
+}
+
+#dependencyContainer #messageBox #icon {
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
+  margin-bottom: 10px;
+}
+
+#dependencyContainer #messageBox #messageBoxText {
+  padding-left: 10px;
+  flex-direction: column;
+}
+
+
+#installStateSideBubbleLabelHolder{
+  height: 100%;
+  width: 100%;
+}
+
+#installStateSideBubbleLabelHolderRotationMask {
+  position: absolute;
+  top: 20px;
+}
+
+#installStateSideBubbleLabel{
+  font-size: 14px;
+  -unity-font-style: bold;
+}
+
 .installedDependency{
-  border-color: #00ff00;
+  border-color: #009000;
 }
 .optionalDependencyNotInstalled{
   border-color: #0000ff;
@@ -39,6 +131,41 @@
 
 #scroll-view {
   flex-grow: 1;
+}
+
+#dependencyInfoLower #dependencyInfo #dependencyName{
+  font-size: 18px;
+  padding-bottom: 5px;
+}
+#dependencyInfoLower #dependencyInfo #dependencyDescriptionTitle{
+  font-size: 14px;
+  padding-bottom: 5px;
+}
+
+#messageBox{
+  bottom: -2px;
+  background-color: #333333;
+  height: auto;
+  border-radius: 10px 10px 0px 0px;
+  padding-top: 6px;
+  padding-left: 6px;
+  border-left-width: 0px;
+  border-right-width: 0px;
+  border-top-width: 0px;
+  border-bottom-width: 1px;
+  border-color: #ffffff;
+  flex-direction: row;
+}
+
+#messageBoxText #messageType{
+  font-size: 14px;
+  -unity-font-style: bold;
+  padding-bottom: 5px;
+
+}
+#messageBoxText #message{
+  font-size: 12px;
+  padding-bottom: 10px;
 }
 
 .sectionTitle {
@@ -61,6 +188,7 @@
 }
 
 .linkButton {
+  width: 100%;
   background-color: #222222;
   border-radius: 20px;
   padding: 6px;

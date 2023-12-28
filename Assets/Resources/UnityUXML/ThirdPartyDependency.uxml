@@ -1,9 +1,30 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
-    <ui:VisualElement name="dependencyContainer" >
+  <ui:VisualElement name="dependencyContainer" >
+    <ui:VisualElement name="messageBox" >
+      <ui:Image name="icon" />
+      <ui:VisualElement name="messageBoxText" >
+        <ui:Label name="messageType" />
+        <ui:Label name="message" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="dependencyInfoLower" >
+      <ui:VisualElement name="dependencyInfo" >
         <ui:Label name="dependencyName" />
+        <ui:Label name="dependencyDescriptionTitle" />
         <ui:Label name="dependencyDescription" />
         <ui:Label name="dependencyType" />
-        <ui:Label name="installStatusLabel" />
         <ui:VisualElement name="ButtonsContainer" />
+      </ui:VisualElement>
+      <ui:VisualElement name="detectionTypeBubble" >
+        <ui:Label name="detectionTypeBubbleLabel" />
+      </ui:VisualElement>
+      <ui:VisualElement name="installStateSideBubble" >
+        <ui:VisualElement name="installStateSideBubbleLabelHolder" >
+          <ui:VisualElement name="installStateSideBubbleLabelHolderRotationMask" >
+            <ui:Label name="installStateSideBubbleLabel" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+      </ui:VisualElement>
     </ui:VisualElement>
+  </ui:VisualElement>
 </ui:UXML>
