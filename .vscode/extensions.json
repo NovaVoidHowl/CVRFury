@@ -6,6 +6,7 @@
     "elagil.pre-commit-helper",
     "ms-dotnettools.vscodeintellicode-csharp",
     "streetsidesoftware.code-spell-checker",
-    "ms-dotnettools.csharp"
+    "ms-dotnettools.csharp",
+    "kamikillerto.vscode-colorize"
   ]
 }
