@@ -15,6 +15,10 @@
     "stylesheet",
     "vrcfury"
   ],
+  "colorize.hide_current_line_decorations": false,
+  "colorize.languages": [
+    "UnityUSS"
+  ],
   "editor.detectIndentation": false,
   "editor.insertSpaces": true,
   "editor.rulers": [
