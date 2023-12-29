@@ -121,9 +121,10 @@ namespace uk.novavoidhowl.dev.nvhpmm
       }
 
       // Add the IMGUIContainers
-      primaryDependenciesContainer.Add(new IMGUIContainer(() => renderPrimaryDependencies()));
+      //primaryDependenciesContainer.Add(new IMGUIContainer(() => renderPrimaryDependencies()));
       appComponentsContainer.Add(new IMGUIContainer(() => renderInternalDependencies(scriptingDefines)));
       //thirdPartyDependenciesContainer.Add(new IMGUIContainer(() => renderThirdPartyDependencies(scriptingDefines)));
+      primaryDependenciesContainer.Add(RenderPrimaryDependencies());
       thirdPartyDependenciesContainer.Add(RenderThirdPartyDependencies(scriptingDefines));
     }
 
@@ -138,285 +139,41 @@ namespace uk.novavoidhowl.dev.nvhpmm
       return result;
     }
 
-    private VisualElement RenderThirdPartyDependencies(string scriptingDefines)
+    private VisualElement RenderPrimaryDependencies()
     {
+      // Create a new VisualElement root.
       var root = new VisualElement();
+      // add a container for the
 
-      var title = new Label("3rd Party Dependencies");
-      // add the sectionTitle class to the title
+      // add the title
+      var title = new Label("Primary Dependencies");
       title.AddToClassList("sectionTitle");
       root.Add(title);
 
-      // UIElements button to refresh the list of Third Party dependencies
+      // Create a button to refresh the list of Primary dependencies
       var refreshButton = new Button(() =>
       {
-        ThirdPartyDependenciesPackages.refreshThirdPartyDependencies();
+        PrimaryDependenciesPackages.refreshPrimaryDependencies();
         refreshDepMgrUI();
       })
       {
         text = "Refresh Dependencies List"
       };
-
-      // add the refreshButton class to the refreshButton
       refreshButton.AddToClassList("refreshButton");
       root.Add(refreshButton);
 
-      int thirdPartyDependenciesCount = SharedData.ThirdPartyDependencies.Count;
-
-      if (thirdPartyDependenciesCount == 0)
-      {
-        var helpBox = new Label("No 3rd party dependencies found.");
-        // add the help box class to the help box
-        helpBox.AddToClassList("helpBox");
-        root.Add(helpBox);
-      }
-      else
-      {
-        var visualTree = Resources.Load<VisualTreeAsset>("UnityUXML/ThirdPartyDependency");
-        foreach (var dependency in SharedData.ThirdPartyDependencies)
-        {
-          // bool for if there is a message to show
-          bool showMessage = false;
-
-          // bool for each level of message to show (info, warning, error)
-          bool showInfo = false;
-          bool showWarning = false;
-          bool showError = false;
-          string messageContent = "";
-
-          // clone in the visual tree for the dependency
-          var dependencyContainer = visualTree.CloneTree().Q<VisualElement>("dependencyContainer");
-
-          // set the name of the dependency
-          dependencyContainer.Q<Label>("dependencyName").text = dependency.Name;
-          // set the description of the dependency
-          dependencyContainer.Q<Label>("dependencyDescriptionTitle").text = "Description:";
-          dependencyContainer.Q<Label>("dependencyDescription").text = dependency.Description;
-          // set the type of the dependency
-          dependencyContainer.Q<Label>("dependencyType").text = "Type: " + dependency.DependencyType + "\n";
-
-          // get a reference to the 'detectionTypeBubble' UI element
-          var detectionTypeBubble = dependencyContainer.Q("detectionTypeBubble");
-
-          // get a reference to the 'detectionTypeBubbleLabel' UI element
-          var detectionTypeBubbleLabel = detectionTypeBubble.Q<Label>("detectionTypeBubbleLabel");
-
-          // string for prefix of the detection type
-          string detectionTypePrefix = "Install Check Method \n";
-          // logic to check if the dependency is installed
-          bool installStatus = false;
-          switch (dependency.InstallCheckMode)
-          {
-            case "Scripting Define Symbol":
-              detectionTypeBubbleLabel.text = detectionTypePrefix + "Scripting Define Symbol";
-              if (scriptingDefines.Contains(dependency.InstallCheckValue))
-              {
-                installStatus = true;
-              }
-              break;
-            case "Package Manager":
-              detectionTypeBubbleLabel.text = detectionTypePrefix + "Unity Package Manager";
-              if (IsPackageInstalled(dependency.InstallCheckValue))
-              {
-                installStatus = true;
-              }
-              break;
-            case "Package Manager Implicit":
-              detectionTypeBubbleLabel.text = detectionTypePrefix + "Unity Package Manager";
-              if (IsImplicitPackageInstalled(dependency.InstallCheckValue))
-              {
-                installStatus = true;
-              }
-              break;
-            case "File Exists":
-              detectionTypeBubbleLabel.text = detectionTypePrefix + "Check File";
-              if (File.Exists(dependency.InstallCheckValue))
-              {
-                installStatus = true;
-              }
-              break;
-            case "Folder Exists":
-              detectionTypeBubbleLabel.text = detectionTypePrefix + "Check Folder";
-              if (Directory.Exists(dependency.InstallCheckValue))
-              {
-                installStatus = true;
-              }
-              break;
-            default:
-              detectionTypeBubbleLabel.text = detectionTypePrefix + "Unknown";
-              showError = true;
-              messageContent = messageContent + "Unknown detection type: \"" + dependency.InstallCheckMode + "\"\n";
-
-              break;
-          }
-
-          // Get a reference to the 'installStateSideBubble' UI element
-          var installStateSideBubble = dependencyContainer.Q("installStateSideBubble");
-
-          // get a reference to the 'installStateSideBubbleLabel' UI element
-          var installStateSideBubbleLabel = dependencyContainer.Q<Label>("installStateSideBubbleLabel");
-
-          // set the text of the 'installStateSideBubbleLabel' UI element
-          installStateSideBubbleLabel.text = installStatus ? "Installed" : "Not Installed";
-
-          // rotate the 'installStateSideBubbleLabel' UI element to the correct angle (90 degrees)
-          installStateSideBubbleLabel.transform.rotation = Quaternion.Euler(0, 0, 90);
-
-          // if the dependency is installed, set the class to installed
-          if (installStatus)
-          {
-            installStateSideBubble.AddToClassList("installed");
-            installStateSideBubble.AddToClassList("installedDependency");
-            dependencyContainer.AddToClassList("installedDependency");
-          }
-          if (!installStatus)
-          {
-            installStateSideBubble.AddToClassList("notInstalled");
-            if (dependency.DependencyType == "Optional")
-            {
-              installStateSideBubble.AddToClassList("optionalDependencyNotInstalled");
-              dependencyContainer.AddToClassList("optionalDependencyNotInstalled");
-            }
-            else
-            {
-              messageContent = messageContent + "This dependency is mandatory and must be installed." + "\n";
-              showError = true; // show the message box as a mandatory dependency is not installed
-              installStateSideBubble.AddToClassList("mandatoryDependencyNotInstalled");
-              dependencyContainer.AddToClassList("mandatoryDependencyNotInstalled");
-            }
-          }
-
-          foreach (var button in dependency.Buttons)
-          {
-            var linkButton = new Button(() => Application.OpenURL(button.ButtonLink)) { text = button.ButtonText };
-            // add the linkButton class to the button
-            linkButton.AddToClassList("linkButton");
-            dependencyContainer.Q<VisualElement>("ButtonsContainer").Add(linkButton);
-          }
-
-          // get a reference to the 'messageBox' UI element
-          var messageBox = dependencyContainer.Q<VisualElement>("messageBox");
-
-          // read the bool values for the message types from the dependency,
-          // if any are true, set the bool for 'showMessage' to true
-          if (showInfo || showWarning || showError)
-          {
-            showMessage = true;
-          }
-
-          // check if there is a message to be displayed
-          if (showMessage)
-          {
-            // if there is a message, show the 'messageBox' UI element and set its text
-            messageBox.style.display = DisplayStyle.Flex;
-            // set the side bubble to the correct border type via class
-            installStateSideBubble.AddToClassList("withMessage");
-          }
-          else
-          {
-            // if there is no message, hide the 'messageBox' UI element
-            messageBox.style.display = DisplayStyle.None;
-            // set the side bubble to the correct border type via class
-            installStateSideBubble.AddToClassList("noMessage");
-          }
-
-          // get a reference to the 'messageBoxText' UI element
-          var messageBoxText = messageBox.Q<Label>("message");
-          // get a reference to the 'messageType' UI element
-          var messageType = messageBox.Q<Label>("messageType");
-          // get a reference to the 'icon' UI element
-          var icon = messageBox.Q<VisualElement>("icon");
-
-          if (showInfo)
-          {
-            // load the VectorImage from the Resources folder
-            VectorImage infoIcon = Resources.Load<VectorImage>("IconsAndImages/info");
-
-            // create a StyleBackground from the VectorImage
-            StyleBackground infoBackground = new StyleBackground(infoIcon);
-
-            // set the StyleBackground as the background image for the 'icon' UI element
-            icon.style.backgroundImage = infoBackground;
-
-            // set the text of 'messageType' to 'Info'
-            messageType.text = "Info";
-
-            // set the text of 'messageBoxText' to the message content
-            messageBoxText.text = messageContent;
-          }
-          if (showWarning)
-          {
-            // load the VectorImage from the Resources folder
-            VectorImage warningIcon = Resources.Load<VectorImage>("IconsAndImages/warning");
-
-            // create a StyleBackground from the VectorImage
-            StyleBackground warningBackground = new StyleBackground(warningIcon);
-
-            // set the StyleBackground as the background image for the 'icon' UI element
-            icon.style.backgroundImage = warningBackground;
-
-            // set the text of 'messageType' to 'Warning'
-            messageType.text = "Warning";
-
-            // set the text of 'messageBoxText' to the message content
-            messageBoxText.text = messageContent;
-          }
-          if (showError)
-          {
-            // load the VectorImage from the Resources folder
-            VectorImage errorIcon = Resources.Load<VectorImage>("IconsAndImages/error");
-
-            // create a StyleBackground from the VectorImage
-            StyleBackground errorBackground = new StyleBackground(errorIcon);
-
-            // set the StyleBackground as the background image for the 'icon' UI element
-            icon.style.backgroundImage = errorBackground;
-
-            // set the text of 'messageType' to 'Error'
-            messageType.text = "Error";
-
-            // set the text of 'messageBoxText' to the message content
-            messageBoxText.text = messageContent;
-          }
-
-          root.Add(dependencyContainer);
-        }
-      }
-      // send the root VisualElement back to the calling function
-      return root;
-    }
-
-    /// <summary>
-    /// Renders the primary/1st party dependencies
-    /// </summary>
-    private void renderPrimaryDependencies()
-    {
-      // begin horizontal layout
-      EditorGUILayout.BeginHorizontal();
-
-      EditorGUILayout.LabelField("1st Party Dependencies", EditorStyles.boldLabel);
-      // button to refresh the list of Primary dependencies
-      if (GUILayout.Button("Refresh Dependencies List"))
-      {
-        PrimaryDependenciesPackages.refreshPrimaryDependencies();
-      }
-      // end horizontal layout
-      EditorGUILayout.EndHorizontal();
-      // gap
-      EditorGUILayout.Space(5);
+      // Check if there are any primary dependencies
       if (SharedData.PrimaryDependencies.Count == 0)
       {
-        EditorGUILayout.HelpBox("No first party dependencies required", MessageType.Info);
-        return;
+        var helpBox = new Label("No first party dependencies required");
+        root.Add(helpBox);
+        return root;
       }
-      // gap
-      EditorGUILayout.Space(5);
 
-      // bool to check if there are any version mismatches
-      bool versionsMismatch = false;
+      // Load the UXML
+      var visualTree = Resources.Load<VisualTreeAsset>("UnityUXML/FirstPartyDependency");
 
-      // start box
-      EditorGUILayout.BeginVertical("box");
+      // Iterate over each dependency
       foreach (var dependency in SharedData.PrimaryDependencies)
       {
         // Get versions, part after the '#' character in the version
@@ -427,148 +184,158 @@ namespace uk.novavoidhowl.dev.nvhpmm
           ? dependency.InstalledVersion.Split('#')[1]
           : dependency.InstalledVersion;
 
-        // try to convert the version strings to semantic versioning
-        Match matchCurrent = Regex.Match(
-          displayedVersion,
-          @"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-        );
-        Match matchInstalled = Regex.Match(
-          displayedInstalledVersion,
-          @"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-        );
+        // Clone the UXML for each dependency
+        var templateContainer = visualTree.CloneTree();
+        var dependencyContainer = templateContainer.Q<VisualElement>("dependencyContainer");
 
-        Color boxColor = Constants.UI_UPDATE_NOT_INSTALLED_COLOR;
-        // if the version strings are valid semantic versioning
-        if (matchCurrent.Success && matchInstalled.Success)
+        // Remove the dependencyContainer from the templateContainer
+        templateContainer.Remove(dependencyContainer);
+
+        // install state bool
+        bool installStatus = true;
+
+        if (dependency.InstalledVersion == "Not installed")
         {
-          // if the installed version is lower than the current version
-          if (new Version(displayedInstalledVersion).CompareTo(new Version(displayedVersion)) < 0)
+          installStatus = false;
+        }
+
+        // Set the labels
+        dependencyContainer.Q<Label>("dependencyName").text = dependency.Name;
+        dependencyContainer.Q<Label>("dependencyVersion").text = "Version: " + displayedVersion;
+        dependencyContainer.Q<Label>("dependencyInstalledVersion").text =
+          "Installed Version: " + displayedInstalledVersion;
+        dependencyContainer.Q<Label>("dependencyDescription").text = dependency.Description;
+
+        foreach (var button in dependency.Buttons)
+        {
+          var linkButton = new Button(() => Application.OpenURL(button.ButtonLink)) { text = button.ButtonText };
+          // add the linkButton class to the button
+          linkButton.AddToClassList("linkButton");
+          dependencyContainer.Q<VisualElement>("ButtonsContainer").Add(linkButton);
+        }
+
+        // Get a reference to the 'installStateSideBubble' UI element
+        var installStateSideBubble = dependencyContainer.Q("installStateSideBubble");
+
+        // get a reference to the 'installStateSideBubbleLabel' UI element
+        var installStateSideBubbleLabel = dependencyContainer.Q<Label>("installStateSideBubbleLabel");
+
+        // set the text of the 'installStateSideBubbleLabel' UI element
+        installStateSideBubbleLabel.text = installStatus ? "Installed" : "Not Installed";
+
+        // rotate the 'installStateSideBubbleLabel' UI element to the correct angle (90 degrees)
+        installStateSideBubbleLabel.transform.rotation = Quaternion.Euler(0, 0, 90);
+
+        // get a reference to the 'packageStateLabelHolder' UI element
+        var packageStateLabelHolder = dependencyContainer.Q("packageStateLabelHolder");
+
+        //get a reference to the 'packageStateLabel' UI element
+        var packageStateLabel = dependencyContainer.Q<Label>("packageStateLabel");
+
+        // never will be messages here so turn off the message support
+        installStateSideBubble.AddToClassList("plainBubble");
+
+        // bool for broken dependency versions
+        bool brokenDependencyVersionData = false;
+        // bool for broken installed dependency versions
+        bool brokenInstalledDependencyVersionData = false;
+
+        if (displayedVersion != displayedInstalledVersion)
+        {
+          // check if dependency.InstalledVersion and dependency.Version are valid version strings
+          bool targetHasVersion = checkIfValidVersion(displayedInstalledVersion);
+          bool sourceHasVersion = checkIfValidVersion(displayedVersion);
+
+          if (sourceHasVersion && targetHasVersion)
           {
-            boxColor = Constants.UI_UPDATE_OUT_OF_DATE_COLOR;
+            // if source file version is higher than target file version
+            if (new Version(displayedVersion).CompareTo(new Version(displayedInstalledVersion)) > 0)
+            {
+              // set the install bubble to to update format
+              dependencyContainer.AddToClassList("mismatchedDependencyLower");
+              installStateSideBubble.AddToClassList("mismatchedDependencyLower");
+              packageStateLabelHolder.AddToClassList("mismatchedDependencyLower");
+              // set packageStateLabel to say the dependency is out of date
+              packageStateLabel.text = "Out of date";
+            }
+            // if source file version is lower than target file version
+            if (new Version(displayedVersion).CompareTo(new Version(displayedInstalledVersion)) < 0)
+            {
+              // set the install bubble to to optional format
+              dependencyContainer.AddToClassList("mismatchedDependencyHigher");
+              installStateSideBubble.AddToClassList("mismatchedDependencyHigher");
+              packageStateLabelHolder.AddToClassList("mismatchedDependencyHigher");
+              // set packageStateLabel to say that the installed dependency is newer than the required version
+              packageStateLabel.text = "Newer version installed";
+            }
           }
-          // if the installed version is the same as the current version
-          if (displayedInstalledVersion == displayedVersion)
+          else
           {
-            boxColor = Constants.UI_UPDATE_OK_COLOR;
+            // if the version strings are not valid, set the install bubble to to Unversioned format
+            dependencyContainer.AddToClassList("mismatchedDependencyUnversioned");
+            installStateSideBubble.AddToClassList("mismatchedDependencyUnversioned");
+            packageStateLabelHolder.AddToClassList("mismatchedDependencyUnversioned");
+            // set the brokenDependencyVersionData bool to true
+            brokenDependencyVersionData = true;
+            // set packageStateLabel to say that the version strings are not valid
+            packageStateLabel.text = "Version strings invalid";
           }
-          // if the installed version is higher than the current version
-          if (new Version(displayedInstalledVersion).CompareTo(new Version(displayedVersion)) > 0)
+        }
+        else
+        {
+          // version strings are the same, so really has to be installed but lets check anyway
+          if (dependency.InstalledVersion == "Not installed")
           {
-            boxColor = Constants.UI_UPDATE_DOWNGRADE_COLOR;
+            // this should never happen, but if it does,
+            // set the install bubble to to unversioned format, how the heck did this happen?
+            dependencyContainer.AddToClassList("mismatchedDependencyUnversioned");
+            installStateSideBubble.AddToClassList("mismatchedDependencyUnversioned");
+            packageStateLabelHolder.AddToClassList("mismatchedDependencyUnversioned");
+            // set the brokenDependencyVersionData bool to true
+            brokenInstalledDependencyVersionData = true;
+            // show popup message asking the user to report this error
+            EditorUtility.DisplayDialog(
+              "Error",
+              "This should not have occurred, but it seems that the installed version of "
+                + dependency.Name
+                + " is corrupted. Please report this error to the developer.",
+              "OK"
+            );
+            // set packageStateLabel to say that the installed version is corrupted
+            packageStateLabel.text = "Installed version corrupted";
+          }
+          else
+          {
+            // set the install bubble to to installed format
+            dependencyContainer.AddToClassList("installedDependency");
+            installStateSideBubble.AddToClassList("installedDependency");
+            packageStateLabelHolder.AddToClassList("installedDependency");
+            // set packageStateLabel to say that the dependency is up to date
+            packageStateLabel.text = "Up to date";
           }
         }
 
-        // Set the background color
-        Color originalColor = GUI.backgroundColor;
-        GUI.backgroundColor = Color.white; // Reset the color to white
-
-        EditorGUILayout.Space(5);
-        GUI.backgroundColor = boxColor; // Set the color for the child box
-
-        // Create a custom GUIStyle
-
-        GUIStyle customBoxStyle = new GUIStyle(GUI.skin.box);
-        customBoxStyle.normal.background = MakeTex(2, 2, boxColor);
-        // start box
-        EditorGUILayout.BeginHorizontal("box");
-
-        EditorGUILayout.LabelField(
-          "Name                     : "
-            + dependency.Name
-            + "\nVersion                  : "
-            + displayedVersion
-            + "\nInstalled Version : "
-            + displayedInstalledVersion,
-          EditorStyles.wordWrappedLabel
-        );
-
-        // Create a GUIStyle for the label
-        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.alignment = TextAnchor.MiddleCenter;
-
-        // Create a GUILayoutOption array for the label
-        GUILayoutOption[] labelOptions = new GUILayoutOption[]
-        {
-          GUILayout.Width(200),
-          GUILayout.Height(50) // Set the height of the box
-        };
-
-        // if the version strings are valid semantic versioning
-        if (matchCurrent.Success && matchInstalled.Success)
-        {
-          // if the installed version is lower than the current version
-          if (new Version(displayedInstalledVersion).CompareTo(new Version(displayedVersion)) < 0)
-          {
-            // show label to say that an update is available
-            GUI.contentColor = Constants.UI_UPDATE_OUT_OF_DATE_COLOR_TEXT;
-            EditorGUILayout.LabelField("Update available", labelStyle, labelOptions);
-            GUI.contentColor = Color.white; // Reset the text color to white
-            // set versionsMismatch to true
-            versionsMismatch = true;
-          }
-          // if the installed version is the same as the current version
-          if (displayedInstalledVersion == displayedVersion)
-          {
-            // show label to say that the package is up to date
-            GUI.contentColor = Constants.UI_UPDATE_OK_COLOR_TEXT;
-            EditorGUILayout.LabelField("Up to date", labelStyle, labelOptions);
-            GUI.contentColor = Color.white; // Reset the text color to white
-          }
-          // if the installed version is higher than the current version
-          if (new Version(displayedInstalledVersion).CompareTo(new Version(displayedVersion)) > 0)
-          {
-            // show label to say that the installed version is higher than the current version
-            GUI.contentColor = Constants.UI_UPDATE_DOWNGRADE_COLOR_TEXT;
-            EditorGUILayout.LabelField("Installed version is higher\n than required version", labelStyle, labelOptions);
-            GUI.contentColor = Color.white; // Reset the text color to white
-            // don't set versionsMismatch to true, as this is not a problem if the installed version is higher than the required version
-          }
-        }
-
-        // if installed version is "Not installed"
-        if (displayedInstalledVersion == "Not installed")
-        {
-          // show label to say that the package is not installed
-          GUI.contentColor = Constants.UI_UPDATE_NOT_INSTALLED_COLOR_TEXT;
-          EditorGUILayout.LabelField("Not installed", labelStyle, labelOptions);
-          GUI.contentColor = Color.white; // Reset the text color to white
-          // set versionsMismatch to true
-          versionsMismatch = true;
-        }
-
-        EditorGUILayout.EndHorizontal();
-
-        // Reset the background color
-        GUI.backgroundColor = originalColor;
+        // Add the dependency box to the root
+        root.Add(dependencyContainer);
       }
 
-      EditorGUILayout.Space(10);
-      //show a warning box if there are any mismatches
-      if (versionsMismatch)
-      {
-        EditorGUILayout.HelpBox(
-          "There are out of date dependencies. Please update/install the dependencies.",
-          MessageType.Error
-        );
-        EditorGUILayout.Space(10);
-      }
-
-      //if there are no mismatches, disable the gui for the button
-      if (!versionsMismatch)
-      {
-        GUI.enabled = false;
-      }
-      // Display the button to update/install the dependencies
-      if (GUILayout.Button("Update Dependencies"))
+      // Add button to install the dependencies
+      var installOrUpdateButton = new Button(() =>
       {
         ApplyDependencies();
-        //refresh the window to show the updated versions
-        Repaint();
-      }
-      //enable gui
-      GUI.enabled = true;
-      // end box
-      EditorGUILayout.EndVertical();
+        // Refresh the UI
+        refreshDepMgrUI();
+      })
+      {
+        text = "Update Dependencies"
+      };
+      // set the button class to 'linkButton'
+      installOrUpdateButton.AddToClassList("linkButton");
+      // Add the button to the root
+      root.Add(installOrUpdateButton);
+
+      // return the root
+      return root;
     }
 
     private void renderInternalDependencies(string scriptingDefines)

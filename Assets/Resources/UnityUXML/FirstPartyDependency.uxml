@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <ui:VisualElement name="dependencyContainer" >
+    <ui:VisualElement name="packageStateLabelHolder" >
+      <ui:Label name="packageStateLabel" />
+    </ui:VisualElement>
+    <ui:VisualElement name="dependencyInfoLower" >
+      <ui:VisualElement name="dependencyInfo" >
+        <ui:Label name="dependencyName" />
+        <ui:Label name="dependencyVersion" />
+        <ui:Label name="dependencyInstalledVersion" />
+        <ui:Label name="dependencyDescriptionTitle" text="Description:" />
+        <ui:Label name="dependencyDescription" />
+        <ui:VisualElement name="ButtonsContainer" />
+      </ui:VisualElement>
+      <ui:VisualElement name="installStateSideBubble" >
+        <ui:VisualElement name="installStateSideBubbleLabelHolder" >
+          <ui:VisualElement name="installStateSideBubbleLabelHolderRotationMask" >
+            <ui:Label name="installStateSideBubbleLabel" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

@@ -2,6 +2,39 @@
   background-color: #555555;
 }
 
+#primaryDependenciesContainer{
+  background-color: #2C3E50;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+#primaryDependenciesContainer #dependencyContainer{
+  min-height: 170px;
+}
+#primaryDependenciesContainer #dependencyContainer #dependencyInfoLower #dependencyInfo #dependencyDescriptionTitle{
+  padding-top: 6px;
+
+}
+#primaryDependenciesContainer #dependencyContainer #packageStateLabelHolder{
+  position: absolute;
+  top: 6px;
+  right: 30px;
+  width: auto;
+  height: 24px;
+  padding-top: 4px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 4px;
+  border-radius: 10px 10px 10px 10px;
+}
+
+#primaryDependenciesContainer #dependencyContainer #packageStateLabelHolder #packageStateLabel {
+  font-size: 14px;
+  -unity-font-style: bold;
+}
+
 #thirdPartyDependenciesContainer{
   background-color: #2C3E50;
   padding: 10px;
@@ -46,14 +79,29 @@
   top: 0;
   width: 20px;
 }
-#installStateSideBubble.installedDependency{
+#installStateSideBubble.installedDependency,
+#packageStateLabelHolder.installedDependency{
   background-color: #009000;
 }
-#installStateSideBubble.optionalDependencyNotInstalled{
+#installStateSideBubble.optionalDependencyNotInstalled,
+#packageStateLabelHolder.optionalDependencyNotInstalled{
   background-color: #0000ff;
 }
-#installStateSideBubble.mandatoryDependencyNotInstalled{
+#installStateSideBubble.mandatoryDependencyNotInstalled,
+#packageStateLabelHolder.mandatoryDependencyNotInstalled{
   background-color: #ff0000;
+}
+#installStateSideBubble.mismatchedDependencyLower,
+#packageStateLabelHolder.mismatchedDependencyLower{
+  background-color: #ff0000;
+}
+#installStateSideBubble.mismatchedDependencyHigher,
+#packageStateLabelHolder.mismatchedDependencyHigher{
+  background-color: #0000ff;
+}
+#installStateSideBubble.mismatchedDependencyUnversioned,
+#packageStateLabelHolder.mismatchedDependencyUnversioned{
+  background-color: #ff00ff;
 }
 
 #installStateSideBubble.withMessage{
@@ -61,6 +109,9 @@
 }
 #installStateSideBubble.noMessage{
   border-radius: 0px 10px 0px 10px;
+}
+#installStateSideBubble.plainBubble{
+  border-radius: 0px 10px 10px 0px;
 }
 
 #installStateSideBubble.installed{
@@ -127,6 +178,15 @@
 }
 .mandatoryDependencyNotInstalled{
   border-color: #ff0000;
+}
+.mismatchedDependencyLower{
+  border-color: #ff0000;
+}
+.mismatchedDependencyHigher{
+  border-color: #0000ff;
+}
+.mismatchedDependencyUnversioned{
+  border-color: #ff00ff;
 }
 
 #scroll-view {
