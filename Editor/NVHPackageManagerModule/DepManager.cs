@@ -240,9 +240,19 @@ namespace uk.novavoidhowl.dev.nvhpmm
         // bool for broken installed dependency versions
         bool brokenInstalledDependencyVersionData = false;
 
-        if (displayedVersion != displayedInstalledVersion)
+        if (displayedInstalledVersion == "Not installed")
         {
-          // check if dependency.InstalledVersion and dependency.Version are valid version strings
+          // set the install bubble to to not installed format
+          dependencyContainer.AddToClassList("mandatoryDependencyNotInstalled");
+          installStateSideBubble.AddToClassList("mandatoryDependencyNotInstalled");
+          packageStateLabelHolder.AddToClassList("mandatoryDependencyNotInstalled");
+          // set packageStateLabel to say that the dependency is not installed
+          packageStateLabel.text = "Please Install";
+        }
+
+        if (displayedVersion != displayedInstalledVersion && displayedInstalledVersion != "Not installed")
+        {
+          // check if displayedInstalledVersion and displayedVersion are valid version strings
           bool targetHasVersion = checkIfValidVersion(displayedInstalledVersion);
           bool sourceHasVersion = checkIfValidVersion(displayedVersion);
 
@@ -284,7 +294,7 @@ namespace uk.novavoidhowl.dev.nvhpmm
         else
         {
           // version strings are the same, so really has to be installed but lets check anyway
-          if (dependency.InstalledVersion == "Not installed")
+          if (displayedVersion == "Not installed")
           {
             // this should never happen, but if it does,
             // set the install bubble to to unversioned format, how the heck did this happen?
@@ -293,16 +303,47 @@ namespace uk.novavoidhowl.dev.nvhpmm
             packageStateLabelHolder.AddToClassList("mismatchedDependencyUnversioned");
             // set the brokenDependencyVersionData bool to true
             brokenInstalledDependencyVersionData = true;
+
+            // Get the package info
+            var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssetPath(
+              "Packages/" + Constants.PACKAGE_NAME
+            );
+
             // show popup message asking the user to report this error
             EditorUtility.DisplayDialog(
               "Error",
-              "This should not have occurred, but it seems that the installed version of "
+              "This should not have occurred, but it seems that the source version of "
                 + dependency.Name
-                + " is corrupted. Please report this error to the developer.",
+                + " is corrupted. Please report this error to the developer, via the \"Report Issue\" button, on the dependency. \n \n"
+                + "Please include the following information in your report: \n"
+                + "Installed Version: "
+                + displayedInstalledVersion
+                + "\n"
+                + "Source Version: "
+                + displayedVersion
+                + "\n"
+                + "Time of error: "
+                + DateTime.Now.ToString("hh:mm:ss tt")
+                + "\n"
+                + "Date of error: "
+                + DateTime.Now.ToString("dd/MM/yyyy")
+                + "\n"
+                + "Unity Version: "
+                + Application.unityVersion
+                + "\n"
+                + "Package you are using: "
+                + Constants.PROGRAM_DISPLAY_NAME
+                + "\n"
+                + "Its Version: "
+                + packageInfo.version
+                + "\n"
+                + "Your OS: "
+                + SystemInfo.operatingSystem
+                + "\n",
               "OK"
             );
             // set packageStateLabel to say that the installed version is corrupted
-            packageStateLabel.text = "Installed version corrupted";
+            packageStateLabel.text = "Version Corrupted";
           }
           else
           {
