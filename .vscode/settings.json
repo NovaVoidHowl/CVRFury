@@ -13,6 +13,7 @@
     "packagecore",
     "recognised",
     "stylesheet",
+    "Unversioned",
     "vrcfury"
   ],
   "colorize.hide_current_line_decorations": false,
