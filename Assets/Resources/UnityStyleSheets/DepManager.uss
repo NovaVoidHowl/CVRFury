@@ -31,7 +31,7 @@
 }
 
 #primaryDependenciesContainer #dependencyContainer #packageStateLabelHolder #packageStateLabel {
-  font-size: 14px;
+  font-size: 12px;
   -unity-font-style: bold;
 }
 
