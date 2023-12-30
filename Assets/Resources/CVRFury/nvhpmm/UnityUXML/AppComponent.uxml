@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <ui:VisualElement name="appComponentContainer" >
+    <ui:VisualElement name="appComponentInfoAndTools">
+      <ui:Label name="componentStateLabel" />
+      <ui:Label name="installedVersionLabel" />
+      <ui:Label name="componentNameLabel" />
+      <ui:Label name="componentTypeLabel" />
+      <ui:Label name="sourceVersionLabel" />
+      <ui:Button name="installOrUpdateButton" text="Install" />
+      <ui:Button name="removeButton" text="Remove" />
+    </ui:VisualElement>
+    <ui:VisualElement name="statusPip" >
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
