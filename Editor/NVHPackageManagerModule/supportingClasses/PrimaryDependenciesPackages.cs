@@ -4,6 +4,12 @@ using UnityEngine;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+// only need to change the following line, here
+// in 'supportingClasses\AppInternalPackages.cs'
+// and the asmdef, to bind to project specific constants
+
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+
 namespace uk.novavoidhowl.dev.nvhpmm
 {
   [InitializeOnLoad]
@@ -18,7 +24,9 @@ namespace uk.novavoidhowl.dev.nvhpmm
     {
       EditorApplication.delayCall -= refreshPrimaryDependencies;
 
-      TextAsset jsonFile = Resources.Load<TextAsset>("Dependencies/PrimaryDependencies");
+      TextAsset jsonFile = Resources.Load<TextAsset>(
+        Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/Dependencies/PrimaryDependencies"
+      );
 
       if (jsonFile == null)
       {

@@ -8,6 +8,12 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+// only need to change the following line, here
+// in 'supportingClasses\AppInternalPackages.cs'
+// and the asmdef, to bind to project specific constants
+
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+
 namespace uk.novavoidhowl.dev.nvhpmm
 {
   public partial class ToolSetup : EditorWindow
@@ -46,7 +52,9 @@ namespace uk.novavoidhowl.dev.nvhpmm
       }
       else
       {
-        var visualTree = Resources.Load<VisualTreeAsset>("UnityUXML/ThirdPartyDependency");
+        var visualTree = Resources.Load<VisualTreeAsset>(
+          Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/UnityUXML/ThirdPartyDependency"
+        );
         foreach (var dependency in SharedData.ThirdPartyDependencies)
         {
           // bool for if there is a message to show
@@ -204,7 +212,9 @@ namespace uk.novavoidhowl.dev.nvhpmm
           if (showInfo)
           {
             // load the VectorImage from the Resources folder
-            VectorImage infoIcon = Resources.Load<VectorImage>("IconsAndImages/info");
+            VectorImage infoIcon = Resources.Load<VectorImage>(
+              Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/IconsAndImages/info"
+            );
 
             // create a StyleBackground from the VectorImage
             StyleBackground infoBackground = new StyleBackground(infoIcon);
@@ -221,7 +231,9 @@ namespace uk.novavoidhowl.dev.nvhpmm
           if (showWarning)
           {
             // load the VectorImage from the Resources folder
-            VectorImage warningIcon = Resources.Load<VectorImage>("IconsAndImages/warning");
+            VectorImage warningIcon = Resources.Load<VectorImage>(
+              Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/IconsAndImages/warning"
+            );
 
             // create a StyleBackground from the VectorImage
             StyleBackground warningBackground = new StyleBackground(warningIcon);
@@ -238,7 +250,9 @@ namespace uk.novavoidhowl.dev.nvhpmm
           if (showError)
           {
             // load the VectorImage from the Resources folder
-            VectorImage errorIcon = Resources.Load<VectorImage>("IconsAndImages/error");
+            VectorImage errorIcon = Resources.Load<VectorImage>(
+              Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/IconsAndImages/error"
+            );
 
             // create a StyleBackground from the VectorImage
             StyleBackground errorBackground = new StyleBackground(errorIcon);

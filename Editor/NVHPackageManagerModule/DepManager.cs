@@ -19,6 +19,7 @@ using Newtonsoft.Json.Linq;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
+// NVH Package Manager Module
 namespace uk.novavoidhowl.dev.nvhpmm
 {
   [ExecuteInEditMode]
@@ -28,13 +29,45 @@ namespace uk.novavoidhowl.dev.nvhpmm
     private const float MIN_WIDTH = 700f;
     private const float MIN_HEIGHT = 600f;
 
-    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Tool Setup")]
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Tool Setup", false, 10000)]
     public static void ShowWindow()
     {
       ToolSetup window = (ToolSetup)EditorWindow.GetWindow(typeof(ToolSetup), true, "Tool Setup");
       window.maxSize = new Vector2(2000, 2000);
       window.minSize = new Vector2(600, 300);
       window.Show();
+    }
+
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Tool Setup", true)]
+    public static bool ValidateShowWindow()
+    {
+      // get the config values
+      var result = DepManagerConfValidateAndLoad();
+
+      bool fileFound = result.Item1;
+      bool FileParseOK = result.Item2;
+      VisualElement errorContainer = result.Item3;
+      DepManagerConfig nvhpmmConfig = result.Item4;
+
+      // if the config file was not found, or was not parsed ok, then allow the menu item to be disabled
+      // as there are error messages to be shown
+      if (!fileFound || !FileParseOK)
+      {
+        return true;
+      }
+
+      // check if all the deps are disabled
+      if (
+        !nvhpmmConfig.ThirdPartyDepsEnabled && !nvhpmmConfig.FirstPartyDepsEnabled && !nvhpmmConfig.AppComponentsEnabled
+      )
+      {
+        // if all the deps are disabled, then hide the menu item
+        return false;
+      }
+
+      // if we get here, then the config file was found, and parsed ok, and at least one dep is enabled
+      // so allow the menu item to be enabled
+      return true;
     }
 
     private void OnEnable()
@@ -58,7 +91,7 @@ namespace uk.novavoidhowl.dev.nvhpmm
       );
 
       // load base UXML
-      var baseTree = Resources.Load<VisualTreeAsset>("UnityUXML/ToolSetup");
+      var baseTree = Resources.Load<VisualTreeAsset>(Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/UnityUXML/ToolSetup");
 
       // Check if the UXML file was loaded
       if (baseTree == null)
@@ -72,7 +105,9 @@ namespace uk.novavoidhowl.dev.nvhpmm
       }
 
       // Load and apply the stylesheet
-      var stylesheet = Resources.Load<StyleSheet>("UnityStyleSheets/DepManager");
+      var stylesheet = Resources.Load<StyleSheet>(
+        Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/UnityStyleSheets/DepManager"
+      );
 
       // Check if the StyleSheet was loaded
       if (stylesheet == null)
@@ -85,19 +120,26 @@ namespace uk.novavoidhowl.dev.nvhpmm
         return;
       }
 
-      // Instantiate the UXML tree and add it to the root
+      // Instantiate the UXML tree
       var ToolSetup = baseTree.Instantiate();
 
-      // apply the UXML to the root
-      rootVisualElement.Add(ToolSetup);
+      // Create a temporary list to hold the children
+      List<VisualElement> children = new List<VisualElement>(ToolSetup.Children());
+
+      // Add the children of the instantiated UXML to the root
+      foreach (var child in children)
+      {
+        rootVisualElement.Add(child);
+      }
 
       // Apply the StyleSheet
       rootVisualElement.styleSheets.Add(stylesheet);
 
       // Get the containers
-      var primaryDependenciesContainer = ToolSetup.Q("primaryDependenciesContainer");
-      var appComponentsContainer = ToolSetup.Q("appComponentsContainer");
-      var thirdPartyDependenciesContainer = ToolSetup.Q("thirdPartyDependenciesContainer");
+      var scrollViewsContainer = rootVisualElement.Q("scrollViewContainer");
+      var primaryDependenciesContainer = rootVisualElement.Q("primaryDependenciesContainer");
+      var appComponentsContainer = rootVisualElement.Q("appComponentsContainer");
+      var thirdPartyDependenciesContainer = rootVisualElement.Q("thirdPartyDependenciesContainer");
 
       // Check if the containers were found
       if (primaryDependenciesContainer == null)
@@ -120,12 +162,154 @@ namespace uk.novavoidhowl.dev.nvhpmm
         return;
       }
 
-      // Add the IMGUIContainers
-      //primaryDependenciesContainer.Add(new IMGUIContainer(() => renderPrimaryDependencies()));
-      appComponentsContainer.Add(new IMGUIContainer(() => renderAppComponents(scriptingDefines)));
-      //thirdPartyDependenciesContainer.Add(new IMGUIContainer(() => renderThirdPartyDependencies(scriptingDefines)));
-      primaryDependenciesContainer.Add(RenderPrimaryDependencies());
-      thirdPartyDependenciesContainer.Add(RenderThirdPartyDependencies(scriptingDefines));
+      var result = DepManagerConfValidateAndLoad();
+
+      bool fileFound = result.Item1;
+      bool FileParseOK = result.Item2;
+      VisualElement errorContainer = result.Item3;
+      DepManagerConfig nvhpmmConfig = result.Item4;
+
+      if (!fileFound || !FileParseOK)
+      {
+        // add the errorContainer to the root
+        rootVisualElement.Add(errorContainer);
+        // make the errorContainer use all the available space
+        errorContainer.style.height = new Length(100, LengthUnit.Percent);
+        errorContainer.style.width = new Length(100, LengthUnit.Percent);
+
+        // hide the other containers
+        scrollViewsContainer.style.display = DisplayStyle.None;
+        primaryDependenciesContainer.style.display = DisplayStyle.None;
+        appComponentsContainer.style.display = DisplayStyle.None;
+        thirdPartyDependenciesContainer.style.display = DisplayStyle.None;
+
+        // add a button to refresh the UI
+        var refreshButton = new Button(() =>
+        {
+          refreshDepMgrUI();
+        })
+        {
+          text = "Refresh UI"
+        };
+        // add the refreshButton class to the refreshButton
+        refreshButton.AddToClassList("refreshButton");
+
+        // add margin to the refreshButton
+        refreshButton.style.marginTop = new StyleLength(20f);
+        refreshButton.style.marginRight = new StyleLength(20f);
+
+        // add the refreshButton to the errorContainer
+        errorContainer.Add(refreshButton);
+
+        // if the config file was not found, or was not parsed ok, then we can't continue
+        return;
+      }
+
+      // if the config was loaded, check if the 3rd party deps are enabled
+      if (!nvhpmmConfig.ThirdPartyDepsEnabled)
+      {
+        // hide the 3rd party deps container
+        thirdPartyDependenciesContainer.style.display = DisplayStyle.None;
+      }
+      else
+      {
+        // 3rd party deps are enabled, so render the 3rd party deps container
+        thirdPartyDependenciesContainer.Add(RenderThirdPartyDependencies(scriptingDefines));
+      }
+
+      // if the config was loaded, check if the 1st party deps are enabled
+      if (!nvhpmmConfig.FirstPartyDepsEnabled)
+      {
+        // hide the 1st party deps container
+        primaryDependenciesContainer.style.display = DisplayStyle.None;
+      }
+      else
+      {
+        // 1st party deps are enabled, so render the 1st party deps container
+        primaryDependenciesContainer.Add(RenderPrimaryDependencies());
+      }
+
+      // if the config was loaded, check if the app components are enabled
+      if (!nvhpmmConfig.AppComponentsEnabled)
+      {
+        // hide the app components container
+        appComponentsContainer.style.display = DisplayStyle.None;
+      }
+      else
+      {
+        // app components are enabled, so render the app components container
+        appComponentsContainer.Add(renderAppComponents(scriptingDefines));
+      }
+
+      // if all the deps are disabled, then hide the scrollViewsContainer, and show an info message
+      if (
+        !nvhpmmConfig.ThirdPartyDepsEnabled && !nvhpmmConfig.FirstPartyDepsEnabled && !nvhpmmConfig.AppComponentsEnabled
+      )
+      {
+        // hide the scrollViewsContainer
+        scrollViewsContainer.style.display = DisplayStyle.None;
+
+        // add message container to the root
+        var messageContainer = new VisualElement();
+        // make message container flex layout with vertical direction
+        messageContainer.style.flexDirection = FlexDirection.Column;
+        // set sub element alignment to center
+        messageContainer.style.alignItems = Align.Center;
+        // set justify content to center
+        messageContainer.style.justifyContent = Justify.Center;
+        // set the height to 100%
+        messageContainer.style.height = new Length(100, LengthUnit.Percent);
+        // set the width to 100%
+        messageContainer.style.width = new Length(100, LengthUnit.Percent);
+
+        // add the info icon to the messageContainer
+        var icon = new VisualElement();
+        // add the icon class to the icon
+        icon.AddToClassList("icon");
+        // set the width and height of the icon to 40px
+        icon.style.width = new Length(40, LengthUnit.Pixel);
+        icon.style.height = new Length(40, LengthUnit.Pixel);
+        // load the VectorImage from the Resources folder
+        VectorImage infoIcon = Resources.Load<VectorImage>(
+          Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/IconsAndImages/info"
+        );
+        // create a StyleBackground from the VectorImage
+        StyleBackground infoBackground = new StyleBackground(infoIcon);
+        // set the StyleBackground as the background image for the 'icon' UI element
+        icon.style.backgroundImage = infoBackground;
+        // add margin to the icon
+        icon.style.marginBottom = new StyleLength(20f);
+
+        // add the icon to the messageContainer
+        messageContainer.Add(icon);
+
+        // add a label to say that all deps are disabled
+        var infoMessage = new Label("All dependency/component are disabled in the config file");
+        // add the info message class
+        infoMessage.AddToClassList("infoMessage");
+        messageContainer.Add(infoMessage);
+
+        // add a button to refresh the UI
+        var refreshButton = new Button(() =>
+        {
+          refreshDepMgrUI();
+        })
+        {
+          text = "Refresh UI"
+        };
+        // add the refreshButton class to the refreshButton
+        refreshButton.AddToClassList("refreshButton");
+
+        // add margin to the refreshButton
+        refreshButton.style.marginTop = new StyleLength(20f);
+        refreshButton.style.marginRight = new StyleLength(20f);
+
+        // add the refreshButton to the messageContainer
+        messageContainer.Add(refreshButton);
+
+        // add the messageContainer to the root
+        rootVisualElement.Add(messageContainer);
+      }
     }
 
     Texture2D MakeTex(int width, int height, Color col)
@@ -205,15 +389,6 @@ namespace uk.novavoidhowl.dev.nvhpmm
       return fileVersion;
     }
 
-    private void renderPackageVersionString(string version, string label)
-    {
-      if (version == null || version == "")
-      {
-        version = "?.?.?";
-      }
-      EditorGUILayout.LabelField(label + ": " + version, GUILayout.Width(110));
-    }
-
     private bool checkPackageCanInstall(string file, bool canInstall)
     {
       Dictionary<string, object> dict = getInternalPackageInfoFromFile(file);
@@ -254,139 +429,6 @@ namespace uk.novavoidhowl.dev.nvhpmm
         optional = false;
       }
       return optional;
-    }
-
-    private void renderInternalPackageRemoveButton(bool optional, string targetFile)
-    {
-      // check if target file exists
-      if (AssetDatabase.LoadAssetAtPath(targetFile, typeof(UnityEngine.Object)) == null)
-      {
-        // target file does not exist
-        // disable gui
-        GUI.enabled = false;
-      }
-
-      if (optional)
-      {
-        //button to remove
-        if (GUILayout.Button("Remove", GUILayout.Width(80)))
-        {
-          // get the scripting define symbol suffix from the target file
-          Dictionary<string, object> dict = getInternalPackageInfoFromFile(targetFile);
-          string scriptingDefineSymbolSuffix = "";
-          if (dict != null)
-          {
-            // check if there is a 'defineSymbolSuffix' key in the dictionary
-            if (dict.ContainsKey("defineSymbolSuffix"))
-            {
-              // get the value of the 'defineSymbolSuffix' key as a string
-              scriptingDefineSymbolSuffix = dict["defineSymbolSuffix"].ToString();
-            }
-          }
-          else
-          {
-            // if the dictionary is null, then the file does not contain the line we want
-            // set the scriptingDefineSymbolSuffix string to empty
-            scriptingDefineSymbolSuffix = "";
-          }
-
-          if (scriptingDefineSymbolSuffix == "")
-          {
-            // if the scriptingDefineSymbolSuffix string is empty, then we can't remove the define symbol
-            // show error message
-            Debug.LogError("Could not find defineSymbolSuffix in file at path: " + targetFile);
-          }
-          else
-          {
-            // symbol suffix found, remove the define symbol
-
-            // concat full scripting define symbol
-            string symbolToBeRemoved = Constants.SCRIPTING_DEFINE_SYMBOL + scriptingDefineSymbolSuffix;
-
-            // print the symbol to be removed to the console
-            Debug.Log("Removing scripting define symbol: " + symbolToBeRemoved);
-
-            // get the current Scripting Define Symbols
-            string scriptingDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(
-              EditorUserBuildSettings.selectedBuildTargetGroup
-            );
-
-            // remove the Scripting Define Symbol (which is a concatenation of the core symbol and the defineSymbolSuffix)
-            scriptingDefines = scriptingDefines.Replace(symbolToBeRemoved, "");
-
-            // Set the new Scripting Define Symbols
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(
-              EditorUserBuildSettings.selectedBuildTargetGroup,
-              scriptingDefines
-            );
-          }
-
-          // remove file from assets folder
-          if (File.Exists(targetFile))
-          {
-            File.Delete(targetFile);
-          }
-          // delete the meta file too
-          if (File.Exists(targetFile + ".meta"))
-          {
-            File.Delete(targetFile + ".meta");
-          }
-
-          AssetDatabase.Refresh();
-        }
-      }
-      else
-      {
-        // show disabled button
-        GUI.enabled = false;
-        GUILayout.Button("Remove", GUILayout.Width(80));
-        //enable gui
-        GUI.enabled = true;
-      }
-
-      // enable gui
-      GUI.enabled = true;
-    }
-
-    private void renderInternalPackageInstallButton(
-      bool canInstall,
-      string buttonText,
-      string sourceFile,
-      string targetFile
-    )
-    {
-      if (!canInstall)
-      {
-        // disable gui
-        GUI.enabled = false;
-      }
-
-      //button to update/install
-      if (GUILayout.Button(buttonText, GUILayout.Width(80)))
-      {
-        // copy file from resource folder to assets folder
-
-        if (!File.Exists(sourceFile))
-        {
-          Debug.LogError("Could not find file at path: " + sourceFile);
-          return;
-        }
-        string directoryPath = Path.GetDirectoryName(targetFile);
-        Directory.CreateDirectory(directoryPath);
-
-        // remove existing file
-        if (File.Exists(targetFile))
-        {
-          File.Delete(targetFile);
-        }
-
-        FileUtil.CopyFileOrDirectory(sourceFile, targetFile);
-        AssetDatabase.Refresh();
-
-        // Install button clicked
-      }
-      //enable gui
-      GUI.enabled = true;
     }
 
     private string getInternalPackageButtonLabel(string installedVersion, string sourceVersion, bool notInstalled)

@@ -55,7 +55,9 @@ namespace uk.novavoidhowl.dev.nvhpmm
       }
 
       // Load the UXML
-      var visualTree = Resources.Load<VisualTreeAsset>("UnityUXML/FirstPartyDependency");
+      var visualTree = Resources.Load<VisualTreeAsset>(
+        Constants.PROGRAM_DISPLAY_NAME + "/nvhpmm/UnityUXML/FirstPartyDependency"
+      );
 
       // bool for broken dependency versions
       bool brokenDependencyVersionData = false;
