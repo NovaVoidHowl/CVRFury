@@ -1,0 +1,31 @@
+<UXML xmlns="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <VisualElement name="scrollViewContainer">
+    <ScrollView name="scrollView">
+      <VisualElement name="headerContainer">
+        <Label name="titleLabel" text="VRCExpressionParameters Converter" />
+        <Label name="descriptionLabel" text="This tool converts VRCExpressionParameters files to CVRFury format." />
+      </VisualElement>
+      <VisualElement name="parametersFileSelectorContainer">
+        <Label name="selectLabel" text="Drag and drop the VRCExpressionParameters file you want to convert to the box below" />
+        <VisualElement name="parametersFileDropArea">
+          <VisualElement name="parametersFileDropAreaLabel">
+            <Label name="parametersFileDropAreaLabelText" text="Drop file here" />
+          </VisualElement>
+        </VisualElement>
+        <VisualElement name="parametersFileSelectorHolder">
+        </VisualElement>
+      </VisualElement>
+      <VisualElement name="controlsContainer">
+        <VisualElement name="convertButtonContainer">
+          <Button name="convertButton" text="Convert" />
+        </VisualElement>
+        <VisualElement name="progressBarContainer">
+          <ProgressBar name="progressBar" value="0" />
+        </VisualElement>
+        <VisualElement name="progressLabelContainer">
+          <Label name="progressLabel" text="0%" />
+        </VisualElement>
+      </VisualElement>
+    </ScrollView>
+  </VisualElement>
+</UXML>

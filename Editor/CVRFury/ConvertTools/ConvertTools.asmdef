@@ -1,0 +1,19 @@
+{
+  "name": "uk.novavoidhowl.dev.cvrfury.converttools",
+  "references": [
+    "UnityEngine.CoreModule",
+    "UnityEditor.CoreModule",
+    "uk.novavoidhowl.dev.cvrfury.packagecore"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [
+  ],
+  "noEngineReferences": false
+}
