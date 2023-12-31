@@ -1,3 +1,6 @@
+// editor only script to manage the dependencies
+#if UNITY_EDITOR
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -461,3 +464,4 @@ namespace uk.novavoidhowl.dev.nvhpmm
     }
   }
 }
+#endif

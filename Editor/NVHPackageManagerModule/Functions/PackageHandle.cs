@@ -1,3 +1,6 @@
+// editor only script to manage the dependencies
+#if UNITY_EDITOR
+
 using UnityEditor;
 using System;
 using System.IO;
@@ -77,3 +80,4 @@ namespace uk.novavoidhowl.dev.nvhpmm
     }
   }
 }
+#endif
