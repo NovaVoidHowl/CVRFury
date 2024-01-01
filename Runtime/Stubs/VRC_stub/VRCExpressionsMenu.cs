@@ -69,26 +69,19 @@ namespace uk.novavoidhowl.dev.vrcstub
       [Serializable]
       public struct Label
       {
-        [Tooltip("(Optional) Label shown in the expression menu.")]
         public string name;
 
-        [Tooltip("(Optional) Icon shown in the expression menu.")]
         public Texture2D icon;
       }
 
-      [Tooltip("(Optional) Label shown in the expression menu.")]
       public string name;
 
-      [Tooltip("(Optional) Icon shown in the expression menu.")]
       public Texture2D icon;
 
-      [Tooltip("Type of control used.")]
       public ControlType type = ControlType.Button;
 
-      [Tooltip("The specific parameter used by this control in the Animation Controller.")]
       public Parameter parameter;
 
-      [Tooltip("The value the parameter is set to when this control is used.")]
       public float value = 1f;
 
       public Style style;
@@ -117,8 +110,6 @@ namespace uk.novavoidhowl.dev.vrcstub
         return default(Label);
       }
     }
-
-    public const int MAX_CONTROLS = 8;
 
     public List<Control> controls = new List<Control>();
   }
