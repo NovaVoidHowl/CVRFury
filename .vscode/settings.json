@@ -6,15 +6,22 @@
     "Chillout",
     "converttools",
     "cvrfury",
+    "LICENCE",
     "Magica",
     "Newtonsoft",
     "novavoidhowl",
     "nvhpmm",
     "packagecore",
     "recognised",
+    "Scriptable",
     "stylesheet",
+    "subfolders",
     "Unversioned",
-    "vrcfury"
+    "Vrcf",
+    "vrcfury",
+    "vrchat",
+    "VRCSDK",
+    "vrcstub"
   ],
   "colorize.hide_current_line_decorations": false,
   "colorize.languages": [
