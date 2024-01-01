@@ -14,6 +14,13 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 {
   public class VRCExpressionParametersConverter : EditorWindow
   {
+    // Constants
+    private static readonly List<string> VRCEXPRESSIONPARAMETERS_M_SCRIPT_IDS = new List<string>
+    {
+      "{fileID: -1506855854, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}"
+    };
+    private const string CVRFURY_M_SCRIPT_ID = "{fileID: 11500000, guid: 5b6d1c52f7faa5b4f8ab4fb331d31ffd, type: 3}";
+
     // Declare textField as a member variable
     private TextField textField;
 
@@ -138,6 +145,39 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
           // Now you can use filePath in your code
           Debug.Log("File path: " + filePath);
+
+          // get the string from the file at filePath
+          var parametersFileText = File.ReadAllText(filePath);
+
+          // check if the file is null
+          if (string.IsNullOrEmpty(parametersFileText))
+          {
+            // if the file is null
+            // show popup to the user, to inform them that the file could not be loaded
+            EditorUtility.DisplayDialog(
+              "Error",
+              "Chosen file appears to be null. Please select a different file.",
+              "OK"
+            );
+
+            // clear the text field
+            textField.value = "";
+          }
+          else
+          {
+            if (checkCVRFuryScriptID(parametersFileText))
+            {
+              // show popup to the user, to inform them that the file could not be loaded
+              EditorUtility.DisplayDialog(
+                "Error",
+                "Chosen file appears to have already been converted to CVRFury format.\n\n"
+                  + "Please select an un-converted VRCExpressionParameters file.",
+                "OK"
+              );
+              // clear the text field
+              textField.value = "";
+            }
+          }
 
           // refresh the UI
           refreshParamConverterGUI();
@@ -295,10 +335,10 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
         if (parametersFile.ToString().Contains("m_Script:"))
         {
           // if the file has a line starting with 'm_Script:'
-          // check if the m_Script line ends '{fileID: -1506855854, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}'
-          if (
-            parametersFile.ToString().Contains("{fileID: -1506855854, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}")
-          )
+          // check if the m_Script line ends with the value in 'VRCEXPRESSIONPARAMETERS_M_SCRIPT_IDS'
+
+          (bool IDmatch, string IDString) = checkScriptIDs(parametersFile, VRCEXPRESSIONPARAMETERS_M_SCRIPT_IDS);
+          if (IDmatch)
           {
             // found the file we are looking for, is a stock VRCExpressionParameters file
 
@@ -367,8 +407,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // Wait for barDelay
               await Task.Delay(barDelay);
 
-              // in the new  file, replace  the line m_Script: {fileID: -1506855854, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}
-              // with m_Script: {fileID: 11500000, guid: 5b6d1c52f7faa5b4f8ab4fb331d31ffd, type: 3} , which is the CVRFury version of VRCExpressionParameters
+              // in the new  file, replace  the line m_Script: $IDString
+              // with m_Script: $CVRFURY_M_SCRIPT_ID , which is the CVRFury version of VRCExpressionParameters
 
               // read the new file as plain text
               var newFileString = File.ReadAllText(newFilePath);
@@ -379,10 +419,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               progressBar.value = 30;
 
               // replace the line in the file
-              newFileString = newFileString.Replace(
-                "m_Script: {fileID: -1506855854, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}",
-                "m_Script: {fileID: 11500000, guid: 5b6d1c52f7faa5b4f8ab4fb331d31ffd, type: 3}"
-              );
+              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_M_SCRIPT_ID);
 
               // set the text of the progressLabel to "80% -- Rebinding Script"
               progressLabel.text = "80% -- Rebinding Script";
@@ -416,7 +453,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // popup to confirm conversion
               EditorUtility.DisplayDialog(
                 "Conversion Complete",
-                "The file has been converted. The new file can be found at: " + newFilePath,
+                "The output file can be found at:\n\n" + newFilePath,
                 "OK"
               );
               // Wait for barDelay
@@ -425,7 +462,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
           }
           else
           {
-            // if the file does not end with '{fileID: -1506855854, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}'
+            // if the file does not end with 'VRCEXPRESSIONPARAMETERS_M_SCRIPT_ID'
             // display an error popup to the user
             EditorUtility.DisplayDialog(
               "Error",
@@ -464,6 +501,69 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
       // refresh the UI
       refreshParamConverterGUI();
+    }
+
+    // support functions -----------------------------------------------------------------------------------------------
+
+    // function to check if string content is a VRCExpressionParameters file
+    public (bool, string) checkScriptIDs(string parametersFileString, List<string> scriptIDs)
+    {
+      // output vars
+      bool IDmatch = false;
+      string IDString = "";
+
+      // check provided string is not null or empty
+      if (!string.IsNullOrEmpty(parametersFileString))
+      {
+        // not null or empty, so check if the string contains the line 'm_Script: '
+
+        // check if the string contains the line 'm_Script: '
+        if (parametersFileString.ToString().Contains("m_Script:"))
+        {
+          // if the string contains the line 'm_Script: '
+          // check if any of the strings in scriptIDs are contained in the string
+          foreach (string id in scriptIDs)
+          {
+            if (parametersFileString.ToString().Contains(id))
+            {
+              // got a match so set the output vars
+              IDmatch = true;
+              IDString = id;
+            }
+          }
+        }
+      }
+
+      // return the output vars
+      return (IDmatch, IDString);
+    }
+
+    // function to check if a file content is a the CVRFury version of VRCExpressionParameters
+    public bool checkCVRFuryScriptID(string parametersFileString)
+    {
+      // output vars
+      bool IDmatch = false;
+
+      // check provided string is not null or empty
+      if (!string.IsNullOrEmpty(parametersFileString))
+      {
+        // not null or empty, so check if the string contains the line 'm_Script: '
+
+        // check if the string contains the line 'm_Script: '
+        if (parametersFileString.ToString().Contains("m_Script:"))
+        {
+          // if the string contains the line 'm_Script: '
+          // check if the string contains the line 'm_Script: ' + CVRFURY_M_SCRIPT_ID
+          if (parametersFileString.ToString().Contains("m_Script: " + CVRFURY_M_SCRIPT_ID))
+          {
+            // got a match so set the output vars
+            IDmatch = true;
+          }
+        }
+      }
+
+      // return the output vars
+      return IDmatch;
     }
   }
 }
