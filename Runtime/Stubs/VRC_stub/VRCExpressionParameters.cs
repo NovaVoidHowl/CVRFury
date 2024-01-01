@@ -4,7 +4,7 @@
 using System;
 using UnityEngine;
 
-namespace VRCStub
+namespace uk.novavoidhowl.dev.vrcstub
 {
   /// <summary>
   /// Stub for VRCExpressionParameters

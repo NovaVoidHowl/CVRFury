@@ -1,5 +1,5 @@
 {
-    "name": "VRCStub",
+    "name": "uk.novavoidhowl.dev.vrcstub",
     "references": [
       "UnityEngine"
     ],

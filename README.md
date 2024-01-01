@@ -115,8 +115,11 @@ or find a tool that can do them.
 
 ## Roadmap
 
+- [x] VRCExpressionParameters Converter and Stub
+- [x] VRCExpressionMenu Converter and Stub
 - [ ] VRCFury stubs
 - [ ] VRCFury to CVRFury data porter
+- [ ] CVRFury VRCStub to VRC Converter (potential)
 - [ ] More to come ......
 
 See the [open issues](https://github.com/NovaVoidHowl/CVRFury/issues) for a full list of proposed features (and known issues).
