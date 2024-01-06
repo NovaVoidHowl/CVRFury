@@ -1,5 +1,5 @@
 {
-    "name": "StubCovers",
+    "name": "uk.novavoidhowl.dev.cvrfury.stubcovers",
     "references": [
       "VRCFury",
       "uk.novavoidhowl.dev.cvrfury.packagecore",
