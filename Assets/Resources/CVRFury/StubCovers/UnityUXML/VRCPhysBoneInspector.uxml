@@ -1,0 +1,9 @@
+<UXML xmlns="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <VisualElement name="VRCPhysBoneStubBase">
+    <VisualElement name="Banner">
+      <Label name="VRCPhysBoneStubCoverTitle" text="VRCPhysBone Stub Component" />
+      <Label name="VRCPhysBoneStubCoverContent1" text="I'm a blank stub" />
+      <Label name="VRCPhysBoneStubCoverContent2" text="I exist to prevent compile issues" />
+    </VisualElement>
+  </VisualElement>
+</UXML>

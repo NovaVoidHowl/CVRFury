@@ -1,0 +1,19 @@
+{
+    "name": "StubCovers",
+    "references": [
+      "VRCFury",
+      "uk.novavoidhowl.dev.cvrfury.packagecore",
+      "uk.novavoidhowl.dev.vrcstub"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}
