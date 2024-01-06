@@ -15,6 +15,7 @@ namespace uk.novavoidhowl.dev.vrcstub
   /// named the same as the original class so that it can be used as a drop in replacement with VRCFury stubs
   /// in order to keep the code as similar as possible with the original VRCFury code base
   /// </summary>
+  [AddComponentMenu("")] // hide from add component menu
   public class VRCAvatarDescriptor : MonoBehaviour
   {
     [Serializable]

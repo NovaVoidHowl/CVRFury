@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace uk.novavoidhowl.dev.vrcstub
 {
+  [AddComponentMenu("")] // hide from add component menu
   public class VRCPhysBone : MonoBehaviour
   {
     // this is just an empty stub, to prevent errors when the VRC SDK is not in the project
