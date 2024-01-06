@@ -117,6 +117,7 @@ or find a tool that can do them.
 
 - [x] VRCExpressionParameters Converter and Stub
 - [x] VRCExpressionMenu Converter and Stub
+- [x] PhysBone Stubber - (just stubs them NOT a converter)
 - [ ] VRCFury stubs
 - [ ] VRCFury to CVRFury data porter
 - [ ] CVRFury VRCStub to VRC Converter (potential)
