@@ -1,0 +1,44 @@
+#CVRFuryDataStorageUnitBase{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+}
+#Banner{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#CVRFuryDataStorageUnitTitle{
+  font-size: 15px;
+  margin: 10px;
+}
+
+#CVRFuryDataStorageUnitContent{
+  font-size: 10px;
+  margin: 10px;
+}
+
+#CVRFuryDataStorageUnitBase #logo{
+  width: 128px;
+  height: 64px;
+}
+
+#CVRFuryDataStorageUnitCoverTitle{
+  font-size: 15px;
+  margin: 10px;
+}
+
+.cvr-fury-inspector{
+  height: 100%;
+  background-color: #444444;
+  margin-left: -15px;
+  margin-right: -10px;
+}
