@@ -3,7 +3,8 @@
     "references": [
       "VRCFury",
       "uk.novavoidhowl.dev.cvrfury.packagecore",
-      "uk.novavoidhowl.dev.vrcstub"
+      "uk.novavoidhowl.dev.vrcstub",
+      "uk.novavoidhowl.dev.cvrfury.runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

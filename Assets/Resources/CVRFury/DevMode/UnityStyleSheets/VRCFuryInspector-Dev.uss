@@ -1,0 +1,20 @@
+#devModeTag{
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #000090;
+  color: #fff;
+  padding: 5px;
+  font-size: 12px;
+  border-radius: 0 0 0 10px;
+}
+
+#defaultEditorContainer{
+  padding-bottom: 10px;
+  padding-top: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-width: 1px 0px 0px 0px;
+  border-color: #ffffff;
+
+}
