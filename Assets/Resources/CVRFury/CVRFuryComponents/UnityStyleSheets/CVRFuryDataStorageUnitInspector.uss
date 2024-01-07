@@ -15,6 +15,27 @@
   justify-content: center;
   align-items: center;
 }
+#Status{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#Status #CVRFuryDataStorageUnitStatusContent{
+  display: flex;
+  flex-direction: row;
+}
+#Status #CVRFuryDataStorageUnitStatusLinks{
+  display: flex;
+  flex-direction: column;
+}
+
+#Status #CVRFuryDataStorageUnitStatusLinks .Content{
+  display: flex;
+  flex-direction: row;
+}
 
 #CVRFuryDataStorageUnitTitle{
   font-size: 15px;

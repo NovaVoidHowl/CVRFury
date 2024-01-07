@@ -7,5 +7,21 @@
       <Label name="CVRFuryDataStorageUnitContent1" text="This is the Data Storage Unit Component" />
       <Label name="CVRFuryDataStorageUnitContent2" text="It stores data for CVRFury components\nso please leave it here" />
     </VisualElement>
+    <VisualElement name="Status">
+      <Label name="CVRFuryDataStorageUnitStatus" />
+      <VisualElement name="CVRFuryDataStorageUnitStatusContent">
+        <Label name="CVRFuryDataStorageUnitStatusDataTitle" text="Data Storage in use : " />
+        <Label name="CVRFuryDataStorageUnitStatusDataContent" text="None" />
+      </VisualElement>
+      <VisualElement name="CVRFuryDataStorageUnitStatusLinks">
+        <VisualElement class="Content">
+          <Label name="CVRFuryDataStorageUnitStatusAvatarLinkTitle" text="Avatar Link Status : " />
+          <Label name="CVRFuryDataStorageUnitStatusAvatarLinkContent" text="Inactive" />
+        </VisualElement>
+        <VisualElement name="CVRFuryDataStorageUnitStatusAvatarLinkButtons">
+          <Button name="CVRFuryDataStorageUnitStatusAvatarLinkButton" text="Select In Hierarchy" style="display: none;" />
+        </VisualElement>
+      </VisualElement>
+    </VisualElement>
   </VisualElement>
 </UXML>
