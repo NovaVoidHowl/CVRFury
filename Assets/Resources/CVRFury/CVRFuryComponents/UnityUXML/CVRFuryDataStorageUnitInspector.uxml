@@ -8,7 +8,6 @@
       <Label name="CVRFuryDataStorageUnitContent2" text="It stores data for CVRFury components\nso please leave it here" />
     </VisualElement>
     <VisualElement name="Status">
-      <Label name="CVRFuryDataStorageUnitStatus" />
       <VisualElement name="CVRFuryDataStorageUnitStatusContent">
         <Label name="CVRFuryDataStorageUnitStatusDataTitle" text="Data Storage in use : " />
         <Label name="CVRFuryDataStorageUnitStatusDataContent" text="None" />
