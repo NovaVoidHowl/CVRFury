@@ -118,9 +118,6 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     void UpdateUI(bool newValue)
     {
-      // debug log the new value
-      Debug.Log("Dev Mode Enabled : " + newValue);
-
       devModeEnabled = newValue;
 
       if (rootVisualElement == null)
