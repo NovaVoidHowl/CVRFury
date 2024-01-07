@@ -167,7 +167,11 @@ Project Link: [https://repo.cvrfury.uk](https://repo.cvrfury.uk)
 
 ## Acknowledgments
 
-TBC
+### VRCFury
+
+This repo contains stub components (in the folder VRCFury_stub), that are derivative of derivative of the VRCFury
+codebase, please see <https://github.com/VRCFury/VRCFury>, unlike the rest of the code in this repo the VRCFury stubs
+are licensed under CC BY-NC 4.0
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
