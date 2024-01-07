@@ -2,25 +2,23 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
+  height: auto;
   padding-top: 10px;
   padding-bottom: 10px;
-
 }
 #Banner{
-  width: 100%;
-  height: 100%;
+  height: auto;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding-top: 10px;
 }
 #Status{
-  width: 100%;
-  height: 100%;
+  height: auto;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding-top: 10px;
 }
 
 #Status #CVRFuryDataStorageUnitStatusContent{
@@ -38,7 +36,10 @@
 }
 
 #CVRFuryDataStorageUnitStatusAvatarLinkButtons{
-  margin: 6px;
+  padding-top: 10px;
+}
+#CVRFuryDataStorageUnitStatusAvatarLinkButton{
+  padding: 5px;
 }
 
 #CVRFuryDataStorageUnitTitle{
@@ -52,8 +53,11 @@
 }
 
 #CVRFuryDataStorageUnitBase #logo{
-  width: 128px;
-  height: 64px;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 64px;
+  height: 32px;
 }
 
 #CVRFuryDataStorageUnitCoverTitle{
@@ -62,7 +66,7 @@
 }
 
 .cvr-fury-inspector{
-  height: 100%;
+
   background-color: #444444;
   margin-left: -15px;
   margin-right: -10px;
