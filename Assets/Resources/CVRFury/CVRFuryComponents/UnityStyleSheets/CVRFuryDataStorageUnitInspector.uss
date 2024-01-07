@@ -37,6 +37,10 @@
   flex-direction: row;
 }
 
+#CVRFuryDataStorageUnitStatusAvatarLinkButtons{
+  margin: 6px;
+}
+
 #CVRFuryDataStorageUnitTitle{
   font-size: 15px;
   margin: 10px;
