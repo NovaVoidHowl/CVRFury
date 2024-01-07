@@ -1,5 +1,4 @@
-// editor ui for CVRFuryDevModeEnabler
-
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using UnityEditor;
@@ -97,3 +96,4 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
     }
   }
 }
+#endif
