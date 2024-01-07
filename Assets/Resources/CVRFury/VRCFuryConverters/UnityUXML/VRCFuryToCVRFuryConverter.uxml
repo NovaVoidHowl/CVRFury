@@ -1,0 +1,32 @@
+<UXML xmlns="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <VisualElement name="scrollViewContainer">
+    <ScrollView name="scrollView">
+      <VisualElement name="headerContainer">
+        <Label name="titleLabel" text="VRCFury To CVRFury Prefab Converter" />
+        <Label name="descriptionLabel" text="This tool converts VRCFury prefabs to CVRFury ones." />
+        <Label name="note" text="Note you should run the prefab through the PhysBone stubber first if it has any" />
+      </VisualElement>
+      <VisualElement name="prefabFileSelectorContainer">
+        <Label name="selectLabel" text="Drag and drop the prefab file you want to process to the box below" />
+        <VisualElement name="prefabFileDropArea">
+          <VisualElement name="prefabFileDropAreaLabel">
+            <Label name="prefabFileDropAreaLabelText" text="Drop file here" />
+          </VisualElement>
+        </VisualElement>
+        <VisualElement name="prefabFileSelectorHolder">
+        </VisualElement>
+      </VisualElement>
+      <VisualElement name="controlsContainer">
+        <VisualElement name="processButtonContainer">
+          <Button name="processButton" text="Process" />
+        </VisualElement>
+        <VisualElement name="progressBarContainer">
+          <ProgressBar name="progressBar" value="0" />
+        </VisualElement>
+        <VisualElement name="progressLabelContainer">
+          <Label name="progressLabel" text="0%" />
+        </VisualElement>
+      </VisualElement>
+    </ScrollView>
+  </VisualElement>
+</UXML>
