@@ -20,9 +20,9 @@
 
 <br />
 <div align="center">
-  <!-- <a href="https://github.com/NovaVoidHowl/CVRFury">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a> -->
+  <a href="https://repo.cvrfury.uk/">
+    <img src="Assets/Resources/CVRFury/Logos/CVRFurylogo.png" alt="Logo" width="128" height="64">
+  </a>
 
 <h3 align="center">CVR Fury</h3>
 
@@ -149,7 +149,7 @@ You can also simply open an issue with the tag "enhancement".
 
 ## License
 
-Distributed under the LGPL License. See `LICENSE.md` for more information.
+Please see [LICENSE.md](LICENSE.md) for information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -169,7 +169,7 @@ Project Link: [https://repo.cvrfury.uk](https://repo.cvrfury.uk)
 
 ### VRCFury
 
-This repo contains stub components (in the folder VRCFury_stub), that are derivative of derivative of the VRCFury
+This repo contains stub components (in the folder VRCFury_stub), that are derivative of the VRCFury
 codebase, please see <https://github.com/VRCFury/VRCFury>, unlike the rest of the code in this repo the VRCFury stubs
 are licensed under CC BY-NC 4.0
 
