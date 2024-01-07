@@ -1,5 +1,5 @@
 {
-  "FirstPartyDepsEnabled": true,
+  "FirstPartyDepsEnabled": false,
   "ThirdPartyDepsEnabled": true,
   "appComponentsEnabled": true
 }
