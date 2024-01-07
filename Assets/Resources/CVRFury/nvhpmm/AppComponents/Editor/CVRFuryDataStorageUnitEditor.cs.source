@@ -1,4 +1,4 @@
-// { "version": "0.1.5" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.1.12" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using UnityEditor;
@@ -157,14 +157,9 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private void devModeSubscribe()
     {
-      // check if the target has a CVRFuryDevModeEnabler component
-      if (((CVRFuryDataStorageUnit) target).gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      if (target is CVRFuryDataStorageUnit cvrFuryDataStorageUnit && cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
       {
-        // if the target has a CVRFuryDevModeEnabler component,
-        // get the component
-        var CVRFuryDevModeEnabler = ((CVRFuryDataStorageUnit) target).gameObject.GetComponent<CVRFuryDevModeEnabler>();
-
-        // add a listener to link to the CVRFuryDevModeEnabler component
+        var CVRFuryDevModeEnabler = cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>();
         CVRFuryDevModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
         devModeEnabled = CVRFuryDevModeEnabler.DevModeEnabled;
       }
@@ -172,14 +167,9 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private void OnDisable()
     {
-      // check if the target has a CVRFuryDevModeEnabler component
-      if (((CVRFuryDataStorageUnit) target).gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      if (target is CVRFuryDataStorageUnit cvrFuryDataStorageUnit && cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
       {
-        // if the target has a CVRFuryDevModeEnabler component,
-        // get the component
-        var CVRFuryDevModeEnabler = ((CVRFuryDataStorageUnit) target).gameObject.GetComponent<CVRFuryDevModeEnabler>();
-
-        // remove the listener to link to the CVRFuryDevModeEnabler component
+        var CVRFuryDevModeEnabler = cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>();
         CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
       }
     }
@@ -247,6 +237,39 @@ namespace uk.novavoidhowl.dev.cvrfury
             defaultEditor.OnInspectorGUI();
           });
           defaultEditorContainer.Add(defaultEditorIMGUIContainer);
+
+          // add container for moduleAdder
+          var moduleAdderContainer = new VisualElement();
+          moduleAdderContainer.name = "moduleAdderContainer";
+          defaultEditorContainer.Add(moduleAdderContainer);
+
+          // add dropdown for moduleAdder types list
+          var moduleAdderTypeDropdown = new PopupField<string>("Module Type", new List<string>(){"parametersLink", "menuLink"}, 0);
+          moduleAdderTypeDropdown.name = "moduleAdderTypeDropdown";
+          moduleAdderContainer.Add(moduleAdderTypeDropdown);
+
+          // add button for moduleAdder
+          var moduleAdderButton = new Button(() =>
+          {
+            var moduleAdderType = moduleAdderTypeDropdown.value;
+            switch (moduleAdderType)
+            {
+              case "parametersLink":
+                var newParametersLink = new parametersLink();
+                ((CVRFuryDataStorageUnit) target).modules.modules.Add(newParametersLink);
+                break;
+              case "menuLink":
+                var newMenuLink = new menuLink();
+                ((CVRFuryDataStorageUnit) target).modules.modules.Add(newMenuLink);
+                break;
+            }
+            UpdateUI(devModeEnabled);
+          });
+          moduleAdderButton.name = "moduleAdderButton";
+          moduleAdderButton.text = "Add Module";
+          moduleAdderContainer.Add(moduleAdderButton);
+
+
         }
       }
       else

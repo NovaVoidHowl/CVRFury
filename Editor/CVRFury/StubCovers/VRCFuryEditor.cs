@@ -1,10 +1,14 @@
 #if UNITY_EDITOR
+using System;
+using System.Linq;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VF.Model;
+using VF.Model.Feature;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 
@@ -13,6 +17,9 @@ namespace uk.novavoidhowl.dev.cvrfury
   [CustomEditor(typeof(VRCFury))]
   public class VRCFuryEditor : Editor
   {
+    // type list
+    List<Type> derivedClasses;
+
     // dev mode enabled
     bool devModeEnabled = false;
 
@@ -89,14 +96,9 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private void devModeSubscribe()
     {
-      // check if the target has a CVRFuryDevModeEnabler component
-      if (((VRCFury)target).gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      if (target is VRCFury vrcFury && vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
       {
-        // if the target has a CVRFuryDevModeEnabler component,
-        // get the component
-        var CVRFuryDevModeEnabler = ((VRCFury)target).gameObject.GetComponent<CVRFuryDevModeEnabler>();
-
-        // add a listener to link to the CVRFuryDevModeEnabler component
+        var CVRFuryDevModeEnabler = vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>();
         CVRFuryDevModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
         devModeEnabled = CVRFuryDevModeEnabler.DevModeEnabled;
       }
@@ -104,14 +106,9 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private void OnDisable()
     {
-      // check if the target has a CVRFuryDevModeEnabler component
-      if (((VRCFury)target).gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      if (target is VRCFury vrcFury && vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
       {
-        // if the target has a CVRFuryDevModeEnabler component,
-        // get the component
-        var CVRFuryDevModeEnabler = ((VRCFury)target).gameObject.GetComponent<CVRFuryDevModeEnabler>();
-
-        // remove the listener to link to the CVRFuryDevModeEnabler component
+        var CVRFuryDevModeEnabler = vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>();
         CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
       }
     }
@@ -119,6 +116,8 @@ namespace uk.novavoidhowl.dev.cvrfury
     void UpdateUI(bool newValue)
     {
       devModeEnabled = newValue;
+
+      derivedClasses = GetClassesDerivedFromAbstractClass(typeof(FeatureModel));
 
       if (rootVisualElement == null)
       {
@@ -177,6 +176,40 @@ namespace uk.novavoidhowl.dev.cvrfury
             defaultEditor.OnInspectorGUI();
           });
           defaultEditorContainer.Add(defaultEditorIMGUIContainer);
+
+          // add container for the Feature adder
+          var featureAdderContainer = new VisualElement();
+          featureAdderContainer.name = "featureAdderContainer";
+          defaultEditorContainer.Add(featureAdderContainer);
+
+          // add dropdown for feature type
+          var featureTypeDropdown = new PopupField<string>("Feature Type", derivedClasses.ConvertAll(x => x.Name), 0);
+          featureAdderContainer.Add(featureTypeDropdown);
+
+          // add button to add feature
+          var addFeatureButton = new Button(() =>
+          {
+            var featureType = derivedClasses[featureTypeDropdown.index];
+            if (typeof(FeatureModel).IsAssignableFrom(featureType))
+            {
+              var feature = Activator.CreateInstance(featureType) as FeatureModel;
+              if (feature != null)
+              {
+                ((VRCFury)target).config.features.Add(feature);
+                UpdateUI(devModeEnabled);
+              }
+              else
+              {
+                // Handle the case when the instance cannot be created or casted to FeatureModel
+              }
+            }
+            else
+            {
+              // Handle the case when featureType is not a subclass of FeatureModel
+            }
+          });
+          addFeatureButton.text = "Add Feature";
+          featureAdderContainer.Add(addFeatureButton);
         }
       }
       else
@@ -198,6 +231,20 @@ namespace uk.novavoidhowl.dev.cvrfury
         }
       }
       Repaint();
+    }
+
+    public static List<Type> GetClassesDerivedFromAbstractClass(Type baseType)
+    {
+      var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+      var types = new List<Type>();
+
+      foreach (var assembly in assemblies)
+      {
+        types.AddRange(assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(baseType)));
+      }
+
+      return types;
     }
   }
 }

@@ -1,7 +1,8 @@
 {
   "name": "uk.novavoidhowl.dev.cvrfury.runtime",
   "references": [
-    "UnityEngine"
+    "UnityEngine",
+    "uk.novavoidhowl.dev.vrcstub"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

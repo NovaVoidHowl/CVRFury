@@ -16,5 +16,22 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     // unityEditor in the runtime
     [Header("CVRFury UI failed to load\n\nPlease check Tool Setup\n\n NVH>CVRFury>Tool Setup\n")]
     public bool somethingIsBroken = true;
+
+    public CVRFuryModuleInfo moduleInfo;
+    public CVRFuryModules modules;
+  }
+
+  [Serializable]
+  public class CVRFuryModuleInfo
+  {
+    public string name;
+    public SemVer version;
+  }
+
+  [Serializable]
+  public class CVRFuryModules
+  {
+    [SerializeReference]
+    public List<CVRFuryModule> modules = new List<CVRFuryModule>();
   }
 }
