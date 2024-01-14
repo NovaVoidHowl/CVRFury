@@ -1,0 +1,16 @@
+{
+  "name": "VRCFury",
+  "references": [
+      "VrcfEditorOnly",
+      "JsonComponent",
+      "uk.novavoidhowl.dev.vrcstub"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": []
+}
