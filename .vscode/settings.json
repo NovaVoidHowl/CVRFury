@@ -1,11 +1,16 @@
 {
+  "cSpell.enableFiletypes": [
+    "UnityUXML"
+  ],
   "cSpell.words": [
     "asmdef",
     "autofix",
     "Behaviour",
     "Chillout",
     "converttools",
+    "CVRCCK",
     "cvrfury",
+    "IMGUI",
     "LICENCE",
     "Magica",
     "Newtonsoft",
@@ -17,6 +22,7 @@
     "stylesheet",
     "subfolders",
     "Unversioned",
+    "UXML",
     "Vrcf",
     "vrcfury",
     "vrchat",
