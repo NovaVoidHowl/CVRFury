@@ -4,7 +4,21 @@
 using System.IO;
 using UnityEditor;
 
-// only need to change this line (and the asmdef) to bind to project specific constants
+// Only need to change the following line, in the following files:
+//
+// DepManager.cs
+// render1stPartyDeps.cs
+// render3rdPartyDeps.cs
+// renderAppComponents.cs
+// renderCoreError.cs
+// Validation.cs
+// AppInternalPackages.cs
+// DepManagerConfig.cs
+// PrimaryDependenciesPackages.cs
+// ThirdPartyDependenciesPackages.cs
+//
+// and the asmdef, to bind to project specific constants
+
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
 namespace uk.novavoidhowl.dev.nvhpmm

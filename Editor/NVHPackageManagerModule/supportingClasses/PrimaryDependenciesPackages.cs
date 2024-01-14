@@ -7,8 +7,19 @@ using UnityEngine;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-// only need to change the following line, here
-// in 'supportingClasses\AppInternalPackages.cs'
+// Only need to change the following line, in the following files:
+//
+// DepManager.cs
+// render1stPartyDeps.cs
+// render3rdPartyDeps.cs
+// renderAppComponents.cs
+// renderCoreError.cs
+// Validation.cs
+// AppInternalPackages.cs
+// DepManagerConfig.cs
+// PrimaryDependenciesPackages.cs
+// ThirdPartyDependenciesPackages.cs
+//
 // and the asmdef, to bind to project specific constants
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;

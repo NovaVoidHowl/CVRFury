@@ -1,3 +1,4 @@
+// Version 2.1.0
 // editor only script to manage the dependencies
 #if UNITY_EDITOR
 
@@ -16,8 +17,19 @@ using UnityEngine.UIElements;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-// only need to change the following line, here
-// in 'supportingClasses\AppInternalPackages.cs'
+// Only need to change the following line, in the following files:
+//
+// DepManager.cs
+// render1stPartyDeps.cs
+// render3rdPartyDeps.cs
+// renderAppComponents.cs
+// renderCoreError.cs
+// Validation.cs
+// AppInternalPackages.cs
+// DepManagerConfig.cs
+// PrimaryDependenciesPackages.cs
+// ThirdPartyDependenciesPackages.cs
+//
 // and the asmdef, to bind to project specific constants
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
@@ -75,7 +87,13 @@ namespace uk.novavoidhowl.dev.nvhpmm
 
     private void OnEnable()
     {
-      renderDepMgrUI();
+      refreshDepMgrUI();
+      EditorApplication.projectChanged += refreshDepMgrUI;
+    }
+
+    private void OnDisable()
+    {
+      EditorApplication.projectChanged -= refreshDepMgrUI;
     }
 
     private void refreshDepMgrUI()
@@ -315,16 +333,16 @@ namespace uk.novavoidhowl.dev.nvhpmm
       }
     }
 
-    Texture2D MakeTex(int width, int height, Color col)
-    {
-      Color[] pix = new Color[width * height];
-      for (int i = 0; i < pix.Length; i++)
-        pix[i] = col;
-      Texture2D result = new Texture2D(width, height);
-      result.SetPixels(pix);
-      result.Apply();
-      return result;
-    }
+    // Texture2D MakeTex(int width, int height, Color col)
+    // {
+    //   Color[] pix = new Color[width * height];
+    //   for (int i = 0; i < pix.Length; i++)
+    //     pix[i] = col;
+    //   Texture2D result = new Texture2D(width, height);
+    //   result.SetPixels(pix);
+    //   result.Apply();
+    //   return result;
+    // }
 
     public static Dictionary<string, object> getInternalPackageInfoFromFile(string file)
     {
