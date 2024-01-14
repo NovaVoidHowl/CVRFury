@@ -20,6 +20,24 @@
         <VisualElement name="CVRFuryDataStorageUnitStatusAvatarLinkButtons">
           <Button name="CVRFuryDataStorageUnitStatusAvatarLinkButton" text="Select In Hierarchy" style="display: none;" />
         </VisualElement>
+        <VisualElement name="CVRFuryDataStorageUnitDataImport">
+          <Label class="sectionTitle" text="Data Import" />
+          <Label text="VRC Fury data component detected" />
+          <VisualElement name="CVRFuryDataStorageUnitDataImportDetails">
+            <VisualElement class="Content">
+              <Label name="CVRFuryDataStorageUnitDataImportDetailsTotalFeatures" text="Total Features : " />
+              <Label name="CVRFuryDataStorageUnitDataImportDetailsTotalFeaturesContent" text="0" />
+              <Label text="-" />
+              <Label name="CVRFuryDataStorageUnitDataImportDetailsTotalCompatibleFeatures" text="Total Importable Features : " />
+              <Label name="CVRFuryDataStorageUnitDataImportDetailsTotalCompatibleFeaturesContent" text="0" />
+            </VisualElement>
+            <Label name="CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle" text="Features Found" />
+            <VisualElement name="CVRFuryDataStorageUnitDataImportDetailsFeaturesList">
+              <!-- empty element for the list of features-->
+            </VisualElement>
+          <!-- empty Element to add buttons to dynamically for each thing that can be imported-->
+          </VisualElement>
+        </VisualElement>
       </VisualElement>
     </VisualElement>
   </VisualElement>

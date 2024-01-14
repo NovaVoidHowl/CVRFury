@@ -65,6 +65,72 @@
   margin: 10px;
 }
 
+#CVRFuryDataStorageUnitDataImport{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  padding-top: 10px;
+}
+#CVRFuryDataStorageUnitDataImport .sectionTitle{
+  font-size: 15px;
+  margin: 10px;
+}
+
+#CVRFuryDataStorageUnitDataImportDetails .Content{
+  display: flex;
+  flex-direction: row;
+
+}
+
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle{
+  font-size: 13px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList{
+  border-width: 1px 1px 1px 1px;
+  border-color: #646464;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelOK,
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelNotOK,
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelUnknown {
+  font-size: 12px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  padding: 2px;
+  border-radius: 3px;
+  -unity-text-align: middle-center;
+}
+
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelOK{
+  background-color: green;
+}
+
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelUnknown{
+  background-color: gray;
+}
+
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelNotOK{
+  background-color: gray;
+  border-width: 4px 4px 4px 4px;
+  border-color: red;
+}
+
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelBlockListed{
+  display: none;
+}
+
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelBorderWhite{
+  border-width: 1px 1px 1px 1px;
+  border-color: white;
+}
+
 .cvr-fury-inspector{
 
   background-color: #444444;
