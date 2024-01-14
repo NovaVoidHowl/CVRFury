@@ -196,7 +196,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       renderDataImportUI();
 
       // supported features import
-      //importApplyOnUploadFeature(); // TODO : ON HOLD, this one needs support for the 'State'
+      importApplyOnUploadFeature();
 
       renderDevModeUI();
       Repaint();

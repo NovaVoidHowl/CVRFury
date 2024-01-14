@@ -1,4 +1,4 @@
-// { "version": "0.0.1" , "canInstall": false , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -17,6 +17,22 @@ using ABI.CCK.Scripts.Editor;
 using VF.Model.Feature;
 using VF.Component;
 using VF.Model;
+using Action = VF.Model.StateAction.Action;
+using VF.Model.StateAction;
+
+
+// This is going to be BIG, as there are lot of different types of actions
+// see StateAction.cs in the stubs folder for the full list of actions
+//
+// sofar working on ObjectToggleAction, as this is the most common action
+//
+// Things to look out for:
+// - you can have multiple actions of the same type
+// - you can mix and match actions of different types in one block
+//
+// TO REVIEW:
+// bug on line 164 - seems the stateToSet property of the objectStatePair is not being updated
+//
 
 namespace uk.novavoidhowl.dev.cvrfury
 {
@@ -24,9 +40,6 @@ namespace uk.novavoidhowl.dev.cvrfury
   {
     private void importApplyOnUploadFeature()
     {
-      //TODO : ON HOLD, this one needs support for the 'State'
-      // (see line 682 of this the Feature.cs file in the stubs folder)
-
 
       // get the gameObject this component is attached to
       var DSUgameObject = ((CVRFuryDataStorageUnit) target).gameObject;
@@ -60,7 +73,7 @@ namespace uk.novavoidhowl.dev.cvrfury
           Debug.LogWarning("VRCFuryComponent converted to VRCFury is null");
         }
 
-        // TODO : multiples of a given class, how to deal with that ?
+
 
         // if the featureClassNames list contains the ApplyDuringUpload feature
         if (featureClassNames.Any(tuple => tuple.Item1 == "ApplyDuringUpload"))
@@ -86,18 +99,142 @@ namespace uk.novavoidhowl.dev.cvrfury
           {
             // effectively this label is now a button, user can click to trigger the import
 
-            // print the content of applyDuringUploadFeature to console
-            Debug.Log(applyDuringUploadFeature);
+            // // print the content of applyDuringUploadFeature to console
+            // Debug.Log(applyDuringUploadFeature);
+
+            // State is in VRCFury stub, line 130
 
             // cast applyDuringUploadFeature to ApplyDuringUpload and access the action property
             ApplyDuringUpload applyDuringUpload = applyDuringUploadFeature as ApplyDuringUpload;
             if (applyDuringUpload != null)
             {
+              // cast applyDuringUpload.action to State and access the actions list property
+              State state = applyDuringUpload.action as State;
+
+
+              // get the list of modules from this DSU
+              var modules = ((CVRFuryDataStorageUnit) target).modules.modules;
+
+
+              ////// debug outputs to console
+              // // print the number of modules in the modules list to console
+              // Debug.Log("number of DSU modules = " + modules.Count);
+              //
+              // // print the number of actions in the actions list to console
+              // Debug.Log("number of actions = " + state.actions.Count);
+
+              // iterate through the actions list and print the type of each action to console
+              foreach (Action action in state.actions)
+              {
+                switch (action)
+                {
+                  ////////--------------------------------------------------------------------------------------------
+                  // Case to handle objectToggleAction data import
+                  // Note: This is the most common action type seen so far as of 2021-10-13
+                  // related files: StateAction.cs - line 18 to 44
+
+                  case ObjectToggleAction objectToggleAction:
+
+                    // debug outputs to console
+                    // Debug.Log(objectToggleAction.GetType());
+                    // Debug.Log(objectToggleAction.obj);
+                    // Debug.Log(objectToggleAction.mode);
+
+                    // TODO: set the versions on the module
+                    //newModule.CVRFuryVersion = ParseCVRFuryVersion();
+                    // newModule.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    // newModule.CVRCCKVersion = ParseCCKVersion();
+
+                    // check to see if the DSU already has an uploadObjectStateSetter module
+                    if (modules.Any(module => module.GetType().Name == "uploadObjectStateSetter"))
+                    {
+                      // if so, get the uploadObjectStateSetter module
+                      var uploadObjectStateSetterModule = modules.First(module => module.GetType().Name == "uploadObjectStateSetter");
+
+                      // cast the uploadObjectStateSetter module to uploadObjectStateSetter
+                      uploadObjectStateSetter uploadObjectStateSetter = uploadObjectStateSetterModule as uploadObjectStateSetter;
+
+                      // check to see if the uploadObjectStateSetter module already has an objectStatePair for this obj
+                      if (uploadObjectStateSetter.objectStatePairs.Any(objectStatePair => objectStatePair.objectToSetStateOn == objectToggleAction.obj))
+                      {
+                        // if so, get the objectStatePair
+                        var objectStatePair = uploadObjectStateSetter.objectStatePairs.First(objectStatePair => objectStatePair.objectToSetStateOn == objectToggleAction.obj);
+
+                        // TODO : not seeming to work - needs review
+                        // set the stateToSet property of the objectStatePair to the mode of the action
+                        objectStatePair.stateToSet = objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn ? objectStatePair.objectState.enabled : objectStatePair.objectState.disabled;
+                      }
+                      else
+                      {
+                        // if not, create a new objectStatePair
+                        objectStatePair newObjectStatePair = new objectStatePair();
+
+                        // set the objectToSetStateOn property of the new objectStatePair to the obj gameObject from the action
+                        newObjectStatePair.objectToSetStateOn = objectToggleAction.obj;
+
+                        // set the stateToSet property of the new objectStatePair to the mode of the action
+                        newObjectStatePair.stateToSet = objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn ? objectStatePair.objectState.enabled : objectStatePair.objectState.disabled;
+
+                        // add the new objectStatePair to the objectStatePairs array in the uploadObjectStateSetter module
+                        Array.Resize(ref uploadObjectStateSetter.objectStatePairs, uploadObjectStateSetter.objectStatePairs.Length + 1);
+                        uploadObjectStateSetter.objectStatePairs[uploadObjectStateSetter.objectStatePairs.Length - 1] = newObjectStatePair;
+                      }
+                    }
+                    else
+                    {
+                      // if not, create a new uploadObjectStateSetter module
+                      uploadObjectStateSetter uploadObjectStateSetter = new uploadObjectStateSetter();
+
+                      // create a new objectStatePair
+                      objectStatePair newObjectStatePair = new objectStatePair();
+
+                      // set the objectToSetStateOn property of the new objectStatePair to the obj gameObject from the action
+                      newObjectStatePair.objectToSetStateOn = objectToggleAction.obj;
+
+                      // set the stateToSet property of the new objectStatePair to the mode of the action
+                      newObjectStatePair.stateToSet = objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn ? objectStatePair.objectState.enabled : objectStatePair.objectState.disabled;
+
+                      // add the new objectStatePair to the objectStatePairs array in the uploadObjectStateSetter module
+                      uploadObjectStateSetter.objectStatePairs = new objectStatePair[] { newObjectStatePair };
+
+                      // add the uploadObjectStateSetter module to the modules list in the DSU
+                      modules.Add(uploadObjectStateSetter);
+                    }
+
+
+
+
+
+                    break;
+
+                  // more cases to be added here
+                  //
+                  // case AnotherActionType anotherAction:
+                  //     // Handle anotherAction here
+                  //     break;
+
+                  default:
+                    // Handle unknown action types
+
+                    // get the type of the action
+                    Type actionType = action.GetType();
+
+                    // pop up a dialog box to inform the user that this action type is not yet supported
+                    EditorUtility.DisplayDialog("Unsupported Action type Detected",
+                                                "The action type " + actionType + " is not yet supported",
+                                                "OK");
+                    break;
+                }
+
+                Debug.Log(action.GetType());
+              }
+
+
+
+
               Debug.Log(applyDuringUpload.action);
             }
 
-            // your action here
-            Debug.Log("Label clicked");
           });
         }
         else
