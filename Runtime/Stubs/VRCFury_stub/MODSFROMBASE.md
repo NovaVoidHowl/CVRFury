@@ -26,13 +26,7 @@ Not included
 
 ## JsonComponent
 
-### Editor
-
-Not included
-
-### Runtime
-
-Included as is (no changes)
+Not Included
 
 ## Libs
 
@@ -68,7 +62,30 @@ VRCFury.asmdef :
 
 ### FV
 
+#### Component
+
+- remove 'VRCFuryComponentNew.cs'
+
+- remove 'VRCFuryComponentNew.cs.meta'
+
+- empty stub 'VRCFuryPlayComponent.cs'
+
+- empty stub 'VRCFuryGlobalCollider.cs'
+
+- empty stub 'VRCFuryHapticPlug.cs'
+
+- empty stub 'VRCFuryHapticSocket.cs'
+
+- empty stub 'VRCFuryHapticTouchReceiver.cs'
+
+- empty stub 'VRCFuryHapticTouchSender.cs'
+
+- empty stub 'VRCFuryPlayComponent.cs'
+
 #### Model
+
+- remove VRCFuryTest.cs
+- remove VRCFuryTest.cs.meta
 
 Feature.cs :
 
