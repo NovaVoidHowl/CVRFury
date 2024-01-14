@@ -5,7 +5,7 @@ using UnityEngine;
 namespace uk.novavoidhowl.dev.cvrfury.runtime
 {
   [Serializable]
-  public class SemVer
+  public class CVRFurySemVer
   {
     public int major;
     public int minor;
