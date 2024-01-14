@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
@@ -19,5 +21,34 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     public static readonly Color UI_UPDATE_DOWNGRADE_COLOR = new Color(0.0f, 0.0f, 1.0f); // Blue
     public static readonly Color UI_UPDATE_DOWNGRADE_COLOR_TEXT = new Color(0.4f, 0.4f, 1.0f); // Blue
+
+    public static readonly ReadOnlyCollection<string> COMPATIBLE_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
+      new List<string> { }
+    );
+    public static readonly ReadOnlyCollection<string> CVR_INCOMPATIBLE_VRCFURY_FEATURES =
+      new ReadOnlyCollection<string>(new List<string> { "SetIcon", "SecurityLock" });
+    public static readonly ReadOnlyCollection<string> BLOCK_LISTED_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
+      new List<string>
+      {
+        "SpsOptions",
+        "ZawooIntegration",
+        "SenkyGestureDriver",
+        "DirectTreeOptimizer",
+        "AvatarScale",
+        "AvatarScale2",
+        "TpsScaleFix",
+        "Gizmo",
+        "CrossEyeFix",
+        "CrossEyeFix2",
+        "OGBIntegration",
+        "OGBIntegration2",
+        "MakeWriteDefaultsOff",
+        "MakeWriteDefaultsOff2",
+        "TPSIntegration",
+        "TPSIntegration2",
+        "LegacyPrefabSupport",
+        "LegacyPrefabSupport2",
+      }
+    );
   }
 }
