@@ -119,6 +119,9 @@ namespace uk.novavoidhowl.dev.cvrfury
 
       derivedClasses = GetClassesDerivedFromAbstractClass(typeof(FeatureModel));
 
+      // remove the blocklisted features from the derivedClasses list
+      derivedClasses.RemoveAll(type => Constants.BLOCK_LISTED_VRCFURY_FEATURES.Contains(type.Name));
+
       if (rootVisualElement == null)
       {
         // if the rootVisualElement is null, return
