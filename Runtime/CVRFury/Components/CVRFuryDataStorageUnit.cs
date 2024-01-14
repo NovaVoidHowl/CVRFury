@@ -25,7 +25,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   public class CVRFuryModuleInfo
   {
     public string name;
-    public SemVer version;
+    public CVRFurySemVer version;
   }
 
   [Serializable]
