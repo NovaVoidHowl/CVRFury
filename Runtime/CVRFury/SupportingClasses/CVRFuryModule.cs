@@ -98,12 +98,28 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
-  public class uploadStateSetter : CVRFuryModule
+  public abstract class uploadStateSetter : CVRFuryModule
   {
-    public uploadStateSetter()
-      : base("UploadStateSetter") { }
+    public uploadStateSetter(string moduleType)
+      : base(moduleType) { }
+  }
+
+  [Serializable]
+  public class uploadObjectStateSetter : uploadStateSetter
+  {
+    public uploadObjectStateSetter()
+      : base("uploadObjectStateSetter") { }
 
     public objectStatePair[] objectStatePairs;
+  }
+
+  [Serializable]
+  public class CVRFuryPrefabDependency : CVRFuryModule
+  {
+    public CVRFuryPrefabDependency()
+      : base("PrefabDependency") { }
+
+    public string version;
   }
 
   //------------------------------------------------- Supporting structs -------------------------------------------------

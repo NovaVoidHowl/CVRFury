@@ -1,0 +1,117 @@
+// { "version": "0.0.1" , "canInstall": false , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using Newtonsoft.Json.Linq;
+using ABI.CCK.Scripts.Editor;
+using VF.Model.Feature;
+using VF.Component;
+using VF.Model;
+
+namespace uk.novavoidhowl.dev.cvrfury
+{
+  public partial class CVRFuryDataStorageUnitEditor : Editor
+  {
+    private void importApplyOnUploadFeature()
+    {
+      //TODO : ON HOLD, this one needs support for the 'State'
+      // (see line 682 of this the Feature.cs file in the stubs folder)
+
+
+      // get the gameObject this component is attached to
+      var DSUgameObject = ((CVRFuryDataStorageUnit) target).gameObject;
+
+      // check if that gameObject has VRCFuryComponent on it
+      if (DSUgameObject.GetComponent<VRCFuryComponent>() != null)
+      {
+        // if the gameObject has VRCFuryComponent on it, get the VRCFuryComponent
+        var VRCFuryComponent = DSUgameObject.GetComponent<VRCFuryComponent>();
+
+        // list for the feature class names
+        List<Tuple<string, FeatureModel>> featureClassNames = new List<Tuple<string, FeatureModel>>();
+
+        VRCFury fury = VRCFuryComponent as VRCFury; // cast to VRCFury
+
+        if (fury != null) {
+          // access the config property
+          VRCFuryConfig config = fury.config;
+
+          // iterate through the features, and list the class names
+          foreach (FeatureModel feature in config.features)
+          {
+            // add the class name and the feature to the featureClassNames list
+            featureClassNames.Add(new Tuple<string, FeatureModel>(feature.GetType().Name, feature));
+          }
+        }
+        else
+        {
+          // converted component is null
+          // send a warning to the console
+          Debug.LogWarning("VRCFuryComponent converted to VRCFury is null");
+        }
+
+        // TODO : multiples of a given class, how to deal with that ?
+
+        // if the featureClassNames list contains the ApplyDuringUpload feature
+        if (featureClassNames.Any(tuple => tuple.Item1 == "ApplyDuringUpload"))
+        {
+          // get the tuple that contains the ApplyDuringUpload feature
+          var applyDuringUploadTuple = featureClassNames.First(tuple => tuple.Item1 == "ApplyDuringUpload");
+
+          // get the ApplyDuringUpload feature from the tuple
+          FeatureModel applyDuringUploadFeature = applyDuringUploadTuple.Item2;
+
+          // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
+          var CVRFuryDataStorageUnitDataImportDetailsFeaturesList =
+            rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetailsFeaturesList");
+
+          // get the ApplyDuringUpload featureClassNameLabel Label VisualElement from the CVRFuryDataStorageUnitDataImportDetailsFeaturesList VisualElement
+          var featureClassNameLabel =
+            CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Q<Label>("ApplyDuringUpload");
+
+          // add a white border to the featureClassNameLabel Label VisualElement
+          featureClassNameLabel.AddToClassList("featureClassNameLabelBorderWhite");
+
+          featureClassNameLabel.RegisterCallback<ClickEvent>(evt =>
+          {
+            // effectively this label is now a button, user can click to trigger the import
+
+            // print the content of applyDuringUploadFeature to console
+            Debug.Log(applyDuringUploadFeature);
+
+            // cast applyDuringUploadFeature to ApplyDuringUpload and access the action property
+            ApplyDuringUpload applyDuringUpload = applyDuringUploadFeature as ApplyDuringUpload;
+            if (applyDuringUpload != null)
+            {
+              Debug.Log(applyDuringUpload.action);
+            }
+
+            // your action here
+            Debug.Log("Label clicked");
+          });
+        }
+        else
+        {
+          // if the featureClassNames list does not contain the ApplyDuringUpload feature,
+          // no data to copy over
+        }
+      }
+      else
+      {
+        // no VRCFuryComponent on the gameObject, so no data of this type to import
+      }
+
+    }
+  }
+}
+#endif
