@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public sealed class ThirdPartyPackageDependency
   {

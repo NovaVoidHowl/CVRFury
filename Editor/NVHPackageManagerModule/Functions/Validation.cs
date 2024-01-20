@@ -28,7 +28,7 @@ using UnityEngine.UIElements;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public partial class ToolSetup : EditorWindow
   {

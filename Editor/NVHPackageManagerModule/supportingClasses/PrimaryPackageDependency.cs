@@ -5,7 +5,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public sealed class PrimaryPackageDependency
   {

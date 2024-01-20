@@ -1,7 +1,7 @@
 // editor only script to manage the dependencies
 #if UNITY_EDITOR
 
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public sealed class DependencyLinkButton
   {

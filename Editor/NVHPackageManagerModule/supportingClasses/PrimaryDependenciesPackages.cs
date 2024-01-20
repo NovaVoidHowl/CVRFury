@@ -24,7 +24,7 @@ using Newtonsoft.Json.Linq;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   [InitializeOnLoad]
   public class PrimaryDependenciesPackages

@@ -35,7 +35,7 @@ using Newtonsoft.Json.Linq;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
 // NVH Package Manager Module
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   [ExecuteInEditMode]
   public partial class ToolSetup : EditorWindow
@@ -47,9 +47,10 @@ namespace uk.novavoidhowl.dev.nvhpmm
     [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Tool Setup", false, 10000)]
     public static void ShowWindow()
     {
-      ToolSetup window = (ToolSetup)EditorWindow.GetWindow(typeof(ToolSetup), true, "Tool Setup");
+      ToolSetup window = (ToolSetup)
+        EditorWindow.GetWindow(typeof(ToolSetup), true, "Tool Setup - " + Constants.PROGRAM_DISPLAY_NAME);
       window.maxSize = new Vector2(2000, 2000);
-      window.minSize = new Vector2(600, 300);
+      window.minSize = new Vector2(800, 300);
       window.Show();
     }
 

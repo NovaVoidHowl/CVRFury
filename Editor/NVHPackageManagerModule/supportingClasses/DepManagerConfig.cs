@@ -21,7 +21,7 @@ using UnityEditor;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public class DepManagerConfig
   {

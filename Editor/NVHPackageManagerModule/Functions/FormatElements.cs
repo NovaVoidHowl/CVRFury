@@ -4,7 +4,7 @@
 using UnityEngine.UIElements;
 using UnityEditor;
 
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public partial class ToolSetup : EditorWindow { }
 }

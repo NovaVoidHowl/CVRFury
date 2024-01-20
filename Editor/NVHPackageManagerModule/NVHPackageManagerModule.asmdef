@@ -1,5 +1,5 @@
 {
-  "name": "uk.novavoidhowl.dev.nvhpmm",
+  "name": "uk.novavoidhowl.dev.cvrfury.nvhpmm",
   "references": [
     "UnityEngine.CoreModule",
     "UnityEditor.CoreModule",

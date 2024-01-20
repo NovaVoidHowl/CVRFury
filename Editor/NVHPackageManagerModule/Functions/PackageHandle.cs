@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 
-namespace uk.novavoidhowl.dev.nvhpmm
+namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public partial class ToolSetup : EditorWindow
   {
