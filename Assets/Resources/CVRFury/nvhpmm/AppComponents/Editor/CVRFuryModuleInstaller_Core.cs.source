@@ -1,0 +1,189 @@
+// { "version": "0.2.17" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+using Math = System.Math;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Components;
+
+namespace uk.novavoidhowl.dev.cvrfury
+{
+  public partial class CVRFuryModuleInstaller
+  {
+    /// <summary>
+    /// Install CVRFury Modules on a given GameObject
+    /// Mode 0 = Play Mode
+    /// Mode 1 = Build Mode
+    /// </summary>
+    /// <param name="uploadedObject"></param>
+    /// <param name="mode"></param>
+    public static void InstallCVRFuryModules(GameObject uploadedObject, int mode = 0)
+    {
+      // popup title depending on mode, suffixing with " - Play Mode" or " - Build Mode"
+      string popupTitle = "CVRFury Module Installer - ";
+      if (mode == 0) popupTitle += "Play Mode";
+      else if (mode == 1) popupTitle += "Build Mode";
+
+      // Implementation
+      string path = GetGameObjectPath(uploadedObject);
+      EditorUtility.DisplayDialog(popupTitle, "Installing CVRFury Modules on \n\n" + path, "OK");
+
+      // show modal progress window
+      ModalWindow.ShowWindow(uploadedObject);
+
+
+    }
+
+
+
+    public static string GetGameObjectPath(GameObject obj)
+    {
+      string path = "/" + obj.name;
+      while (obj.transform.parent != null)
+      {
+        obj = obj.transform.parent.gameObject;
+        path = "/" + obj.name + path;
+      }
+      return path;
+    }
+  }
+
+  [InitializeOnLoad]
+  public class ModuleInstallOnBuild
+  {
+    public int callbackOrder => -10000;
+    static ModuleInstallOnBuild()
+    {
+      // attach to OnPreBundleEvent event
+      CCK_BuildUtility.PreAvatarBundleEvent.AddListener(OnPreBundleEvent);
+
+      // console print to show that the event has been attached
+      Debug.Log("[CVRFury] ModuleInstallOnBuild attached to OnPreBundleEvent");
+    }
+
+    private static void OnPreBundleEvent(GameObject uploadedObject)
+    {
+      // console print to show that the event has been triggered
+      Debug.Log("[CVRFury] ModuleInstallOnBuild.OnPreBundleEvent triggered");
+
+      // if uploadedObject is null, do nothing
+      if (uploadedObject == null) return;
+
+      CVRFuryModuleInstaller.InstallCVRFuryModules(uploadedObject, 1);
+    }
+  }
+
+  public class ModuleInstallOnPlay
+  {
+    [RuntimeInitializeOnLoadMethod]
+    static void RunOnStart()
+    {
+      // Find all active game objects with a CVRAvatar component
+      var avatars = GameObject.FindObjectsOfType<CVRAvatar>();
+
+      foreach (var avatar in avatars)
+      {
+        CVRFuryModuleInstaller.InstallCVRFuryModules(avatar.gameObject, 0);
+      }
+    }
+  }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// ancillary classes
+
+
+  public class ModalWindow : EditorWindow
+  {
+    private static GameObject uploadedObject;
+    private static double openTime;
+    private static double closeTime;
+    private static float totalTimeCount;
+    private static EditorApplication.CallbackFunction updateProgressBarAction;
+    private static EditorApplication.CallbackFunction closeWindowAction;
+    private static ProgressBar progressBar;
+
+    public static void ShowWindow(GameObject targetObject)
+    {
+      uploadedObject = targetObject;
+
+      var mainWindowPos = EditorGUIUtility.GetMainWindowPosition();
+      var size = new Vector2(600, 600);
+      ModalWindow window = ScriptableObject.CreateInstance<ModalWindow>();
+      window.position = new Rect(mainWindowPos.xMin + (mainWindowPos.width - size.x) * 0.5f, mainWindowPos.yMin + 100, size.x, size.y);
+      window.ShowPopup();
+    }
+
+    public void OnEnable()
+    {
+      var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
+      int numDataStorageUnits = dataStorageUnits.Length;
+      var root = rootVisualElement;
+      var label = new Label("Installing CVR Fury Modules on: " + uploadedObject.name);
+      root.Add(label);
+      var label2 = new Label("Number of CVRFuryDataStorageUnit components: " + numDataStorageUnits);
+      root.Add(label2);
+      progressBar = new ProgressBar();
+      progressBar.value = 0;
+      root.Add(progressBar);
+
+      totalTimeCount = 4 * numDataStorageUnits;
+
+      // Set openTime to the current time
+      openTime = EditorApplication.timeSinceStartup;
+
+      updateProgressBarAction = () => UpdateProgressBar(totalTimeCount);
+      closeWindowAction = CloseWindow;
+
+      EditorApplication.update += updateProgressBarAction;
+      EditorApplication.update += closeWindowAction;
+    }
+
+    private static void UpdateProgressBar(float totalTimeCount)
+    {
+      // Calculate remainingTime as totalTimeCount - the time passed since openTime
+      var remainingTime = totalTimeCount - (EditorApplication.timeSinceStartup - openTime);
+
+      // Ensure remainingTime is never less than 0
+      remainingTime = Math.Max(remainingTime, 0);
+
+      // Calculate progressValue and ensure it's never greater than 100
+      var progressValue = 100 - (float)(remainingTime / totalTimeCount) * 100;
+      progressBar.value = Math.Min(progressValue, 100);
+
+      //TODO: remove this debug log
+      // Log the values of remainingTime, progressBar.value, and totalTimeCount
+      // Debug.Log($"remainingTime: {remainingTime}, progressBar.value: {progressBar.value}, totalTimeCount: {totalTimeCount}");
+
+      if (progressBar.value >= 100 && closeTime == 0)
+      {
+        // Set the close time to 2 seconds in the future
+        closeTime = EditorApplication.timeSinceStartup + 2;
+      }
+    }
+
+    private static void CloseWindow()
+    {
+      if (closeTime > 0 && EditorApplication.timeSinceStartup > closeTime)
+      {
+        // Unsubscribe UpdateProgressBar and CloseWindow from EditorApplication.update
+        EditorApplication.update -= updateProgressBarAction;
+        EditorApplication.update -= closeWindowAction;
+
+        // Close the window
+        GetWindow<ModalWindow>().Close();
+      }
+    }
+  }
+
+
+
+
+}
+
+// #endif
