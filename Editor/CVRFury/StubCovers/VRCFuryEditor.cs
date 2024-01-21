@@ -106,10 +106,13 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private void OnDisable()
     {
-      if (target is VRCFury vrcFury && vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      if (target is VRCFury vrcFury)
       {
         var CVRFuryDevModeEnabler = vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>();
-        CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+        if (CVRFuryDevModeEnabler != null)
+        {
+          CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+        }
       }
     }
 
