@@ -1,4 +1,4 @@
-// { "version": "0.3.9" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.3.12" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -16,6 +16,11 @@ using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
 namespace uk.novavoidhowl.dev.cvrfury
 {
+  public interface IModuleProcessor
+  {
+    void ProcessModule(CVRFuryModule module);
+  }
+
   public partial class CVRFuryModuleInstaller
   {
     /// <summary>
@@ -39,11 +44,24 @@ namespace uk.novavoidhowl.dev.cvrfury
       // get the CVRFuryDataStorageUnit components
       var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
 
-      // show modal progress window
-      ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
+      // get the number of CVRFuryDataStorageUnit components
+      int numDataStorageUnits = dataStorageUnits.Length;
 
-      // Start processing the modules asynchronously
-      EditorCoroutine.Start(ProcessModules(dataStorageUnits));
+      // if there are 1 or more CVRFuryDataStorageUnit components present on the uploadedObject
+      // then run the module installer
+      if (numDataStorageUnits > 0)
+      {
+        // show modal progress window
+        ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
+
+        // Start processing the modules asynchronously
+        EditorCoroutine.Start(ProcessModules(dataStorageUnits));
+      }
+      else
+      {
+        // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
+      }
+
     }
 
     private static IEnumerator ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits)
@@ -67,11 +85,32 @@ namespace uk.novavoidhowl.dev.cvrfury
         {
           // placeholder for the module processing code
 
-          // wait for 10 seconds
+          // wait for 1 seconds
           EditorWaitForSeconds wait = new EditorWaitForSeconds(1);
           while (!wait.IsDone())
           {
             yield return null;
+          }
+
+          // module processing trigger code
+          // get the module
+          var module = modules[j];
+          IModuleProcessor processor = null;
+          // case statement to process the module based on its type
+          switch (module)
+          {
+            case uploadStateSetter:
+                processor = new UploadStateSetterProcessor();
+                break;
+            default:
+              // console print to say that the module type is not recognised
+              Debug.Log("[CVRFury] Module type not recognised");
+              break;
+          }
+
+          if (processor != null)
+          {
+            processor.ProcessModule(module);
           }
 
           // console print to say that the module has been processed
