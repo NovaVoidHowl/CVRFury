@@ -1,4 +1,4 @@
-// { "version": "0.3.12" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.3.18" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -327,58 +327,88 @@ namespace uk.novavoidhowl.dev.cvrfury
       // get the CVRFuryDataStorageUnit components
       var dataStorageUnits = _dataStorageUnits;
 
-      // get the number of CVRFuryDataStorageUnit components
-      int numDataStorageUnits = dataStorageUnits.Length;
-
-      // get the BuildProgressWindowTitle label and set its text
-      var buildProgressWindowTitle = rootVisualElement.Q<Label>("BuildProgressWindowTitle");
-      buildProgressWindowTitle.text = "Installing CVR Fury Modules on: " + uploadedObject.name;
-
-      // get the BuildProgressWindowPathToUploadedObject label and set its text
-      var buildProgressWindowPathToUploadedObject = rootVisualElement.Q<Label>("BuildProgressWindowPathToUploadedObject");
-      buildProgressWindowPathToUploadedObject.text = "Path : " + _pathToUploadedObject;
-
-      // get the BuildProgressWindowMessage label and set its text
-      var buildProgressWindowMessage = rootVisualElement.Q<Label>("BuildProgressComponentsMessage");
-      buildProgressWindowMessage.text = "Number of CVRFuryDataStorageUnit components: " + numDataStorageUnits;
-
-      // get the BuildProgressBarHolder and add a new ProgressBar to it
-      var buildProgressBarHolder = rootVisualElement.Q<VisualElement>("BuildProgressBarHolder");
-      progressBar = new ProgressBar();
-      progressBar.value = 0;
-      buildProgressBarHolder.Add(progressBar);
-
-      // get the BuildSubProgressBarsHolder and add a new ProgressBar to it for each CVRFuryDataStorageUnit
-      var buildSubProgressBarsHolder = rootVisualElement.Q<VisualElement>("BuildSubProgressBarsHolder");
-
-      // Clear the list of sub-progress bars
-      subProgressBars.Clear();
-
-      // for each name in dataStorageUnitNames add a new ProgressBar to buildSubProgressBarsHolder
-      foreach (var dataStorageUnit in dataStorageUnits)
+      if (dataStorageUnits == null)
       {
-        // get the name of the object the CVRFuryDataStorageUnit is on
-        string name = dataStorageUnit.gameObject.name;
-        // get the number of Modules in the CVRFuryDataStorageUnit
-        int numModules = dataStorageUnit.modules.modules.Count;
-
-        // create a new ProgressBar
-        var subProgressBar = new ProgressBar();
-        subProgressBar.value = 0;
-        buildSubProgressBarsHolder.Add(subProgressBar);
-        // add a name to the ProgressBar so it can be styled
-        subProgressBar.name = "SubProgressBar";
-        // add a label to the ProgressBar with the name of the CVRFuryDataStorageUnit
-        Label subProgressBarLabel = new Label(name + " (" + numModules + " modules)");
-        // add a name to the ProgressBar so it can be styled
-        subProgressBarLabel.name = "SubProgressBarText";
-        subProgressBar.Add(subProgressBarLabel);
-
-        // Add the sub-progress bar to the list
-        subProgressBars.Add(subProgressBar);
-
+        // if dataStorageUnits is null, then stop here and force close the window
+        Debug.Log("[CVRFury] [CRITICAL ERROR] [ID MIC-333] dataStorageUnits is null\n"+
+                  " looks like the CVR CCK has already stripped the CVRFuryDataStorageUnit components from the uploadedObject\n"+
+                  " this is a race condition, and needs to be fixed, please report this to the CVRFury project"
+                 );
+        closeTime = 0;
+        CloseWindow();
       }
+      else
+      {
+        //ok so we have dataStorageUnits, let's continue
 
+        // get the number of CVRFuryDataStorageUnit components
+        int numDataStorageUnits = dataStorageUnits.Length;
+
+        // check that the number of CVRFuryDataStorageUnit components is greater than 0
+        if (numDataStorageUnits <= 0)
+        {
+          // if there are no CVRFuryDataStorageUnit components present on the uploadedObject
+          // stop here and force close the window
+          Debug.Log("[CVRFury] [CRITICAL ERROR] [ID MIC-352] dataStorageUnits not found\n"+
+                  " looks like the CVR CCK has already stripped the CVRFuryDataStorageUnit components from the uploadedObject\n"+
+                  " this is a race condition, and needs to be fixed, please report this to the CVRFury project"
+                 );
+          closeTime = 0;
+          CloseWindow();
+        }
+        else
+        {
+          // and we have one or more of dataStorageUnits, so let's continue
+          // get the BuildProgressWindowTitle label and set its text
+          var buildProgressWindowTitle = rootVisualElement.Q<Label>("BuildProgressWindowTitle");
+          buildProgressWindowTitle.text = "Installing CVR Fury Modules on: " + uploadedObject.name;
+
+          // get the BuildProgressWindowPathToUploadedObject label and set its text
+          var buildProgressWindowPathToUploadedObject = rootVisualElement.Q<Label>("BuildProgressWindowPathToUploadedObject");
+          buildProgressWindowPathToUploadedObject.text = "Path : " + _pathToUploadedObject;
+
+          // get the BuildProgressWindowMessage label and set its text
+          var buildProgressWindowMessage = rootVisualElement.Q<Label>("BuildProgressComponentsMessage");
+          buildProgressWindowMessage.text = "Number of CVRFuryDataStorageUnit components: " + numDataStorageUnits;
+
+          // get the BuildProgressBarHolder and add a new ProgressBar to it
+          var buildProgressBarHolder = rootVisualElement.Q<VisualElement>("BuildProgressBarHolder");
+          progressBar = new ProgressBar();
+          progressBar.value = 0;
+          buildProgressBarHolder.Add(progressBar);
+
+          // get the BuildSubProgressBarsHolder and add a new ProgressBar to it for each CVRFuryDataStorageUnit
+          var buildSubProgressBarsHolder = rootVisualElement.Q<VisualElement>("BuildSubProgressBarsHolder");
+
+          // Clear the list of sub-progress bars
+          subProgressBars.Clear();
+
+          // for each name in dataStorageUnitNames add a new ProgressBar to buildSubProgressBarsHolder
+          foreach (var dataStorageUnit in dataStorageUnits)
+          {
+            // get the name of the object the CVRFuryDataStorageUnit is on
+            string name = dataStorageUnit.gameObject.name;
+            // get the number of Modules in the CVRFuryDataStorageUnit
+            int numModules = dataStorageUnit.modules.modules.Count;
+
+            // create a new ProgressBar
+            var subProgressBar = new ProgressBar();
+            subProgressBar.value = 0;
+            buildSubProgressBarsHolder.Add(subProgressBar);
+            // add a name to the ProgressBar so it can be styled
+            subProgressBar.name = "SubProgressBar";
+            // add a label to the ProgressBar with the name of the CVRFuryDataStorageUnit
+            Label subProgressBarLabel = new Label(name + " (" + numModules + " modules)");
+            // add a name to the ProgressBar so it can be styled
+            subProgressBarLabel.name = "SubProgressBarText";
+            subProgressBar.Add(subProgressBarLabel);
+
+            // Add the sub-progress bar to the list
+            subProgressBars.Add(subProgressBar);
+
+          }
+        }
+      }
       // Set openTime to the current time
       openTime = EditorApplication.timeSinceStartup;
 
