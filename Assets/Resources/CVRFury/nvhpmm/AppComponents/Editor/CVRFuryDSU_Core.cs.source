@@ -1,4 +1,4 @@
-// { "version": "0.1.41" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.1.42" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -194,6 +194,20 @@ namespace uk.novavoidhowl.dev.cvrfury
       }
 
       renderDataImportUI();
+
+      // update data on ui TODO: move this bit to a function -----------------------------------------------------------
+
+      // get the CVRFuryDataStorageUnitStatusDataContent Label VisualElement
+      var CVRFuryDataStorageUnitStatusDataContent =
+        rootVisualElement.Q<Label>("CVRFuryDataStorageUnitStatusDataContent");
+
+      // get the number of modules in the modules in this DSU
+      var numberOfModules = ((CVRFuryDataStorageUnit) target).modules.modules.Count;
+
+      // set the text of the CVRFuryDataStorageUnitStatusDataContent Label VisualElement to the number of modules
+      CVRFuryDataStorageUnitStatusDataContent.text = numberOfModules.ToString() + " Modules Stored";
+
+      // update data on ui  END ----------------------------------------------------------------------------------------
 
       // supported features import
       importApplyOnUploadFeature();
