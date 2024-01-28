@@ -1,4 +1,4 @@
-// { "version": "0.0.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
+// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -16,13 +16,42 @@ using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
 namespace uk.novavoidhowl.dev.cvrfury
 {
-  public class UploadStateSetterProcessor : IModuleProcessor
+  public class uploadObjectStateSetterProcessor : IModuleProcessor
   {
     public void ProcessModule(CVRFuryModule module)
     {
-        // Implementation for UploadStateSetter
+        // Implementation for uploadObjectStateSetter
         // console print to say this function is being called
-        Debug.Log("UploadStateSetterProcessor.ProcessModule() called");
+        Debug.Log("uploadObjectStateSetterProcessor.ProcessModule() called");
+
+        // log the module's moduleType to the console
+        Debug.Log("module.ModuleType: " + module.ModuleType);
+
+        // for each of the objectStatePairs in the module
+        foreach (objectStatePair pair in ((uploadObjectStateSetter)module).objectStatePairs)
+        {
+          // check if the GameObject exists
+          if (pair.objectToSetStateOn != null)
+          {
+
+            // use objectState to set the GameObject's state, (its an enum with values: "disabled", "enabled")
+            switch (pair.stateToSet)
+            {
+              case objectStatePair.objectState.disabled:
+                pair.objectToSetStateOn.SetActive(false);
+                break;
+              case objectStatePair.objectState.enabled:
+                pair.objectToSetStateOn.SetActive(true);
+                break;
+            }
+          }
+          else
+          {
+            // if it doesn't, log an error to the console
+            Debug.LogError("GameObject " + pair.objectToSetStateOn.name + " does not exist");
+          }
+        }
+
     }
   }
 }
