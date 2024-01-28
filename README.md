@@ -58,6 +58,7 @@
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <li><a href="#project-tools">Project tools</a></li>
   </ol>
 </details>
 
@@ -172,6 +173,16 @@ Project Link: [https://repo.cvrfury.uk](https://repo.cvrfury.uk)
 This repo contains stub components (in the folder VRCFury_stub), that are derivative of the VRCFury
 codebase, please see <https://github.com/VRCFury/VRCFury>, unlike the rest of the code in this repo the VRCFury stubs
 are licensed under CC BY-NC 4.0
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- PROJECT TOOLS -->
+
+## Project tools
+
+- VS Code, ide
+- Pre-Commit, linting and error detection
+- Github Copilot, Code error/issue analysis
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
