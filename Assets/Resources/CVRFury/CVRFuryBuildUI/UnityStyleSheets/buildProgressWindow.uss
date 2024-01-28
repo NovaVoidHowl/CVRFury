@@ -1,0 +1,43 @@
+#BuildProgressWindowBase{
+  background-color: #111111;
+  border-width: 2px 2px 2px 2px;
+  border-color: #646464;
+  display: flex;
+  padding: 10px;
+  height: 100%;
+  flex-direction: column;
+}
+
+
+#BuildProgressWindowBase #BuildProgressWindowTitle{
+  font-size: 17px;
+  color: #ffffff;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  -unity-text-align: middle-center;
+}
+#BuildProgressWindowBase #BuildProgressWindowPathToUploadedObject{
+  font-size: 14px;
+  color: #ffffff;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+#BuildProgressWindowBase #BuildProgressComponentsMessage{
+  font-size: 14px;
+  color: #ffffff;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+#SubProgressBar{
+
+}
+#SubProgressBarText{
+  position: absolute;
+  top: 2px;
+  left: 0px;
+  right: 0px;
+  color: #e1e1e1;
+  -unity-text-align: middle-center;
+}

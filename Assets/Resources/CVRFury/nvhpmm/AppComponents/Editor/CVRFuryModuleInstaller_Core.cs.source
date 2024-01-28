@@ -1,7 +1,9 @@
-// { "version": "0.2.17" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.3.9" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -10,6 +12,7 @@ using UnityEngine.SceneManagement;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Components;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
 namespace uk.novavoidhowl.dev.cvrfury
 {
@@ -31,12 +34,54 @@ namespace uk.novavoidhowl.dev.cvrfury
 
       // Implementation
       string path = GetGameObjectPath(uploadedObject);
-      EditorUtility.DisplayDialog(popupTitle, "Installing CVRFury Modules on \n\n" + path, "OK");
+      // EditorUtility.DisplayDialog(popupTitle, "Installing CVRFury Modules on \n\n" + path, "OK");
+
+      // get the CVRFuryDataStorageUnit components
+      var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
 
       // show modal progress window
-      ModalWindow.ShowWindow(uploadedObject);
+      ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
 
+      // Start processing the modules asynchronously
+      EditorCoroutine.Start(ProcessModules(dataStorageUnits));
+    }
 
+    private static IEnumerator ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits)
+    {
+      // Process each data storage unit
+      for (int i = 0; i < dataStorageUnits.Length; i++)
+      {
+        var dataStorageUnit = dataStorageUnits[i];
+
+        // get the modules
+        var modules = dataStorageUnit.modules.modules;
+
+        // get a count of the modules
+        int numModules = modules.Count;
+
+        // divide the progress bar into equal parts for each module
+        float progressPerModule = 100f / numModules;
+
+        // for each module in modules
+        for (int j = 0; j < numModules; j++)
+        {
+          // placeholder for the module processing code
+
+          // wait for 10 seconds
+          EditorWaitForSeconds wait = new EditorWaitForSeconds(1);
+          while (!wait.IsDone())
+          {
+            yield return null;
+          }
+
+          // console print to say that the module has been processed
+          Debug.Log("[CVRFury] Module " + modules[j].name + " processed");
+
+          // Update the progress bar after processing the module
+          float progress = progressPerModule * (j + 1);
+          ModalWindow.UpdateSubProgressBar(i, progress);
+        }
+      }
     }
 
 
@@ -97,20 +142,84 @@ namespace uk.novavoidhowl.dev.cvrfury
 ///////////////////////////////////////////////////////////////////////////////////////////
 // ancillary classes
 
+//////
+// EditorCoroutine
+  public class EditorCoroutine
+  {
+    public static EditorCoroutine Start(IEnumerator routine)
+    {
+      EditorCoroutine coroutine = new EditorCoroutine(routine);
+      coroutine.Start();
+      return coroutine;
+    }
 
+    readonly IEnumerator routine;
+    EditorCoroutine(IEnumerator routine)
+    {
+      this.routine = routine;
+    }
+
+    void Start()
+    {
+      EditorApplication.update += Update;
+    }
+    public void Stop()
+    {
+      EditorApplication.update -= Update;
+    }
+
+    void Update()
+    {
+      if (!routine.MoveNext())
+      {
+        Stop();
+      }
+    }
+  }
+
+  public class EditorWaitForSeconds
+  {
+    public float timeToWait;
+    private float startTime;
+
+    public EditorWaitForSeconds(float time)
+    {
+      timeToWait = time;
+      startTime = Time.realtimeSinceStartup;
+    }
+
+    public bool IsDone()
+    {
+      return Time.realtimeSinceStartup - startTime >= timeToWait;
+    }
+  }
+
+
+//////
+// Window class
+//
   public class ModalWindow : EditorWindow
   {
     private static GameObject uploadedObject;
     private static double openTime;
     private static double closeTime;
-    private static float totalTimeCount;
+    // private static float totalTimeCount;
     private static EditorApplication.CallbackFunction updateProgressBarAction;
     private static EditorApplication.CallbackFunction closeWindowAction;
     private static ProgressBar progressBar;
+    private static List<ProgressBar> subProgressBars = new List<ProgressBar>();
 
-    public static void ShowWindow(GameObject targetObject)
+    private static CVRFuryDataStorageUnit[] _dataStorageUnits;
+    private static string _pathToUploadedObject;
+
+
+    public static void ShowWindow(GameObject targetObject, CVRFuryDataStorageUnit[] dataStorageUnits, string pathToUploadedObject)
     {
       uploadedObject = targetObject;
+
+      // Store the dataStorageUnits and pathToUploadedObject in static fields
+      _dataStorageUnits = dataStorageUnits;
+      _pathToUploadedObject = pathToUploadedObject;
 
       var mainWindowPos = EditorGUIUtility.GetMainWindowPosition();
       var size = new Vector2(600, 600);
@@ -119,46 +228,142 @@ namespace uk.novavoidhowl.dev.cvrfury
       window.ShowPopup();
     }
 
+    public static void UpdateSubProgressBar(int index, float progress)
+    {
+      if (index >= 0 && index < subProgressBars.Count)
+      {
+        subProgressBars[index].value = progress;
+      }
+    }
+
     public void OnEnable()
     {
-      var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
+      // load base UXML
+      var baseTree = Resources.Load<VisualTreeAsset>(
+        Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryBuildUI/UnityUXML/buildProgressWindow"
+      );
+
+      // Check if the UXML file was loaded
+      if (baseTree == null)
+      {
+        Debug.LogError(
+          "Failed to load UXML file at 'UnityUXML/buildProgressWindow'. Please ensure the file exists at the specified path."
+        );
+        // If the UXML file was not loaded add a new label to the root.
+        rootVisualElement.Add(new Label("CRITICAL ERROR : UXML could not be loaded."));
+        return;
+      }
+
+      // Load and apply the stylesheet
+      var stylesheet = Resources.Load<StyleSheet>(
+        Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryBuildUI/UnityStyleSheets/buildProgressWindow"
+      );
+
+      // Check if the StyleSheet was loaded
+      if (stylesheet == null)
+      {
+        Debug.LogError(
+          "Failed to load StyleSheet at 'UnityStyleSheets/buildProgressWindow'. Please ensure the file exists at the specified path."
+        );
+        // If the StyleSheet was not loaded add a new label to the root.
+        rootVisualElement.Add(new Label("CRITICAL ERROR : StyleSheet could not be loaded."));
+        return;
+      }
+
+      // Instantiate the UXML tree into a TemplateContainer
+      var templateContainer = baseTree.CloneTree();
+
+      // Create a temporary list to hold the children
+      var children = new List<VisualElement>(templateContainer.Children());
+
+      // Add the children of the TemplateContainer to the rootVisualElement
+      foreach (var child in children)
+      {
+          rootVisualElement.Add(child);
+      }
+
+      // Apply the StyleSheet
+      rootVisualElement.styleSheets.Add(stylesheet);
+
+      // get the CVRFuryDataStorageUnit components
+      var dataStorageUnits = _dataStorageUnits;
+
+      // get the number of CVRFuryDataStorageUnit components
       int numDataStorageUnits = dataStorageUnits.Length;
-      var root = rootVisualElement;
-      var label = new Label("Installing CVR Fury Modules on: " + uploadedObject.name);
-      root.Add(label);
-      var label2 = new Label("Number of CVRFuryDataStorageUnit components: " + numDataStorageUnits);
-      root.Add(label2);
+
+      // get the BuildProgressWindowTitle label and set its text
+      var buildProgressWindowTitle = rootVisualElement.Q<Label>("BuildProgressWindowTitle");
+      buildProgressWindowTitle.text = "Installing CVR Fury Modules on: " + uploadedObject.name;
+
+      // get the BuildProgressWindowPathToUploadedObject label and set its text
+      var buildProgressWindowPathToUploadedObject = rootVisualElement.Q<Label>("BuildProgressWindowPathToUploadedObject");
+      buildProgressWindowPathToUploadedObject.text = "Path : " + _pathToUploadedObject;
+
+      // get the BuildProgressWindowMessage label and set its text
+      var buildProgressWindowMessage = rootVisualElement.Q<Label>("BuildProgressComponentsMessage");
+      buildProgressWindowMessage.text = "Number of CVRFuryDataStorageUnit components: " + numDataStorageUnits;
+
+      // get the BuildProgressBarHolder and add a new ProgressBar to it
+      var buildProgressBarHolder = rootVisualElement.Q<VisualElement>("BuildProgressBarHolder");
       progressBar = new ProgressBar();
       progressBar.value = 0;
-      root.Add(progressBar);
+      buildProgressBarHolder.Add(progressBar);
 
-      totalTimeCount = 4 * numDataStorageUnits;
+      // get the BuildSubProgressBarsHolder and add a new ProgressBar to it for each CVRFuryDataStorageUnit
+      var buildSubProgressBarsHolder = rootVisualElement.Q<VisualElement>("BuildSubProgressBarsHolder");
+
+      // Clear the list of sub-progress bars
+      subProgressBars.Clear();
+
+      // for each name in dataStorageUnitNames add a new ProgressBar to buildSubProgressBarsHolder
+      foreach (var dataStorageUnit in dataStorageUnits)
+      {
+        // get the name of the object the CVRFuryDataStorageUnit is on
+        string name = dataStorageUnit.gameObject.name;
+        // get the number of Modules in the CVRFuryDataStorageUnit
+        int numModules = dataStorageUnit.modules.modules.Count;
+
+        // create a new ProgressBar
+        var subProgressBar = new ProgressBar();
+        subProgressBar.value = 0;
+        buildSubProgressBarsHolder.Add(subProgressBar);
+        // add a name to the ProgressBar so it can be styled
+        subProgressBar.name = "SubProgressBar";
+        // add a label to the ProgressBar with the name of the CVRFuryDataStorageUnit
+        Label subProgressBarLabel = new Label(name + " (" + numModules + " modules)");
+        // add a name to the ProgressBar so it can be styled
+        subProgressBarLabel.name = "SubProgressBarText";
+        subProgressBar.Add(subProgressBarLabel);
+
+        // Add the sub-progress bar to the list
+        subProgressBars.Add(subProgressBar);
+
+      }
 
       // Set openTime to the current time
       openTime = EditorApplication.timeSinceStartup;
 
-      updateProgressBarAction = () => UpdateProgressBar(totalTimeCount);
+      updateProgressBarAction = () => UpdateProgressBar();
       closeWindowAction = CloseWindow;
 
       EditorApplication.update += updateProgressBarAction;
       EditorApplication.update += closeWindowAction;
     }
 
-    private static void UpdateProgressBar(float totalTimeCount)
+    private static void UpdateProgressBar()
     {
-      // Calculate remainingTime as totalTimeCount - the time passed since openTime
-      var remainingTime = totalTimeCount - (EditorApplication.timeSinceStartup - openTime);
+      // Calculate the total progress of all sub-progress bars
+      float totalSubProgress = 0;
+      foreach (var subProgressBar in subProgressBars)
+      {
+        totalSubProgress += subProgressBar.value;
+      }
 
-      // Ensure remainingTime is never less than 0
-      remainingTime = Math.Max(remainingTime, 0);
+      // Calculate the average progress of all sub-progress bars
+      float averageSubProgress = totalSubProgress / subProgressBars.Count;
 
-      // Calculate progressValue and ensure it's never greater than 100
-      var progressValue = 100 - (float)(remainingTime / totalTimeCount) * 100;
-      progressBar.value = Math.Min(progressValue, 100);
-
-      //TODO: remove this debug log
-      // Log the values of remainingTime, progressBar.value, and totalTimeCount
-      // Debug.Log($"remainingTime: {remainingTime}, progressBar.value: {progressBar.value}, totalTimeCount: {totalTimeCount}");
+      // Set the main progress bar value to the average sub-progress
+      progressBar.value = averageSubProgress;
 
       if (progressBar.value >= 100 && closeTime == 0)
       {
