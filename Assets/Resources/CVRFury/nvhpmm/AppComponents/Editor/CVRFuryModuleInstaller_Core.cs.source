@@ -99,8 +99,8 @@ namespace uk.novavoidhowl.dev.cvrfury
           // case statement to process the module based on its type
           switch (module)
           {
-            case uploadStateSetter:
-                processor = new UploadStateSetterProcessor();
+            case uploadObjectStateSetter:
+                processor = new uploadObjectStateSetterProcessor();
                 break;
             default:
               // console print to say that the module type is not recognised
