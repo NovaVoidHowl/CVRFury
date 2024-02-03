@@ -1,9 +1,11 @@
-// { "version": "0.3.28" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.4.40" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
 using System.Collections;
 using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -13,6 +15,7 @@ using uk.novavoidhowl.dev.cvrfury.runtime;
 using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury
 {
@@ -39,7 +42,7 @@ namespace uk.novavoidhowl.dev.cvrfury
 
       // Implementation
       string path = GetGameObjectPath(uploadedObject);
-      // EditorUtility.DisplayDialog(popupTitle, "Installing CVRFury Modules on \n\n" + path, "OK");
+      EditorUtility.DisplayDialog(popupTitle, "Installing CVRFury Modules on \n\n" + path, "OK");
 
       // get the CVRFuryDataStorageUnit components
       var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
@@ -54,12 +57,15 @@ namespace uk.novavoidhowl.dev.cvrfury
         // show modal progress window
         ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
 
-        // Start processing the modules asynchronously
-        EditorCoroutine.Start(ProcessModules(dataStorageUnits));
+        // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
+        EditorCoroutine.Start(ProcessModules(dataStorageUnits), () => ModuleInstallOnBuild.OnInstallationComplete());
       }
       else
       {
         // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
+
+        // signal that the task is complete
+        ModuleInstallOnBuild.OnInstallationComplete(true);
       }
 
     }
@@ -104,7 +110,7 @@ namespace uk.novavoidhowl.dev.cvrfury
                 break;
             default:
               // console print to say that the module type is not recognised
-              Debug.Log("[CVRFury] Module type not recognised");
+              CoreLog("Module type not recognised");
               break;
           }
 
@@ -114,7 +120,7 @@ namespace uk.novavoidhowl.dev.cvrfury
           }
 
           // console print to say that the module has been processed
-          Debug.Log("[CVRFury] Module " + modules[j].name + " processed");
+          CoreLog("Module " + modules[j].name + " processed");
 
           // Update the progress bar after processing the module
           float progress = progressPerModule * (j + 1);
@@ -137,59 +143,151 @@ namespace uk.novavoidhowl.dev.cvrfury
     }
   }
 
+  //TODO: Remove this before release
+  //for debug purposes only - to check/set the ModuleInstallOnBuild state
+
+  public class CVRFuryModuleInstaller_Core
+  {
+    [MenuItem("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build")]
+    private static void ToggleModuleInstallOnBuild()
+    {
+      ModuleInstallState.IsModuleInstallOnBuildCalled = !ModuleInstallState.IsModuleInstallOnBuildCalled;
+      UpdateMenu();
+    }
+
+    [MenuItem("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", true)]
+    private static bool ToggleModuleInstallOnBuildValidation()
+    {
+      Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", ModuleInstallState.IsModuleInstallOnBuildCalled);
+      return true;
+    }
+
+    [InitializeOnLoadMethod]
+    private static void UpdateMenu()
+    {
+      if (ModuleInstallState.IsModuleInstallOnBuildCalled)
+      {
+        Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", true);
+      }
+      else
+      {
+        Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", false);
+      }
+    }
+  }
+
+
   public static class ModuleInstallState
   {
-    public static bool IsModuleInstallOnBuildCalled { get; set; } = false;
+      public static bool IsModuleInstallOnBuildCalled
+      {
+          get { return PlayerPrefs.GetInt("CVRFury-IsModuleInstallOnBuildCalled", 0) == 1; }
+          set { PlayerPrefs.SetInt("CVRFury-IsModuleInstallOnBuildCalled", value ? 1 : 0); }
+      }
   }
 
   [InitializeOnLoad]
   public class ModuleInstallOnBuild
   {
-    public int callbackOrder => -10000;
+    // Add a TaskCompletionSource field
+    private static TaskCompletionSource<bool> tcs;
+
+
     static ModuleInstallOnBuild()
     {
       // attach to OnPreBundleEvent event
       CCK_BuildUtility.PreAvatarBundleEvent.AddListener(OnPreBundleEvent);
 
       // console print to show that the event has been attached
-      Debug.Log("[CVRFury] ModuleInstallOnBuild attached to OnPreBundleEvent");
+      CoreLog("ModuleInstallOnBuild attached to OnPreBundleEvent");
     }
 
     private static void OnPreBundleEvent(GameObject uploadedObject)
     {
-      // console print to show that the event has been triggered
-      Debug.Log("[CVRFury] ModuleInstallOnBuild.OnPreBundleEvent triggered");
-      // set the ModuleInstallState.IsModuleInstallOnBuildCalled to true,
-      // so that the ModuleInstallOnPlay does not run
-      ModuleInstallState.IsModuleInstallOnBuildCalled = true;
+      try
+      {
+        // set the ModuleInstallState.IsModuleInstallOnBuildCalled to true,
+        // so that the ModuleInstallOnPlay does not run
+        ModuleInstallState.IsModuleInstallOnBuildCalled = true;
 
-      // if uploadedObject is null, do nothing
-      if (uploadedObject == null) return;
+        // if uploadedObject is null, do nothing
+        if (uploadedObject == null) return;
 
-      CVRFuryModuleInstaller.InstallCVRFuryModules(uploadedObject, 1);
+        // Initialize the TaskCompletionSource
+        tcs = new TaskCompletionSource<bool>();
+
+        // Start the installation process on a separate thread
+        Task.Run(() => CVRFuryModuleInstaller.InstallCVRFuryModules(uploadedObject, 1));
+
+        // Periodically check whether the task is complete
+        EditorApplication.update += CheckTaskCompletion;
+      }
+      catch (Exception e)
+      {
+        // pop up to show that an exception has been caught
+        EditorUtility.DisplayDialog("Exception caught in ModuleInstallOnBuild.OnPreBundleEvent", e.Message, "OK");
+      }
+    }
+
+    private static void CheckTaskCompletion()
+    {
+      if (tcs.Task.IsCompleted)
+      {
+        // Remove the update method
+        EditorApplication.update -= CheckTaskCompletion;
+
+        // Signal that the task is complete
+        tcs.SetResult(true);
+
+        // pop up to show that the task is complete
+        EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnPreBundleEvent] CVRFury Module Installation Complete", "OK");
+      }
+    }
+
+    public static void OnInstallationComplete(bool noTcs  = false)
+    {
+      if (!noTcs && tcs != null)
+      {
+
+        // Signal that the task is complete
+        tcs.SetResult(true);
+        // debug pop to show tcs triggered
+        EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnInstallationComplete] tcs triggered", "OK");
+      }
+
+      // pop up to show that the task is complete
+      EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnInstallationComplete] CVRFury Module Installation Complete", "OK");
+
+      // console print to show that the task is complete
+      CoreLog("ModuleInstallOnBuild.OnInstallationComplete triggered");
     }
   }
 
-  // public class ModuleInstallOnPlay
-  // {
-  //   [RuntimeInitializeOnLoadMethod]
-  //   static void RunOnStart()
-  //   {
-  //     if (ModuleInstallState.IsModuleInstallOnBuildCalled)
-  //     {
-  //       ModuleInstallState.IsModuleInstallOnBuildCalled = false;
-  //       return;
-  //     }
+  public class ModuleInstallOnPlay
+  {
+    [RuntimeInitializeOnLoadMethod]
+    static void RunOnStart()
+    {
+      if (ModuleInstallState.IsModuleInstallOnBuildCalled)
+      {
+        // console print to show that the ModuleInstallOnPlay has been skipped
+        CoreLog("ModuleInstallOnPlay skipped as in Build Mode");
+        // play only gets called once so reset the ModuleInstallState.IsModuleInstallOnBuildCalled to false
+        ModuleInstallState.IsModuleInstallOnBuildCalled = false;
+      }
+      else
+      {
+        // Find all active game objects with a CVRAvatar component
+        var avatars = GameObject.FindObjectsOfType<CVRAvatar>();
 
-  //     // Find all active game objects with a CVRAvatar component
-  //     var avatars = GameObject.FindObjectsOfType<CVRAvatar>();
+        foreach (var avatar in avatars)
+        {
+          CVRFuryModuleInstaller.InstallCVRFuryModules(avatar.gameObject, 0);
+        }
+      }
 
-  //     foreach (var avatar in avatars)
-  //     {
-  //       CVRFuryModuleInstaller.InstallCVRFuryModules(avatar.gameObject, 0);
-  //     }
-  //   }
-  // }
+    }
+  }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -199,23 +297,27 @@ namespace uk.novavoidhowl.dev.cvrfury
 // EditorCoroutine
   public class EditorCoroutine
   {
-    public static EditorCoroutine Start(IEnumerator routine)
+    public static EditorCoroutine Start(IEnumerator routine, Action callback = null)
     {
-      EditorCoroutine coroutine = new EditorCoroutine(routine);
+      EditorCoroutine coroutine = new EditorCoroutine(routine, callback);
       coroutine.Start();
       return coroutine;
     }
 
     readonly IEnumerator routine;
-    EditorCoroutine(IEnumerator routine)
+    readonly Action callback;
+
+    EditorCoroutine(IEnumerator routine, Action callback)
     {
       this.routine = routine;
+      this.callback = callback;
     }
 
     void Start()
     {
       EditorApplication.update += Update;
     }
+
     public void Stop()
     {
       EditorApplication.update -= Update;
@@ -226,6 +328,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       if (!routine.MoveNext())
       {
         Stop();
+        callback?.Invoke();
       }
     }
   }
@@ -256,7 +359,7 @@ namespace uk.novavoidhowl.dev.cvrfury
     private static GameObject uploadedObject;
     private static double openTime;
     private static double closeTime;
-    // private static float totalTimeCount;
+
     private static EditorApplication.CallbackFunction updateProgressBarAction;
     private static EditorApplication.CallbackFunction closeWindowAction;
     private static ProgressBar progressBar;
@@ -278,7 +381,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       if (uploadedObject == null || dataStorageUnits == null || pathToUploadedObject == null)
       {
         // if any of targetObject, dataStorageUnits or pathToUploadedObject are null, then stop here and force close the window
-        Debug.Log("[CVRFury] [CRITICAL ERROR] [ID MIC-227] targetObject, dataStorageUnits or pathToUploadedObject is null\n"+
+        CoreLogCritical("[ID MIC-227]  targetObject, dataStorageUnits or pathToUploadedObject is null\n"+
                   " please report this to the CVRFury project"
                   );
         // bail out
@@ -291,7 +394,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       window.position = new Rect(mainWindowPos.xMin + (mainWindowPos.width - size.x) * 0.5f, mainWindowPos.yMin + 100, size.x, size.y);
       window.ShowPopup();
       // print to console to show that the window has been shown
-      Debug.Log("[CVRFury] ModalWindow shown");
+      CoreLog("ModalWindow shown");
     }
 
     public static void UpdateSubProgressBar(int index, float progress)
@@ -357,7 +460,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       if (dataStorageUnits == null)
       {
         // if dataStorageUnits is null, then stop here and force close the window
-        Debug.Log("[CVRFury] [CRITICAL ERROR] [ID MIC-333] dataStorageUnits is null\n"+
+        CoreLogCritical("[ID MIC-333]  dataStorageUnits is null\n"+
                   " looks like the CVR CCK has already stripped the CVRFuryDataStorageUnit components from the uploadedObject\n"+
                   " this is a race condition, and needs to be fixed, please report this to the CVRFury project"
                  );
@@ -376,7 +479,7 @@ namespace uk.novavoidhowl.dev.cvrfury
         {
           // if there are no CVRFuryDataStorageUnit components present on the uploadedObject
           // stop here and force close the window
-          Debug.Log("[CVRFury] [CRITICAL ERROR] [ID MIC-352] dataStorageUnits not found\n"+
+          CoreLogCritical("[ID MIC-352] dataStorageUnits not found\n"+
                   " looks like the CVR CCK has already stripped the CVRFuryDataStorageUnit components from the uploadedObject\n"+
                   " this is a race condition, and needs to be fixed, please report this to the CVRFury project"
                  );
@@ -507,8 +610,6 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private static void CloseWindow()
     {
-      // debug print to show that the window close command has been triggered and the closeTime
-      Debug.Log("[CVRFury] ModalWindow close command triggered, closeTime: " + closeTime);
 
       if (closeTime > 0 && EditorApplication.timeSinceStartup > closeTime)
       {
@@ -517,7 +618,7 @@ namespace uk.novavoidhowl.dev.cvrfury
         EditorApplication.update -= closeWindowAction;
 
         // debug print to show that the window is closing
-        Debug.Log("[CVRFury] ModalWindow closing");
+        CoreLog("ModalWindow closing");
 
         // Close the window
         GetWindow<ModalWindow>().Close();
