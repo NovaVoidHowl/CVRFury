@@ -10,6 +10,7 @@ using UnityEngine.UIElements;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.processtools
 {
@@ -148,7 +149,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
           textField.value = filePath;
 
           // Now you can use filePath in your code
-          Debug.Log("File path: " + filePath);
+          CoreLog("File path: " + filePath);
 
           // get the string from the file at filePath
           var prefabFileText = File.ReadAllText(filePath);
@@ -192,7 +193,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
         else
         {
           // No files have been dragged and dropped
-          Debug.Log("No files dragged and dropped");
+          CoreLog("No files dragged and dropped");
         }
       });
 

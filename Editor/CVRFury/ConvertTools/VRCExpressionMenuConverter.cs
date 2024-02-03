@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.converttools
 {
@@ -144,7 +145,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
           textField.value = filePath;
 
           // Now you can use filePath in your code
-          Debug.Log("File path: " + filePath);
+          CoreLog("File path: " + filePath);
 
           // get the string from the file at filePath
           var menuFileText = File.ReadAllText(filePath);
@@ -185,7 +186,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
         else
         {
           // No files have been dragged and dropped
-          Debug.Log("No files dragged and dropped");
+          CoreLog("No files dragged and dropped");
         }
       });
 
@@ -356,7 +357,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
             // set the text of the progressLabel to "0%"
             progressLabel.text = "0%";
             // debug print the value of the progressBar
-            Debug.Log("progressBar.value: " + progressBar.value);
+            CoreLog("progressBar.value: " + progressBar.value);
 
             // Wait for barDelay
             await Task.Delay(barDelay);
@@ -370,7 +371,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
             // set the value of the progressBar to 10
             progressBar.value = 10;
             // debug print the value of the progressBar
-            Debug.Log("progressBar.value: " + progressBar.value);
+            CoreLog("progressBar.value: " + progressBar.value);
 
             // Wait for barDelay
             await Task.Delay(barDelay);
