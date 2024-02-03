@@ -32,6 +32,7 @@ using Newtonsoft.Json.Linq;
 // and the asmdef, to bind to project specific constants
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
@@ -358,7 +359,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
               string symbolToBeRemoved = Constants.SCRIPTING_DEFINE_SYMBOL + scriptingDefineSymbolSuffix;
 
               // print the symbol to be removed to the console
-              Debug.Log("Removing scripting define symbol: " + symbolToBeRemoved);
+              CoreLog("Removing scripting define symbol: " + symbolToBeRemoved);
 
               // get the current Scripting Define Symbols
               string scriptingDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(
@@ -398,7 +399,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           // source file does not exist (this should not happen ever)
           // only possible case is a de-sync on the shared data, show error
           // print error message to console
-          Debug.Log("ERROR: source file not found: " + sourceFile);
+          CoreLog("ERROR: source file not found: " + sourceFile);
 
           // set the componentStateLabel to 'Unavailable'
           componentStateLabel.text = "Unavailable";

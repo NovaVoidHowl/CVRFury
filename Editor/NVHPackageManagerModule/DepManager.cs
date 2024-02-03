@@ -1,4 +1,4 @@
-// Version 2.1.0
+// Version 2.1.1
 // editor only script to manage the dependencies
 #if UNITY_EDITOR
 
@@ -33,6 +33,7 @@ using Newtonsoft.Json.Linq;
 // and the asmdef, to bind to project specific constants
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 // NVH Package Manager Module
 namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
@@ -365,8 +366,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         }
         catch (JsonReaderException ex)
         {
-          Debug.Log(ex.Message);
-          Debug.Log("suspect legacy format internal package");
+          CoreLog(ex.Message);
+          CoreLog("suspect legacy format internal package");
           // if it does not parse as json, then it is not the line we want
           // set dict to null, so we can see that it is not valid
           dict = null;
