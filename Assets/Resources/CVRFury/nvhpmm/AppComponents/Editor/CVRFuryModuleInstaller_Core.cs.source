@@ -1,4 +1,4 @@
-// { "version": "0.3.18" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.3.28" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -137,6 +137,11 @@ namespace uk.novavoidhowl.dev.cvrfury
     }
   }
 
+  public static class ModuleInstallState
+  {
+    public static bool IsModuleInstallOnBuildCalled { get; set; } = false;
+  }
+
   [InitializeOnLoad]
   public class ModuleInstallOnBuild
   {
@@ -154,6 +159,9 @@ namespace uk.novavoidhowl.dev.cvrfury
     {
       // console print to show that the event has been triggered
       Debug.Log("[CVRFury] ModuleInstallOnBuild.OnPreBundleEvent triggered");
+      // set the ModuleInstallState.IsModuleInstallOnBuildCalled to true,
+      // so that the ModuleInstallOnPlay does not run
+      ModuleInstallState.IsModuleInstallOnBuildCalled = true;
 
       // if uploadedObject is null, do nothing
       if (uploadedObject == null) return;
@@ -162,20 +170,26 @@ namespace uk.novavoidhowl.dev.cvrfury
     }
   }
 
-  public class ModuleInstallOnPlay
-  {
-    [RuntimeInitializeOnLoadMethod]
-    static void RunOnStart()
-    {
-      // Find all active game objects with a CVRAvatar component
-      var avatars = GameObject.FindObjectsOfType<CVRAvatar>();
+  // public class ModuleInstallOnPlay
+  // {
+  //   [RuntimeInitializeOnLoadMethod]
+  //   static void RunOnStart()
+  //   {
+  //     if (ModuleInstallState.IsModuleInstallOnBuildCalled)
+  //     {
+  //       ModuleInstallState.IsModuleInstallOnBuildCalled = false;
+  //       return;
+  //     }
 
-      foreach (var avatar in avatars)
-      {
-        CVRFuryModuleInstaller.InstallCVRFuryModules(avatar.gameObject, 0);
-      }
-    }
-  }
+  //     // Find all active game objects with a CVRAvatar component
+  //     var avatars = GameObject.FindObjectsOfType<CVRAvatar>();
+
+  //     foreach (var avatar in avatars)
+  //     {
+  //       CVRFuryModuleInstaller.InstallCVRFuryModules(avatar.gameObject, 0);
+  //     }
+  //   }
+  // }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -260,11 +274,24 @@ namespace uk.novavoidhowl.dev.cvrfury
       _dataStorageUnits = dataStorageUnits;
       _pathToUploadedObject = pathToUploadedObject;
 
+      // check if any of targetObject, dataStorageUnits or pathToUploadedObject are null
+      if (uploadedObject == null || dataStorageUnits == null || pathToUploadedObject == null)
+      {
+        // if any of targetObject, dataStorageUnits or pathToUploadedObject are null, then stop here and force close the window
+        Debug.Log("[CVRFury] [CRITICAL ERROR] [ID MIC-227] targetObject, dataStorageUnits or pathToUploadedObject is null\n"+
+                  " please report this to the CVRFury project"
+                  );
+        // bail out
+        return;
+      }
+
       var mainWindowPos = EditorGUIUtility.GetMainWindowPosition();
       var size = new Vector2(600, 600);
       ModalWindow window = ScriptableObject.CreateInstance<ModalWindow>();
       window.position = new Rect(mainWindowPos.xMin + (mainWindowPos.width - size.x) * 0.5f, mainWindowPos.yMin + 100, size.x, size.y);
       window.ShowPopup();
+      // print to console to show that the window has been shown
+      Debug.Log("[CVRFury] ModalWindow shown");
     }
 
     public static void UpdateSubProgressBar(int index, float progress)
@@ -421,33 +448,76 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private static void UpdateProgressBar()
     {
-      // Calculate the total progress of all sub-progress bars
-      float totalSubProgress = 0;
-      foreach (var subProgressBar in subProgressBars)
+      // failsafe if subProgressBar is null set closeTime to 1 second in the future
+      if (subProgressBars == null)
       {
-        totalSubProgress += subProgressBar.value;
+        if (closeTime == 0)
+        {
+          closeTime = EditorApplication.timeSinceStartup + 1;
+        }
       }
-
-      // Calculate the average progress of all sub-progress bars
-      float averageSubProgress = totalSubProgress / subProgressBars.Count;
-
-      // Set the main progress bar value to the average sub-progress
-      progressBar.value = averageSubProgress;
-
-      if (progressBar.value >= 100 && closeTime == 0)
+      else
       {
-        // Set the close time to 2 seconds in the future
-        closeTime = EditorApplication.timeSinceStartup + 2;
+        // ok so the subProgressBars is not null, let's continue
+        // check if there are any sub-progress bars
+        if (subProgressBars.Count == 0)
+        {
+          // if there are no sub-progress bars, then set the closeTime to 1 second in the future
+          if (closeTime == 0)
+          {
+            closeTime = EditorApplication.timeSinceStartup + 1;
+          }
+        }
+        else
+        {
+
+          // Calculate the total progress of all sub-progress bars
+          float totalSubProgress = 0;
+          foreach (var subProgressBar in subProgressBars)
+          {
+            totalSubProgress += subProgressBar.value;
+          }
+
+          // Calculate the average progress of all sub-progress bars
+          float averageSubProgress = totalSubProgress / subProgressBars.Count;
+
+          // failsafe if progressBar is null set closeTime to 1 second in the future
+          if (progressBar == null)
+          {
+            if (closeTime == 0)
+            {
+              closeTime = EditorApplication.timeSinceStartup + 1;
+            }
+          }
+          else
+          {
+            // progress bar is not null, so set the main progress bar value to the average sub-progress
+            // Set the main progress bar value to the average sub-progress
+            progressBar.value = averageSubProgress;
+
+            if (progressBar.value >= 100 && closeTime == 0)
+            {
+              // Set the close time to 2 seconds in the future
+              closeTime = EditorApplication.timeSinceStartup + 2;
+            }
+          }
+        }
       }
     }
 
     private static void CloseWindow()
     {
+      // debug print to show that the window close command has been triggered and the closeTime
+      Debug.Log("[CVRFury] ModalWindow close command triggered, closeTime: " + closeTime);
+
       if (closeTime > 0 && EditorApplication.timeSinceStartup > closeTime)
       {
         // Unsubscribe UpdateProgressBar and CloseWindow from EditorApplication.update
         EditorApplication.update -= updateProgressBarAction;
         EditorApplication.update -= closeWindowAction;
+
+        // debug print to show that the window is closing
+        Debug.Log("[CVRFury] ModalWindow closing");
 
         // Close the window
         GetWindow<ModalWindow>().Close();
