@@ -8,6 +8,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
   {
     public const string VRCFURY_VERSION_COMPATIBILITY = "1.659.0";
     public const string PROGRAM_DISPLAY_NAME = "CVRFury";
+    public const string APP_COLOUR = "#0080FF";
+    public const string APP_COLOUR_CRIT = "#FF0000";
     public const string SCRIPTING_DEFINE_SYMBOL = "NVH_CVRFURY_EXISTS";
     public const string PACKAGE_NAME = "uk.novavoidhowl.dev.cvrfury";
     public const string ASSETS_MANAGED_FOLDER = "Assets/_CVRFury";
