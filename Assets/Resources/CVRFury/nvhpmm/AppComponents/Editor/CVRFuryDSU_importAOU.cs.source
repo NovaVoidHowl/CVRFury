@@ -1,4 +1,4 @@
-// { "version": "0.1.6" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.1.7" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -10,6 +10,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using ABI.CCK.Components;
 using Newtonsoft.Json.Linq;
@@ -96,7 +97,7 @@ namespace uk.novavoidhowl.dev.cvrfury
             // effectively this label is now a button, user can click to trigger the import
 
             // // print the content of applyDuringUploadFeature to console
-            // Debug.Log(applyDuringUploadFeature);
+            // CoreLog(applyDuringUploadFeature);
 
             // State is in VRCFury stub, line 130
 
@@ -114,10 +115,10 @@ namespace uk.novavoidhowl.dev.cvrfury
 
               ////// debug outputs to console
               // // print the number of modules in the modules list to console
-              // Debug.Log("number of DSU modules = " + modules.Count);
+              // CoreLog("number of DSU modules = " + modules.Count);
               //
               // // print the number of actions in the actions list to console
-              // Debug.Log("number of actions = " + state.actions.Count);
+              // CoreLog("number of actions = " + state.actions.Count);
 
               // iterate through the actions list and print the type of each action to console
               foreach (Action action in state.actions)
@@ -133,9 +134,9 @@ namespace uk.novavoidhowl.dev.cvrfury
 
                     //// TODO: remove this debug code before release
                     // debug outputs to console
-                    // Debug.Log(objectToggleAction.GetType());
-                    // Debug.Log(objectToggleAction.obj);
-                    // Debug.Log(objectToggleAction.mode);
+                    // CoreLog(objectToggleAction.GetType());
+                    // CoreLog(objectToggleAction.obj);
+                    // CoreLog(objectToggleAction.mode);
 
                     // check to see if the DSU already has an uploadObjectStateSetter module
                     if (modules.Any(module => module.GetType().Name == "uploadObjectStateSetter"))
@@ -252,13 +253,13 @@ namespace uk.novavoidhowl.dev.cvrfury
                     break;
                 }
 
-                Debug.Log(action.GetType());
+                CoreLog(action.GetType());
               }
 
 
 
 
-              Debug.Log(applyDuringUpload.action);
+              CoreLog(applyDuringUpload.action);
             }
 
           });
