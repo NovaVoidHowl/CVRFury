@@ -1,8 +1,12 @@
 using UnityEngine;
-using UnityEditor;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+
+// dynamic using statements
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
@@ -31,6 +35,9 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       return path;
     }
 
+#if UNITY_EDITOR
+    // this bit needs editor to work
+
     public static void DisplayProgressBarAndSleep(string title, string message, float progress, int sleepTime)
     {
       EditorUtility.DisplayProgressBar(title, message, progress);
@@ -45,5 +52,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       // Wait for the specified amount of time
       await Task.Delay(sleepTime);
     }
+#endif
   }
 }
