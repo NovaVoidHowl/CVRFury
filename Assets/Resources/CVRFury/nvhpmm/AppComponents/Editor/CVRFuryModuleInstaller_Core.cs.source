@@ -1,4 +1,4 @@
-// { "version": "0.5.21" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.22" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -204,70 +204,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // ancillary classes
-
-//////
-// EditorCoroutine
-  public class EditorCoroutine
-  {
-    public static EditorCoroutine Start(Func<EditorCoroutine, IEnumerator> routineFactory, Action callback = null)
-    {
-      EditorCoroutine coroutine = new EditorCoroutine(routineFactory, callback);
-      coroutine.Start();
-      return coroutine;
-    }
-
-    private readonly IEnumerator routine;
-    private readonly Action callback;
-
-    private EditorCoroutine(Func<EditorCoroutine, IEnumerator> routineFactory, Action callback)
-    {
-      this.routine = routineFactory(this);
-      this.callback = callback;
-    }
-
-    private void Start()
-    {
-      EditorApplication.update += Update;
-    }
-
-    public void Stop()
-    {
-      EditorApplication.update -= Update;
-    }
-
-    private void Update()
-    {
-      if (routine.Current is EditorWaitForSeconds waitForSeconds)
-      {
-        if (!waitForSeconds.IsDone())
-          return;
-      }
-
-      if (!routine.MoveNext())
-      {
-        Stop();
-        callback?.Invoke();
-      }
-    }
-  }
-
-  public class EditorWaitForSeconds
-  {
-    public float timeToWait;
-    private float startTime;
-
-    public EditorWaitForSeconds(float time)
-    {
-      timeToWait = time;
-      startTime = Time.realtimeSinceStartup;
-    }
-
-    public bool IsDone()
-    {
-      return Time.realtimeSinceStartup - startTime >= timeToWait;
-    }
-  }
-
 
 //////
 // Window class
