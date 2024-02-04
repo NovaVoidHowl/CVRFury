@@ -1,4 +1,4 @@
-// { "version": "0.4.40" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.6" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -35,15 +35,28 @@ namespace uk.novavoidhowl.dev.cvrfury
     /// <param name="mode"></param>
     public static void InstallCVRFuryModules(GameObject uploadedObject, int mode = 0)
     {
+      // Initialize the overlay unity progress bar
+      float progress = 0;
+      EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Initializing...", progress);
+      System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
+
       // popup title depending on mode, suffixing with " - Play Mode" or " - Build Mode"
       string popupTitle = "CVRFury Module Installer - ";
       if (mode == 0) popupTitle += "Play Mode";
       else if (mode == 1) popupTitle += "Build Mode";
+      progress = 0.1f;
+      EditorUtility.DisplayProgressBar("CVRFury Module Installation", "getting uploadObject", progress);
+      System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
 
       // Implementation
       string path = GetGameObjectPath(uploadedObject);
-      EditorUtility.DisplayDialog(popupTitle, "Installing CVRFury Modules on \n\n" + path, "OK");
+      progress = 0.4f;
+      EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Target for CVRFury Modules is \n\n" + path, progress);
+      System.Threading.Thread.Sleep(4000); // Sleep for 2000ms to allow the progress bar to show and the user to read the message
 
+      progress = 0.6f;
+      EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Getting CVRFuryDataStorageUnit components", progress);
+      System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
       // get the CVRFuryDataStorageUnit components
       var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
 
@@ -54,23 +67,34 @@ namespace uk.novavoidhowl.dev.cvrfury
       // then run the module installer
       if (numDataStorageUnits > 0)
       {
+        progress = 0.8f;
+        EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Starting module processing", progress);
+        System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
         // show modal progress window
         ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
 
+        progress = 1;
+        EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Processing modules started", progress);
+        System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
         // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
-        EditorCoroutine.Start(ProcessModules(dataStorageUnits), () => ModuleInstallOnBuild.OnInstallationComplete());
+        EditorCoroutine.Start(coroutine => ProcessModules(coroutine, dataStorageUnits), () => ModuleInstallOnBuild.OnInstallationComplete());
       }
       else
       {
         // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
-
+        progress = 1;
+        EditorUtility.DisplayProgressBar("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress);
+        System.Threading.Thread.Sleep(2000); // Sleep for 2000ms to allow the progress bar to show and the user to read the message
         // signal that the task is complete
         ModuleInstallOnBuild.OnInstallationComplete(true);
       }
 
+      // close the progress bar
+      EditorUtility.ClearProgressBar();
+
     }
 
-    private static IEnumerator ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits)
+    private static IEnumerator ProcessModules(EditorCoroutine coroutine, CVRFuryDataStorageUnit[] dataStorageUnits)
     {
       // Process each data storage unit
       for (int i = 0; i < dataStorageUnits.Length; i++)
@@ -89,14 +113,10 @@ namespace uk.novavoidhowl.dev.cvrfury
         // for each module in modules
         for (int j = 0; j < numModules; j++)
         {
-          // placeholder for the module processing code
+          // module processing code triggers etc
 
           // wait for 1 seconds
-          EditorWaitForSeconds wait = new EditorWaitForSeconds(1);
-          while (!wait.IsDone())
-          {
-            yield return null;
-          }
+          yield return new EditorWaitForSeconds(1);
 
           // module processing trigger code
           // get the module
@@ -106,8 +126,8 @@ namespace uk.novavoidhowl.dev.cvrfury
           switch (module)
           {
             case uploadObjectStateSetter:
-                processor = new uploadObjectStateSetterProcessor();
-                break;
+              processor = new uploadObjectStateSetterProcessor();
+              break;
             default:
               // console print to say that the module type is not recognised
               CoreLog("Module type not recognised");
@@ -125,7 +145,12 @@ namespace uk.novavoidhowl.dev.cvrfury
           // Update the progress bar after processing the module
           float progress = progressPerModule * (j + 1);
           ModalWindow.UpdateSubProgressBar(i, progress);
+
+
         }
+        // all modules processed so can stop coroutine now
+        coroutine.Stop();
+
       }
     }
 
@@ -220,7 +245,7 @@ namespace uk.novavoidhowl.dev.cvrfury
         Task.Run(() => CVRFuryModuleInstaller.InstallCVRFuryModules(uploadedObject, 1));
 
         // Periodically check whether the task is complete
-        EditorApplication.update += CheckTaskCompletion;
+        EditorCoroutine.Start(coroutine => CheckTaskCompletion(coroutine));
       }
       catch (Exception e)
       {
@@ -229,23 +254,31 @@ namespace uk.novavoidhowl.dev.cvrfury
       }
     }
 
-    private static void CheckTaskCompletion()
+    private static IEnumerator CheckTaskCompletion(EditorCoroutine coroutine)
     {
-      if (tcs.Task.IsCompleted)
+      while (!tcs.Task.IsCompleted)
       {
-        // Remove the update method
-        EditorApplication.update -= CheckTaskCompletion;
+        // Wait for 1 second
+        yield return new EditorWaitForSeconds(1);
 
-        // Signal that the task is complete
-        tcs.SetResult(true);
+        if (tcs.Task.IsCompleted)
+        {
+          // Signal that the task is complete
+          tcs.SetResult(true);
 
-        // pop up to show that the task is complete
-        EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnPreBundleEvent] CVRFury Module Installation Complete", "OK");
+          // pop up to show that the task is complete
+          EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnPreBundleEvent] CVRFury Module Installation Complete", "OK");
+
+          // Stop the coroutine
+          coroutine.Stop();
+        }
       }
     }
 
     public static void OnInstallationComplete(bool noTcs  = false)
     {
+      // note console print does not work here
+
       if (!noTcs && tcs != null)
       {
 
@@ -254,12 +287,6 @@ namespace uk.novavoidhowl.dev.cvrfury
         // debug pop to show tcs triggered
         EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnInstallationComplete] tcs triggered", "OK");
       }
-
-      // pop up to show that the task is complete
-      EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnInstallationComplete] CVRFury Module Installation Complete", "OK");
-
-      // console print to show that the task is complete
-      CoreLog("ModuleInstallOnBuild.OnInstallationComplete triggered");
     }
   }
 
@@ -297,23 +324,23 @@ namespace uk.novavoidhowl.dev.cvrfury
 // EditorCoroutine
   public class EditorCoroutine
   {
-    public static EditorCoroutine Start(IEnumerator routine, Action callback = null)
+    public static EditorCoroutine Start(Func<EditorCoroutine, IEnumerator> routineFactory, Action callback = null)
     {
-      EditorCoroutine coroutine = new EditorCoroutine(routine, callback);
+      EditorCoroutine coroutine = new EditorCoroutine(routineFactory, callback);
       coroutine.Start();
       return coroutine;
     }
 
-    readonly IEnumerator routine;
-    readonly Action callback;
+    private readonly IEnumerator routine;
+    private readonly Action callback;
 
-    EditorCoroutine(IEnumerator routine, Action callback)
+    private EditorCoroutine(Func<EditorCoroutine, IEnumerator> routineFactory, Action callback)
     {
-      this.routine = routine;
+      this.routine = routineFactory(this);
       this.callback = callback;
     }
 
-    void Start()
+    private void Start()
     {
       EditorApplication.update += Update;
     }
@@ -323,8 +350,14 @@ namespace uk.novavoidhowl.dev.cvrfury
       EditorApplication.update -= Update;
     }
 
-    void Update()
+    private void Update()
     {
+      if (routine.Current is EditorWaitForSeconds waitForSeconds)
+      {
+        if (!waitForSeconds.IsDone())
+          return;
+      }
+
       if (!routine.MoveNext())
       {
         Stop();
