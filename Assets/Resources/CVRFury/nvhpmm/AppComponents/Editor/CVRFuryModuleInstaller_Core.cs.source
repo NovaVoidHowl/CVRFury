@@ -1,4 +1,4 @@
-// { "version": "0.5.8" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.11" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -16,6 +16,7 @@ using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
 
 namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
@@ -168,14 +169,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
   }
 
-  public static class ModuleInstallState
-  {
-      public static bool IsModuleInstallOnBuildCalled
-      {
-          get { return PlayerPrefs.GetInt("CVRFury-IsModuleInstallOnBuildCalled", 0) == 1; }
-          set { PlayerPrefs.SetInt("CVRFury-IsModuleInstallOnBuildCalled", value ? 1 : 0); }
-      }
-  }
+
 
   [InitializeOnLoad]
   public class ModuleInstallOnBuild
@@ -197,9 +191,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       try
       {
-        // set the ModuleInstallState.IsModuleInstallOnBuildCalled to true,
+        // set the ModuleInstallerState.IsModuleInstallOnBuildCalled to true,
         // so that the ModuleInstallOnPlay does not run
-        ModuleInstallState.IsModuleInstallOnBuildCalled = true;
+        ModuleInstallerState.IsModuleInstallOnBuildCalled = true;
 
         // if uploadedObject is null, do nothing
         if (uploadedObject == null) return;
@@ -261,12 +255,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     [RuntimeInitializeOnLoadMethod]
     static void RunOnStart()
     {
-      if (ModuleInstallState.IsModuleInstallOnBuildCalled)
+      if (ModuleInstallerState.IsModuleInstallOnBuildCalled)
       {
         // console print to show that the ModuleInstallOnPlay has been skipped
         CoreLog("ModuleInstallOnPlay skipped as in Build Mode");
-        // play only gets called once so reset the ModuleInstallState.IsModuleInstallOnBuildCalled to false
-        ModuleInstallState.IsModuleInstallOnBuildCalled = false;
+        // play only gets called once so reset the ModuleInstallerState.IsModuleInstallOnBuildCalled to false
+        ModuleInstallerState.IsModuleInstallOnBuildCalled = false;
       }
       else
       {

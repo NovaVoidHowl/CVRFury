@@ -1,4 +1,4 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_DBG", dependencies: ["NVH_CVRFURY_EXISTS_MI_Core"]}
+// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_DBG", dependencies: ["NVH_CVRFURY_EXISTS_MI_Core"]}
 #if UNITY_EDITOR
 
 using Math = System.Math;
@@ -16,6 +16,7 @@ using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
 
 namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
@@ -27,21 +28,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     [MenuItem("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build")]
     private static void ToggleModuleInstallOnBuild()
     {
-      ModuleInstallState.IsModuleInstallOnBuildCalled = !ModuleInstallState.IsModuleInstallOnBuildCalled;
+      ModuleInstallerState.IsModuleInstallOnBuildCalled = !ModuleInstallerState.IsModuleInstallOnBuildCalled;
       UpdateMenu();
     }
 
     [MenuItem("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", true)]
     private static bool ToggleModuleInstallOnBuildValidation()
     {
-      Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", ModuleInstallState.IsModuleInstallOnBuildCalled);
+      Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", ModuleInstallerState.IsModuleInstallOnBuildCalled);
       return true;
     }
 
     [InitializeOnLoadMethod]
     private static void UpdateMenu()
     {
-      if (ModuleInstallState.IsModuleInstallOnBuildCalled)
+      if (ModuleInstallerState.IsModuleInstallOnBuildCalled)
       {
         Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", true);
       }
