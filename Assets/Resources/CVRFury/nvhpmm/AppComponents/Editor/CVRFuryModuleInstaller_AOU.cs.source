@@ -1,4 +1,4 @@
-// { "version": "0.1.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
+// { "version": "0.1.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -15,7 +15,7 @@ using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
-namespace uk.novavoidhowl.dev.cvrfury
+namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public class uploadObjectStateSetterProcessor : IModuleProcessor
   {

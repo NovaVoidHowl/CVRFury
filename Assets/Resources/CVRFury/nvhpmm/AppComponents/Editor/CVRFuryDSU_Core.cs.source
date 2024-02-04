@@ -1,4 +1,4 @@
-// { "version": "0.1.42" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.1.43" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -18,7 +18,7 @@ using VF.Model.Feature;
 using VF.Component;
 using VF.Model;
 
-namespace uk.novavoidhowl.dev.cvrfury
+namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   [CustomEditor(typeof(CVRFuryDataStorageUnit))]
   public partial class CVRFuryDataStorageUnitEditor : Editor
