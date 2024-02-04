@@ -1,0 +1,45 @@
+// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_HOOK_BUILD", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+using System;
+using System.Threading.Tasks;
+using UnityEditor;
+using UnityEngine;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using ABI.CCK.Scripts.Editor;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  [InitializeOnLoad]
+  public class ModuleInstallOnBuild
+  {
+
+    static ModuleInstallOnBuild()
+    {
+      // attach to OnPreBundleEvent event
+      CCK_BuildUtility.PreAvatarBundleEvent.AddListener(OnPreBundleEvent);
+
+      // console print to show that the event has been attached
+      CoreLog("ModuleInstallOnBuild attached to OnPreBundleEvent");
+    }
+
+    private static void OnPreBundleEvent(GameObject uploadedObject)
+    {
+      // this is the method that will be called when the OnPreBundleEvent is triggered
+      // set ModuleInstallerState.IsModuleInstallOnBuildCalled to true so we don't run the ModuleInstallOnPlay
+      // or the InstallCVRFuryModulesAsync will be called twice, as build mode triggers the play mode
+      ModuleInstallerState.IsModuleInstallOnBuildCalled = true;
+
+
+      /// need a new way of doing this, so scraped for now
+      // console print to show that the OnPreBundleEvent has been called
+      CoreLog("OnPreBundleEvent called in build mode");
+    }
+
+  }
+}
+// #endif

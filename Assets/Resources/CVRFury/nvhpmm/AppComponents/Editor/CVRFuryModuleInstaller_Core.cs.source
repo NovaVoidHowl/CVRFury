@@ -1,4 +1,4 @@
-// { "version": "0.5.23" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.24" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -144,33 +144,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
 
   }
-
-
-
-  [InitializeOnLoad]
-  public class ModuleInstallOnBuild
-  {
-
-    static ModuleInstallOnBuild()
-    {
-      // attach to OnPreBundleEvent event
-      CCK_BuildUtility.PreAvatarBundleEvent.AddListener(OnPreBundleEvent);
-
-      // console print to show that the event has been attached
-      CoreLog("ModuleInstallOnBuild attached to OnPreBundleEvent");
-    }
-
-    private static void OnPreBundleEvent(GameObject uploadedObject)
-    {
-      /// need a new way of doing this, so scraped for now
-      // console print to show that the OnPreBundleEvent has been called
-      CoreLog("OnPreBundleEvent called in build mode");
-    }
-
-  }
-
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // ancillary classes
