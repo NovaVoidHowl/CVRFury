@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEditor;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -27,6 +28,12 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         path = "/" + obj.name + path;
       }
       return path;
+    }
+
+    public static void DisplayProgressBarAndSleep(string title, string message, float progress, int sleepTime)
+    {
+      EditorUtility.DisplayProgressBar(title, message, progress);
+      System.Threading.Thread.Sleep(sleepTime);
     }
   }
 }

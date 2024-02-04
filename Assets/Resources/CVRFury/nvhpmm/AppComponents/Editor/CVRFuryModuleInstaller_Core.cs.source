@@ -1,4 +1,4 @@
-// { "version": "0.5.12" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.14" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -38,26 +38,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Initialize the overlay unity progress bar
       float progress = 0;
-      EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Initializing...", progress);
-      System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "Initializing...", progress, 500);
 
       // popup title depending on mode, suffixing with " - Play Mode" or " - Build Mode"
       string popupTitle = "CVRFury Module Installer - ";
       if (mode == 0) popupTitle += "Play Mode";
       else if (mode == 1) popupTitle += "Build Mode";
       progress = 0.1f;
-      EditorUtility.DisplayProgressBar("CVRFury Module Installation", "getting uploadObject", progress);
-      System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "getting uploadObject", progress, 500);
 
       // Implementation
       string path = GetGameObjectPath(uploadedObject);
       progress = 0.4f;
-      EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Target for CVRFury Modules is \n\n" + path, progress);
-      System.Threading.Thread.Sleep(4000); // Sleep for 2000ms to allow the progress bar to show and the user to read the message
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "Target for CVRFury Modules is \n\n" + path, progress, 2000);
+
 
       progress = 0.6f;
-      EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Getting CVRFuryDataStorageUnit components", progress);
-      System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "Getting CVRFuryDataStorageUnit components", progress, 500);
+
       // get the CVRFuryDataStorageUnit components
       var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
 
@@ -69,14 +67,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (numDataStorageUnits > 0)
       {
         progress = 0.8f;
-        EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Starting module processing", progress);
-        System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "Starting module processing", progress, 500);
         // show modal progress window
         ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
 
         progress = 1;
-        EditorUtility.DisplayProgressBar("CVRFury Module Installation", "Processing modules started", progress);
-        System.Threading.Thread.Sleep(500); // Sleep for 500ms to allow the progress bar to show
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "Processing modules started", progress, 500);
         // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
         EditorCoroutine.Start(coroutine => ProcessModules(coroutine, dataStorageUnits), () => ModuleInstallOnBuild.OnInstallationComplete());
       }
@@ -84,8 +80,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
         progress = 1;
-        EditorUtility.DisplayProgressBar("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress);
-        System.Threading.Thread.Sleep(2000); // Sleep for 2000ms to allow the progress bar to show and the user to read the message
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress, 2000);
         // signal that the task is complete
         ModuleInstallOnBuild.OnInstallationComplete(true);
       }
