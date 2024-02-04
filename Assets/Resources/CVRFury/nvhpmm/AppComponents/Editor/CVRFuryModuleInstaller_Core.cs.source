@@ -1,4 +1,4 @@
-// { "version": "0.5.24" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.29" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -73,6 +73,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         progress = 1;
         await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules started", progress, 2000);
+        // close the progress bar
+        EditorUtility.ClearProgressBar();
         // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
         await ProcessModules(dataStorageUnits);
       }
@@ -81,10 +83,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
         progress = 1;
         await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress, 2000);
+        // close the progress bar
+        EditorUtility.ClearProgressBar();
       }
 
-      // close the progress bar
-      EditorUtility.ClearProgressBar();
+
 
     }
 
@@ -103,6 +106,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // divide the progress bar into equal parts for each module
         float progressPerModule = 100f / numModules;
+        float progressPerModuleOnUnityProgressBar = 1f / numModules;
+
+        // initialize the unity progress bar
+        float progressOnUnityProgressBar = 0;
+        await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules started", progressOnUnityProgressBar, 500);
+
+        // initialize the sub-progress bar
+        float progress = 0;
+        ModalWindow.UpdateSubProgressBar(i, progress);
 
         // for each module in modules
         for (int j = 0; j < numModules; j++)
@@ -137,10 +149,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLog("Module " + modules[j].name + " processed");
 
           // Update the progress bar after processing the module
-          float progress = progressPerModule * (j + 1);
+          progress = progressPerModule * (j + 1);
+          progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
+
+          // Update the unity progress bar
+          await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules", progressOnUnityProgressBar, 0);
+
+          // Update the sub-progress bar
           ModalWindow.UpdateSubProgressBar(i, progress);
         }
+        // module done
+        // close current unity progress bar
+        EditorUtility.ClearProgressBar();
       }
+      // all modules done
     }
 
   }
