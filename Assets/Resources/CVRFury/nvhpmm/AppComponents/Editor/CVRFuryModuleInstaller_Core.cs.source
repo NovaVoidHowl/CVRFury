@@ -1,4 +1,4 @@
-// { "version": "0.5.20" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.21" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -74,7 +74,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         progress = 1;
         await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules started", progress, 2000);
         // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
-        EditorCoroutine.Start(coroutine => ProcessModules(coroutine, dataStorageUnits));
+        await ProcessModules(dataStorageUnits);
       }
       else
       {
@@ -88,7 +88,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
 
-    private static IEnumerator ProcessModules(EditorCoroutine coroutine, CVRFuryDataStorageUnit[] dataStorageUnits)
+    private static async Task ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits)
     {
       // Process each data storage unit
       for (int i = 0; i < dataStorageUnits.Length; i++)
@@ -110,7 +110,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // module processing code triggers etc
 
           // wait for 1 seconds
-          yield return new EditorWaitForSeconds(1);
+          await Task.Delay(1000);
 
           // module processing trigger code
           // get the module
@@ -139,17 +139,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // Update the progress bar after processing the module
           float progress = progressPerModule * (j + 1);
           ModalWindow.UpdateSubProgressBar(i, progress);
-
-
         }
-        // all modules processed so can stop coroutine now
-        coroutine.Stop();
-
       }
     }
-
-
-
 
   }
 
