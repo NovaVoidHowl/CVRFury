@@ -1,4 +1,4 @@
-// { "version": "0.5.14" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.20" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -34,11 +34,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// </summary>
     /// <param name="uploadedObject"></param>
     /// <param name="mode"></param>
-    public static void InstallCVRFuryModules(GameObject uploadedObject, int mode = 0)
+    public static async Task InstallCVRFuryModulesAsync(GameObject uploadedObject, int mode = 0)
     {
       // Initialize the overlay unity progress bar
       float progress = 0;
-      DisplayProgressBarAndSleep("CVRFury Module Installation", "Initializing...", progress, 500);
+      await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Initializing...", progress, 500);
 
       // popup title depending on mode, suffixing with " - Play Mode" or " - Build Mode"
       string popupTitle = "CVRFury Module Installer - ";
@@ -50,11 +50,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Implementation
       string path = GetGameObjectPath(uploadedObject);
       progress = 0.4f;
-      DisplayProgressBarAndSleep("CVRFury Module Installation", "Target for CVRFury Modules is \n\n" + path, progress, 2000);
+      await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Target for CVRFury Modules is \n\n" + path, progress, 2000);
 
 
       progress = 0.6f;
-      DisplayProgressBarAndSleep("CVRFury Module Installation", "Getting CVRFuryDataStorageUnit components", progress, 500);
+      await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Getting CVRFuryDataStorageUnit components", progress, 500);
 
       // get the CVRFuryDataStorageUnit components
       var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
@@ -67,22 +67,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (numDataStorageUnits > 0)
       {
         progress = 0.8f;
-        DisplayProgressBarAndSleep("CVRFury Module Installation", "Starting module processing", progress, 500);
+        await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Starting module processing", progress, 500);
         // show modal progress window
         ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
 
         progress = 1;
-        DisplayProgressBarAndSleep("CVRFury Module Installation", "Processing modules started", progress, 500);
+        await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules started", progress, 2000);
         // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
-        EditorCoroutine.Start(coroutine => ProcessModules(coroutine, dataStorageUnits), () => ModuleInstallOnBuild.OnInstallationComplete());
+        EditorCoroutine.Start(coroutine => ProcessModules(coroutine, dataStorageUnits));
       }
       else
       {
         // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
         progress = 1;
-        DisplayProgressBarAndSleep("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress, 2000);
-        // signal that the task is complete
-        ModuleInstallOnBuild.OnInstallationComplete(true);
+        await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress, 2000);
       }
 
       // close the progress bar
@@ -160,9 +158,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   [InitializeOnLoad]
   public class ModuleInstallOnBuild
   {
-    // Add a TaskCompletionSource field
-    private static TaskCompletionSource<bool> tcs;
-
 
     static ModuleInstallOnBuild()
     {
@@ -175,65 +170,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private static void OnPreBundleEvent(GameObject uploadedObject)
     {
-      try
-      {
-        // set the ModuleInstallerState.IsModuleInstallOnBuildCalled to true,
-        // so that the ModuleInstallOnPlay does not run
-        ModuleInstallerState.IsModuleInstallOnBuildCalled = true;
-
-        // if uploadedObject is null, do nothing
-        if (uploadedObject == null) return;
-
-        // Initialize the TaskCompletionSource
-        tcs = new TaskCompletionSource<bool>();
-
-        // Start the installation process on a separate thread
-        Task.Run(() => CVRFuryModuleInstaller.InstallCVRFuryModules(uploadedObject, 1));
-
-        // Periodically check whether the task is complete
-        EditorCoroutine.Start(coroutine => CheckTaskCompletion(coroutine));
-      }
-      catch (Exception e)
-      {
-        // pop up to show that an exception has been caught
-        EditorUtility.DisplayDialog("Exception caught in ModuleInstallOnBuild.OnPreBundleEvent", e.Message, "OK");
-      }
+      /// need a new way of doing this, so scraped for now
+      // console print to show that the OnPreBundleEvent has been called
+      CoreLog("OnPreBundleEvent called in build mode");
     }
 
-    private static IEnumerator CheckTaskCompletion(EditorCoroutine coroutine)
-    {
-      while (!tcs.Task.IsCompleted)
-      {
-        // Wait for 1 second
-        yield return new EditorWaitForSeconds(1);
-
-        if (tcs.Task.IsCompleted)
-        {
-          // Signal that the task is complete
-          tcs.SetResult(true);
-
-          // pop up to show that the task is complete
-          EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnPreBundleEvent] CVRFury Module Installation Complete", "OK");
-
-          // Stop the coroutine
-          coroutine.Stop();
-        }
-      }
-    }
-
-    public static void OnInstallationComplete(bool noTcs  = false)
-    {
-      // note console print does not work here
-
-      if (!noTcs && tcs != null)
-      {
-
-        // Signal that the task is complete
-        tcs.SetResult(true);
-        // debug pop to show tcs triggered
-        EditorUtility.DisplayDialog("CVRFury Module Installation", "[OnInstallationComplete] tcs triggered", "OK");
-      }
-    }
   }
 
   public class ModuleInstallOnPlay
@@ -255,10 +196,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         foreach (var avatar in avatars)
         {
-          CVRFuryModuleInstaller.InstallCVRFuryModules(avatar.gameObject, 0);
+          // Start the InstallCVRFuryModules method as a separate task
+          Task.Run(() =>
+          {
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+              CVRFuryModuleInstaller.InstallCVRFuryModulesAsync(avatar.gameObject, 0);
+            };
+          });
         }
       }
-
     }
   }
 
