@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
@@ -34,6 +35,15 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     {
       EditorUtility.DisplayProgressBar(title, message, progress);
       System.Threading.Thread.Sleep(sleepTime);
+    }
+
+    public static async Task DisplayProgressBarAndSleepAsync(string title, string info, float progress, int sleepTime)
+    {
+      // Display the progress bar
+      EditorUtility.DisplayProgressBar(title, info, progress);
+
+      // Wait for the specified amount of time
+      await Task.Delay(sleepTime);
     }
   }
 }
