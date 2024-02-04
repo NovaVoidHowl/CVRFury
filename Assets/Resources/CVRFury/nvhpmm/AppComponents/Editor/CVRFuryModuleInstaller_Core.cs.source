@@ -1,4 +1,4 @@
-// { "version": "0.5.22" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.23" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -169,37 +169,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   }
 
-  public class ModuleInstallOnPlay
-  {
-    [RuntimeInitializeOnLoadMethod]
-    static void RunOnStart()
-    {
-      if (ModuleInstallerState.IsModuleInstallOnBuildCalled)
-      {
-        // console print to show that the ModuleInstallOnPlay has been skipped
-        CoreLog("ModuleInstallOnPlay skipped as in Build Mode");
-        // play only gets called once so reset the ModuleInstallerState.IsModuleInstallOnBuildCalled to false
-        ModuleInstallerState.IsModuleInstallOnBuildCalled = false;
-      }
-      else
-      {
-        // Find all active game objects with a CVRAvatar component
-        var avatars = GameObject.FindObjectsOfType<CVRAvatar>();
 
-        foreach (var avatar in avatars)
-        {
-          // Start the InstallCVRFuryModules method as a separate task
-          Task.Run(() =>
-          {
-            UnityEditor.EditorApplication.delayCall += () =>
-            {
-              CVRFuryModuleInstaller.InstallCVRFuryModulesAsync(avatar.gameObject, 0);
-            };
-          });
-        }
-      }
-    }
-  }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
