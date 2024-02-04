@@ -1,4 +1,4 @@
-// { "version": "0.5.11" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.12" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -157,16 +157,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 
 
-    public static string GetGameObjectPath(GameObject obj)
-    {
-      string path = "/" + obj.name;
-      while (obj.transform.parent != null)
-      {
-        obj = obj.transform.parent.gameObject;
-        path = "/" + obj.name + path;
-      }
-      return path;
-    }
+
   }
 
 

@@ -17,5 +17,16 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         $"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] <color={Constants.APP_COLOUR_CRIT}>[CRITICAL ERROR]</color> {message.ToString()}"
       );
     }
+
+    public static string GetGameObjectPath(GameObject obj)
+    {
+      string path = "/" + obj.name;
+      while (obj.transform.parent != null)
+      {
+        obj = obj.transform.parent.gameObject;
+        path = "/" + obj.name + path;
+      }
+      return path;
+    }
   }
 }
