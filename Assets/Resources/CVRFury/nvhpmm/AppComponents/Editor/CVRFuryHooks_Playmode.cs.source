@@ -1,5 +1,5 @@
-// { "version": "0.0.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_HOOK_PLAY", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
-// #if UNITY_EDITOR && CVR_CCK_EXISTS
+// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_HOOK_PLAY", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
+// #if UNITY_EDITOR
 
 using System;
 using System.Threading.Tasks;
@@ -13,7 +13,7 @@ using uk.novavoidhowl.dev.cvrfury.packagecore;
 
 namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
-   public class ModuleInstallOnPlay
+  public class ModuleInstallOnPlay
   {
     [RuntimeInitializeOnLoadMethod]
     static void RunOnStart()
