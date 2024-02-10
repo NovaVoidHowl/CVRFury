@@ -1,4 +1,4 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_HOOK_BUILD", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
+// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_HOOK_BUILD", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using System;
@@ -29,15 +29,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private static void OnPreBundleEvent(GameObject uploadedObject)
     {
+      // note console prints don't  work in build mode, due to BuildAndUploadAvatar from the CCK being async
+      // so we can't use the CoreLog method here
+
       // this is the method that will be called when the OnPreBundleEvent is triggered
       // set ModuleInstallerState.IsModuleInstallOnBuildCalled to true so we don't run the ModuleInstallOnPlay
       // or the InstallCVRFuryModulesAsync will be called twice, as build mode triggers the play mode
       ModuleInstallerState.IsModuleInstallOnBuildCalled = true;
 
+      // call the InstallCVRFuryModules method to install the modules (build mode)
+      CVRFuryModuleInstaller.InstallCVRFuryModules(uploadedObject, 1);
 
-      /// need a new way of doing this, so scraped for now
-      // console print to show that the OnPreBundleEvent has been called
-      CoreLog("OnPreBundleEvent called in build mode");
+      // show a progress bar to indicate that the modules have been installed
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "Completed install", 1, 2000);
+
     }
 
   }
