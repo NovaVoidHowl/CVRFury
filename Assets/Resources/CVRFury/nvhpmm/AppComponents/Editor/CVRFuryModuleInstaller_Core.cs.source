@@ -1,4 +1,4 @@
-// { "version": "0.5.33" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.6.7" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -60,7 +60,123 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
 
     /// <summary>
-    /// Install CVRFury Modules on a given GameObject
+    /// Install CVRFury Modules on a given GameObject, Async for play mode
+    /// Mode 0 = Play Mode
+    /// Mode 1 = Build Mode
+    /// </summary>
+    /// <param name="uploadedObject"></param>
+    /// <param name="mode"></param>
+    public static void InstallCVRFuryModules(GameObject uploadedObject, int mode = 0)
+    {
+      // trap for play mode, this method should not be called in play mode
+      if (mode == 0)
+      {
+        CoreLogCritical("InstallCVRFuryModules called in play mode");
+        return;
+      }
+
+      // Initialize the overlay unity progress bar
+      float progress = 0;
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "Initializing...", progress, 500);
+
+      // popup title depending on mode, suffixing with " - Play Mode" or " - Build Mode"
+      string popupTitle = InstallModeString(mode);
+
+      progress = 0.1f;
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "getting uploadObject", progress, 500);
+
+      // Implementation
+      string path = GetGameObjectPath(uploadedObject);
+      progress = 0.4f;
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "Target for CVRFury Modules is \n\n" + path, progress, 2000);
+
+
+      progress = 0.6f;
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "Getting CVRFuryDataStorageUnit components", progress, 500);
+
+      // get the CVRFuryDataStorageUnit components
+      var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
+
+      // get the number of CVRFuryDataStorageUnit components
+      int numDataStorageUnits = dataStorageUnits.Length;
+
+      // if there are 1 or more CVRFuryDataStorageUnit components present on the uploadedObject
+      // then run the module installer
+      if (numDataStorageUnits > 0)
+      {
+        progress = 0.8f;
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "Starting module processing", progress, 500);
+
+        progress = 1;
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "Processing modules started", progress, 2000);
+        // close the progress bar
+        EditorUtility.ClearProgressBar();
+
+        // Start processing the modules
+        ProcessModules(dataStorageUnits);
+      }
+      else
+      {
+        // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
+        progress = 1;
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress, 2000);
+        // close the progress bar
+        EditorUtility.ClearProgressBar();
+      }
+    }
+
+    private static void ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits)
+    {
+      // Process each data storage unit
+      for (int i = 0; i < dataStorageUnits.Length; i++)
+      {
+        var dataStorageUnit = dataStorageUnits[i];
+
+        // get the modules
+        var modules = dataStorageUnit.modules.modules;
+
+        // get a count of the modules
+        int numModules = modules.Count;
+
+        // divide the progress bar into equal parts for each module
+        float progressPerModuleOnUnityProgressBar = 1f / numModules;
+
+        // initialize the unity progress bar
+        float progressOnUnityProgressBar = 0;
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "Processing modules started", progressOnUnityProgressBar, 500);
+
+        // for each module in modules
+        for (int j = 0; j < numModules; j++)
+        {
+          // module processing code triggers etc
+
+          // wait for 1 seconds
+          System.Threading.Thread.Sleep(1000);
+
+          // module processing trigger code
+          // get the module
+          var module = modules[j];
+          HandleModule(module);
+
+          // Update the progress bar after processing the module
+          progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
+
+          // Update the unity progress bar
+          DisplayProgressBarAndSleep("CVRFury Module Installation", "Processing modules", progressOnUnityProgressBar, 0);
+        }
+        // module done
+        // close current unity progress bar
+        EditorUtility.ClearProgressBar();
+      }
+      // all modules done
+    }
+
+
+
+    //// Async methods -------------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Install CVRFury Modules on a given GameObject, Async for play mode
     /// Mode 0 = Play Mode
     /// Mode 1 = Build Mode
     /// </summary>
@@ -68,6 +184,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// <param name="mode"></param>
     public static async Task InstallCVRFuryModulesAsync(GameObject uploadedObject, int mode = 0)
     {
+      // trap for build mode, this method should not be called in build mode
+      if (mode == 1)
+      {
+        CoreLogCritical("InstallCVRFuryModulesAsync called in build mode");
+        return;
+      }
+
       // Initialize the overlay unity progress bar
       float progress = 0;
       await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Initializing...", progress, 500);
@@ -107,7 +230,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // close the progress bar
         EditorUtility.ClearProgressBar();
         // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
-        await ProcessModules(dataStorageUnits);
+        await ProcessModulesAsync(dataStorageUnits);
       }
       else
       {
@@ -119,7 +242,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-    private static async Task ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits)
+    private static async Task ProcessModulesAsync(CVRFuryDataStorageUnit[] dataStorageUnits)
     {
       // Process each data storage unit
       for (int i = 0; i < dataStorageUnits.Length; i++)
