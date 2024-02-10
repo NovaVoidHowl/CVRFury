@@ -1,4 +1,4 @@
-// { "version": "0.5.29" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
+// { "version": "0.5.33" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_CORE", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -27,6 +27,38 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   public partial class CVRFuryModuleInstaller
   {
+    private static string InstallModeString (int mode) {
+      string baseString = "CVRFury Module Installer - ";
+      if (mode == 0) return baseString + "Play Mode";
+      else if (mode == 1) return baseString + "Build Mode";
+      else return baseString + "Unknown Mode";
+    }
+
+
+    public static void HandleModule(CVRFuryModule module)
+    {
+        IModuleProcessor processor = null;
+        // case statement to process the module based on its type
+        switch (module)
+        {
+            case uploadObjectStateSetter:
+                processor = new uploadObjectStateSetterProcessor();
+                break;
+            default:
+                // console print to say that the module type is not recognised
+                CoreLog("Module type not recognised");
+                break;
+        }
+
+        if (processor != null)
+        {
+            processor.ProcessModule(module);
+        }
+
+        // console print to say that the module has been processed
+        CoreLog("Module " + module.name + " processed");
+    }
+
     /// <summary>
     /// Install CVRFury Modules on a given GameObject
     /// Mode 0 = Play Mode
@@ -41,9 +73,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Initializing...", progress, 500);
 
       // popup title depending on mode, suffixing with " - Play Mode" or " - Build Mode"
-      string popupTitle = "CVRFury Module Installer - ";
-      if (mode == 0) popupTitle += "Play Mode";
-      else if (mode == 1) popupTitle += "Build Mode";
+      string popupTitle = InstallModeString(mode);
+
       progress = 0.1f;
       DisplayProgressBarAndSleep("CVRFury Module Installation", "getting uploadObject", progress, 500);
 
@@ -86,9 +117,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // close the progress bar
         EditorUtility.ClearProgressBar();
       }
-
-
-
     }
 
     private static async Task ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits)
@@ -127,26 +155,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // module processing trigger code
           // get the module
           var module = modules[j];
-          IModuleProcessor processor = null;
-          // case statement to process the module based on its type
-          switch (module)
-          {
-            case uploadObjectStateSetter:
-              processor = new uploadObjectStateSetterProcessor();
-              break;
-            default:
-              // console print to say that the module type is not recognised
-              CoreLog("Module type not recognised");
-              break;
-          }
-
-          if (processor != null)
-          {
-            processor.ProcessModule(module);
-          }
-
-          // console print to say that the module has been processed
-          CoreLog("Module " + modules[j].name + " processed");
+          HandleModule(module);
 
           // Update the progress bar after processing the module
           progress = progressPerModule * (j + 1);
@@ -164,6 +173,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
       // all modules done
     }
+
 
   }
 
