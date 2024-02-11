@@ -27,6 +27,9 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     public string name;
     public string description;
+
+    public bool importedFromVRCFury;
+    public bool justImported;
   }
 
   [Serializable]
@@ -111,6 +114,22 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       : base("uploadObjectStateSetter") { }
 
     public objectStatePair[] objectStatePairs;
+  }
+
+  [Serializable]
+  public class uploadObjectDefaultMaterialSetter : uploadStateSetter
+  {
+    public uploadObjectDefaultMaterialSetter()
+      : base("uploadObjectDefaultMaterialSetter") { }
+
+    // material to set as default
+    public Material defaultMaterial;
+
+    // renderer to set the default material on
+    public Renderer renderer;
+
+    // renderer index to set the default material on
+    public int rendererIndex;
   }
 
   [Serializable]

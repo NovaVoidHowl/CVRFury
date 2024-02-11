@@ -1,4 +1,4 @@
-// { "version": "0.1.8" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.3.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -141,96 +141,127 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // check to see if the DSU already has an uploadObjectStateSetter module
                     if (modules.Any(module => module.GetType().Name == "uploadObjectStateSetter"))
                     {
-                      // if so, get the uploadObjectStateSetter module
-                      var uploadObjectStateSetterModule = modules.First(module => module.GetType().Name == "uploadObjectStateSetter");
 
-                      // cast the uploadObjectStateSetter module to uploadObjectStateSetter
-                      uploadObjectStateSetter uploadObjectStateSetter = uploadObjectStateSetterModule as uploadObjectStateSetter;
+                      List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
-                      // update the module's version info
-                      uploadObjectStateSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                      uploadObjectStateSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                      uploadObjectStateSetter.CVRCCKVersion = ParseCCKVersion();
-
-                      // Convert the array to a list so we can use FindIndex
-                      List<objectStatePair> objectStatePairsList = new List<objectStatePair>(uploadObjectStateSetter.objectStatePairs);
-
-                      // Find the index of the objectStatePair in the list
-                      int index = objectStatePairsList.FindIndex(pair => pair.objectToSetStateOn == objectToggleAction.obj);
-
-                      if (index != -1)
+                      // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+                      // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectStateSetter"))
                       {
-                        // Get a copy of the struct from the list
-                        objectStatePair pair = objectStatePairsList[index];
-
-                        // Modify the copy
-                        switch (objectToggleAction.mode)
+                        var uploadObjectStateSetterModuleInstance = module as uploadObjectStateSetter;
+                        if (uploadObjectStateSetterModuleInstance.importedFromVRCFury && !uploadObjectStateSetterModuleInstance.justImported)
                         {
-                          case ObjectToggleAction.Mode.TurnOn:
-                            pair.stateToSet = objectStatePair.objectState.enabled;
-                            break;
-                          case ObjectToggleAction.Mode.TurnOff:
-                            pair.stateToSet = objectStatePair.objectState.disabled;
-                            break;
-                          case ObjectToggleAction.Mode.Toggle:
-                            Debug.LogError("ObjectToggleAction.Mode.Toggle is deprecated");
-                            break;
-                          default:
-                            Debug.LogError("Unknown ObjectToggleAction.Mode detected");
-                            break;
+                          modulesToRemove.Add(module);
                         }
-
-                        // Replace the original struct in the list with the modified copy
-                        objectStatePairsList[index] = pair;
-
-                        // Convert the list back to an array
-                        uploadObjectStateSetter.objectStatePairs = objectStatePairsList.ToArray();
                       }
-                      else
+
+                      // process the remove list
+                      foreach (var module in modulesToRemove)
                       {
-                        // if not, create a new objectStatePair
-                        objectStatePair newObjectStatePair = new objectStatePair();
-
-                        // set the objectToSetStateOn property of the new objectStatePair to the obj gameObject from the action
-                        newObjectStatePair.objectToSetStateOn = objectToggleAction.obj;
-
-                        // set the stateToSet property of the new objectStatePair to the mode of the action
-                        newObjectStatePair.stateToSet = objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn ? objectStatePair.objectState.enabled : objectStatePair.objectState.disabled;
-
-                        // add the new objectStatePair to the objectStatePairs array in the uploadObjectStateSetter module
-                        Array.Resize(ref uploadObjectStateSetter.objectStatePairs, uploadObjectStateSetter.objectStatePairs.Length + 1);
-                        uploadObjectStateSetter.objectStatePairs[uploadObjectStateSetter.objectStatePairs.Length - 1] = newObjectStatePair;
+                        modules.Remove(module);
                       }
                     }
-                    else
+
+                    // ok so now we can be sure we only have stuff the user added after the fact
+                    // (don't want to remove user added data)
+
+                    // now we can add the new data
+                    uploadObjectStateSetter uploadObjectStateSetter = new uploadObjectStateSetter();
+
+                    // update the module's version info
+                    uploadObjectStateSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    uploadObjectStateSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    uploadObjectStateSetter.CVRCCKVersion = ParseCCKVersion();
+
+                    // create a new objectStatePair
+                    objectStatePair newObjectStatePair = new objectStatePair();
+
+                    // set the objectToSetStateOn property of the new objectStatePair to the obj gameObject from the action
+                    newObjectStatePair.objectToSetStateOn = objectToggleAction.obj;
+
+                    // set the stateToSet property of the new objectStatePair to the mode of the action
+                    newObjectStatePair.stateToSet = objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn ? objectStatePair.objectState.enabled : objectStatePair.objectState.disabled;
+
+                    // add the new objectStatePair to the objectStatePairs array in the uploadObjectStateSetter module
+                    uploadObjectStateSetter.objectStatePairs = new objectStatePair[] { newObjectStatePair };
+
+                    // set the importedFromVRCFury bool, and the justImported bool to true
+                    uploadObjectStateSetter.importedFromVRCFury = true;
+                    uploadObjectStateSetter.justImported = true;
+
+                    // add the uploadObjectStateSetter module to the modules list in the DSU
+                    modules.Add(uploadObjectStateSetter);
+
+                    break;
+
+                  //// case to handle MaterialAction data import
+                  // related files: StateAction.cs - 55 to 61
+                  case MaterialAction materialAction:
+                    // debug outputs to console
+                    // CoreLog(materialAction.GetType());
+                    // CoreLog(materialAction.obj);
+                    // CoreLog(materialAction.materialIndex);
+                    // CoreLog(materialAction.mat);
+
+                    // check to see if the DSU already has an uploadObjectDefaultMaterialSetter module
+                    if (modules.Any(module => module.GetType().Name == "uploadObjectDefaultMaterialSetter"))
                     {
-                      // if not, create a new uploadObjectStateSetter module
-                      uploadObjectStateSetter uploadObjectStateSetter = new uploadObjectStateSetter();
 
-                      // update the module's version info
-                      uploadObjectStateSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                      uploadObjectStateSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                      uploadObjectStateSetter.CVRCCKVersion = ParseCCKVersion();
+                      List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
-                      // create a new objectStatePair
-                      objectStatePair newObjectStatePair = new objectStatePair();
+                      // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+                      // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectDefaultMaterialSetter"))
+                      {
+                        var uploadObjectDefaultMaterialSetterModuleInstance = module as uploadObjectDefaultMaterialSetter;
+                        if (uploadObjectDefaultMaterialSetterModuleInstance.importedFromVRCFury && !uploadObjectDefaultMaterialSetterModuleInstance.justImported)
+                        {
+                          modulesToRemove.Add(module);
+                        }
+                      }
 
-                      // set the objectToSetStateOn property of the new objectStatePair to the obj gameObject from the action
-                      newObjectStatePair.objectToSetStateOn = objectToggleAction.obj;
-
-                      // set the stateToSet property of the new objectStatePair to the mode of the action
-                      newObjectStatePair.stateToSet = objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn ? objectStatePair.objectState.enabled : objectStatePair.objectState.disabled;
-
-                      // add the new objectStatePair to the objectStatePairs array in the uploadObjectStateSetter module
-                      uploadObjectStateSetter.objectStatePairs = new objectStatePair[] { newObjectStatePair };
-
-                      // add the uploadObjectStateSetter module to the modules list in the DSU
-                      modules.Add(uploadObjectStateSetter);
+                      // process the remove list
+                      foreach (var module in modulesToRemove)
+                      {
+                        modules.Remove(module);
+                      }
                     }
 
+                    // ok so now we can be sure we only have stuff the user added after the fact
+                    // (don't want to remove user added data)
 
+                    // now we can add the new data
 
+                    // get the materialAction renderer
+                    Renderer renderer = materialAction.obj.GetComponent<Renderer>();
+                    // get the renderer index
+                    int rendererIndex = materialAction.materialIndex;
+                    // get the material
+                    Material material = materialAction.mat.objRef as Material;
 
+                    // create a new uploadObjectDefaultMaterialSetter module
+                    uploadObjectDefaultMaterialSetter uploadObjectDefaultMaterialSetter = new uploadObjectDefaultMaterialSetter();
+
+                    // update the module's version info
+                    uploadObjectDefaultMaterialSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    uploadObjectDefaultMaterialSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    uploadObjectDefaultMaterialSetter.CVRCCKVersion = ParseCCKVersion();
+
+                    // set the defaultMaterial property of the uploadObjectDefaultMaterialSetter module to the material from the action
+                    uploadObjectDefaultMaterialSetter.defaultMaterial = material;
+
+                    // set the renderer property of the uploadObjectDefaultMaterialSetter module to the renderer from the action
+                    uploadObjectDefaultMaterialSetter.renderer = renderer;
+
+                    // set the rendererIndex property of the uploadObjectDefaultMaterialSetter module to the rendererIndex from the action
+                    uploadObjectDefaultMaterialSetter.rendererIndex = rendererIndex;
+
+                    // set the importedFromVRCFury bool, and the justImported bool to true
+                    uploadObjectDefaultMaterialSetter.importedFromVRCFury = true;
+                    uploadObjectDefaultMaterialSetter.justImported = true;
+
+                    // add the uploadObjectDefaultMaterialSetter module to the modules list in the DSU
+                    modules.Add(uploadObjectDefaultMaterialSetter);
 
                     break;
 
@@ -254,6 +285,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 }
 
                 CoreLog(action.GetType());
+              }
+
+              //// Import finalisation section, for  ----------------------------
+              // all modules now processed so we can set the 'justImported' bool to false so we can remove any old data
+              // on the next import
+
+              // iterate through the modules list, and set the 'justImported' bool to false
+              foreach (var module in modules)
+              {
+                switch (module)
+                {
+                  case uploadObjectStateSetter uploadObjectStateSetter:
+                    uploadObjectStateSetter.justImported = false;
+                    break;
+                  case uploadObjectDefaultMaterialSetter uploadObjectDefaultMaterialSetter:
+                    uploadObjectDefaultMaterialSetter.justImported = false;
+                    break;
+                }
               }
 
 
