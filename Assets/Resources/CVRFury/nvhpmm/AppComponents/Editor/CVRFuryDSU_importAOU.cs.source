@@ -28,7 +28,7 @@ using VF.Model.StateAction;
 // sofar working on ObjectToggleAction, as this is the most common action
 //
 // Things to look out for:
-// - you can have multiple actions of the same type
+// - you can have multiple actions of the same type -- think this is fixed now based on the purge and re-add logic
 // - you can mix and match actions of different types in one block
 
 namespace uk.novavoidhowl.dev.cvrfury.deployable
