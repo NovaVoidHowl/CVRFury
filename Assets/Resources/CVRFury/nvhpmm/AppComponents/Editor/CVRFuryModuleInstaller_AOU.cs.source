@@ -1,4 +1,4 @@
-// { "version": "0.1.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
+// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -21,37 +21,100 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   {
     public void ProcessModule(CVRFuryModule module)
     {
-        // Implementation for uploadObjectStateSetter
-        // console print to say this function is being called
-        CoreLog("uploadObjectStateSetterProcessor.ProcessModule() called");
+      // Implementation for uploadObjectStateSetter
+      // console print to say this function is being called
+      CoreLog("uploadObjectStateSetterProcessor.ProcessModule() called");
 
-        // log the module's moduleType to the console
-        CoreLog("module.ModuleType: " + module.ModuleType);
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
 
-        // for each of the objectStatePairs in the module
-        foreach (objectStatePair pair in ((uploadObjectStateSetter)module).objectStatePairs)
+      // for each of the objectStatePairs in the module
+      foreach (objectStatePair pair in ((uploadObjectStateSetter)module).objectStatePairs)
+      {
+        // check if the GameObject exists
+        if (pair.objectToSetStateOn != null)
         {
-          // check if the GameObject exists
-          if (pair.objectToSetStateOn != null)
-          {
 
-            // use objectState to set the GameObject's state, (its an enum with values: "disabled", "enabled")
-            switch (pair.stateToSet)
-            {
-              case objectStatePair.objectState.disabled:
-                pair.objectToSetStateOn.SetActive(false);
-                break;
-              case objectStatePair.objectState.enabled:
-                pair.objectToSetStateOn.SetActive(true);
-                break;
-            }
-          }
-          else
+          // use objectState to set the GameObject's state, (its an enum with values: "disabled", "enabled")
+          switch (pair.stateToSet)
           {
-            // if it doesn't, log an error to the console
-            Debug.LogError("GameObject " + pair.objectToSetStateOn.name + " does not exist");
+            case objectStatePair.objectState.disabled:
+              pair.objectToSetStateOn.SetActive(false);
+              break;
+            case objectStatePair.objectState.enabled:
+              pair.objectToSetStateOn.SetActive(true);
+              break;
           }
         }
+        else
+        {
+          // if it doesn't, log an error to the console
+          Debug.LogError("GameObject " + pair.objectToSetStateOn.name + " does not exist");
+        }
+      }
+
+    }
+  }
+
+
+  public class uploadObjectDefaultMaterialSetterProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module)
+    {
+      // Implementation for uploadObjectDefaultMaterialSetter
+      // console print to say this function is being called
+      CoreLog("uploadObjectDefaultMaterialSetter.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // get the renderer from the module
+      Renderer renderer = ((uploadObjectDefaultMaterialSetter)module).renderer;
+
+      // get the GameObject from the renderer
+      GameObject rendererGameObject = renderer.gameObject;
+
+      // get the renderer index from the module
+      int rendererIndex = ((uploadObjectDefaultMaterialSetter)module).rendererIndex;
+
+      // get the default material from the module
+      Material defaultMaterial = ((uploadObjectDefaultMaterialSetter)module).defaultMaterial;
+
+      // console print the renderer index, and the default material
+      CoreLog("rendererIndex: " + rendererIndex + ", defaultMaterial: " + defaultMaterial);
+
+      // check if the renderer exists
+      if (renderer != null)
+      {
+        // check if the renderer index is valid
+        if (rendererIndex >= 0 && rendererIndex < renderer.materials.Length)
+        {
+          //console print to say the renderer index is valid, and what the length of the materials array is
+          CoreLog("rendererIndex: " + rendererIndex + " is valid, materials.Length: " + renderer.materials.Length);
+
+          // get a copy of the materials array
+          Material[] materialsCopy = renderer.materials;
+
+          // set the material at the index to the default material
+          materialsCopy[rendererIndex] = defaultMaterial;
+
+          // assign the modified array back to the renderer
+          renderer.materials = materialsCopy;
+
+          // update the renderer on the rendererGameObject
+          rendererGameObject.GetComponent<Renderer>().materials = materialsCopy;
+        }
+        else
+        {
+          // if it isn't, log an error to the console
+          Debug.LogError("Renderer index " + rendererIndex + " is invalid");
+        }
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        Debug.LogError("Renderer " + renderer.name + " does not exist");
+      }
 
     }
   }

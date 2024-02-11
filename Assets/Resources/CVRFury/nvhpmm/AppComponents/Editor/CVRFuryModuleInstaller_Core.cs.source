@@ -1,4 +1,4 @@
-// { "version": "0.7.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.8.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -46,6 +46,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             case uploadObjectStateSetter:
                 processor = new uploadObjectStateSetterProcessor();
                 break;
+            case uploadObjectDefaultMaterialSetter:
+                processor = new uploadObjectDefaultMaterialSetterProcessor();
+                break;
+
             default:
                 // console print to say that the module type is not recognised
                 CoreLog("Module type not recognised");
