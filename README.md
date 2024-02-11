@@ -43,6 +43,9 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
+      <a href='#⚠️-warnings-⚠️'>Warnings</a>
+    </li>
+    <li>
       <a href="#about-the-project">About The Project</a>
     </li>
     <li>
@@ -52,7 +55,6 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -61,6 +63,15 @@
     <li><a href="#project-tools">Project tools</a></li>
   </ol>
 </details>
+
+<!-- WARNINGS -->
+
+## ⚠️ Warnings ⚠️
+
+Currently this software is only compatible with versions of VRC Fury older than 1.744, as that version introduced
+a breaking change in the components and this will need new stubs creating for them before they can be supported
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ABOUT THE PROJECT -->
 
@@ -117,11 +128,19 @@ or find a tool that can do them.
 ## Roadmap
 
 - [x] VRCExpressionParameters Converter and Stub
+
 - [x] VRCExpressionMenu Converter and Stub
+
 - [x] PhysBone Stubber - (just stubs them NOT a converter)
-- [ ] VRCFury stubs
+
+- [x] VRCFury stubs - pre version 1.744
+
+- [ ] VRCFury stubs - version and on 1.744
+
 - [ ] VRCFury to CVRFury data porter
+
 - [ ] CVRFury VRCStub to VRC Converter (potential)
+
 - [ ] More to come ......
 
 See the [open issues](https://github.com/NovaVoidHowl/CVRFury/issues) for a full list of proposed features (and known issues).
