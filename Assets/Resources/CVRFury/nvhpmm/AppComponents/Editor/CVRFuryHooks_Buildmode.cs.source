@@ -1,4 +1,4 @@
-// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_HOOK_BUILD", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
+// { "version": "0.0.6" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_HOOK_BUILD", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using System;
