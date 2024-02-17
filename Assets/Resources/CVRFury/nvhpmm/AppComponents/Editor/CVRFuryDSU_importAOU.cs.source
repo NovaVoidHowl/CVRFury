@@ -1,4 +1,4 @@
-// { "version": "0.3.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.6.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -262,6 +262,155 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     // add the uploadObjectDefaultMaterialSetter module to the modules list in the DSU
                     modules.Add(uploadObjectDefaultMaterialSetter);
+
+                    break;
+
+                  //// case to handle BlendShapeAction data import
+                  // related files: StateAction.cs - 46 to 53
+                  case BlendShapeAction blendShapeAction:
+                    // debug outputs to console
+                    // CoreLog(blendShapeAction.GetType());
+                    // CoreLog(blendShapeAction.blendShape);
+                    // CoreLog(blendShapeAction.blendShapeValue);
+                    // CoreLog(blendShapeAction.renderer);
+                    // CoreLog(blendShapeAction.allRenderers);
+
+                    // check to see if the DSU already has an uploadObjectDefaultBlendShapeSetter module
+                    if (modules.Any(module => module.GetType().Name == "uploadObjectDefaultBlendShapeSetter"))
+                    {
+
+                      List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+                      // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+                      // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectDefaultBlendShapeSetter"))
+                      {
+                        var uploadObjectDefaultBlendShapeSetterModuleInstance = module as uploadObjectDefaultBlendShapeSetter;
+                        if (uploadObjectDefaultBlendShapeSetterModuleInstance.importedFromVRCFury && !uploadObjectDefaultBlendShapeSetterModuleInstance.justImported)
+                        {
+                          modulesToRemove.Add(module);
+                        }
+                      }
+
+                      // process the remove list
+                      foreach (var module in modulesToRemove)
+                      {
+                        modules.Remove(module);
+                      }
+                    }
+
+                    // ok so now we can be sure we only have stuff the user added after the fact
+                    // (don't want to remove user added data)
+
+                    // now we can add the new data
+
+                    // get the blendShapeAction renderer
+                    Renderer blendShapeRenderer = blendShapeAction.renderer;
+
+                    // get the blendShapeAction blendShape
+                    string blendShape = blendShapeAction.blendShape;
+
+                    // get the blendShapeAction blendShapeValue
+                    float blendShapeValue = blendShapeAction.blendShapeValue;
+
+                    // get the blendShapeAction allRenderers
+                    bool allRenderers = blendShapeAction.allRenderers;
+
+                    // create a new uploadObjectDefaultBlendShapeSetter module
+                    uploadObjectDefaultBlendShapeSetter uploadObjectDefaultBlendShapeSetter = new uploadObjectDefaultBlendShapeSetter();
+
+                    // update the module's version info
+                    uploadObjectDefaultBlendShapeSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    uploadObjectDefaultBlendShapeSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    uploadObjectDefaultBlendShapeSetter.CVRCCKVersion = ParseCCKVersion();
+
+                    // set the blendShape property of the uploadObjectDefaultBlendShapeSetter module to the blendShape from the action
+                    uploadObjectDefaultBlendShapeSetter.blendShape = blendShape;
+
+                    // set the blendShapeValue property of the uploadObjectDefaultBlendShapeSetter module to the blendShapeValue from the action
+                    uploadObjectDefaultBlendShapeSetter.blendShapeValue = blendShapeValue;
+
+                    // set the renderer property of the uploadObjectDefaultBlendShapeSetter module to the blendShapeRenderer from the action
+                    uploadObjectDefaultBlendShapeSetter.renderer = blendShapeRenderer;
+
+                    // set the allRenderers property of the uploadObjectDefaultBlendShapeSetter module to the allRenderers from the action
+                    uploadObjectDefaultBlendShapeSetter.allRenderers = allRenderers;
+
+                    // set the importedFromVRCFury bool, and the justImported bool to true
+                    uploadObjectDefaultBlendShapeSetter.importedFromVRCFury = true;
+                    uploadObjectDefaultBlendShapeSetter.justImported = true;
+
+                    // add the uploadObjectDefaultBlendShapeSetter module to the modules list in the DSU
+                    modules.Add(uploadObjectDefaultBlendShapeSetter);
+
+                    break;
+
+                  //// case to handle SpsOnAction data import
+                  /// related files: StateAction.cs - 63 to 67
+                  // this is one of the explicitly unsupported action types
+                  // send a warning to the console about it
+                  case SpsOnAction spsOnAction:
+                    // message to send to the console, informing the user that this action type is not yet supported
+                    string message = "The action type " + spsOnAction.GetType() + " is not supported";
+
+                    break;
+
+                  //// case to handle FxFloatAction data import
+                  /// related files: StateAction.cs - 69 to 74
+                  case FxFloatAction fxFloatAction:
+                    // debug outputs to console
+                    // CoreLog(fxFloatAction.GetType());
+                    // CoreLog(fxFloatAction.name);
+                    // CoreLog(fxFloatAction.value);
+                    // check to see if the DSU already has an uploadObjectFxFloatSetter module
+                    if (modules.Any(module => module.GetType().Name == "uploadObjectFxFloatSetter"))
+                    {
+
+                      List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+                      // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+                      // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectFxFloatSetter"))
+                      {
+                        var uploadObjectFxFloatSetterModuleInstance = module as uploadObjectFxFloatSetter;
+                        if (uploadObjectFxFloatSetterModuleInstance.importedFromVRCFury && !uploadObjectFxFloatSetterModuleInstance.justImported)
+                        {
+                          modulesToRemove.Add(module);
+                        }
+                      }
+
+                      // process the remove list
+                      foreach (var module in modulesToRemove)
+                      {
+                        modules.Remove(module);
+                      }
+                    }
+
+                    // ok so now we can be sure we only have stuff the user added after the fact
+                    // (don't want to remove user added data)
+
+                    // now we can add the new data
+
+                    // create a new uploadObjectFxFloatSetter module
+                    uploadObjectFxFloatSetter uploadObjectFxFloatSetter = new uploadObjectFxFloatSetter();
+
+                    // update the module's version info
+                    uploadObjectFxFloatSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    uploadObjectFxFloatSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    uploadObjectFxFloatSetter.CVRCCKVersion = ParseCCKVersion();
+
+                    // set the fxName property of the uploadObjectFxFloatSetter module to the name from the action
+                    uploadObjectFxFloatSetter.fxFloatName = fxFloatAction.name;
+
+                    // set the fxValue property of the uploadObjectFxFloatSetter module to the value from the action
+                    uploadObjectFxFloatSetter.fxFloatValue = fxFloatAction.value;
+
+                    // set the importedFromVRCFury bool, and the justImported bool to true
+                    uploadObjectFxFloatSetter.importedFromVRCFury = true;
+                    uploadObjectFxFloatSetter.justImported = true;
+
+                    // add the uploadObjectFxFloatSetter module to the modules list in the DSU
+                    modules.Add(uploadObjectFxFloatSetter);
 
                     break;
 

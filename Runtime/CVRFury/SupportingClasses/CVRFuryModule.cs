@@ -133,6 +133,28 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
+  public class uploadObjectDefaultBlendShapeSetter : uploadStateSetter
+  {
+    public uploadObjectDefaultBlendShapeSetter()
+      : base("uploadObjectDefaultBlendShapeSetter") { }
+
+    public string blendShape;
+    public float blendShapeValue = 100;
+    public Renderer renderer;
+    public bool allRenderers = true;
+  }
+
+  [Serializable]
+  public class uploadObjectFxFloatSetter : uploadStateSetter
+  {
+    public uploadObjectFxFloatSetter()
+      : base("uploadObjectFxFloatSetter") { }
+
+    public string fxFloatName;
+    public float fxFloatValue;
+  }
+
+  [Serializable]
   public class CVRFuryPrefabDependency : CVRFuryModule
   {
     public CVRFuryPrefabDependency()
