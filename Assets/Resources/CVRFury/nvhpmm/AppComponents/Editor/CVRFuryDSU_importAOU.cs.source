@@ -1,4 +1,4 @@
-// { "version": "0.8.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.9.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -529,6 +529,60 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     break;
 
+                  //// case to handle BlockVisemesAction data import
+                  /// related files: StateAction.cs - 148 to 149
+                  //
+                  case BlockVisemesAction blockVisemesAction:
+                    // debug outputs to console
+                    // CoreLog(blockVisemesAction.GetType());
+
+                    // check to see if the DSU already has an uploadBlockVisemesSetter module
+                    if (modules.Any(module => module.GetType().Name == "uploadBlockVisemesSetter"))
+                    {
+
+                      List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+                      // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+                      // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadBlockVisemesSetter"))
+                      {
+                        var uploadBlockVisemesSetterModuleInstance = module as uploadBlockVisemesSetter;
+                        if (uploadBlockVisemesSetterModuleInstance.importedFromVRCFury && !uploadBlockVisemesSetterModuleInstance.justImported)
+                        {
+                          modulesToRemove.Add(module);
+                        }
+                      }
+
+                      // process the remove list
+                      foreach (var module in modulesToRemove)
+                      {
+                        modules.Remove(module);
+                      }
+                    }
+                    // ok so now we can be sure we only have stuff the user added after the fact
+                    // (don't want to remove user added data)
+
+                    // now we can add the new data
+
+                    // create a new uploadBlockVisemesSetter module
+                    uploadBlockVisemesSetter uploadBlockVisemesSetter = new uploadBlockVisemesSetter();
+
+                    // update the module's version info
+                    uploadBlockVisemesSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    uploadBlockVisemesSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    uploadBlockVisemesSetter.CVRCCKVersion = ParseCCKVersion();
+
+                    // set the blockVisemes property of the uploadBlockVisemesSetter module to the blockVisemes from the action
+                    uploadBlockVisemesSetter.blockVisemes = true;
+
+                    // set the importedFromVRCFury bool, and the justImported bool to true
+                    uploadBlockVisemesSetter.importedFromVRCFury = true;
+                    uploadBlockVisemesSetter.justImported = true;
+
+                    // add the uploadBlockVisemesSetter module to the modules list in the DSU
+                    modules.Add(uploadBlockVisemesSetter);
+
+                    break;
 
                   // more cases to be added here
                   //

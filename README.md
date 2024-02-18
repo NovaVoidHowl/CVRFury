@@ -145,7 +145,7 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |     FlipbookAction     |           🚫           |         🚫         | Flagged as obsolete by VRCFury        |
 |      ScaleAction       |          ✔️           |         ❌         |                                       |
 |  BlockBlinkingAction   |          ✔️           |         ❌         |                                       |
-|   BlockVisemesAction   |           ❔           |         ❔         |                                       |
+|   BlockVisemesAction   |          ✔️           |         ❌         |                                       |
 |  ResetPhysboneAction   |           🚫           |         🚫         | No Physbones in CVR, hence not needed |
 | FlipBookBuilderAction  |           ❔           |         ❔         |                                       |
 |                        |                       |                   |                                       |

@@ -174,6 +174,15 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
+  public class uploadBlockVisemesSetter : uploadStateSetter
+  {
+    public uploadBlockVisemesSetter()
+      : base("uploadBlockVisemesSetter") { }
+
+    public bool blockVisemes;
+  }
+
+  [Serializable]
   public class CVRFuryPrefabDependency : CVRFuryModule
   {
     public CVRFuryPrefabDependency()
