@@ -1,4 +1,4 @@
-// { "version": "0.9.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.9.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -138,18 +138,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // CoreLog(objectToggleAction.obj);
                     // CoreLog(objectToggleAction.mode);
 
-                    // check to see if the DSU already has an uploadObjectStateSetter module
-                    if (modules.Any(module => module.GetType().Name == "uploadObjectStateSetter"))
+                    // check to see if the DSU already has an objectStateSetter module
+                    if (modules.Any(module => module.GetType().Name == "objectStateSetter"))
                     {
 
                       List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
                       // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
                       // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
-                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectStateSetter"))
+                      foreach (var module in modules.Where(module => module.GetType().Name == "objectStateSetter"))
                       {
-                        var uploadObjectStateSetterModuleInstance = module as uploadObjectStateSetter;
-                        if (uploadObjectStateSetterModuleInstance.importedFromVRCFury && !uploadObjectStateSetterModuleInstance.justImported)
+                        var objectStateSetterModuleInstance = module as objectStateSetter;
+                        if (objectStateSetterModuleInstance.importedFromVRCFury && !objectStateSetterModuleInstance.justImported)
                         {
                           modulesToRemove.Add(module);
                         }
@@ -166,12 +166,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // (don't want to remove user added data)
 
                     // now we can add the new data
-                    uploadObjectStateSetter uploadObjectStateSetter = new uploadObjectStateSetter();
+                    objectStateSetter objectStateSetter = new objectStateSetter();
 
                     // update the module's version info
-                    uploadObjectStateSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                    uploadObjectStateSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                    uploadObjectStateSetter.CVRCCKVersion = ParseCCKVersion();
+                    objectStateSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    objectStateSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    objectStateSetter.CVRCCKVersion = ParseCCKVersion();
 
                     // create a new objectStatePair
                     objectStatePair newObjectStatePair = new objectStatePair();
@@ -182,15 +182,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // set the stateToSet property of the new objectStatePair to the mode of the action
                     newObjectStatePair.stateToSet = objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn ? objectStatePair.objectState.enabled : objectStatePair.objectState.disabled;
 
-                    // add the new objectStatePair to the objectStatePairs array in the uploadObjectStateSetter module
-                    uploadObjectStateSetter.objectStatePairs = new objectStatePair[] { newObjectStatePair };
+                    // add the new objectStatePair to the objectStatePairs array in the objectStateSetter module
+                    objectStateSetter.objectStatePairs = new objectStatePair[] { newObjectStatePair };
 
                     // set the importedFromVRCFury bool, and the justImported bool to true
-                    uploadObjectStateSetter.importedFromVRCFury = true;
-                    uploadObjectStateSetter.justImported = true;
+                    objectStateSetter.importedFromVRCFury = true;
+                    objectStateSetter.justImported = true;
 
-                    // add the uploadObjectStateSetter module to the modules list in the DSU
-                    modules.Add(uploadObjectStateSetter);
+                    // add the objectStateSetter module to the modules list in the DSU
+                    modules.Add(objectStateSetter);
 
                     break;
 
@@ -203,18 +203,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // CoreLog(materialAction.materialIndex);
                     // CoreLog(materialAction.mat);
 
-                    // check to see if the DSU already has an uploadObjectDefaultMaterialSetter module
-                    if (modules.Any(module => module.GetType().Name == "uploadObjectDefaultMaterialSetter"))
+                    // check to see if the DSU already has an objectDefaultMaterialSetter module
+                    if (modules.Any(module => module.GetType().Name == "objectDefaultMaterialSetter"))
                     {
 
                       List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
                       // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
                       // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
-                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectDefaultMaterialSetter"))
+                      foreach (var module in modules.Where(module => module.GetType().Name == "objectDefaultMaterialSetter"))
                       {
-                        var uploadObjectDefaultMaterialSetterModuleInstance = module as uploadObjectDefaultMaterialSetter;
-                        if (uploadObjectDefaultMaterialSetterModuleInstance.importedFromVRCFury && !uploadObjectDefaultMaterialSetterModuleInstance.justImported)
+                        var objectDefaultMaterialSetterModuleInstance = module as objectDefaultMaterialSetter;
+                        if (objectDefaultMaterialSetterModuleInstance.importedFromVRCFury && !objectDefaultMaterialSetterModuleInstance.justImported)
                         {
                           modulesToRemove.Add(module);
                         }
@@ -239,29 +239,29 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // get the material
                     Material material = materialAction.mat.objRef as Material;
 
-                    // create a new uploadObjectDefaultMaterialSetter module
-                    uploadObjectDefaultMaterialSetter uploadObjectDefaultMaterialSetter = new uploadObjectDefaultMaterialSetter();
+                    // create a new objectDefaultMaterialSetter module
+                    objectDefaultMaterialSetter objectDefaultMaterialSetter = new objectDefaultMaterialSetter();
 
                     // update the module's version info
-                    uploadObjectDefaultMaterialSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                    uploadObjectDefaultMaterialSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                    uploadObjectDefaultMaterialSetter.CVRCCKVersion = ParseCCKVersion();
+                    objectDefaultMaterialSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    objectDefaultMaterialSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    objectDefaultMaterialSetter.CVRCCKVersion = ParseCCKVersion();
 
-                    // set the defaultMaterial property of the uploadObjectDefaultMaterialSetter module to the material from the action
-                    uploadObjectDefaultMaterialSetter.defaultMaterial = material;
+                    // set the defaultMaterial property of the objectDefaultMaterialSetter module to the material from the action
+                    objectDefaultMaterialSetter.defaultMaterial = material;
 
-                    // set the renderer property of the uploadObjectDefaultMaterialSetter module to the renderer from the action
-                    uploadObjectDefaultMaterialSetter.renderer = renderer;
+                    // set the renderer property of the objectDefaultMaterialSetter module to the renderer from the action
+                    objectDefaultMaterialSetter.renderer = renderer;
 
-                    // set the rendererIndex property of the uploadObjectDefaultMaterialSetter module to the rendererIndex from the action
-                    uploadObjectDefaultMaterialSetter.rendererIndex = rendererIndex;
+                    // set the rendererIndex property of the objectDefaultMaterialSetter module to the rendererIndex from the action
+                    objectDefaultMaterialSetter.rendererIndex = rendererIndex;
 
                     // set the importedFromVRCFury bool, and the justImported bool to true
-                    uploadObjectDefaultMaterialSetter.importedFromVRCFury = true;
-                    uploadObjectDefaultMaterialSetter.justImported = true;
+                    objectDefaultMaterialSetter.importedFromVRCFury = true;
+                    objectDefaultMaterialSetter.justImported = true;
 
-                    // add the uploadObjectDefaultMaterialSetter module to the modules list in the DSU
-                    modules.Add(uploadObjectDefaultMaterialSetter);
+                    // add the objectDefaultMaterialSetter module to the modules list in the DSU
+                    modules.Add(objectDefaultMaterialSetter);
 
                     break;
 
@@ -275,18 +275,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // CoreLog(blendShapeAction.renderer);
                     // CoreLog(blendShapeAction.allRenderers);
 
-                    // check to see if the DSU already has an uploadObjectDefaultBlendShapeSetter module
-                    if (modules.Any(module => module.GetType().Name == "uploadObjectDefaultBlendShapeSetter"))
+                    // check to see if the DSU already has an objectDefaultBlendShapeSetter module
+                    if (modules.Any(module => module.GetType().Name == "objectDefaultBlendShapeSetter"))
                     {
 
                       List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
                       // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
                       // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
-                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectDefaultBlendShapeSetter"))
+                      foreach (var module in modules.Where(module => module.GetType().Name == "objectDefaultBlendShapeSetter"))
                       {
-                        var uploadObjectDefaultBlendShapeSetterModuleInstance = module as uploadObjectDefaultBlendShapeSetter;
-                        if (uploadObjectDefaultBlendShapeSetterModuleInstance.importedFromVRCFury && !uploadObjectDefaultBlendShapeSetterModuleInstance.justImported)
+                        var objectDefaultBlendShapeSetterModuleInstance = module as objectDefaultBlendShapeSetter;
+                        if (objectDefaultBlendShapeSetterModuleInstance.importedFromVRCFury && !objectDefaultBlendShapeSetterModuleInstance.justImported)
                         {
                           modulesToRemove.Add(module);
                         }
@@ -316,32 +316,32 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // get the blendShapeAction allRenderers
                     bool allRenderers = blendShapeAction.allRenderers;
 
-                    // create a new uploadObjectDefaultBlendShapeSetter module
-                    uploadObjectDefaultBlendShapeSetter uploadObjectDefaultBlendShapeSetter = new uploadObjectDefaultBlendShapeSetter();
+                    // create a new objectDefaultBlendShapeSetter module
+                    objectDefaultBlendShapeSetter objectDefaultBlendShapeSetter = new objectDefaultBlendShapeSetter();
 
                     // update the module's version info
-                    uploadObjectDefaultBlendShapeSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                    uploadObjectDefaultBlendShapeSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                    uploadObjectDefaultBlendShapeSetter.CVRCCKVersion = ParseCCKVersion();
+                    objectDefaultBlendShapeSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    objectDefaultBlendShapeSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    objectDefaultBlendShapeSetter.CVRCCKVersion = ParseCCKVersion();
 
-                    // set the blendShape property of the uploadObjectDefaultBlendShapeSetter module to the blendShape from the action
-                    uploadObjectDefaultBlendShapeSetter.blendShape = blendShape;
+                    // set the blendShape property of the objectDefaultBlendShapeSetter module to the blendShape from the action
+                    objectDefaultBlendShapeSetter.blendShape = blendShape;
 
-                    // set the blendShapeValue property of the uploadObjectDefaultBlendShapeSetter module to the blendShapeValue from the action
-                    uploadObjectDefaultBlendShapeSetter.blendShapeValue = blendShapeValue;
+                    // set the blendShapeValue property of the objectDefaultBlendShapeSetter module to the blendShapeValue from the action
+                    objectDefaultBlendShapeSetter.blendShapeValue = blendShapeValue;
 
-                    // set the renderer property of the uploadObjectDefaultBlendShapeSetter module to the blendShapeRenderer from the action
-                    uploadObjectDefaultBlendShapeSetter.renderer = blendShapeRenderer;
+                    // set the renderer property of the objectDefaultBlendShapeSetter module to the blendShapeRenderer from the action
+                    objectDefaultBlendShapeSetter.renderer = blendShapeRenderer;
 
-                    // set the allRenderers property of the uploadObjectDefaultBlendShapeSetter module to the allRenderers from the action
-                    uploadObjectDefaultBlendShapeSetter.allRenderers = allRenderers;
+                    // set the allRenderers property of the objectDefaultBlendShapeSetter module to the allRenderers from the action
+                    objectDefaultBlendShapeSetter.allRenderers = allRenderers;
 
                     // set the importedFromVRCFury bool, and the justImported bool to true
-                    uploadObjectDefaultBlendShapeSetter.importedFromVRCFury = true;
-                    uploadObjectDefaultBlendShapeSetter.justImported = true;
+                    objectDefaultBlendShapeSetter.importedFromVRCFury = true;
+                    objectDefaultBlendShapeSetter.justImported = true;
 
-                    // add the uploadObjectDefaultBlendShapeSetter module to the modules list in the DSU
-                    modules.Add(uploadObjectDefaultBlendShapeSetter);
+                    // add the objectDefaultBlendShapeSetter module to the modules list in the DSU
+                    modules.Add(objectDefaultBlendShapeSetter);
 
                     break;
 
@@ -362,18 +362,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // CoreLog(fxFloatAction.GetType());
                     // CoreLog(fxFloatAction.name);
                     // CoreLog(fxFloatAction.value);
-                    // check to see if the DSU already has an uploadObjectFxFloatSetter module
-                    if (modules.Any(module => module.GetType().Name == "uploadObjectFxFloatSetter"))
+                    // check to see if the DSU already has an objectFxFloatSetter module
+                    if (modules.Any(module => module.GetType().Name == "objectFxFloatSetter"))
                     {
 
                       List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
                       // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
                       // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
-                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectFxFloatSetter"))
+                      foreach (var module in modules.Where(module => module.GetType().Name == "objectFxFloatSetter"))
                       {
-                        var uploadObjectFxFloatSetterModuleInstance = module as uploadObjectFxFloatSetter;
-                        if (uploadObjectFxFloatSetterModuleInstance.importedFromVRCFury && !uploadObjectFxFloatSetterModuleInstance.justImported)
+                        var objectFxFloatSetterModuleInstance = module as objectFxFloatSetter;
+                        if (objectFxFloatSetterModuleInstance.importedFromVRCFury && !objectFxFloatSetterModuleInstance.justImported)
                         {
                           modulesToRemove.Add(module);
                         }
@@ -391,26 +391,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     // now we can add the new data
 
-                    // create a new uploadObjectFxFloatSetter module
-                    uploadObjectFxFloatSetter uploadObjectFxFloatSetter = new uploadObjectFxFloatSetter();
+                    // create a new objectFxFloatSetter module
+                    objectFxFloatSetter objectFxFloatSetter = new objectFxFloatSetter();
 
                     // update the module's version info
-                    uploadObjectFxFloatSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                    uploadObjectFxFloatSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                    uploadObjectFxFloatSetter.CVRCCKVersion = ParseCCKVersion();
+                    objectFxFloatSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    objectFxFloatSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    objectFxFloatSetter.CVRCCKVersion = ParseCCKVersion();
 
-                    // set the fxName property of the uploadObjectFxFloatSetter module to the name from the action
-                    uploadObjectFxFloatSetter.fxFloatName = fxFloatAction.name;
+                    // set the fxName property of the objectFxFloatSetter module to the name from the action
+                    objectFxFloatSetter.fxFloatName = fxFloatAction.name;
 
-                    // set the fxValue property of the uploadObjectFxFloatSetter module to the value from the action
-                    uploadObjectFxFloatSetter.fxFloatValue = fxFloatAction.value;
+                    // set the fxValue property of the objectFxFloatSetter module to the value from the action
+                    objectFxFloatSetter.fxFloatValue = fxFloatAction.value;
 
                     // set the importedFromVRCFury bool, and the justImported bool to true
-                    uploadObjectFxFloatSetter.importedFromVRCFury = true;
-                    uploadObjectFxFloatSetter.justImported = true;
+                    objectFxFloatSetter.importedFromVRCFury = true;
+                    objectFxFloatSetter.justImported = true;
 
-                    // add the uploadObjectFxFloatSetter module to the modules list in the DSU
-                    modules.Add(uploadObjectFxFloatSetter);
+                    // add the objectFxFloatSetter module to the modules list in the DSU
+                    modules.Add(objectFxFloatSetter);
 
                     break;
 
@@ -423,18 +423,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // CoreLog(scaleAction.obj);
                     // CoreLog(scaleAction.scale);
 
-                    // check to see if the DSU already has an uploadObjectScaleSetter module
-                    if (modules.Any(module => module.GetType().Name == "uploadObjectScaleSetter"))
+                    // check to see if the DSU already has an objectScaleSetter module
+                    if (modules.Any(module => module.GetType().Name == "objectScaleSetter"))
                     {
 
                       List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
                       // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
                       // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
-                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectScaleSetter"))
+                      foreach (var module in modules.Where(module => module.GetType().Name == "objectScaleSetter"))
                       {
-                        var uploadObjectScaleSetterModuleInstance = module as uploadObjectScaleSetter;
-                        if (uploadObjectScaleSetterModuleInstance.importedFromVRCFury && !uploadObjectScaleSetterModuleInstance.justImported)
+                        var objectScaleSetterModuleInstance = module as objectScaleSetter;
+                        if (objectScaleSetterModuleInstance.importedFromVRCFury && !objectScaleSetterModuleInstance.justImported)
                         {
                           modulesToRemove.Add(module);
                         }
@@ -451,26 +451,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     // now we can add the new data
 
-                    // create a new uploadObjectScaleSetter module
-                    uploadObjectScaleSetter uploadObjectScaleSetter = new uploadObjectScaleSetter();
+                    // create a new objectScaleSetter module
+                    objectScaleSetter objectScaleSetter = new objectScaleSetter();
 
                     // update the module's version info
-                    uploadObjectScaleSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                    uploadObjectScaleSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                    uploadObjectScaleSetter.CVRCCKVersion = ParseCCKVersion();
+                    objectScaleSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    objectScaleSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    objectScaleSetter.CVRCCKVersion = ParseCCKVersion();
 
-                    // set the objectToSetScaleOn property of the uploadObjectScaleSetter module to the obj from the action
-                    uploadObjectScaleSetter.objectToSetScaleOn = scaleAction.obj;
+                    // set the objectToSetScaleOn property of the objectScaleSetter module to the obj from the action
+                    objectScaleSetter.objectToSetScaleOn = scaleAction.obj;
 
-                    // set the scaleToBeSet property of the uploadObjectScaleSetter module to the scale from the action
-                    uploadObjectScaleSetter.scaleToBeSet = scaleAction.scale;
+                    // set the scaleToBeSet property of the objectScaleSetter module to the scale from the action
+                    objectScaleSetter.scaleToBeSet = scaleAction.scale;
 
                     // set the importedFromVRCFury bool, and the justImported bool to true
-                    uploadObjectScaleSetter.importedFromVRCFury = true;
-                    uploadObjectScaleSetter.justImported = true;
+                    objectScaleSetter.importedFromVRCFury = true;
+                    objectScaleSetter.justImported = true;
 
-                    // add the uploadObjectScaleSetter module to the modules list in the DSU
-                    modules.Add(uploadObjectScaleSetter);
+                    // add the objectScaleSetter module to the modules list in the DSU
+                    modules.Add(objectScaleSetter);
 
                     break;
 
@@ -481,18 +481,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // debug outputs to console
                     // CoreLog(blockBlinkingAction.GetType());
 
-                    // check to see if the DSU already has an uploadBlockBlinkSetter module
-                    if (modules.Any(module => module.GetType().Name == "uploadBlockBlinkSetter"))
+                    // check to see if the DSU already has an blockBlinkSetter module
+                    if (modules.Any(module => module.GetType().Name == "blockBlinkSetter"))
                     {
 
                       List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
                       // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
                       // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
-                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadBlockBlinkSetter"))
+                      foreach (var module in modules.Where(module => module.GetType().Name == "blockBlinkSetter"))
                       {
-                        var uploadBlockBlinkSetterModuleInstance = module as uploadBlockBlinkSetter;
-                        if (uploadBlockBlinkSetterModuleInstance.importedFromVRCFury && !uploadBlockBlinkSetterModuleInstance.justImported)
+                        var blockBlinkSetterModuleInstance = module as blockBlinkSetter;
+                        if (blockBlinkSetterModuleInstance.importedFromVRCFury && !blockBlinkSetterModuleInstance.justImported)
                         {
                           modulesToRemove.Add(module);
                         }
@@ -509,23 +509,23 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     // now we can add the new data
 
-                    // create a new uploadBlockBlinkSetter module
-                    uploadBlockBlinkSetter uploadBlockBlinkSetter = new uploadBlockBlinkSetter();
+                    // create a new blockBlinkSetter module
+                    blockBlinkSetter blockBlinkSetter = new blockBlinkSetter();
 
                     // update the module's version info
-                    uploadBlockBlinkSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                    uploadBlockBlinkSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                    uploadBlockBlinkSetter.CVRCCKVersion = ParseCCKVersion();
+                    blockBlinkSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    blockBlinkSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    blockBlinkSetter.CVRCCKVersion = ParseCCKVersion();
 
-                    // set the blockBlink property of the uploadBlockBlinkSetter module to the blockBlink from the action
-                    uploadBlockBlinkSetter.blockBlink = true;
+                    // set the blockBlink property of the blockBlinkSetter module to the blockBlink from the action
+                    blockBlinkSetter.blockBlink = true;
 
                     // set the importedFromVRCFury bool, and the justImported bool to true
-                    uploadBlockBlinkSetter.importedFromVRCFury = true;
-                    uploadBlockBlinkSetter.justImported = true;
+                    blockBlinkSetter.importedFromVRCFury = true;
+                    blockBlinkSetter.justImported = true;
 
-                    // add the uploadBlockBlinkSetter module to the modules list in the DSU
-                    modules.Add(uploadBlockBlinkSetter);
+                    // add the blockBlinkSetter module to the modules list in the DSU
+                    modules.Add(blockBlinkSetter);
 
                     break;
 
@@ -536,18 +536,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // debug outputs to console
                     // CoreLog(blockVisemesAction.GetType());
 
-                    // check to see if the DSU already has an uploadBlockVisemesSetter module
-                    if (modules.Any(module => module.GetType().Name == "uploadBlockVisemesSetter"))
+                    // check to see if the DSU already has an blockVisemesSetter module
+                    if (modules.Any(module => module.GetType().Name == "blockVisemesSetter"))
                     {
 
                       List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
                       // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
                       // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
-                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadBlockVisemesSetter"))
+                      foreach (var module in modules.Where(module => module.GetType().Name == "blockVisemesSetter"))
                       {
-                        var uploadBlockVisemesSetterModuleInstance = module as uploadBlockVisemesSetter;
-                        if (uploadBlockVisemesSetterModuleInstance.importedFromVRCFury && !uploadBlockVisemesSetterModuleInstance.justImported)
+                        var blockVisemesSetterModuleInstance = module as blockVisemesSetter;
+                        if (blockVisemesSetterModuleInstance.importedFromVRCFury && !blockVisemesSetterModuleInstance.justImported)
                         {
                           modulesToRemove.Add(module);
                         }
@@ -564,23 +564,23 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     // now we can add the new data
 
-                    // create a new uploadBlockVisemesSetter module
-                    uploadBlockVisemesSetter uploadBlockVisemesSetter = new uploadBlockVisemesSetter();
+                    // create a new blockVisemesSetter module
+                    blockVisemesSetter blockVisemesSetter = new blockVisemesSetter();
 
                     // update the module's version info
-                    uploadBlockVisemesSetter.CVRFuryVersion = ParseCVRFuryVersion();
-                    uploadBlockVisemesSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
-                    uploadBlockVisemesSetter.CVRCCKVersion = ParseCCKVersion();
+                    blockVisemesSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    blockVisemesSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    blockVisemesSetter.CVRCCKVersion = ParseCCKVersion();
 
-                    // set the blockVisemes property of the uploadBlockVisemesSetter module to the blockVisemes from the action
-                    uploadBlockVisemesSetter.blockVisemes = true;
+                    // set the blockVisemes property of the blockVisemesSetter module to the blockVisemes from the action
+                    blockVisemesSetter.blockVisemes = true;
 
                     // set the importedFromVRCFury bool, and the justImported bool to true
-                    uploadBlockVisemesSetter.importedFromVRCFury = true;
-                    uploadBlockVisemesSetter.justImported = true;
+                    blockVisemesSetter.importedFromVRCFury = true;
+                    blockVisemesSetter.justImported = true;
 
-                    // add the uploadBlockVisemesSetter module to the modules list in the DSU
-                    modules.Add(uploadBlockVisemesSetter);
+                    // add the blockVisemesSetter module to the modules list in the DSU
+                    modules.Add(blockVisemesSetter);
 
                     break;
 
@@ -615,11 +615,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               {
                 switch (module)
                 {
-                  case uploadObjectStateSetter uploadObjectStateSetter:
-                    uploadObjectStateSetter.justImported = false;
+                  case objectStateSetter objectStateSetter:
+                    objectStateSetter.justImported = false;
                     break;
-                  case uploadObjectDefaultMaterialSetter uploadObjectDefaultMaterialSetter:
-                    uploadObjectDefaultMaterialSetter.justImported = false;
+                  case objectDefaultMaterialSetter objectDefaultMaterialSetter:
+                    objectDefaultMaterialSetter.justImported = false;
                     break;
                 }
               }

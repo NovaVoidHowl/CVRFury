@@ -101,26 +101,26 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
-  public abstract class uploadStateSetter : CVRFuryModule
+  public abstract class StateSetter : CVRFuryModule
   {
-    public uploadStateSetter(string moduleType)
+    public StateSetter(string moduleType)
       : base(moduleType) { }
   }
 
   [Serializable]
-  public class uploadObjectStateSetter : uploadStateSetter
+  public class objectStateSetter : StateSetter
   {
-    public uploadObjectStateSetter()
-      : base("uploadObjectStateSetter") { }
+    public objectStateSetter()
+      : base("objectStateSetter") { }
 
     public objectStatePair[] objectStatePairs;
   }
 
   [Serializable]
-  public class uploadObjectDefaultMaterialSetter : uploadStateSetter
+  public class objectDefaultMaterialSetter : StateSetter
   {
-    public uploadObjectDefaultMaterialSetter()
-      : base("uploadObjectDefaultMaterialSetter") { }
+    public objectDefaultMaterialSetter()
+      : base("objectDefaultMaterialSetter") { }
 
     // material to set as default
     public Material defaultMaterial;
@@ -133,10 +133,10 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
-  public class uploadObjectDefaultBlendShapeSetter : uploadStateSetter
+  public class objectDefaultBlendShapeSetter : StateSetter
   {
-    public uploadObjectDefaultBlendShapeSetter()
-      : base("uploadObjectDefaultBlendShapeSetter") { }
+    public objectDefaultBlendShapeSetter()
+      : base("objectDefaultBlendShapeSetter") { }
 
     public string blendShape;
     public float blendShapeValue = 100;
@@ -145,39 +145,39 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
-  public class uploadObjectFxFloatSetter : uploadStateSetter
+  public class objectFxFloatSetter : StateSetter
   {
-    public uploadObjectFxFloatSetter()
-      : base("uploadObjectFxFloatSetter") { }
+    public objectFxFloatSetter()
+      : base("objectFxFloatSetter") { }
 
     public string fxFloatName;
     public float fxFloatValue;
   }
 
   [Serializable]
-  public class uploadObjectScaleSetter : uploadStateSetter
+  public class objectScaleSetter : StateSetter
   {
-    public uploadObjectScaleSetter()
-      : base("uploadObjectScaleSetter") { }
+    public objectScaleSetter()
+      : base("objectScaleSetter") { }
 
     public GameObject objectToSetScaleOn;
     public float scaleToBeSet;
   }
 
   [Serializable]
-  public class uploadBlockBlinkSetter : uploadStateSetter
+  public class blockBlinkSetter : StateSetter
   {
-    public uploadBlockBlinkSetter()
-      : base("uploadBlockBlinkSetter") { }
+    public blockBlinkSetter()
+      : base("blockBlinkSetter") { }
 
     public bool blockBlink;
   }
 
   [Serializable]
-  public class uploadBlockVisemesSetter : uploadStateSetter
+  public class blockVisemesSetter : StateSetter
   {
-    public uploadBlockVisemesSetter()
-      : base("uploadBlockVisemesSetter") { }
+    public blockVisemesSetter()
+      : base("blockVisemesSetter") { }
 
     public bool blockVisemes;
   }

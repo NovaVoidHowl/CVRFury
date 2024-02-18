@@ -1,4 +1,4 @@
-// { "version": "0.8.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.8.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -43,11 +43,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // case statement to process the module based on its type
         switch (module)
         {
-            case uploadObjectStateSetter:
-                processor = new uploadObjectStateSetterProcessor();
+            case objectStateSetter:
+                processor = new objectStateSetterProcessor();
                 break;
-            case uploadObjectDefaultMaterialSetter:
-                processor = new uploadObjectDefaultMaterialSetterProcessor();
+            case objectDefaultMaterialSetter:
+                processor = new objectDefaultMaterialSetterProcessor();
                 break;
 
             default:
