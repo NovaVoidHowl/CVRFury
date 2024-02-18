@@ -1,4 +1,4 @@
-// { "version": "0.6.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.7.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -413,6 +413,68 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     modules.Add(uploadObjectFxFloatSetter);
 
                     break;
+
+                  //// case to handle ScaleAction data import
+                  /// related files: StateAction.cs - 138 to 143
+                  //
+                  case ScaleAction scaleAction:
+                    // debug outputs to console
+                    // CoreLog(scaleAction.GetType());
+                    // CoreLog(scaleAction.obj);
+                    // CoreLog(scaleAction.scale);
+
+                    // check to see if the DSU already has an uploadObjectScaleSetter module
+                    if (modules.Any(module => module.GetType().Name == "uploadObjectScaleSetter"))
+                    {
+
+                      List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+                      // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+                      // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadObjectScaleSetter"))
+                      {
+                        var uploadObjectScaleSetterModuleInstance = module as uploadObjectScaleSetter;
+                        if (uploadObjectScaleSetterModuleInstance.importedFromVRCFury && !uploadObjectScaleSetterModuleInstance.justImported)
+                        {
+                          modulesToRemove.Add(module);
+                        }
+                      }
+
+                      // process the remove list
+                      foreach (var module in modulesToRemove)
+                      {
+                        modules.Remove(module);
+                      }
+                    }
+                    // ok so now we can be sure we only have stuff the user added after the fact
+                    // (don't want to remove user added data)
+
+                    // now we can add the new data
+
+                    // create a new uploadObjectScaleSetter module
+                    uploadObjectScaleSetter uploadObjectScaleSetter = new uploadObjectScaleSetter();
+
+                    // update the module's version info
+                    uploadObjectScaleSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    uploadObjectScaleSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    uploadObjectScaleSetter.CVRCCKVersion = ParseCCKVersion();
+
+                    // set the objectToSetScaleOn property of the uploadObjectScaleSetter module to the obj from the action
+                    uploadObjectScaleSetter.objectToSetScaleOn = scaleAction.obj;
+
+                    // set the scaleToBeSet property of the uploadObjectScaleSetter module to the scale from the action
+                    uploadObjectScaleSetter.scaleToBeSet = scaleAction.scale;
+
+                    // set the importedFromVRCFury bool, and the justImported bool to true
+                    uploadObjectScaleSetter.importedFromVRCFury = true;
+                    uploadObjectScaleSetter.justImported = true;
+
+                    // add the uploadObjectScaleSetter module to the modules list in the DSU
+                    modules.Add(uploadObjectScaleSetter);
+
+                    break;
+
+
 
                   // more cases to be added here
                   //

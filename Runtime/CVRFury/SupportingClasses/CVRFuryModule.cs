@@ -155,6 +155,16 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
+  public class uploadObjectScaleSetter : uploadStateSetter
+  {
+    public uploadObjectScaleSetter()
+      : base("uploadObjectScaleSetter") { }
+
+    public GameObject objectToSetScaleOn;
+    public float scaleToBeSet;
+  }
+
+  [Serializable]
   public class CVRFuryPrefabDependency : CVRFuryModule
   {
     public CVRFuryPrefabDependency()

@@ -138,12 +138,12 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |    BlendShapeAction    |          ✔️           |         ❌         |                                       |
 |      SpsOnAction       |           🚫           |         🚫         |                                       |
 |     FxFloatAction      |          ✔️           |        ❌🔽         |                                       |
-|  AnimationClipAction   |           ❔           |         ❔         |                                       |
-| ShaderInventoryAction  |           ❔           |         ❔         |                                       |
-|  PoiyomiUVTileAction   |           ❔           |         ❔         |                                       |
-| MaterialPropertyAction |           ❔           |         ❔         |                                       |
+|  AnimationClipAction   |          ❔🔽           |        ❔🔽         |                                       |
+| ShaderInventoryAction  |          ❔🔽           |        ❔🔽         |                                       |
+|  PoiyomiUVTileAction   |          ❔🔽           |        ❔🔽         |                                       |
+| MaterialPropertyAction |          ❔🔽           |        ❔🔽         |                                       |
 |     FlipbookAction     |           🚫           |         🚫         | Flagged as obsolete by VRCFury        |
-|      ScaleAction       |           ❔           |         ❔         |                                       |
+|      ScaleAction       |          ✔️           |         ❌         |                                       |
 |  BlockBlinkingAction   |           ❔           |         ❔         |                                       |
 |   BlockVisemesAction   |           ❔           |         ❔         |                                       |
 |  ResetPhysboneAction   |           🚫           |         🚫         | No Physbones in CVR, hence not needed |
