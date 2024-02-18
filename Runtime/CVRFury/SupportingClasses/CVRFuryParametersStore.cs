@@ -14,15 +14,15 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     {
       public string name;
 
-      public ValueType valueType;
+      public ValueType valueType = ValueType.Float;
 
-      public float defaultValue;
+      public float defaultValue = 0.0f;
     }
 
     public enum ValueType
     {
-      Int,
       Float,
+      Int,
       Bool
     }
 
