@@ -149,9 +149,9 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |  ResetPhysboneAction   |           🚫           |         🚫         | No Physbones in CVR, hence not needed |
 | FlipBookBuilderAction  |           ❔           |         ❔         |                                       |
 |                        |                       |                   |                                       |
-|        Blinking        |           ❌           |         ❌         |                                       |
-|       Breathing        |           ❌           |         ❌         |                                       |
-|     FullController     |           ❌           |         ❌         |                                       |
+|        Blinking        |           ❔           |         ❔         |                                       |
+|       Breathing        |           ❔           |         ❔         |                                       |
+|     FullController     |          ⚙️           |         ❌         |                                       |
 |         Toggle         |           ❌           |         ❌         |                                       |
 |         Puppet         |           ❔           |         ❔         |                                       |
 |      SecurityLock      |          ❌🔽           |        ❌🔽         |                                       |
