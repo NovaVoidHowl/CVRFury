@@ -33,6 +33,51 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
+  public class fullControllerModule : CVRFuryModule
+  {
+    public fullControllerModule()
+      : base("fullControllerModule") { }
+
+    public List<RuntimeAnimatorController> controllers = new List<RuntimeAnimatorController>();
+    public List<MenuEntry> menus = new List<MenuEntry>();
+    public List<ParamsEntry> parameters = new List<ParamsEntry>();
+    public List<SmoothParamEntry> smoothedPrms = new List<SmoothParamEntry>();
+    public List<string> globalParams = new List<string>();
+
+    public string toggleParam;
+
+    public List<BindingRewrite> rewriteBindings = new List<BindingRewrite>();
+
+    [Serializable]
+    public class MenuEntry
+    {
+      public CVRFuryMenuStore menu;
+      public string prefix;
+    }
+
+    [Serializable]
+    public class ParamsEntry
+    {
+      public CVRFuryParametersStore parameters;
+    }
+
+    [Serializable]
+    public class BindingRewrite
+    {
+      public string from;
+      public string to;
+      public bool delete = false;
+    }
+
+    [Serializable]
+    public class SmoothParamEntry
+    {
+      public string name;
+      public float smoothingDuration = 0.2f;
+    }
+  }
+
+  [Serializable]
   public class parametersLink : CVRFuryModule
   {
     public parametersLink()
