@@ -1,4 +1,4 @@
-// { "version": "0.7.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.8.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -474,6 +474,60 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     break;
 
+                  //// case to handle BlockBlinkingAction data import
+                  /// related files: StateAction.cs - 145 to 146
+                  //
+                  case BlockBlinkingAction blockBlinkingAction:
+                    // debug outputs to console
+                    // CoreLog(blockBlinkingAction.GetType());
+
+                    // check to see if the DSU already has an uploadBlockBlinkSetter module
+                    if (modules.Any(module => module.GetType().Name == "uploadBlockBlinkSetter"))
+                    {
+
+                      List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+                      // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+                      // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+                      foreach (var module in modules.Where(module => module.GetType().Name == "uploadBlockBlinkSetter"))
+                      {
+                        var uploadBlockBlinkSetterModuleInstance = module as uploadBlockBlinkSetter;
+                        if (uploadBlockBlinkSetterModuleInstance.importedFromVRCFury && !uploadBlockBlinkSetterModuleInstance.justImported)
+                        {
+                          modulesToRemove.Add(module);
+                        }
+                      }
+
+                      // process the remove list
+                      foreach (var module in modulesToRemove)
+                      {
+                        modules.Remove(module);
+                      }
+                    }
+                    // ok so now we can be sure we only have stuff the user added after the fact
+                    // (don't want to remove user added data)
+
+                    // now we can add the new data
+
+                    // create a new uploadBlockBlinkSetter module
+                    uploadBlockBlinkSetter uploadBlockBlinkSetter = new uploadBlockBlinkSetter();
+
+                    // update the module's version info
+                    uploadBlockBlinkSetter.CVRFuryVersion = ParseCVRFuryVersion();
+                    uploadBlockBlinkSetter.unityVersion = ParseUnityVersion(Application.unityVersion);
+                    uploadBlockBlinkSetter.CVRCCKVersion = ParseCCKVersion();
+
+                    // set the blockBlink property of the uploadBlockBlinkSetter module to the blockBlink from the action
+                    uploadBlockBlinkSetter.blockBlink = true;
+
+                    // set the importedFromVRCFury bool, and the justImported bool to true
+                    uploadBlockBlinkSetter.importedFromVRCFury = true;
+                    uploadBlockBlinkSetter.justImported = true;
+
+                    // add the uploadBlockBlinkSetter module to the modules list in the DSU
+                    modules.Add(uploadBlockBlinkSetter);
+
+                    break;
 
 
                   // more cases to be added here

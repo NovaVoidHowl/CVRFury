@@ -165,6 +165,15 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
+  public class uploadBlockBlinkSetter : uploadStateSetter
+  {
+    public uploadBlockBlinkSetter()
+      : base("uploadBlockBlinkSetter") { }
+
+    public bool blockBlink;
+  }
+
+  [Serializable]
   public class CVRFuryPrefabDependency : CVRFuryModule
   {
     public CVRFuryPrefabDependency()
