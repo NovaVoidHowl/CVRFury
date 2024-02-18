@@ -125,7 +125,7 @@ Icon Key:
 🔼 = High priority.
 🔽 = Low priority.
 ❔ = Feature pending review.
-🚫 = Feature will not supported.
+🚫 = Feature will not be supported.
 ```
 
 The following table gives a breakdown of what features from VRCFury are supported for import/install.\
