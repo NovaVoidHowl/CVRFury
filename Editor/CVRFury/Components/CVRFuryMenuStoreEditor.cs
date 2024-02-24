@@ -71,13 +71,22 @@ public class CVRFuryMenuStoreEditor : Editor
         string fullTypeName = element.managedReferenceFullTypename;
         string shortTypeName = fullTypeName.Split('.').Last();
 
-        // Draw a foldout for the element
+        // Get the name of the menuParameter
+        SerializedProperty nameProperty = element.FindPropertyRelative("name");
+        string name = nameProperty != null ? nameProperty.stringValue : "null";
+        // if name is not set, put 'Unnamed' as the name
+        if (name == "")
+        {
+          name = "Unnamed";
+        }
+
+        // Draw a foldout header group for the element
         bool foldoutState = false;
         foldoutStates.TryGetValue(index, out foldoutState);
-        foldoutState = EditorGUI.Foldout(
-          new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
+        foldoutState = EditorGUI.BeginFoldoutHeaderGroup(
+          new Rect(rect.x + 10, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
           foldoutState,
-          shortTypeName
+          $"{name} - ({shortTypeName})"
         );
         foldoutStates[index] = foldoutState;
 
@@ -155,6 +164,7 @@ public class CVRFuryMenuStoreEditor : Editor
             }
           }
         }
+        EditorGUI.EndFoldoutHeaderGroup();
       },
       onAddDropdownCallback = (Rect buttonRect, ReorderableList l) =>
       {
