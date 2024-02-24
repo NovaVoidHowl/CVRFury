@@ -16,6 +16,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   [Serializable]
   public abstract class menuParameter
   {
+    public bool viewerFoldoutState = false;
     public string name;
 
     [SerializeField]

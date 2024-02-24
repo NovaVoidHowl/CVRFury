@@ -12,9 +12,6 @@ using uk.novavoidhowl.dev.cvrfury.runtime;
 [CustomEditor(typeof(CVRFuryMenuStore))]
 public class CVRFuryMenuStoreEditor : Editor
 {
-  // Create a dictionary to store the foldout states
-  Dictionary<int, bool> foldoutStates = new Dictionary<int, bool>();
-
   private ReorderableList list;
   private List<Type> menuTypes;
 
@@ -37,8 +34,8 @@ public class CVRFuryMenuStoreEditor : Editor
         float height = EditorGUIUtility.singleLineHeight;
 
         // Check if the foldout is expanded
-        bool foldoutState = false;
-        foldoutStates.TryGetValue(index, out foldoutState);
+        SerializedProperty foldoutStateProperty = element.FindPropertyRelative("viewerFoldoutState");
+        bool foldoutState = foldoutStateProperty.boolValue;
         if (foldoutState)
         {
           // If the menuParameter is a toggleParameter, add height for its properties
@@ -80,15 +77,18 @@ public class CVRFuryMenuStoreEditor : Editor
           name = "Unnamed";
         }
 
-        // Draw a foldout header group for the element
-        bool foldoutState = false;
-        foldoutStates.TryGetValue(index, out foldoutState);
+        // Get the foldout state from the menuParameter
+        SerializedProperty foldoutStateProperty = element.FindPropertyRelative("viewerFoldoutState");
+        bool foldoutState = foldoutStateProperty.boolValue;
+
         foldoutState = EditorGUI.BeginFoldoutHeaderGroup(
           new Rect(rect.x + 10, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
           foldoutState,
           $"{name} - ({shortTypeName})"
         );
-        foldoutStates[index] = foldoutState;
+
+        // Store the foldout state back to the menuParameter
+        foldoutStateProperty.boolValue = foldoutState;
 
         if (foldoutState)
         {
