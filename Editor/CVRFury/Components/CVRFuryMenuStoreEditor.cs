@@ -23,37 +23,110 @@ public class CVRFuryMenuStoreEditor : Editor
 
     list = new ReorderableList(serializedObject, items)
     {
+      elementHeightCallback = (index) =>
+      {
+        // Get the element
+        var element = list.serializedProperty.GetArrayElementAtIndex(index);
+        string fullTypeName = element.managedReferenceFullTypename;
+        string shortTypeName = fullTypeName.Split('.').Last();
+
+        // Base height for the type name and the name property
+        float height = 2 * EditorGUIUtility.singleLineHeight;
+
+        // If the menuParameter is a toggleParameter, add height for its properties
+        if (shortTypeName == "toggleParameter")
+        {
+          height += 3 * EditorGUIUtility.singleLineHeight;
+        }
+
+        // If the menuParameter is a testParameter, add height for its properties
+        if (shortTypeName == "testParameter")
+        {
+          height += EditorGUIUtility.singleLineHeight;
+        }
+
+        // Add some spacing
+        height += EditorGUIUtility.standardVerticalSpacing;
+
+        return height;
+      },
       drawHeaderCallback = (Rect rect) =>
       {
         EditorGUI.LabelField(rect, "Menu Items");
       },
       drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
       {
-        var element = items.GetArrayElementAtIndex(index);
-        rect.y += 2;
-        EditorGUI.PropertyField(
-          new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
-          element,
-          GUIContent.none
-        );
+        // Get the element
+        var element = list.serializedProperty.GetArrayElementAtIndex(index);
+        // write the type name
+        string fullTypeName = element.managedReferenceFullTypename;
+        string shortTypeName = fullTypeName.Split('.').Last();
+        EditorGUI.LabelField(new Rect(rect.x, rect.y, 600, EditorGUIUtility.singleLineHeight), shortTypeName);
 
-        var typeName = element.managedReferenceFullTypename;
-        var type = Type.GetType(typeName);
-        if (type != null && type.IsSubclassOf(typeof(menuParameter)))
+        // Get the serialized property of the menuParameter
+        SerializedProperty menuParameterProperty = element.FindPropertyRelative("name");
+        if (menuParameterProperty != null)
         {
-          var menuParameter = element.managedReferenceValue as menuParameter;
-          var fields = menuParameter.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance);
-          foreach (var field in fields)
+          // Draw field for the menuParameter
+          EditorGUI.PropertyField(
+            new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight, rect.width, EditorGUIUtility.singleLineHeight),
+            menuParameterProperty
+          );
+        }
+
+        // If the menuParameter is a toggleParameter, draw fields for its properties
+        if (shortTypeName == "toggleParameter")
+        {
+          SerializedProperty defaultStateProperty = element.FindPropertyRelative("defaultState");
+          SerializedProperty useAnimationProperty = element.FindPropertyRelative("useAnimation");
+          SerializedProperty generateTypeProperty = element.FindPropertyRelative("generateType");
+          if (defaultStateProperty != null && useAnimationProperty != null && generateTypeProperty != null)
           {
-            if (field.IsPublic && field.GetCustomAttributes(typeof(SerializeField), false).Length > 0)
-            {
-              rect.y += EditorGUIUtility.singleLineHeight + 2;
-              var value = field.GetValue(menuParameter);
-              EditorGUI.LabelField(
-                new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
-                field.Name + ": " + value
-              );
-            }
+            EditorGUI.PropertyField(
+              new Rect(
+                rect.x,
+                rect.y + 2 * EditorGUIUtility.singleLineHeight,
+                rect.width,
+                EditorGUIUtility.singleLineHeight
+              ),
+              defaultStateProperty
+            );
+            EditorGUI.PropertyField(
+              new Rect(
+                rect.x,
+                rect.y + 3 * EditorGUIUtility.singleLineHeight,
+                rect.width,
+                EditorGUIUtility.singleLineHeight
+              ),
+              useAnimationProperty
+            );
+            EditorGUI.PropertyField(
+              new Rect(
+                rect.x,
+                rect.y + 4 * EditorGUIUtility.singleLineHeight,
+                rect.width,
+                EditorGUIUtility.singleLineHeight
+              ),
+              generateTypeProperty
+            );
+          }
+        }
+
+        // If the menuParameter is a testParameter, draw fields for its properties
+        if (shortTypeName == "testParameter")
+        {
+          SerializedProperty testStringProperty = element.FindPropertyRelative("testString");
+          if (testStringProperty != null)
+          {
+            EditorGUI.PropertyField(
+              new Rect(
+                rect.x,
+                rect.y + 2 * EditorGUIUtility.singleLineHeight,
+                rect.width,
+                EditorGUIUtility.singleLineHeight
+              ),
+              testStringProperty
+            );
           }
         }
       },
