@@ -42,21 +42,18 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       Bool
     }
 
+    public List<targetGameObject> targets;
+
     public toggleParameter()
-      : base("toggleParameter") { }
+      : base("toggleParameter")
+    {
+      targets = new List<targetGameObject>();
+    }
 
     public bool defaultState;
     public bool useAnimation;
 
     public GenerateType generateType = GenerateType.Float;
-
-    public class targetGameObject
-    {
-      public GameObject target;
-      public bool stateToSet;
-    }
-
-    public List<targetGameObject> targets;
   }
 
   public class testParameter : menuParameter
@@ -65,6 +62,13 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       : base("testParameter") { }
 
     public string testString;
+  }
+
+  [Serializable]
+  public class targetGameObject
+  {
+    public GameObject target;
+    public bool stateToSet;
   }
 
   //// More to be added, this is the list of menu items that will be available

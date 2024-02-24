@@ -42,6 +42,11 @@ public class CVRFuryMenuStoreEditor : Editor
           if (shortTypeName == "toggleParameter")
           {
             height += 4 * EditorGUIUtility.singleLineHeight;
+            SerializedProperty targetsProperty = element.FindPropertyRelative("targets");
+            if (targetsProperty != null)
+            {
+              height += (2 * targetsProperty.arraySize + 1) * EditorGUIUtility.singleLineHeight;
+            }
           }
 
           // If the menuParameter is a testParameter, add height for its properties
@@ -114,6 +119,7 @@ public class CVRFuryMenuStoreEditor : Editor
             SerializedProperty defaultStateProperty = element.FindPropertyRelative("defaultState");
             SerializedProperty useAnimationProperty = element.FindPropertyRelative("useAnimation");
             SerializedProperty generateTypeProperty = element.FindPropertyRelative("generateType");
+            SerializedProperty targetsProperty = element.FindPropertyRelative("targets");
             if (defaultStateProperty != null && useAnimationProperty != null && generateTypeProperty != null)
             {
               EditorGUI.PropertyField(
@@ -143,6 +149,49 @@ public class CVRFuryMenuStoreEditor : Editor
                 ),
                 generateTypeProperty
               );
+              if (targetsProperty != null)
+              {
+                EditorGUI.LabelField(
+                  new Rect(
+                    rect.x,
+                    rect.y + 5 * EditorGUIUtility.singleLineHeight,
+                    rect.width,
+                    EditorGUIUtility.singleLineHeight
+                  ),
+                  "Targets"
+                );
+
+                EditorGUI.indentLevel++;
+                for (int i = 0; i < targetsProperty.arraySize; i++)
+                {
+                  SerializedProperty targetProperty = targetsProperty.GetArrayElementAtIndex(i);
+                  SerializedProperty targetGameObjectProperty = targetProperty.FindPropertyRelative("target");
+                  SerializedProperty stateToSetProperty = targetProperty.FindPropertyRelative("stateToSet");
+
+                  if (targetGameObjectProperty != null && stateToSetProperty != null)
+                  {
+                    EditorGUI.PropertyField(
+                      new Rect(
+                        rect.x,
+                        rect.y + (6 + i) * EditorGUIUtility.singleLineHeight,
+                        rect.width,
+                        EditorGUIUtility.singleLineHeight
+                      ),
+                      targetGameObjectProperty
+                    );
+                    EditorGUI.PropertyField(
+                      new Rect(
+                        rect.x,
+                        rect.y + (7 + i) * EditorGUIUtility.singleLineHeight,
+                        rect.width,
+                        EditorGUIUtility.singleLineHeight
+                      ),
+                      stateToSetProperty
+                    );
+                  }
+                }
+                EditorGUI.indentLevel--;
+              }
             }
           }
 
