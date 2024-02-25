@@ -5,6 +5,7 @@ using UnityEngine;
 namespace uk.novavoidhowl.dev.cvrfury.runtime
 {
   /// <summary>
+  /// This class is used to store the menu items that will be used by CVRFury to inject additional CVR menu sections
   /// </summary>
   [CreateAssetMenu(fileName = "NewCVRFuryMenuStore", menuName = "CVRFury/Menu Store")]
   public class CVRFuryMenuStore : ScriptableObject
@@ -12,6 +13,8 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     [SerializeReference]
     public List<menuParameter> menuItems = new List<menuParameter>();
   }
+
+  // Base class for all menu items -------------------------------------------------------------------------------------
 
   [Serializable]
   public abstract class menuParameter
@@ -32,6 +35,8 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       this.menuParameterType = menuParameterType;
     }
   }
+
+  // Menu items derivatives --------------------------------------------------------------------------------------------
 
   public class toggleParameter : menuParameter
   {
@@ -56,6 +61,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public GenerateType generateType = GenerateType.Float;
   }
 
+  // Test class for development purposes (remove once one more derivative class added) ---------------------------------
   public class testParameter : menuParameter
   {
     public testParameter()
@@ -64,12 +70,15 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public string testString;
   }
 
+  //// Support classes -------------------------------------------------------------------------------------------------
   [Serializable]
   public class targetGameObject
   {
     public GameObject target;
     public bool stateToSet;
   }
+
+  //// Notes for future development ------------------------------------------------------------------------------------
 
   //// More to be added, this is the list of menu items that will be available
   //   Toggle - done
