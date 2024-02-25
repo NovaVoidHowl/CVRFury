@@ -45,7 +45,21 @@ public class CVRFuryMenuStoreEditor : Editor
             SerializedProperty targetsProperty = element.FindPropertyRelative("targets");
             if (targetsProperty != null)
             {
-              height += (2 * targetsProperty.arraySize + 1) * EditorGUIUtility.singleLineHeight;
+              height += targetsProperty.arraySize * EditorGUIUtility.singleLineHeight;
+            }
+
+            if (targetsProperty != null)
+            {
+              ReorderableList targetsList = new ReorderableList(
+                serializedObject,
+                targetsProperty,
+                true, // draggable
+                true, // displayHeader
+                true, // displayAddButton
+                true // displayRemoveButton
+              );
+
+              height += targetsList.GetHeight();
             }
           }
 
@@ -119,7 +133,64 @@ public class CVRFuryMenuStoreEditor : Editor
             SerializedProperty defaultStateProperty = element.FindPropertyRelative("defaultState");
             SerializedProperty useAnimationProperty = element.FindPropertyRelative("useAnimation");
             SerializedProperty generateTypeProperty = element.FindPropertyRelative("generateType");
+            ReorderableList targetsList = null;
             SerializedProperty targetsProperty = element.FindPropertyRelative("targets");
+            if (targetsProperty != null)
+            {
+              targetsList = new ReorderableList(
+                serializedObject,
+                targetsProperty,
+                true, // draggable
+                true, // displayHeader
+                true, // displayAddButton
+                true // displayRemoveButton
+              );
+
+              targetsList.drawHeaderCallback = (Rect rect) =>
+              {
+                EditorGUI.LabelField(rect, "Targets");
+              };
+
+              targetsList.elementHeightCallback = (index) =>
+              {
+                // Base height for the target and stateToSet properties
+                float height = 2 * EditorGUIUtility.singleLineHeight;
+
+                // Add some spacing
+                height += EditorGUIUtility.standardVerticalSpacing;
+
+                return height;
+              };
+
+              targetsList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
+              {
+                SerializedProperty targetProperty = targetsList.serializedProperty.GetArrayElementAtIndex(index);
+                SerializedProperty targetGameObjectProperty = targetProperty.FindPropertyRelative("target");
+                SerializedProperty stateToSetProperty = targetProperty.FindPropertyRelative("stateToSet");
+
+                if (targetGameObjectProperty != null && stateToSetProperty != null)
+                {
+                  EditorGUI.PropertyField(
+                    new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
+                    targetGameObjectProperty
+                  );
+                  EditorGUI.PropertyField(
+                    new Rect(
+                      rect.x,
+                      rect.y + EditorGUIUtility.singleLineHeight,
+                      rect.width,
+                      EditorGUIUtility.singleLineHeight
+                    ),
+                    stateToSetProperty
+                  );
+                }
+              };
+
+              targetsList.DoList(
+                new Rect(rect.x, rect.y + 5 * EditorGUIUtility.singleLineHeight, rect.width, targetsList.GetHeight())
+              );
+            }
+
             if (defaultStateProperty != null && useAnimationProperty != null && generateTypeProperty != null)
             {
               EditorGUI.PropertyField(
@@ -151,46 +222,9 @@ public class CVRFuryMenuStoreEditor : Editor
               );
               if (targetsProperty != null)
               {
-                EditorGUI.LabelField(
-                  new Rect(
-                    rect.x,
-                    rect.y + 5 * EditorGUIUtility.singleLineHeight,
-                    rect.width,
-                    EditorGUIUtility.singleLineHeight
-                  ),
-                  "Targets"
+                targetsList.DoList(
+                  new Rect(rect.x, rect.y + 5 * EditorGUIUtility.singleLineHeight, rect.width, targetsList.GetHeight())
                 );
-
-                EditorGUI.indentLevel++;
-                for (int i = 0; i < targetsProperty.arraySize; i++)
-                {
-                  SerializedProperty targetProperty = targetsProperty.GetArrayElementAtIndex(i);
-                  SerializedProperty targetGameObjectProperty = targetProperty.FindPropertyRelative("target");
-                  SerializedProperty stateToSetProperty = targetProperty.FindPropertyRelative("stateToSet");
-
-                  if (targetGameObjectProperty != null && stateToSetProperty != null)
-                  {
-                    EditorGUI.PropertyField(
-                      new Rect(
-                        rect.x,
-                        rect.y + (6 + i) * EditorGUIUtility.singleLineHeight,
-                        rect.width,
-                        EditorGUIUtility.singleLineHeight
-                      ),
-                      targetGameObjectProperty
-                    );
-                    EditorGUI.PropertyField(
-                      new Rect(
-                        rect.x,
-                        rect.y + (7 + i) * EditorGUIUtility.singleLineHeight,
-                        rect.width,
-                        EditorGUIUtility.singleLineHeight
-                      ),
-                      stateToSetProperty
-                    );
-                  }
-                }
-                EditorGUI.indentLevel--;
               }
             }
           }
