@@ -1,4 +1,4 @@
-// { "version": "0.1.43" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.2.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -334,8 +334,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private CVRFurySemVer ParseCCKVersion()
     {
-      string version = ABI.CCK.Scripts.Editor.CCK_BuildManagerWindow.Version;
-      int buildId = ABI.CCK.Scripts.Editor.CCK_BuildManagerWindow.BuildID;
+      string version = ABI.CCK.Scripts.CVRCommon.CCK_VERSION_NUMBER;
+      int buildId = ABI.CCK.Scripts.CVRCommon.CCK_BUILD_NUMBER;
 
       var versionAndType = version.Split(' ');
       var versionNumberFull = versionAndType[0];
