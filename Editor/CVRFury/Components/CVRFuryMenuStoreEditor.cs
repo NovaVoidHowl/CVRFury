@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 
 [CustomEditor(typeof(CVRFuryMenuStore))]
-public class CVRFuryMenuStoreEditor : Editor
+public partial class CVRFuryMenuStoreEditor : Editor
 {
   private ReorderableList list;
   private List<Type> menuTypes;
@@ -38,35 +38,36 @@ public class CVRFuryMenuStoreEditor : Editor
         bool foldoutState = foldoutStateProperty.boolValue;
         if (foldoutState)
         {
-          // If the menuParameter is a toggleParameter, add height for its properties
-          if (shortTypeName == "toggleParameter")
+          switch (shortTypeName)
           {
-            height += 4 * EditorGUIUtility.singleLineHeight;
-            SerializedProperty targetsProperty = element.FindPropertyRelative("targets");
-            if (targetsProperty != null)
-            {
-              height += targetsProperty.arraySize * EditorGUIUtility.singleLineHeight;
-            }
-
-            if (targetsProperty != null)
-            {
-              ReorderableList targetsList = new ReorderableList(
-                serializedObject,
-                targetsProperty,
-                true, // draggable
-                true, // displayHeader
-                true, // displayAddButton
-                true // displayRemoveButton
-              );
-
-              height += targetsList.GetHeight();
-            }
-          }
-
-          // If the menuParameter is a testParameter, add height for its properties
-          if (shortTypeName == "testParameter")
-          {
-            height += 2 * EditorGUIUtility.singleLineHeight;
+            case "toggleParameter":
+              height += CalculateToggleParameterBlockHeight();
+              break;
+            case "dropdownParameter":
+              height += CalculateDropdownParameterBlockHeight();
+              height += CalculateDropdownParameterListHeight(element);
+              break;
+            case "MaterialColorParameter":
+              // TODO: Add height for MaterialColorParameter
+              break;
+            case "SliderParameter":
+              // TODO: Add height for SliderParameter
+              break;
+            case "2DJoystickParameter":
+              // TODO: Add height for 2DJoystickParameter
+              break;
+            case "3DJoystickParameter":
+              // TODO: Add height for 3DJoystickParameter
+              break;
+            case "InputSingleParameter":
+              // TODO: Add height for InputSingleParameter
+              break;
+            case "InputVector2Parameter":
+              // TODO: Add height for InputVector2Parameter
+              break;
+            case "InputVector3Parameter":
+              // TODO: Add height for InputVector3Parameter
+              break;
           }
         }
 
@@ -127,125 +128,19 @@ public class CVRFuryMenuStoreEditor : Editor
             );
           }
 
-          // If the menuParameter is a toggleParameter, draw fields for its properties
-          if (shortTypeName == "toggleParameter")
-          {
-            SerializedProperty defaultStateProperty = element.FindPropertyRelative("defaultState");
-            SerializedProperty useAnimationProperty = element.FindPropertyRelative("useAnimation");
-            SerializedProperty generateTypeProperty = element.FindPropertyRelative("generateType");
-            ReorderableList targetsList = null;
-            SerializedProperty targetsProperty = element.FindPropertyRelative("targets");
-            if (targetsProperty != null)
-            {
-              targetsList = new ReorderableList(
-                serializedObject,
-                targetsProperty,
-                true, // draggable
-                true, // displayHeader
-                true, // displayAddButton
-                true // displayRemoveButton
-              );
+          float totalHeightOffset = 0;
+          // render all the sections for the menuParameters
+          DrawToggleParameterFields(shortTypeName, element, rect);
+          DrawDropdownParameterFields(shortTypeName, element, rect);
 
-              targetsList.drawHeaderCallback = (Rect rect) =>
-              {
-                EditorGUI.LabelField(rect, "Targets");
-              };
-
-              targetsList.elementHeightCallback = (index) =>
-              {
-                // Base height for the target and stateToSet properties
-                float height = 2 * EditorGUIUtility.singleLineHeight;
-
-                // Add some spacing
-                height += EditorGUIUtility.standardVerticalSpacing;
-
-                return height;
-              };
-
-              targetsList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
-              {
-                SerializedProperty targetProperty = targetsList.serializedProperty.GetArrayElementAtIndex(index);
-                SerializedProperty targetGameObjectProperty = targetProperty.FindPropertyRelative("target");
-                SerializedProperty stateToSetProperty = targetProperty.FindPropertyRelative("stateToSet");
-
-                if (targetGameObjectProperty != null && stateToSetProperty != null)
-                {
-                  EditorGUI.PropertyField(
-                    new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
-                    targetGameObjectProperty
-                  );
-                  EditorGUI.PropertyField(
-                    new Rect(
-                      rect.x,
-                      rect.y + EditorGUIUtility.singleLineHeight,
-                      rect.width,
-                      EditorGUIUtility.singleLineHeight
-                    ),
-                    stateToSetProperty
-                  );
-                }
-              };
-
-              targetsList.DoList(
-                new Rect(rect.x, rect.y + 5 * EditorGUIUtility.singleLineHeight, rect.width, targetsList.GetHeight())
-              );
-            }
-
-            if (defaultStateProperty != null && useAnimationProperty != null && generateTypeProperty != null)
-            {
-              EditorGUI.PropertyField(
-                new Rect(
-                  rect.x,
-                  rect.y + 2 * EditorGUIUtility.singleLineHeight,
-                  rect.width,
-                  EditorGUIUtility.singleLineHeight
-                ),
-                defaultStateProperty
-              );
-              EditorGUI.PropertyField(
-                new Rect(
-                  rect.x,
-                  rect.y + 3 * EditorGUIUtility.singleLineHeight,
-                  rect.width,
-                  EditorGUIUtility.singleLineHeight
-                ),
-                useAnimationProperty
-              );
-              EditorGUI.PropertyField(
-                new Rect(
-                  rect.x,
-                  rect.y + 4 * EditorGUIUtility.singleLineHeight,
-                  rect.width,
-                  EditorGUIUtility.singleLineHeight
-                ),
-                generateTypeProperty
-              );
-              if (targetsProperty != null)
-              {
-                targetsList.DoList(
-                  new Rect(rect.x, rect.y + 5 * EditorGUIUtility.singleLineHeight, rect.width, targetsList.GetHeight())
-                );
-              }
-            }
-          }
-
-          // If the menuParameter is a testParameter, draw fields for its properties
-          if (shortTypeName == "testParameter")
-          {
-            SerializedProperty testStringProperty = element.FindPropertyRelative("testString");
-            if (testStringProperty != null)
-            {
-              EditorGUI.PropertyField(
-                new Rect(
-                  rect.x,
-                  rect.y + 2 * EditorGUIUtility.singleLineHeight,
-                  rect.width,
-                  EditorGUIUtility.singleLineHeight
-                ),
-                testStringProperty
-              );
-            }
-          }
+          // TODO: Add the rest of the menuParameter types UIs
+          // DrawMaterialColorParameterFields(shortTypeName, element, rect);
+          // DrawSliderParameterFields(shortTypeName, element, rect);
+          // Draw2DJoystickParameterFields(shortTypeName, element, rect);
+          // Draw3DJoystickParameterFields(shortTypeName, element, rect);
+          // DrawInputSingleParameterFields(shortTypeName, element, rect);
+          // DrawInputVector2ParameterFields(shortTypeName, element, rect);
+          // DrawInputVector3ParameterFields(shortTypeName, element, rect);
         }
         EditorGUI.EndFoldoutHeaderGroup();
       },

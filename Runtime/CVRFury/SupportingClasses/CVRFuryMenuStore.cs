@@ -47,35 +47,34 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       Bool
     }
 
-    public List<targetGameObject> targets;
-
     public toggleParameter()
-      : base("toggleParameter")
-    {
-      targets = new List<targetGameObject>();
-    }
+      : base("toggleParameter") { }
 
     public bool defaultState;
-    public bool useAnimation;
 
-    public GenerateType generateType = GenerateType.Float;
+    public GenerateType generateType = GenerateType.Bool; // default to bool as it is the most efficient for a toggle
+
+    // no point in UseAnimation or target game objects as this is just to make a menu item
+    // it is expected that the user will make their own animations and set them up appropriately
   }
 
   // Test class for development purposes (remove once one more derivative class added) ---------------------------------
-  public class testParameter : menuParameter
+  public class dropdownParameter : menuParameter
   {
-    public testParameter()
-      : base("testParameter") { }
+    public enum GenerateType
+    {
+      Float,
+      Int
+    }
 
-    public string testString;
-  }
+    public dropdownParameter()
+      : base("dropdownParameter") { }
 
-  //// Support classes -------------------------------------------------------------------------------------------------
-  [Serializable]
-  public class targetGameObject
-  {
-    public GameObject target;
-    public bool stateToSet;
+    public int defaultIndex;
+    public GenerateType generateType = GenerateType.Int;
+
+    // list of strings for the dropdown list
+    public List<string> dropdownList = new List<string>();
   }
 
   //// Notes for future development ------------------------------------------------------------------------------------
