@@ -1,4 +1,4 @@
-// { "version": "0.2.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.2.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -336,12 +336,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       string version = uk.novavoidhowl.dev.cvrfury.deployable.CVRFury_CCKLink.GetCCKVersion();
       string buildId = uk.novavoidhowl.dev.cvrfury.deployable.CVRFury_CCKLink.GetCCKBuildNumber();
+      var type = uk.novavoidhowl.dev.cvrfury.deployable.CVRFury_CCKLink.GetCCKReleaseType();
 
-      var versionAndType = version.Split(' ');
-      var versionNumberFull = versionAndType[0];
-      var type = versionAndType.Length > 1 ? versionAndType[1] : "";
-
-      var versionParts = versionNumberFull.Split('.');
+      var versionParts = version.Split('.');
       var major = int.Parse(versionParts[0]);
       var minor = versionParts.Length > 1 ? int.Parse(versionParts[1]) : 0;
       var patch = versionParts.Length > 2 ? int.Parse(versionParts[2]) : 0;
