@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +20,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
   {
     float height = 0;
 
-    height += 5 * EditorGUIUtility.singleLineHeight;
+    height += 7 * EditorGUIUtility.singleLineHeight;
 
     return height;
   }
@@ -29,7 +30,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
     SerializedProperty dropdownListProperty = element.FindPropertyRelative("dropdownList");
     if (dropdownListProperty != null)
     {
-      return 2 * EditorGUIUtility.singleLineHeight + EditorGUIUtility.singleLineHeight * dropdownListProperty.arraySize;
+      return ((EditorGUIUtility.singleLineHeight * 1.24f) * dropdownListProperty.arraySize);
     }
     return 0;
   }
@@ -59,7 +60,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
             rect.width,
             EditorGUIUtility.singleLineHeight
           ),
-          "Default Index",
+          "Default Option",
           defaultIndexProperty.intValue,
           options
         );
@@ -71,7 +72,8 @@ public partial class CVRFuryMenuStoreEditor : Editor
             rect.width,
             EditorGUIUtility.singleLineHeight
           ),
-          generateTypeProperty
+          generateTypeProperty,
+          new GUIContent("Animator Parameter Type")
         );
 
         ReorderableList reorderableList = new ReorderableList(
@@ -108,3 +110,4 @@ public partial class CVRFuryMenuStoreEditor : Editor
     }
   }
 }
+#endif

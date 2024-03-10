@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
   {
     float height = 0;
 
-    height += 3 * EditorGUIUtility.singleLineHeight;
+    height += 3.2f * EditorGUIUtility.singleLineHeight;
 
     return height;
   }
@@ -47,9 +48,11 @@ public partial class CVRFuryMenuStoreEditor : Editor
             rect.width,
             EditorGUIUtility.singleLineHeight
           ),
-          generateTypeProperty
+          generateTypeProperty,
+          new GUIContent("Animator Parameter Type")
         );
       }
     }
   }
 }
+#endif
