@@ -2,10 +2,10 @@
   <ui:VisualElement name="appComponentContainer" >
     <ui:VisualElement name="appComponentInfoAndTools">
       <ui:Label name="componentStateLabel" />
-      <ui:Label name="installedVersionLabel" />
+      <ui:Label class="installedVersionLabel" name="installedVersionLabel" />
       <ui:Label name="componentNameLabel" />
-      <ui:Label name="componentTypeLabel" />
-      <ui:Label name="sourceVersionLabel" />
+      <ui:Label class="sourceVersionLabel" name="sourceVersionLabel" />
+      <ui:Label class="componentTypeLabel" name="componentTypeLabel" />
       <ui:Button name="installOrUpdateButton" text="Install" />
       <ui:Button name="removeButton" text="Remove" />
     </ui:VisualElement>

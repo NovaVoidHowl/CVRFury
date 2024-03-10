@@ -40,7 +40,7 @@ TemplateContainer {
   padding-right: 30px;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
 }
 
@@ -321,4 +321,17 @@ TemplateContainer {
   padding: 6px;
   margin-bottom: 10px;
   margin-top: 0px;
+}
+
+.sourceVersionLabel{
+  margin-right: 10px;
+  margin-left: auto;
+}
+
+.componentTypeLabel{
+  margin-right: 6px;
+}
+
+.installedVersionLabel{
+  margin-right: auto;
 }
