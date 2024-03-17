@@ -85,6 +85,22 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public float defaultValue = 0.0f;
   }
 
+  public class twoDJoystickParameter : menuParameter
+  {
+    public twoDJoystickParameter()
+      : base("twoDJoystickParameter") { }
+
+    public float defaultXValue = 0.0f;
+    public float defaultYValue = 0.0f;
+    public float minXValue = 0.0f;
+    public float maxXValue = 1.0f;
+    public float minYValue = 0.0f;
+    public float maxYValue = 1.0f;
+
+    public string xValuePostfix = "-x";
+    public string yValuePostfix = "-y";
+  }
+
   //// Notes for future development ------------------------------------------------------------------------------------
 
   //// More to be added, this is the list of menu items that will be available
