@@ -567,5 +567,28 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
       return IDmatch;
     }
   }
+
+  public class SuppressDeleteExpressionMenuIntermediateMenu
+  {
+    private const string MENU_PATH =
+      "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Suppress Delete Menu Intermediate";
+    private const string EDITOR_PREFS_KEY = "SuppressDeleteExpressionMenuIntermediate";
+
+    [MenuItem(MENU_PATH)]
+    private static void ToggleSuppressDeleteParameterIntermediateAsset()
+    {
+      // Toggle the value
+      bool currentValue = EditorPrefs.GetBool(EDITOR_PREFS_KEY, false);
+      EditorPrefs.SetBool(EDITOR_PREFS_KEY, !currentValue);
+    }
+
+    [MenuItem(MENU_PATH, true)]
+    private static bool ToggleSuppressDeleteParameterIntermediateValidation()
+    {
+      // Toggle the checked state
+      Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, false));
+      return true;
+    }
+  }
 }
 #endif
