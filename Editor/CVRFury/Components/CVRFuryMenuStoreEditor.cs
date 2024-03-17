@@ -51,8 +51,8 @@ public partial class CVRFuryMenuStoreEditor : Editor
             case "MaterialColorParameter":
               // TODO: Add height for MaterialColorParameter
               break;
-            case "SliderParameter":
-              // TODO: Add height for SliderParameter
+            case "sliderParameter":
+              height += CalculateSliderParameterBlockHeight();
               break;
             case "2DJoystickParameter":
               // TODO: Add height for 2DJoystickParameter
@@ -136,7 +136,9 @@ public partial class CVRFuryMenuStoreEditor : Editor
 
           // TODO: Add the rest of the menuParameter types UIs
           // DrawMaterialColorParameterFields(shortTypeName, element, rect);
-          // DrawSliderParameterFields(shortTypeName, element, rect);
+
+          DrawSliderParameterFields(shortTypeName, element, rect);
+
           // Draw2DJoystickParameterFields(shortTypeName, element, rect);
           // Draw3DJoystickParameterFields(shortTypeName, element, rect);
           // DrawInputSingleParameterFields(shortTypeName, element, rect);

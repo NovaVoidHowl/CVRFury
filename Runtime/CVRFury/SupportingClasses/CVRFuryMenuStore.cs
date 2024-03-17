@@ -58,7 +58,6 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     // it is expected that the user will make their own animations and set them up appropriately
   }
 
-  // Test class for development purposes (remove once one more derivative class added) ---------------------------------
   public class dropdownParameter : menuParameter
   {
     public enum GenerateType
@@ -77,13 +76,22 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public List<string> dropdownList = new List<string>();
   }
 
+  public class sliderParameter : menuParameter
+  {
+    public sliderParameter()
+      : base("sliderParameter") { }
+
+    [Range(0.0f, 1.0f)]
+    public float defaultValue = 0.0f;
+  }
+
   //// Notes for future development ------------------------------------------------------------------------------------
 
   //// More to be added, this is the list of menu items that will be available
   //   Toggle - done
-  //   Dropdown
-  //   MaterialColor
-  //   Slider
+  //   Dropdown - done
+  //   MaterialColor - will be complex due to gameobject references - on hold
+  //   Slider - done
   //   2DJoystick
   //   3DJoystick
   //   InputSingle
