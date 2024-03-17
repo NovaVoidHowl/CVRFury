@@ -126,11 +126,11 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   //// More to be added, this is the list of menu items that will be available
   //   Toggle - done
   //   Dropdown - done
-  //   MaterialColor - will be complex due to gameobject references - on hold
+  //   MaterialColor - will be complex due to gameObject references - on hold
   //   Slider - done
   //   2DJoystick - done
-  //   3DJoystick
-  //   InputSingle
-  //   InputVector2
-  //   InputVector3
+  //   3DJoystick - done
+  //   InputSingle -- not added as its not clear what this would be used for
+  //   InputVector2 -- not added as its not clear what this would be used for
+  //   InputVector3 -- not added as its not clear what this would be used for
 }

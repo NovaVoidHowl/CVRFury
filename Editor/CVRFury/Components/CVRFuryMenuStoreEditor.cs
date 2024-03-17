@@ -49,7 +49,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
               height += CalculateDropdownParameterListHeight(element);
               break;
             case "materialColorParameter":
-              // TODO: Add height for MaterialColorParameter
+              // TODO: Add height for MaterialColorParameter - complexity due to gameObject references
               break;
             case "sliderParameter":
               height += CalculateSliderParameterBlockHeight();
@@ -61,13 +61,13 @@ public partial class CVRFuryMenuStoreEditor : Editor
               height += CalculateThreeDJoystickParameterBlockHeight();
               break;
             case "inputSingleParameter":
-              // TODO: Add height for InputSingleParameter
+              // TODO: Add height for InputSingleParameter - no obvious use case, so not implemented
               break;
             case "inputVector2Parameter":
-              // TODO: Add height for InputVector2Parameter
+              // TODO: Add height for InputVector2Parameter - no obvious use case, so not implemented
               break;
             case "inputVector3Parameter":
-              // TODO: Add height for InputVector3Parameter
+              // TODO: Add height for InputVector3Parameter - no obvious use case, so not implemented
               break;
           }
         }
@@ -133,17 +133,15 @@ public partial class CVRFuryMenuStoreEditor : Editor
           // render all the sections for the menuParameters
           DrawToggleParameterFields(shortTypeName, element, rect);
           DrawDropdownParameterFields(shortTypeName, element, rect);
-
-          // TODO: Add the rest of the menuParameter types UIs
-          // DrawMaterialColorParameterFields(shortTypeName, element, rect);
-
           DrawSliderParameterFields(shortTypeName, element, rect);
           DrawTwoDJoystickParameterFields(shortTypeName, element, rect);
           DrawThreeDJoystickParameterFields(shortTypeName, element, rect);
 
-          // DrawInputSingleParameterFields(shortTypeName, element, rect);
-          // DrawInputVector2ParameterFields(shortTypeName, element, rect);
-          // DrawInputVector3ParameterFields(shortTypeName, element, rect);
+          // TODO:
+          // DrawMaterialColorParameterFields(shortTypeName, element, rect); - complexity due to gameObject references
+          // DrawInputSingleParameterFields(shortTypeName, element, rect); - no obvious use case, so not implemented
+          // DrawInputVector2ParameterFields(shortTypeName, element, rect); - no obvious use case, so not implemented
+          // DrawInputVector3ParameterFields(shortTypeName, element, rect); - no obvious use case, so not implemented
         }
         EditorGUI.EndFoldoutHeaderGroup();
       },
