@@ -48,7 +48,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
               height += CalculateDropdownParameterBlockHeight();
               height += CalculateDropdownParameterListHeight(element);
               break;
-            case "MaterialColorParameter":
+            case "materialColorParameter":
               // TODO: Add height for MaterialColorParameter
               break;
             case "sliderParameter":
@@ -57,16 +57,16 @@ public partial class CVRFuryMenuStoreEditor : Editor
             case "twoDJoystickParameter":
               height += CalculateTwoDJoystickParameterBlockHeight();
               break;
-            case "3DJoystickParameter":
-              // TODO: Add height for 3DJoystickParameter
+            case "threeDJoystickParameter":
+              height += CalculateThreeDJoystickParameterBlockHeight();
               break;
-            case "InputSingleParameter":
+            case "inputSingleParameter":
               // TODO: Add height for InputSingleParameter
               break;
-            case "InputVector2Parameter":
+            case "inputVector2Parameter":
               // TODO: Add height for InputVector2Parameter
               break;
-            case "InputVector3Parameter":
+            case "inputVector3Parameter":
               // TODO: Add height for InputVector3Parameter
               break;
           }
@@ -139,8 +139,8 @@ public partial class CVRFuryMenuStoreEditor : Editor
 
           DrawSliderParameterFields(shortTypeName, element, rect);
           DrawTwoDJoystickParameterFields(shortTypeName, element, rect);
+          DrawThreeDJoystickParameterFields(shortTypeName, element, rect);
 
-          // Draw3DJoystickParameterFields(shortTypeName, element, rect);
           // DrawInputSingleParameterFields(shortTypeName, element, rect);
           // DrawInputVector2ParameterFields(shortTypeName, element, rect);
           // DrawInputVector3ParameterFields(shortTypeName, element, rect);

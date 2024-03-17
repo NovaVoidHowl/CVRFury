@@ -101,6 +101,26 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public string yValuePostfix = "-y";
   }
 
+  public class threeDJoystickParameter : menuParameter
+  {
+    public threeDJoystickParameter()
+      : base("threeDJoystickParameter") { }
+
+    public float defaultXValue = 0.0f;
+    public float defaultYValue = 0.0f;
+    public float defaultZValue = 0.0f;
+    public float minXValue = 0.0f;
+    public float maxXValue = 1.0f;
+    public float minYValue = 0.0f;
+    public float maxYValue = 1.0f;
+    public float minZValue = 0.0f;
+    public float maxZValue = 1.0f;
+
+    public string xValuePostfix = "-x";
+    public string yValuePostfix = "-y";
+    public string zValuePostfix = "-z";
+  }
+
   //// Notes for future development ------------------------------------------------------------------------------------
 
   //// More to be added, this is the list of menu items that will be available
@@ -108,7 +128,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   //   Dropdown - done
   //   MaterialColor - will be complex due to gameobject references - on hold
   //   Slider - done
-  //   2DJoystick
+  //   2DJoystick - done
   //   3DJoystick
   //   InputSingle
   //   InputVector2
