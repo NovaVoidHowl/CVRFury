@@ -10,6 +10,8 @@ using UnityEngine.UIElements;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.vrcstub;
+using uk.novavoidhowl.dev.cvrfury.runtime;
 
 namespace uk.novavoidhowl.dev.cvrfury.converttools
 {
@@ -364,12 +366,13 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
             // get filepath without extension
             var filePathWithoutExtension = Path.ChangeExtension(filePath, null);
-            var newFilePath = filePathWithoutExtension + ".CVRFury.asset";
+            var newFilePath = filePathWithoutExtension + ".Stage1.CVRFury.asset";
+            var newFilePathFinal = filePathWithoutExtension + ".CVRFury.asset";
 
             // set the text of the progressLabel to "10%"
-            progressLabel.text = "10% -- initialising";
+            progressLabel.text = "5% -- initialising";
             // set the value of the progressBar to 10
-            progressBar.value = 10;
+            progressBar.value = 5;
             // debug print the value of the progressBar
             CoreLog("progressBar.value: " + progressBar.value);
 
@@ -401,9 +404,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               AssetDatabase.CopyAsset(filePath, newFilePath);
 
               // set the text of the progressLabel to "20%"
-              progressLabel.text = "20% -- Duplicate File Created";
+              progressLabel.text = "10% -- Duplicate File Created";
               // set the value of the progressBar to .2
-              progressBar.value = 20;
+              progressBar.value = 10;
 
               // Wait for barDelay
               await Task.Delay(barDelay);
@@ -415,17 +418,17 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               var newFileString = File.ReadAllText(newFilePath);
 
               // set the text of the progressLabel to "20%"
-              progressLabel.text = "30% -- Loading File";
+              progressLabel.text = "15% -- Loading File";
               // set the value of the progressBar to .2
-              progressBar.value = 30;
+              progressBar.value = 15;
 
               // replace the line in the file
               newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_M_SCRIPT_ID);
 
               // set the text of the progressLabel to "80% -- Rebinding Script"
-              progressLabel.text = "80% -- Rebinding Script";
+              progressLabel.text = "40% -- Rebinding Script";
               // set the value of the progressBar to .8
-              progressBar.value = 80;
+              progressBar.value = 40;
 
               // Wait for barDelay
               await Task.Delay(barDelay);
@@ -434,9 +437,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               File.WriteAllText(newFilePath, newFileString);
 
               // set the text of the progressLabel to "90% -- Writing File"
-              progressLabel.text = "90% -- Writing File";
+              progressLabel.text = "45% -- Writing File";
               // set the value of the progressBar to .9
-              progressBar.value = 90;
+              progressBar.value = 45;
 
               // Wait for barDelay
               await Task.Delay(barDelay);
@@ -444,21 +447,140 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // refresh the asset database
               AssetDatabase.Refresh();
 
-              // set the text of the progressLabel to "100%"
-              progressLabel.text = "100% -- Complete";
+              // set the text of the progressLabel to "50%"
+              progressLabel.text = "50% -- Stage 1 Complete";
               // set the value of the progressBar to 1
-              progressBar.value = 100;
+              progressBar.value = 50;
 
               // Wait for barDelay
               await Task.Delay(barDelay);
-              // popup to confirm conversion
-              EditorUtility.DisplayDialog(
-                "Conversion Complete",
-                "The output file can be found at:\n\n" + newFilePath,
-                "OK"
-              );
+
+              // set the text of the progressLabel
+              progressLabel.text = "55% -- Loading Data";
+              // set the value of the progressBar to 1
+              progressBar.value = 55;
+
+              // now its in a readable format, we can convert it to a CVRFury version
+
+              // get data out of the file
+              var parametersFileData = AssetDatabase.LoadAssetAtPath<VRCExpressionParameters>(newFilePath);
+
+              // set the text of the progressLabel
+              progressLabel.text = "60% -- Data Loaded";
+              // set the value of the progressBar to 1
+              progressBar.value = 60;
+
               // Wait for barDelay
               await Task.Delay(barDelay);
+
+              // for each parameter in the file, add the values into a new CVRFuryParametersStore file
+              var newCVRFuryParametersStore = ScriptableObject.CreateInstance<CVRFuryParametersStore>();
+              newCVRFuryParametersStore.parameters = new CVRFuryParametersStore.Parameter[
+                parametersFileData.parameters.Length
+              ];
+
+              //divide 30 by the number of parameters (to get the value of each step)
+              float stepValue = 30 / parametersFileData.parameters.Length;
+
+              for (int i = 0; i < parametersFileData.parameters.Length; i++)
+              {
+                newCVRFuryParametersStore.parameters[i] = new CVRFuryParametersStore.Parameter
+                {
+                  name = parametersFileData.parameters[i].name,
+                  valueType = CVRFuryParametersStore.ValueType.Float,
+                  defaultValue = parametersFileData.parameters[i].defaultValue
+                };
+
+                // set the text of the progressLabel
+                progressLabel.text = (60 + (stepValue * i)) + "% -- Data Processing";
+                // set the value of the progressBar to to 60 + (stepValue * i)
+                progressBar.value = 60 + (stepValue * i);
+              }
+
+              // set the text of the progressLabel
+              progressLabel.text = "90% -- Data processed";
+              // set the value of the progressBar to 1
+              progressBar.value = 90;
+
+              // Wait for barDelay
+              await Task.Delay(barDelay);
+
+              // create a new file path for the CVRFuryParametersStore file
+              var newCVRFuryParametersStoreFilePath = newFilePathFinal;
+
+              // check if the file already exists
+              if (File.Exists(newCVRFuryParametersStoreFilePath))
+              {
+                // Check if the menu option is set
+                if (!EditorPrefs.GetBool("SuppressDeleteParameterIntermediate", false))
+                {
+                  // remove intermediate file
+                  AssetDatabase.DeleteAsset(newFilePath);
+                }
+
+                // refresh the asset database
+                AssetDatabase.Refresh();
+
+                // if the file already exists
+                // display an error popup to the user
+                EditorUtility.DisplayDialog(
+                  "Error",
+                  "The file you have selected to convert already has a converted version. Please select a different file.",
+                  "OK"
+                );
+
+                // set the text of the progressLabel to "Conversion Error"
+                progressLabel.text = "Conversion Error";
+                // set the value of the progressBar to 0
+                progressBar.value = 0;
+
+                // Wait for barDelay
+                await Task.Delay(barDelay);
+              }
+              else
+              {
+                // create the new file
+                AssetDatabase.CreateAsset(newCVRFuryParametersStore, newCVRFuryParametersStoreFilePath);
+
+                // set the text of the progressLabel to "100%"
+                progressLabel.text = "95% -- Cleaning Up";
+                // set the value of the progressBar to 1
+                progressBar.value = 95;
+
+                // Wait for barDelay
+                await Task.Delay(barDelay);
+
+                // refresh the asset database
+                AssetDatabase.Refresh();
+
+                // Check if the menu option is set
+                if (!EditorPrefs.GetBool("SuppressDeleteParameterIntermediate", false))
+                {
+                  // remove intermediate file
+                  AssetDatabase.DeleteAsset(newFilePath);
+                }
+
+                // refresh the asset database
+                AssetDatabase.Refresh();
+
+                // set the text of the progressLabel to "Conversion Complete"
+                progressLabel.text = "Conversion Complete";
+                // set the value of the progressBar to 100
+                progressBar.value = 100;
+
+                // Wait for barDelay
+                await Task.Delay(barDelay);
+
+                // popup to confirm conversion
+                EditorUtility.DisplayDialog(
+                  "Conversion Complete",
+                  "The output file can be found at:\n\n" + newFilePathFinal,
+                  "OK"
+                );
+
+                // Wait for barDelay
+                await Task.Delay(barDelay);
+              }
             }
           }
           else
@@ -565,6 +687,28 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
       // return the output vars
       return IDmatch;
+    }
+  }
+
+  public class SuppressDeleteParameterIntermediateMenu
+  {
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Suppress Delete ParameterIntermediate")]
+    private static void ToggleSuppressDeleteParameterIntermediateAsset()
+    {
+      // Toggle the value
+      bool currentValue = EditorPrefs.GetBool("SuppressDeleteParameterIntermediate", false);
+      EditorPrefs.SetBool("SuppressDeleteParameterIntermediate", !currentValue);
+    }
+
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Suppress Delete ParameterIntermediate", true)]
+    private static bool ToggleSuppressDeleteParameterIntermediateValidation()
+    {
+      // Toggle the checked state
+      Menu.SetChecked(
+        "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Suppress Delete ParameterIntermediate",
+        EditorPrefs.GetBool("SuppressDeleteParameterIntermediate", false)
+      );
+      return true;
     }
   }
 }
