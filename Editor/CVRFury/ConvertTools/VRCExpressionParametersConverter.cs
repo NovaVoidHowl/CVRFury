@@ -692,22 +692,23 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
   public class SuppressDeleteParameterIntermediateMenu
   {
-    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Suppress Delete ParameterIntermediate")]
+    private const string MENU_PATH =
+      "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Suppress Delete Parameter Intermediate";
+    private const string EDITOR_PREFS_KEY = "SuppressDeleteParameterIntermediate";
+
+    [MenuItem(MENU_PATH)]
     private static void ToggleSuppressDeleteParameterIntermediateAsset()
     {
       // Toggle the value
-      bool currentValue = EditorPrefs.GetBool("SuppressDeleteParameterIntermediate", false);
-      EditorPrefs.SetBool("SuppressDeleteParameterIntermediate", !currentValue);
+      bool currentValue = EditorPrefs.GetBool(EDITOR_PREFS_KEY, false);
+      EditorPrefs.SetBool(EDITOR_PREFS_KEY, !currentValue);
     }
 
-    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Suppress Delete ParameterIntermediate", true)]
+    [MenuItem(MENU_PATH, true)]
     private static bool ToggleSuppressDeleteParameterIntermediateValidation()
     {
       // Toggle the checked state
-      Menu.SetChecked(
-        "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Suppress Delete ParameterIntermediate",
-        EditorPrefs.GetBool("SuppressDeleteParameterIntermediate", false)
-      );
+      Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, false));
       return true;
     }
   }
