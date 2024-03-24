@@ -9,6 +9,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 using uk.novavoidhowl.dev.cvrfury.runtime;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 public partial class CVRFuryMenuStoreEditor : Editor
 {
@@ -20,7 +21,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
   {
     float height = 0;
 
-    height += 7 * EditorGUIUtility.singleLineHeight;
+    height += 8 * EditorGUIUtility.singleLineHeight;
 
     return height;
   }
@@ -37,6 +38,29 @@ public partial class CVRFuryMenuStoreEditor : Editor
 
   private void DrawDropdownParameterFields(string shortTypeName, SerializedProperty element, Rect rect)
   {
+    // Find the 'name' property
+    SerializedProperty nameProperty = element.FindPropertyRelative("name");
+
+    // Create a string that contains the information to display
+    string info = " " + TranslateMenuNameToParameterName(nameProperty.stringValue);
+
+    // Display the 'Parameter:' label using EditorGUI.PrefixLabel
+    EditorGUI.PrefixLabel(
+      new Rect(rect.x, rect.y + 2 * EditorGUIUtility.singleLineHeight, rect.width, EditorGUIUtility.singleLineHeight),
+      new GUIContent("Parameter:")
+    );
+
+    // Display the info string using EditorGUI.LabelField
+    EditorGUI.LabelField(
+      new Rect(
+        rect.x + EditorGUIUtility.labelWidth,
+        rect.y + 2.1f * EditorGUIUtility.singleLineHeight,
+        rect.width - EditorGUIUtility.labelWidth,
+        EditorGUIUtility.singleLineHeight
+      ),
+      info
+    );
+
     if (shortTypeName == "dropdownParameter")
     {
       SerializedProperty defaultIndexProperty = element.FindPropertyRelative("defaultIndex");
@@ -56,7 +80,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
         defaultIndexProperty.intValue = EditorGUI.Popup(
           new Rect(
             rect.x,
-            rect.y + 2 * EditorGUIUtility.singleLineHeight,
+            rect.y + 3.1f * EditorGUIUtility.singleLineHeight,
             rect.width,
             EditorGUIUtility.singleLineHeight
           ),
@@ -68,7 +92,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
         EditorGUI.PropertyField(
           new Rect(
             rect.x,
-            rect.y + 3 * EditorGUIUtility.singleLineHeight,
+            rect.y + 4.1f * EditorGUIUtility.singleLineHeight,
             rect.width,
             EditorGUIUtility.singleLineHeight
           ),
@@ -101,7 +125,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
         reorderableList.DoList(
           new Rect(
             rect.x,
-            rect.y + 4 * EditorGUIUtility.singleLineHeight,
+            rect.y + 5.1f * EditorGUIUtility.singleLineHeight,
             rect.width,
             EditorGUIUtility.singleLineHeight * dropdownListProperty.arraySize
           )
