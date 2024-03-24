@@ -31,6 +31,12 @@ using VF.Model.StateAction;
 // - you can have multiple actions of the same type -- think this is fixed now based on the purge and re-add logic
 // - you can mix and match actions of different types in one block
 
+/// <summary>
+/// Apply On Upload
+/// this is imports Apply On Upload features from VRCFury
+/// </summary>
+
+
 namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public partial class CVRFuryDataStorageUnitEditor : Editor
