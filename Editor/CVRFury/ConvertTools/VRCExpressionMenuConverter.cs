@@ -592,9 +592,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                       // set the name of the new joystick to the common prefix
                       newJoystick.name = commonPrefix;
 
-                      // set the defaultXValue and defaultYValues of the new joystick to control.value
-                      newJoystick.defaultXValue = control.value;
-                      newJoystick.defaultYValue = control.value;
+                      // the value of the control is the default value of the the VRC menu open value, is bool
+                      // so we can ignore that as it does not exist in CVR
 
                       // rest of the values should be taken care of by the defaults in the class
 
@@ -604,6 +603,12 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     break;
 
                   case ControlType.FourAxisPuppet:
+
+                    // Never seen this in use in VRC so not sure what it does
+                    // will look at mapping if found in a prefab in the future
+                    // send a warning to the console
+                    CoreLog("FourAxisPuppet not supported, please add / up vote a feature request on the GitHub page");
+
                     ////////////////
                     // TODO: add support for FourAxisPuppet
                     ////////////////
@@ -617,8 +622,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     // set the name of the new toggle
                     newSlider.name = GetCVRFuryMenuSectionName(control);
 
-                    // set the default state of the new slider to the value of the control
-                    newSlider.defaultValue = control.value;
+                    // the value of the control is the default value of the the VRC menu open value, is bool
+                    // so we can ignore that as it does not exist in CVR
 
                     // add the new slider to the convertedMenu
                     convertedMenu.menuItems.Add(newSlider);
