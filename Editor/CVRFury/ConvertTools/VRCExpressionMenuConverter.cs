@@ -12,6 +12,7 @@ using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.vrcstub;
 using ControlType = uk.novavoidhowl.dev.vrcstub.VRCExpressionsMenu.Control.ControlType;
+using Control = uk.novavoidhowl.dev.vrcstub.VRCExpressionsMenu.Control;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 
 namespace uk.novavoidhowl.dev.cvrfury.converttools
@@ -512,20 +513,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     // create a new toggleParameter
                     toggleParameter newToggle = new toggleParameter();
 
-                    // parse the Name Vs Parameter in the control
-                    // compare the parameter to the name when the spaces are removed
-                    // if they are the same then the name can be used as the new toggle name
-                    // if they are different then the parameter is used as the new toggle name
-                    if (control.name.Replace(" ", "") == control.parameter.name)
-                    {
-                      // set the name of the new toggle to the name of the control
-                      newToggle.name = control.name;
-                    }
-                    else
-                    {
-                      // set the name of the new toggle to the parameter of the control,
-                      newToggle.name = control.parameter.name;
-                    }
+                    // set the name of the new toggle
+                    newToggle.name = GetCVRFuryMenuSectionName(control);
 
                     // set the default state of the new toggle to the value of the control
                     newToggle.defaultState = control.value == 1f ? true : false;
@@ -562,9 +551,19 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     break;
 
                   case ControlType.RadialPuppet:
-                    ////////////////
-                    // TODO: add support for RadialPuppet
-                    ////////////////
+                    // this maps to a slider in CVR
+                    // create a new sliderParameter
+                    sliderParameter newSlider = new sliderParameter();
+
+                    // set the name of the new toggle
+                    newSlider.name = GetCVRFuryMenuSectionName(control);
+
+                    // set the default state of the new slider to the value of the control
+                    newSlider.defaultValue = control.value;
+
+                    // add the new slider to the convertedMenu
+                    convertedMenu.menuItems.Add(newSlider);
+
                     break;
 
                   default:
@@ -659,6 +658,71 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
     }
 
     // support functions -----------------------------------------------------------------------------------------------
+
+    public string GetCVRFuryMenuSectionName(Control control)
+    {
+      // get the name of the control
+      string controlName = control.name;
+      // get the parameter name of the control
+      string controlParameterName = control.parameter.name;
+
+      // check if the controlParameterName is not null or empty
+      if (!string.IsNullOrEmpty(controlParameterName))
+      {
+        // parse the Name Vs Parameter in the control
+        // compare the parameter to the name when the spaces are removed
+        // if they are the same then the name can be used as the new toggle name
+        // if they are different then the parameter is used as the new toggle name
+        if (control.name.Replace(" ", "") == control.parameter.name)
+        {
+          // set the name of the new toggle to the name of the control
+          return control.name;
+        }
+        else
+        {
+          // set the name of the new toggle to the parameter of the control,
+          return control.parameter.name;
+        }
+      }
+      else
+      {
+        // if the controlParameterName is null or empty
+        // check if there are any subParameters
+        if (control.subParameters != null)
+        {
+          // if there are subParameters
+          // check how many subParameters there are, if there is only one then use that as the name
+          if (control.subParameters.Length == 1)
+          {
+            // if there is only one subParameter return the name of the subParameter
+            return control.subParameters[0].name;
+          }
+          else
+          {
+            // if there are more than one subParameters
+            // set the name of the new toggle to the name of the control
+            return control.name;
+            // send a warning to the console
+            CoreLog("Control has multiple subParameters, please check the control in the VRCExpressionMenu");
+            // popup to inform the user
+            EditorUtility.DisplayDialog(
+              "Warning",
+              "Control "
+                + control.name
+                + " has multiple subParameters, falling back to base name\n"
+                + " Note this may not match the parameter in the animator please check ",
+              "OK"
+            );
+          }
+        }
+        else
+        {
+          // if there are no subParameters
+          // set the name of the new toggle to the name of the control
+          return control.name;
+        }
+      }
+    }
 
     // function to check if string content is a VRCExpressionMenu file
     public (bool, string) checkScriptIDs(string menuFileString, List<string> scriptIDs)
