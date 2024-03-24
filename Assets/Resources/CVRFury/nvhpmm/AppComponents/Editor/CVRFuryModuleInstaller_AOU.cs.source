@@ -15,6 +15,11 @@ using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
+/// <summary>
+/// Apply On Upload
+/// this is installs modules that set the state of objects just before upload/play
+/// </summary>
+
 namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public class objectStateSetterProcessor : IModuleProcessor
