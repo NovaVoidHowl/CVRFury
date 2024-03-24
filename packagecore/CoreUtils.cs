@@ -35,6 +35,11 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       return path;
     }
 
+    public static string TranslateMenuNameToParameterName(string menuName)
+    {
+      return menuName.Replace(" ", "").Replace("\\", "");
+    }
+
 #if UNITY_EDITOR
     // this bit needs editor to work
 
