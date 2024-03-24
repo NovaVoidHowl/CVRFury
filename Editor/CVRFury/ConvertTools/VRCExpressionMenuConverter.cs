@@ -10,6 +10,9 @@ using UnityEngine.UIElements;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.vrcstub;
+using ControlType = uk.novavoidhowl.dev.vrcstub.VRCExpressionsMenu.Control.ControlType;
+using uk.novavoidhowl.dev.cvrfury.runtime;
 
 namespace uk.novavoidhowl.dev.cvrfury.converttools
 {
@@ -352,7 +355,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
             // get the progressLabel element from the controlsContainer
             var progressLabel = controlsContainer.Q<Label>("progressLabel");
 
-            // set the value of the progressBar to 0
+            // set the value of the progressBar
             progressBar.value = 0;
             // set the text of the progressLabel to "0%"
             progressLabel.text = "0%";
@@ -364,11 +367,12 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
             // get filepath without extension
             var filePathWithoutExtension = Path.ChangeExtension(filePath, null);
-            var newFilePath = filePathWithoutExtension + ".CVRFury.asset";
+            var newFilePath = filePathWithoutExtension + ".Stage1.CVRFury.asset";
+            var newFilePathFinal = filePathWithoutExtension + ".CVRFury.asset";
 
             // set the text of the progressLabel to "10%"
             progressLabel.text = "10% -- initialising";
-            // set the value of the progressBar to 10
+            // set the value of the progressBar
             progressBar.value = 10;
             // debug print the value of the progressBar
             CoreLog("progressBar.value: " + progressBar.value);
@@ -389,7 +393,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
               // set the text of the progressLabel to "Conversion Error"
               progressLabel.text = "Conversion Error";
-              // set the value of the progressBar to 0
+              // set the value of the progressBar
               progressBar.value = 0;
 
               // Wait for barDelay
@@ -401,9 +405,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               AssetDatabase.CopyAsset(filePath, newFilePath);
 
               // set the text of the progressLabel to "20%"
-              progressLabel.text = "20% -- Duplicate File Created";
-              // set the value of the progressBar to .2
-              progressBar.value = 20;
+              progressLabel.text = "10% -- Duplicate File Created";
+              // set the value of the progressBar
+              progressBar.value = 10;
 
               // Wait for barDelay
               await Task.Delay(barDelay);
@@ -414,18 +418,18 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // read the new file as plain text
               var newFileString = File.ReadAllText(newFilePath);
 
-              // set the text of the progressLabel to "20%"
-              progressLabel.text = "30% -- Loading File";
-              // set the value of the progressBar to .2
-              progressBar.value = 30;
+              // set the text of the progressLabel
+              progressLabel.text = "15% -- Loading File";
+              // set the value of the progressBar
+              progressBar.value = 15;
 
               // replace the line in the file
               newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_M_SCRIPT_ID);
 
-              // set the text of the progressLabel to "80% -- Rebinding Script"
-              progressLabel.text = "80% -- Rebinding Script";
-              // set the value of the progressBar to .8
-              progressBar.value = 80;
+              // set the text of the progressLabel
+              progressLabel.text = "30% -- Rebinding Script";
+              // set the value of the progressBar
+              progressBar.value = 30;
 
               // Wait for barDelay
               await Task.Delay(barDelay);
@@ -434,9 +438,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               File.WriteAllText(newFilePath, newFileString);
 
               // set the text of the progressLabel to "90% -- Writing File"
-              progressLabel.text = "90% -- Writing File";
-              // set the value of the progressBar to .9
-              progressBar.value = 90;
+              progressLabel.text = "40% -- Writing File";
+              // set the value of the progressBar
+              progressBar.value = 40;
 
               // Wait for barDelay
               await Task.Delay(barDelay);
@@ -444,9 +448,143 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // refresh the asset database
               AssetDatabase.Refresh();
 
-              // set the text of the progressLabel to "100%"
-              progressLabel.text = "100% -- Complete";
-              // set the value of the progressBar to 1
+              // set the text of the progressLabel
+              progressLabel.text = "50% -- Stage 1 Complete";
+              // set the value of the progressBar
+              progressBar.value = 50;
+
+              // load the intermediate menu file based off the 'newFilePath' an the class 'VRCExpressionsMenu'(stub)
+              VRCExpressionsMenu menuToImport = AssetDatabase.LoadAssetAtPath<VRCExpressionsMenu>(newFilePath);
+
+              // set the text of the progressLabel
+              progressLabel.text = "60% -- Loading Intermediate File";
+              // set the value of the progressBar
+              progressBar.value = 60;
+
+              // Wait for barDelay
+              await Task.Delay(barDelay);
+
+              // set the text of the progressLabel
+              progressLabel.text = "65% -- Processing Controls";
+              // set the value of the progressBar
+              progressBar.value = 65;
+
+              // Wait for barDelay
+              await Task.Delay(barDelay);
+
+              // get the number of controls in the menuToImport
+              var controlCount = menuToImport.controls.Count;
+
+              // divide 30 by the number of controls
+              var controlStep = 30 / controlCount;
+
+              // create CVRFuryMenuStore to store the converted menu
+              CVRFuryMenuStore convertedMenu = ScriptableObject.CreateInstance<CVRFuryMenuStore>();
+
+              // for each control in the menuToImport
+              foreach (var control in menuToImport.controls)
+              {
+                // set the text of the progressLabel
+                progressLabel.text = "65% -- Processing Controls\n\n" + controlCount + " controls remaining";
+                // set the value of the progressBar
+                progressBar.value += controlStep;
+
+                // get the type of the control
+                ControlType controlType = control.type;
+
+                // NOTES:
+                // CVR has the menu item name and parameter linked together so for converted
+                // stuff CVR name = VRC parameter
+                // spaces in the name are ignored in the parameter
+                // case sensitivity persist in the parameter so 'Test Var' in the name will be TestVar
+                // in the parameter
+                // '\' in the name will be ignored in the parameter
+                // '/' in the name will be kept in the parameter
+
+                // case statement to handle the different control types
+                switch (controlType)
+                {
+                  case ControlType.Button:
+                  // if the control is a button
+                  // there is not really an analogue for this in CVR, best we can do for this is a toggle
+                  //break; //this break is disabled to allow the toggle to be created
+                  case ControlType.Toggle:
+                    // create a new toggleParameter
+                    toggleParameter newToggle = new toggleParameter();
+
+                    // parse the Name Vs Parameter in the control
+                    // compare the parameter to the name when the spaces are removed
+                    // if they are the same then the name can be used as the new toggle name
+                    // if they are different then the parameter is used as the new toggle name
+                    if (control.name.Replace(" ", "") == control.parameter.name)
+                    {
+                      // set the name of the new toggle to the name of the control
+                      newToggle.name = control.name;
+                    }
+                    else
+                    {
+                      // set the name of the new toggle to the parameter of the control,
+                      newToggle.name = control.parameter.name;
+                    }
+
+                    // set the default state of the new toggle to the value of the control
+                    newToggle.defaultState = control.value == 1f ? true : false;
+
+                    // set the generateType of the new toggle to bool
+                    newToggle.generateType = toggleParameter.GenerateType.Bool;
+
+                    // add the new toggle to the convertedMenu
+                    convertedMenu.menuItems.Add(newToggle);
+
+                    break;
+
+                  //////////////////////////////
+                  // TODO: add the rest of the control types
+                  //
+                  // SubMenu
+                  // TwoAxisPuppet
+                  // FourAxisPuppet
+                  // RadialPuppet
+                  //
+                  //////////////////////////////
+
+
+
+
+                  default:
+                    // write warning to console about unhandled control type
+                    CoreLog("Unhandled control type: " + controlType.ToString());
+                    break;
+                }
+              }
+
+              // set the text of the progressLabel
+              progressLabel.text = "95% -- Writing Output File";
+              // set the value of the progressBar
+              progressBar.value = 95;
+
+              // write the convertedMenu to a new file
+              AssetDatabase.CreateAsset(convertedMenu, newFilePathFinal);
+
+              // Wait for barDelay
+              await Task.Delay(barDelay);
+
+              // if EditorPrefs bool SuppressDeleteExpressionMenuIntermediate is false,
+              // delete the intermediate file
+              if (!EditorPrefs.GetBool("SuppressDeleteExpressionMenuIntermediate", false))
+              {
+                // set the text of the progressLabel
+                progressLabel.text = "97% -- Cleaning Up";
+                // set the value of the progressBar
+                progressBar.value = 97;
+
+                // delete the intermediate file
+                AssetDatabase.DeleteAsset(newFilePath);
+              }
+
+              // set the text of the progressLabel
+              progressLabel.text = "100% -- Conversion Complete";
+              // set the value of the progressBar
               progressBar.value = 100;
 
               // Wait for barDelay
