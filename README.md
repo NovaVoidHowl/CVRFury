@@ -21,7 +21,7 @@
 <br />
 <div align="center">
   <a href="https://repo.cvrfury.uk/">
-    <img src="Assets/Resources/CVRFury/Logos/CVRFurylogo.png" alt="Logo" width="128" height="64">
+    <img src="Assets/Resources/CVRFury/Logos/CVRFuryLogo.png" alt="Logo" width="128" height="64">
   </a>
 
 <h3 align="center">CVR Fury</h3>

@@ -358,8 +358,6 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
             progressBar.value = 0;
             // set the text of the progressLabel to "0%"
             progressLabel.text = "0%";
-            // debug print the value of the progressBar
-            CoreLog("progressBar.value: " + progressBar.value);
 
             // Wait for barDelay
             await Task.Delay(barDelay);
@@ -373,8 +371,6 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
             progressLabel.text = "5% -- initialising";
             // set the value of the progressBar to 10
             progressBar.value = 5;
-            // debug print the value of the progressBar
-            CoreLog("progressBar.value: " + progressBar.value);
 
             // Wait for barDelay
             await Task.Delay(barDelay);
