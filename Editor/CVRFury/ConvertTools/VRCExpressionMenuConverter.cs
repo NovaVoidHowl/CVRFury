@@ -538,18 +538,34 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
                     break;
 
-                  //////////////////////////////
-                  // TODO: add the rest of the control types
-                  //
-                  // SubMenu
-                  // TwoAxisPuppet
-                  // FourAxisPuppet
-                  // RadialPuppet
-                  //
-                  //////////////////////////////
+                  case ControlType.SubMenu:
+                    // there is not really an analogue for this in CVR
+                    // there is a mod that has a sub menu but it is not a standard CVR feature
+                    // so for now not supported, maybe in the future
+                    ////////////////
+                    // TODO: add support for SubMenu
+                    ////////////////
+                    // send a warning to the console
+                    CoreLog("SubMenu not supported, please add / up vote a feature request on the GitHub page");
+                    break;
 
+                  case ControlType.TwoAxisPuppet:
+                    ////////////////
+                    // TODO: add support for TwoAxisPuppet
+                    ////////////////
+                    break;
 
+                  case ControlType.FourAxisPuppet:
+                    ////////////////
+                    // TODO: add support for FourAxisPuppet
+                    ////////////////
+                    break;
 
+                  case ControlType.RadialPuppet:
+                    ////////////////
+                    // TODO: add support for RadialPuppet
+                    ////////////////
+                    break;
 
                   default:
                     // write warning to console about unhandled control type
