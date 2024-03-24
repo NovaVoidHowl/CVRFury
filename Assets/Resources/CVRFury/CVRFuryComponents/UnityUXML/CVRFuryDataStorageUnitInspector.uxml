@@ -18,7 +18,7 @@
           <Label name="CVRFuryDataStorageUnitStatusAvatarLinkContent" text="Inactive" />
         </VisualElement>
         <VisualElement name="CVRFuryDataStorageUnitStatusAvatarLinkButtons">
-          <Button name="CVRFuryDataStorageUnitStatusAvatarLinkButton" text="Select In Hierarchy" style="display: none;" />
+          <Button name="CVRFuryDataStorageUnitStatusAvatarLinkButton" text="Select Avatar In Hierarchy" style="display: none;" />
         </VisualElement>
         <VisualElement name="CVRFuryDataStorageUnitDataImport">
           <Label class="sectionTitle" text="Data Import" />
