@@ -539,9 +539,68 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     break;
 
                   case ControlType.TwoAxisPuppet:
-                    ////////////////
-                    // TODO: add support for TwoAxisPuppet
-                    ////////////////
+                    // Two axis puppet maps to a 2D joystick in CVR
+
+                    // create a new twoDJoystickParameter
+                    twoDJoystickParameter newJoystick = new twoDJoystickParameter();
+
+                    // note that twoDJoystickParameter has two parameters, that have a fixed name structure
+                    // comprised of the name and a suffix of '-x' or '-y', you can't change the suffix
+                    // so we need to see how much of the name we can use, likely will need to re-code animator
+                    // parameters to match the name of the control
+
+                    // get the name of the control
+                    string controlName = control.name;
+
+                    // get the subParameters of the control, as these will always be in use for a TwoAxisPuppet
+                    var subParameters = control.subParameters;
+
+                    // there should only be two subParameters, one for the x axis and one for the y axis.
+                    // get a count of the subParameters
+                    int subParameterCount = subParameters.Length;
+
+                    // if there is anything other than two subParameters,
+                    if (subParameterCount != 2)
+                    {
+                      // send a warning to the console
+                      CoreLog("TwoAxisPuppet control has " + subParameterCount + " subParameters, expected 2");
+
+                      // and display a popup to the user
+                      EditorUtility.DisplayDialog(
+                        "Warning",
+                        "Control "
+                          + control.name
+                          + " has "
+                          + subParameterCount
+                          + " subParameters, expected 2\n"
+                          + "Please check the source file and try again",
+                        "OK"
+                      );
+                    }
+                    else
+                    {
+                      // ok so looks like we have the right number of subParameters
+
+                      // get the first subParameter
+                      var subParameter1 = subParameters[0];
+                      // get the second subParameter
+                      var subParameter2 = subParameters[1];
+
+                      // get the common prefix of the two subParameter names
+                      string commonPrefix = GetCommonPrefix(subParameter1.name, subParameter2.name);
+
+                      // set the name of the new joystick to the common prefix
+                      newJoystick.name = commonPrefix;
+
+                      // set the defaultXValue and defaultYValues of the new joystick to control.value
+                      newJoystick.defaultXValue = control.value;
+                      newJoystick.defaultYValue = control.value;
+
+                      // rest of the values should be taken care of by the defaults in the class
+
+                      // add the new joystick to the convertedMenu
+                      convertedMenu.menuItems.Add(newJoystick);
+                    }
                     break;
 
                   case ControlType.FourAxisPuppet:
@@ -658,6 +717,19 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
     }
 
     // support functions -----------------------------------------------------------------------------------------------
+
+    public static string GetCommonPrefix(string string1, string string2)
+    {
+      int minLength = System.Math.Min(string1.Length, string2.Length);
+      for (int i = 0; i < minLength; i++)
+      {
+        if (string1[i] != string2[i])
+        {
+          return string1.Substring(0, i);
+        }
+      }
+      return string1.Substring(0, minLength);
+    }
 
     public string GetCVRFuryMenuSectionName(Control control)
     {
