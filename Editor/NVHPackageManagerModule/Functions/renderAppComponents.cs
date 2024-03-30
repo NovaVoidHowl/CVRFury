@@ -320,6 +320,61 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             }
 
             FileUtil.CopyFileOrDirectory(sourceFile, targetFile);
+
+            // get the scripting define symbol suffix from the source file
+            Dictionary<string, object> dict = getInternalPackageInfoFromFile(sourceFile);
+            string scriptingDefineSymbolSuffix = "";
+            if (dict != null)
+            {
+              // check if there is a 'defineSymbolSuffix' key in the dictionary
+              if (dict.ContainsKey("defineSymbolSuffix"))
+              {
+                // get the value of the 'defineSymbolSuffix' key as a string
+                scriptingDefineSymbolSuffix = dict["defineSymbolSuffix"].ToString();
+              }
+            }
+            else
+            {
+              // if the dictionary is null, then the file does not contain the line we want
+              // set the scriptingDefineSymbolSuffix string to empty
+              scriptingDefineSymbolSuffix = "";
+            }
+
+            if (scriptingDefineSymbolSuffix == "")
+            {
+              // if the scriptingDefineSymbolSuffix string is empty, then we can't add the define symbol
+              // show error message
+              Debug.LogError("Could not find defineSymbolSuffix in file at path: " + sourceFile);
+            }
+            else
+            {
+              // symbol suffix found, add the define symbol
+
+              // concat full scripting define symbol
+              string symbolToBeAdded = Constants.SCRIPTING_DEFINE_SYMBOL + scriptingDefineSymbolSuffix;
+
+              // print the symbol to be added to the console
+              CoreLog("Adding scripting define symbol: " + symbolToBeAdded);
+
+              // get the current Scripting Define Symbols
+              string scriptingDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(
+                EditorUserBuildSettings.selectedBuildTargetGroup
+              );
+
+              // check if the symbol is already in the scripting define symbols
+              if (!scriptingDefines.Contains(symbolToBeAdded))
+              {
+                // add the Scripting Define Symbol (which is a concatenation of the core symbol and the defineSymbolSuffix)
+                scriptingDefines += ";" + symbolToBeAdded;
+
+                // Set the new Scripting Define Symbols
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(
+                  EditorUserBuildSettings.selectedBuildTargetGroup,
+                  scriptingDefines
+                );
+              }
+            }
+
             AssetDatabase.Refresh();
             refreshDepMgrUI();
           };
