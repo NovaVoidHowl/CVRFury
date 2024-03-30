@@ -1,0 +1,137 @@
+// { "version": "0.0.8" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using Newtonsoft.Json.Linq;
+using ABI.CCK.Scripts.Editor;
+using VF.Model.Feature;
+using VF.Component;
+using VF.Model;
+using Action = VF.Model.StateAction.Action;
+using VF.Model.StateAction;
+
+
+/// <summary>
+/// Full Controller
+/// this imports/convert from VRCFury
+/// </summary>
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public partial class CVRFuryDataStorageUnitEditor : Editor
+  {
+    private void importVRCFuryFeatures()
+    {
+
+      // get the gameObject this component is attached to
+      var DSUgameObject = ((CVRFuryDataStorageUnit) target).gameObject;
+
+      // check if that gameObject has VRCFuryComponent on it
+      if (DSUgameObject.GetComponent<VRCFuryComponent>() != null)
+      {
+        // if the gameObject has VRCFuryComponent on it, get the VRCFuryComponent
+        var VRCFuryComponent = DSUgameObject.GetComponent<VRCFuryComponent>();
+
+        // list for the feature class names
+        List<Tuple<string, FeatureModel>> featureClassInstances = new List<Tuple<string, FeatureModel>>();
+
+        VRCFury fury = VRCFuryComponent as VRCFury; // cast to VRCFury
+
+        if (fury != null) {
+          // access the config property
+          VRCFuryConfig config = fury.config;
+
+          // iterate through the features, and list the class names
+          foreach (FeatureModel feature in config.features)
+          {
+            // add the class name and the feature to the featureClassInstances list
+            featureClassInstances.Add(new Tuple<string, FeatureModel>(feature.GetType().Name, feature));
+          }
+        }
+        else
+        {
+          // converted component is null
+          // send a warning to the console
+          Debug.LogWarning("VRCFuryComponent converted to VRCFury is null");
+          return;
+        }
+
+        // at this point we have a viable list of featureClassInstances in use, on the gameObject
+
+        // first off, check how many features we have
+        CoreLog("number of features to import = " + featureClassInstances.Count);
+        // if there are no features to import, return
+        if (featureClassInstances.Count == 0)
+        {
+          return;
+        }
+
+        // at this point we have a viable list of featureClassInstances that is not empty.
+        // so all import triggers can go here
+
+        // position in the list
+        int positionInList = 0;
+        // loop featureClassInstances
+        foreach(Tuple<string, FeatureModel> featureClassInstance in featureClassInstances)
+        {
+          // get the feature class name
+          string featureClassName = featureClassInstance.Item1;
+          // get the feature instance
+          FeatureModel featureInstance = featureClassInstance.Item2;
+
+          // print the feature class name to the console
+          CoreLog("featureClassName = " + featureClassName);
+
+        //--------------------------------------------------------------------------------------------
+          // process feature instance depending on type of feature
+          // modular list of process functions go here
+          // note the function should expect a single feature instance as an argument
+          // along with the rootVisualElement (so it can update/customise the UI) and the positionInList
+
+          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_AOU
+          importApplyOnUploadFeature(featureClassInstance, rootVisualElement, positionInList);
+          #endif
+
+
+
+
+        //--------------------------------------------------------------------------------------------
+          // increment position in list
+          positionInList++;
+        }
+
+
+
+      }
+      else
+      {
+        // no VRCFuryComponent on the gameObject, so no data of this type to import
+      }
+
+    }
+  }
+}
+#endif
+
+
+
+// TODO: manage Import finalisation
+
+// Not sure how this will be done yet, may be safer to give the user a button to remove all imported data?
+
+// The module processing script will do the replace on its own provided that the 'justImported' bool is set to false
+
+// It may be best to change the behaviour of the import button to clear the 'justImported' bool on its target
+// but update the UI of the button to show its going to do a reimport

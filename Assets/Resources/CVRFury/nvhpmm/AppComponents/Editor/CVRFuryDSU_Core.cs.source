@@ -1,4 +1,4 @@
-// { "version": "0.2.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.2.6" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -210,7 +210,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // update data on ui  END ----------------------------------------------------------------------------------------
 
       // supported features import
-      importApplyOnUploadFeature();
+      #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_CORE
+      importVRCFuryFeatures();
+      #endif
 
       renderDevModeUI();
       Repaint();
