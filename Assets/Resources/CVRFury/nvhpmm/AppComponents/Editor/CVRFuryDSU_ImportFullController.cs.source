@@ -1,4 +1,4 @@
-// { "version": "0.0.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
+// { "version": "0.0.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -43,10 +43,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the ImportFullController feature from the tuple
       FeatureModel importFullControllerFeature = featureClassInstance.Item2;
-
-      // print the featureClassName to the console
-      CoreLog("featureClassName is " + featureClassName);
-
 
       // check if the feature is of the 'FullController' type and if not return. note this is the VRCFury feature
       // name, naming is not 1-to-1 with the class name
