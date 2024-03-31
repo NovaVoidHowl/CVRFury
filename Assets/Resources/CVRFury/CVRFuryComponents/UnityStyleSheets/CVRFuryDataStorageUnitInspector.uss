@@ -99,7 +99,8 @@
 
 #CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelOK,
 #CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelNotOK,
-#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelUnknown {
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelUnknown,
+.finaliseImportLabel {
   font-size: 12px;
   margin-top: 2px;
   margin-bottom: 2px;
@@ -108,7 +109,8 @@
   -unity-text-align: middle-center;
 }
 
-#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelOK{
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelOK,
+.finaliseImportLabel{
   background-color: green;
 }
 
@@ -126,7 +128,8 @@
   display: none;
 }
 
-#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelBorderWhite{
+#CVRFuryDataStorageUnitDataImportDetailsFeaturesList .featureClassNameLabelBorderWhite,
+.finaliseImportLabel{
   border-width: 1px 1px 1px 1px;
   border-color: white;
 }

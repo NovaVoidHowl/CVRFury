@@ -1,4 +1,4 @@
-// { "version": "0.0.8" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
+// { "version": "0.0.28" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -32,7 +32,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
-    private void importVRCFuryFeatures()
+    private void importVRCFuryFeaturesViaUI()
     {
 
       // get the gameObject this component is attached to
@@ -99,7 +99,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // modular list of process functions go here
           // note the function should expect a single feature instance as an argument
           // along with the rootVisualElement (so it can update/customise the UI) and the positionInList
-
+          // it is expected that the function will update the UI as required (rootVisualElement.MarkDirtyRepaint();)
           #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_AOU
           importApplyOnUploadFeature(featureClassInstance, rootVisualElement, positionInList);
           #endif
@@ -112,6 +112,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           positionInList++;
         }
 
+        updateFinaliseUI();
+
 
 
       }
@@ -121,17 +123,95 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
     }
+
+    private void updateFinaliseUI()
+    {
+      // get the list of modules from this DSU
+      var modules = ((CVRFuryDataStorageUnit) target).modules.modules;
+
+      // bool to check if any modules have been imported
+      bool modulesImported = false;
+
+      // loop through the modules
+      foreach (var module in modules)
+      {
+        // check if the module has the 'justImported' bool set to true
+        if (module.justImported)
+        {
+          // if the module has the 'justImported' bool set to true, set modulesImported to true
+          modulesImported = true;
+          // break the loop, if even one module has been imported we need to act on that.
+          break;
+        }
+      }
+
+      // if modulesImported is true, update the UI
+      // this will add a label 'button' to the UI to allow the user to finalise the import
+
+
+      // get the CVRFuryDataStorageUnitDataImportDetails visual element
+      var CVRFuryDataStorageUnitDataImportDetails = rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetails");
+
+      // check if there are any modules that have been imported
+      if (modulesImported)
+      {
+        // add a label to CVRFuryDataStorageUnitDataImportDetails visual element,
+        // to allow the user to finalise the import
+
+        // create a new label
+        var finaliseImportLabel = new Label("Finalise Current Imports");
+        finaliseImportLabel.name = "finaliseImportLabel";
+
+        // add the label to the CVRFuryDataStorageUnitDataImportDetails visual element
+        CVRFuryDataStorageUnitDataImportDetails.Add(finaliseImportLabel);
+
+        // add a click event to the label
+        finaliseImportLabel.RegisterCallback<ClickEvent>(ev =>
+        {
+          // call the finaliseImport function
+          finaliseModuleImport(modules);
+        });
+
+        // add class to the label, to style it
+        finaliseImportLabel.AddToClassList("finaliseImportLabel");
+      }
+      else
+      {
+        // get the finaliseImportLabel
+        Label finaliseImportLabel = CVRFuryDataStorageUnitDataImportDetails.Q<Label>("finaliseImportLabel");
+        if (finaliseImportLabel != null)
+        {
+          // if there is already a finaliseImportLabel, remove it
+          CVRFuryDataStorageUnitDataImportDetails.Remove(finaliseImportLabel);
+        }
+
+        // repaint the CVRFuryDataStorageUnitDataImportDetails visual element
+        CVRFuryDataStorageUnitDataImportDetails.MarkDirtyRepaint();
+
+      }
+    }
+
+    private void finaliseModuleImport(List<CVRFuryModule> modules)
+    {
+      // loop through the modules
+      foreach (var module in modules)
+      {
+        // check if the module has the 'justImported' bool set to true
+        if (module.justImported)
+        {
+          // if the module has the 'justImported' bool set to true, set it to false
+          module.justImported = false;
+        }
+      }
+
+      // update the UI
+      updateFinaliseUI();
+
+    }
+
+  // end of class
   }
+
+// end of namespace
 }
 #endif
-
-
-
-// TODO: manage Import finalisation
-
-// Not sure how this will be done yet, may be safer to give the user a button to remove all imported data?
-
-// The module processing script will do the replace on its own provided that the 'justImported' bool is set to false
-
-// It may be best to change the behaviour of the import button to clear the 'justImported' bool on its target
-// but update the UI of the button to show its going to do a reimport

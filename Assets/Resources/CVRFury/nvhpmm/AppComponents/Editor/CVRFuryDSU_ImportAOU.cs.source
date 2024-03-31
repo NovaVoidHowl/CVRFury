@@ -1,4 +1,4 @@
-// { "version": "0.11.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.11.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -46,10 +46,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                                             int positionInList
                                            )
     {
-      
+
       // get the ApplyOnUpload name from the tuple
       string featureClassName = featureClassInstance.Item1;
-      
+
       // get the ApplyOnUpload feature from the tuple
       FeatureModel applyOnUploadFeature = featureClassInstance.Item2;
 
@@ -155,6 +155,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           }
 
+          // reload the UI finalise UI
+          updateFinaliseUI();
 
         });
 
@@ -171,13 +173,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
 
-    private void ImportObjectToggleAction(ObjectToggleAction objectToggleAction, List<CVRFuryModule> modules ) 
+    private void ImportObjectToggleAction(ObjectToggleAction objectToggleAction, List<CVRFuryModule> modules )
     {
       ////////--------------------------------------------------------------------------------------------
       // function to handle objectToggleAction data import
       // Note: This is the most common action type seen so far as of 2021-10-13
       // related files: StateAction.cs - line 18 to 44
-      
+
       //// TODO: remove this debug code before release
       // debug outputs to console
       // CoreLog(objectToggleAction.GetType());
@@ -314,7 +316,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 
     }
-  
+
     private void ImportBlendShapeAction(BlendShapeAction blendShapeAction, List<CVRFuryModule> modules)
     {
       //// function to handle BlendShapeAction data import
@@ -398,7 +400,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 
     }
-  
+
     private void ImportFxFloatAction(FxFloatAction fxFloatAction, List<CVRFuryModule> modules)
     {
       //// function to handle FxFloatAction data import
@@ -578,9 +580,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the blockBlinkSetter module to the modules list in the DSU
       modules.Add(blockBlinkSetter);
-  
+
     }
-  
+
     private void ImportBlockVisemesAction(BlockVisemesAction blockVisemesAction, List<CVRFuryModule> modules)
     {
       //// case to handle BlockVisemesAction data import
