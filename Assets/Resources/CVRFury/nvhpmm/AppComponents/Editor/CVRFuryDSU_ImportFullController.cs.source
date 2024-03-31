@@ -1,0 +1,293 @@
+// { "version": "0.0.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using Newtonsoft.Json.Linq;
+using ABI.CCK.Scripts.Editor;
+using VF.Model.Feature;
+using VF.Component;
+using VF.Model;
+using Action = VF.Model.StateAction.Action;
+using VF.Model.StateAction;
+
+
+/// <summary>
+/// Full Controller import
+///
+/// </summary>
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public partial class CVRFuryDataStorageUnitEditor : Editor
+  {
+    private void importFullControllerFeature(Tuple<string, FeatureModel> featureClassInstance,
+                                            VisualElement rootVisualElement,
+                                            int positionInList
+                                           )
+    {
+
+      // get the featureClassName name from the tuple
+      string featureClassName = featureClassInstance.Item1;
+
+      // get the ImportFullController feature from the tuple
+      FeatureModel importFullControllerFeature = featureClassInstance.Item2;
+
+      // print the featureClassName to the console
+      CoreLog("featureClassName is " + featureClassName);
+
+
+      // check if the feature is of the 'FullController' type and if not return. note this is the VRCFury feature
+      // name, naming is not 1-to-1 with the class name
+      if (featureClassName != "FullController")
+      {
+        // this console log is for debugging purposes
+        //CoreLog("feature at position "+positionInList+" is "+featureClassName+" not of the ApplyOnUpload , returning");
+        return;
+      }
+
+
+      // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList =
+        rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetailsFeaturesList");
+
+
+      var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
+      var labelAtPosition = featuresList[positionInList] as Label;
+      if (labelAtPosition != null)
+      {
+        // add a white border to the label
+        labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
+
+        // edit the label text to include a suffix of the position in the list
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")" ;
+
+        // add a click event to the label
+        labelAtPosition.RegisterCallback<ClickEvent>(evt =>
+        {
+          // print to console that the label has been clicked
+          // TODO: remove this debug log
+          CoreLog("label at position " + positionInList + " has been clicked");
+
+          // get the list of modules from this DSU
+          var modules = ((CVRFuryDataStorageUnit) target).modules.modules;
+
+          // check to see if the DSU already has an fullControllerModule module
+          if (modules.Any(module => module.GetType().Name == "fullControllerModule"))
+          {
+
+            List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+            // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+            // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+            foreach (var module in modules.Where(module => module.GetType().Name == "fullControllerModule"))
+            {
+              var fullControllerModuleInstance = module as fullControllerModule;
+              if (fullControllerModuleInstance.importedFromVRCFury && !fullControllerModuleInstance.justImported)
+              {
+                modulesToRemove.Add(module);
+              }
+            }
+
+            // process the remove list
+            foreach (var module in modulesToRemove)
+            {
+              modules.Remove(module);
+            }
+          }
+
+          // cast the feature to the FullController type
+          FullController VRCFuryControllerFeature = (FullController)importFullControllerFeature;
+
+          // create a new fullControllerModule
+          fullControllerModule fullControllerModule = new fullControllerModule();
+
+          // set the justImported flag to true
+          fullControllerModule.justImported = true;
+
+          // set the importedFromVRCFury flag to true
+          fullControllerModule.importedFromVRCFury = true;
+
+
+          // ------
+
+          // get the controllers from the VRCFuryControllerFeature
+          List<FullController.ControllerEntry> controllers = VRCFuryControllerFeature.controllers;
+
+          // get the menus from the VRCFuryControllerFeature
+          List<FullController.MenuEntry> menus = VRCFuryControllerFeature.menus;
+
+          // get the parameters from the VRCFuryControllerFeature
+          List<FullController.ParamsEntry> parameters = VRCFuryControllerFeature.prms;
+
+          // get the smoothed parameters from the VRCFuryControllerFeature
+          List<FullController.SmoothParamEntry> smoothedPrms = VRCFuryControllerFeature.smoothedPrms;
+
+          // get the global parameters from the VRCFuryControllerFeature
+          List<string> globalParams = VRCFuryControllerFeature.globalParams;
+
+          // get the toggle parameter from the VRCFuryControllerFeature
+          string toggleParam = VRCFuryControllerFeature.toggleParam;
+
+          // get the binding rewrites from the VRCFuryControllerFeature
+          List<FullController.BindingRewrite> rewriteBindings = VRCFuryControllerFeature.rewriteBindings;
+
+
+          // loop through the controllers, and add them to the fullControllerModule
+          foreach (var controller in controllers)
+          {
+            fullControllerModule.controllers.Add(controller.controller.objRef as RuntimeAnimatorController);
+          }
+
+          // loop through the menus, and add them to the fullControllerModule
+          foreach (var menu in menus)
+          {
+
+            // get the menu from the menu entry
+            var sourceMenu = menu.menu.objRef;
+
+            // get the path to the source menu file
+            string sourceMenuPath = AssetDatabase.GetAssetPath(sourceMenu);
+
+            //// generate the path to the CVRFuryMenuStore
+
+            // remove the .asset extension but keep the path
+            string sourceMenuPathNoExtension = Path.ChangeExtension(sourceMenuPath, null);
+
+            // add the .CVRFury.asset extension
+            string targetMenuPath = sourceMenuPathNoExtension + ".CVRFury.asset";
+
+            // check if the targetMenuPath exists
+            if (File.Exists(targetMenuPath))
+            {
+              // load the CVRFuryMenuStore from the targetMenuPath and add it to the fullControllerModule
+              // along with the prefix
+
+              fullControllerModule.menus.Add(new fullControllerModule.MenuEntry{
+              menu = AssetDatabase.LoadAssetAtPath<CVRFuryMenuStore>(targetMenuPath),
+              prefix = menu.prefix
+            });
+            }
+            else
+            {
+              // show popup that the file does not exist
+              if (EditorUtility.DisplayDialog("File does not exist", "The file " + targetMenuPath + " does not exist\n"
+                              + "Please use the Converter to convert the VRCExpressionsMenu to a CVRFuryMenuStore first"
+                              , "OK"
+                              ))
+              {
+                // If the user clicked "OK", open a menu.
+                EditorApplication.ExecuteMenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Conversion Tools/Convert VRCExpressionMenu");
+              }
+              // return, as the file does not exist
+              return;
+            }
+
+
+
+          }
+
+          // loop through the parameters, and add them to the fullControllerModule
+          foreach (var prms in parameters)
+          {
+            // get the parameters from the parameters entry
+            var sourcePrms = prms.parameters.objRef;
+
+            // get the path to the source parameters file
+            string sourcePrmsPath = AssetDatabase.GetAssetPath(sourcePrms);
+
+            //// generate the path to the CVRFuryParametersStore
+            // remove the .asset extension but keep the path
+            string sourcePrmsPathNoExtension = Path.ChangeExtension(sourcePrmsPath, null);
+
+            // add the .CVRFury.asset extension
+            string targetPrmsPath = sourcePrmsPathNoExtension + ".CVRFury.asset";
+
+            // check if the targetPrmsPath exists
+            if (File.Exists(targetPrmsPath))
+            {
+              // load the CVRFuryParametersStore from the targetPrmsPath and add it to the fullControllerModule
+              fullControllerModule.parameters.Add(new fullControllerModule.ParamsEntry
+              {
+                parameters = AssetDatabase.LoadAssetAtPath<CVRFuryParametersStore>(targetPrmsPath)
+              });
+            }
+            else
+            {
+              // show popup that the file does not exist
+              if (EditorUtility.DisplayDialog("File does not exist", "The file " + targetPrmsPath + " does not exist\n"
+                              + "Please use the Converter to convert the VRCExpressionsParameters to a CVRFuryParametersStore first"
+                              , "OK"
+                              ))
+              {
+                // If the user clicked "OK", open a menu.
+                EditorApplication.ExecuteMenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Conversion Tools/Convert VRCExpressionParameters");
+              }
+              // return, as the file does not exist
+              return;
+            }
+          }
+
+          // loop through the smoothed parameters, and add them to the fullControllerModule
+          foreach (var smoothedPrm in smoothedPrms)
+          {
+            fullControllerModule.smoothedPrms.Add(new fullControllerModule.SmoothParamEntry
+            {
+              name = smoothedPrm.name,
+              smoothingDuration = smoothedPrm.smoothingDuration,
+            });
+          }
+
+          // loop through the global parameters, and add them to the fullControllerModule
+          foreach (var globalParam in globalParams)
+          {
+            fullControllerModule.globalParams.Add(globalParam);
+          }
+
+          // set the toggle parameter in the fullControllerModule
+          fullControllerModule.toggleParam = toggleParam;
+
+          // loop through the binding rewrites, and add them to the fullControllerModule
+          foreach (var rewriteBinding in rewriteBindings)
+          {
+            fullControllerModule.rewriteBindings.Add(new fullControllerModule.BindingRewrite
+            {
+              from = rewriteBinding.from,
+              to = rewriteBinding.to,
+              delete = rewriteBinding.delete
+            });
+          }
+
+          // add the fullControllerModule to the DSU
+          modules.Add(fullControllerModule);
+
+          // reload the UI finalise UI
+          updateFinaliseUI();
+
+        });
+
+      }
+      else
+      {
+        // print to console that the label is null
+        CoreLog("label at position " + positionInList + " is null");
+      }
+
+    }
+
+  // class end
+  }
+// namespace end
+}
+#endif

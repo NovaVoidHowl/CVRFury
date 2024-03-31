@@ -1,4 +1,4 @@
-// { "version": "0.0.29" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
+// { "version": "0.0.30" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -99,6 +99,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           importApplyOnUploadFeature(featureClassInstance, rootVisualElement, positionInList);
           #endif
 
+          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_FULLCONTROLLER
+          importFullControllerFeature(featureClassInstance, rootVisualElement, positionInList);
+          #endif
 
 
 
