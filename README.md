@@ -142,7 +142,6 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 | ShaderInventoryAction  |          ❔🔽           |        ❔🔽         |                                       |
 |  PoiyomiUVTileAction   |          ❔🔽           |        ❔🔽         |                                       |
 | MaterialPropertyAction |          ❔🔽           |        ❔🔽         |                                       |
-|     FlipbookAction     |           🚫           |         🚫         | Flagged as obsolete by VRCFury        |
 |      ScaleAction       |          ✔️           |         ❌         |                                       |
 |  BlockBlinkingAction   |          ✔️           |         ❌         |                                       |
 |   BlockVisemesAction   |          ✔️           |         ❌         |                                       |
@@ -162,7 +161,6 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |      ArmatureLink      |          ✔️           |        ❌🔼         |                                       |
 |     BoundingBoxFix     |          ❔🔽           |        ❔🔽         |                                       |
 |     BoneConstraint     |           ❔           |         ❔         |                                       |
-|  MakeWriteDefaultsOff  |           🚫           |         🚫         | Deprecated by VRCFury                 |
 |    FixWriteDefaults    |          ❔🔽           |        ❔🔽         |                                       |
 |   RemoveHandGestures   |          ❔🔽           |        ❔🔽         |                                       |
 |      CrossEyeFix       |           🚫           |         🚫         |                                       |
@@ -177,7 +175,6 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |  BlendshapeOptimizer   |          ❔🔽           |        ❔🔽         |                                       |
 |        Slot4Fix        |           ❔           |         ❔         |                                       |
 |  DirectTreeOptimizer   |          ❔🔽           |        ❔🔽         |                                       |
-|      TpsScaleFix       |           🚫           |         🚫         | Flagged as Deprecated by VRCFury      |
 |   ShowInFirstPerson    |           ❌           |         ❌         |                                       |
 |       SpsOptions       |           🚫           |         🚫         |                                       |
 |    MmdCompatibility    |          ❔🔽           |        ❔🔽         |                                       |
