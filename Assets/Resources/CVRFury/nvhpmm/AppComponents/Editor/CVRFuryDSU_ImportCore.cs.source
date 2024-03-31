@@ -1,4 +1,4 @@
-// { "version": "0.0.30" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
+// { "version": "0.0.32" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -103,6 +103,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           importFullControllerFeature(featureClassInstance, rootVisualElement, positionInList);
           #endif
 
+          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_ARMATURELINK
+          importArmatureLinkFeature(featureClassInstance, rootVisualElement, positionInList);
+          #endif
+
 
 
         //--------------------------------------------------------------------------------------------
@@ -155,6 +159,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // add a label to CVRFuryDataStorageUnitDataImportDetails visual element,
         // to allow the user to finalise the import
+
+        // check if the finaliseImportLabel already exists
+        if (CVRFuryDataStorageUnitDataImportDetails.Q<Label>("finaliseImportLabel") != null)
+        {
+          // if the finaliseImportLabel already exists, return
+          return;
+        }
 
         // create a new label
         var finaliseImportLabel = new Label("Finalise Current Imports");

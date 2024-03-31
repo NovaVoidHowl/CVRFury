@@ -117,6 +117,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       No
     }
 
+    public linkMode addonLinkMode;
     public GameObject addonObjectToLink;
     public KeepBoneOffsets keepBoneOffsets;
     public float meshRewriteScalingFactor = 0;

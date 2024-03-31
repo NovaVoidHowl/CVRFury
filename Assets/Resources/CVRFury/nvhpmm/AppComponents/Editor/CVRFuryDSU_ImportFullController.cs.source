@@ -1,4 +1,4 @@
-// { "version": "0.0.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
+// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -49,7 +49,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (featureClassName != "FullController")
       {
         // this console log is for debugging purposes
-        //CoreLog("feature at position "+positionInList+" is "+featureClassName+" not of the ApplyOnUpload , returning");
+        //CoreLog("feature at position "+positionInList+" is "+featureClassName+" not of the FullController , returning");
         return;
       }
 

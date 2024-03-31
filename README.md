@@ -159,7 +159,7 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |        Talking         |          ❌🔽           |        ❌🔽         |                                       |
 |      Toes Puppet       |          ❌🔽           |        ❌🔽         |                                       |
 |    Advanced Visemes    |           ❔           |         ❔         |                                       |
-|      ArmatureLink      |          ⚙️🔼          |        ❌🔼         |                                       |
+|      ArmatureLink      |          ✔️           |        ❌🔼         |                                       |
 |     BoundingBoxFix     |          ❔🔽           |        ❔🔽         |                                       |
 |     BoneConstraint     |           ❔           |         ❔         |                                       |
 |  MakeWriteDefaultsOff  |           🚫           |         🚫         | Deprecated by VRCFury                 |
