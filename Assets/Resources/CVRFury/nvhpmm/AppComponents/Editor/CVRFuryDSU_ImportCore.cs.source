@@ -1,4 +1,4 @@
-// { "version": "0.0.28" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
+// { "version": "0.0.29" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -70,8 +70,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // at this point we have a viable list of featureClassInstances in use, on the gameObject
 
-        // first off, check how many features we have
-        CoreLog("number of features to import = " + featureClassInstances.Count);
         // if there are no features to import, return
         if (featureClassInstances.Count == 0)
         {
@@ -90,9 +88,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           string featureClassName = featureClassInstance.Item1;
           // get the feature instance
           FeatureModel featureInstance = featureClassInstance.Item2;
-
-          // print the feature class name to the console
-          CoreLog("featureClassName = " + featureClassName);
 
         //--------------------------------------------------------------------------------------------
           // process feature instance depending on type of feature

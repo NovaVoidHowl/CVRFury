@@ -1,4 +1,4 @@
-// { "version": "0.11.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
+// { "version": "0.11.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -71,8 +71,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       var labelAtPosition = featuresList[positionInList] as Label;
       if (labelAtPosition != null)
       {
-        // print to console the that update is happening
-        CoreLog("updating ApplyOnUpload feature label at position " + positionInList);
         // add a white border to the label
         labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
 
@@ -82,9 +80,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // add a click event to the label
         labelAtPosition.RegisterCallback<ClickEvent>(evt =>
         {
-          // print to console that the label was clicked
-          CoreLog("ApplyOnUpload feature label at position " + positionInList + " was clicked");
-
           // cast applyOnUploadFeature to ApplyDuringUpload and access the action property
           ApplyDuringUpload applyDuringUpload = applyOnUploadFeature as ApplyDuringUpload;
           if (applyDuringUpload != null)
