@@ -25,7 +25,14 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public static readonly Color UI_UPDATE_DOWNGRADE_COLOR_TEXT = new Color(0.4f, 0.4f, 1.0f); // Blue
 
     public static readonly ReadOnlyCollection<string> COMPATIBLE_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
-      new List<string> { "ApplyDuringUpload", "FullController", "ArmatureLink", "ShowInFirstPerson" }
+      new List<string>
+      {
+        "ApplyDuringUpload",
+        "FullController",
+        "ArmatureLink",
+        "ShowInFirstPerson",
+        "DeleteDuringUpload"
+      }
     );
     public static readonly ReadOnlyCollection<string> CVR_INCOMPATIBLE_VRCFURY_FEATURES =
       new ReadOnlyCollection<string>(new List<string> { "SetIcon", "SecurityLock" });
