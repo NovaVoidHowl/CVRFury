@@ -1,4 +1,4 @@
-// { "version": "0.0.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: []}
+// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -43,11 +43,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the ImportArmatureLink feature from the tuple
       FeatureModel importArmatureLinkFeature = featureClassInstance.Item2;
-
-      // print the featureClassName to the console
-      // TODO: remove this debug log
-      CoreLog("featureClassName is " + featureClassName);
-
 
       // check if the feature is of the 'ArmatureLink' type and if not return. note this is the VRCFury feature
       // name, naming is not 1-to-1 with the class name
