@@ -1,4 +1,4 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: []}
+// { "version": "0.0.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -46,7 +46,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // print the featureClassName to the console
       // TODO: remove this debug log
-      CoreLog("featureClassName is " + featureClassName);
+      // CoreLog("featureClassName is " + featureClassName);
 
 
       // check if the feature is of the 'DeleteDuringUpload' type and if not return. note this is the VRCFury feature
