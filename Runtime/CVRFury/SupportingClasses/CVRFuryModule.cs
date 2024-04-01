@@ -96,6 +96,16 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
+  public class showInFirstPerson : CVRFuryModule
+  {
+    public showInFirstPerson()
+      : base("ShowInFirstPerson") { }
+
+    public GameObject target;
+    public bool show;
+  }
+
+  [Serializable]
   public abstract class CVRFuryModuleLinker : CVRFuryModule
   {
     protected CVRFuryModuleLinker(string moduleType)

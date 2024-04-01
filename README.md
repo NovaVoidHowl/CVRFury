@@ -175,7 +175,7 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |  BlendshapeOptimizer   |          ❔🔽           |        ❔🔽         |                                       |
 |        Slot4Fix        |           ❔           |         ❔         |                                       |
 |  DirectTreeOptimizer   |          ❔🔽           |        ❔🔽         |                                       |
-|   ShowInFirstPerson    |           ❌           |         ❌         |                                       |
+|   ShowInFirstPerson    |          ✔️           |         ❌         |                                       |
 |       SpsOptions       |           🚫           |         🚫         |                                       |
 |    MmdCompatibility    |          ❔🔽           |        ❔🔽         |                                       |
 

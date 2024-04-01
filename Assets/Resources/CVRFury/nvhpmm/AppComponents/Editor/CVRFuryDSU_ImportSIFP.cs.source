@@ -1,0 +1,174 @@
+// { "version": "0.0.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: []}
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using Newtonsoft.Json.Linq;
+using ABI.CCK.Scripts.Editor;
+using VF.Model.Feature;
+using VF.Component;
+using VF.Model;
+using Action = VF.Model.StateAction.Action;
+using VF.Model.StateAction;
+
+
+/// <summary>
+/// ShowInFirstPerson import
+///
+/// </summary>
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public partial class CVRFuryDataStorageUnitEditor : Editor
+  {
+    private void importShowInFirstPersonFeature(Tuple<string, FeatureModel> featureClassInstance,
+                                            VisualElement rootVisualElement,
+                                            int positionInList
+                                           )
+    {
+
+      // get the featureClassName name from the tuple
+      string featureClassName = featureClassInstance.Item1;
+
+      // get the ImportArmatureLink feature from the tuple
+      FeatureModel importShowInFirstPersonFeature = featureClassInstance.Item2;
+
+      // print the featureClassName to the console
+      // TODO: remove this debug log
+      // CoreLog("featureClassName is " + featureClassName);
+
+
+      // check if the feature is of the 'ShowInFirstPerson' type and if not return. note this is the VRCFury feature
+      // name, naming is not 1-to-1 with the class name
+      if (featureClassName != "ShowInFirstPerson")
+      {
+        // this console log is for debugging purposes
+        //CoreLog("feature at position "+positionInList+" is "+featureClassName+" not of the ShowInFirstPerson , returning");
+        return;
+      }
+
+
+      // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList =
+        rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetailsFeaturesList");
+
+
+      var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
+      var labelAtPosition = featuresList[positionInList] as Label;
+      if (labelAtPosition != null)
+      {
+        // add a white border to the label
+        labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
+
+        // edit the label text to include a suffix of the position in the list
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")" ;
+
+        // add a click event to the label
+        labelAtPosition.RegisterCallback<ClickEvent>(evt =>
+        {
+          // print to console that the label has been clicked
+          // TODO: remove this debug log
+          CoreLog("label at position " + positionInList + " has been clicked");
+
+          // get the list of modules from this DSU
+          var modules = ((CVRFuryDataStorageUnit) target).modules.modules;
+
+          // check to see if the DSU already has an armatureLink module
+          if (modules.Any(module => module.GetType().Name == "showInFirstPerson"))
+          {
+
+            List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+            // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+            // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+            foreach (var module in modules.Where(module => module.GetType().Name == "showInFirstPerson"))
+            {
+              var armatureLinkModuleInstance = module as armatureLink;
+              if (armatureLinkModuleInstance.importedFromVRCFury && !armatureLinkModuleInstance.justImported)
+              {
+                modulesToRemove.Add(module);
+              }
+            }
+
+            // process the remove list
+            foreach (var module in modulesToRemove)
+            {
+              modules.Remove(module);
+            }
+          }
+
+
+          //importShowInFirstPersonFeature
+          // cast the feature to the ShowInFirstPerson type
+          ShowInFirstPerson VRCFuryShowInFirstPerson = (ShowInFirstPerson)importShowInFirstPersonFeature;
+
+          // create a new showInFirstPerson module
+          showInFirstPerson showInFirstPersonModule = new showInFirstPerson();
+
+          // set the importedFromVRCFury flag to true
+          showInFirstPersonModule.importedFromVRCFury = true;
+
+          // set the importedFromVRCFury flag to true
+          showInFirstPersonModule.justImported = true;
+
+
+          // ---- showInFirstPerson specific properties ----
+          // when converting from VRCFury to CVRFury, it should be noted that:
+          // - the 'target' property of the CVRFury module is going to be the game object that the VRCFury component is
+          //   attached to.
+          // - the 'show' property of the CVRFury module is going to be true, as the VRCFury module is always set to
+          //   show the object in first person view.
+
+          // set the show property to true
+          showInFirstPersonModule.show = true;
+
+          // get the game object that the DSU is attached to ( as it has to be on the same game object as the VCRFury component)
+          GameObject DSUGameObject = ((CVRFuryDataStorageUnit) target).gameObject;
+
+          // check if the VRCFury component is attached to the DSU game object
+          if (DSUGameObject.GetComponent<VRCFury>() == null)
+          {
+            // print to console that the VRCFury component is not attached to the DSU game object
+            CoreLog("VRCFury component is not attached to the DSU game object");
+            return;
+          }
+
+          // get the game object that the VRCFury component is attached to
+          showInFirstPersonModule.target = DSUGameObject;
+
+
+          // ---- end armatureLink specific properties ----
+
+          // add the armatureLinkModule to the DSU
+          modules.Add(showInFirstPersonModule);
+
+          // reload the UI finalise UI
+          updateFinaliseUI();
+
+        });
+
+      }
+      else
+      {
+        // print to console that the label is null
+        CoreLog("label at position " + positionInList + " is null");
+      }
+
+    }
+
+  // class end
+  }
+// namespace end
+}
+#endif
