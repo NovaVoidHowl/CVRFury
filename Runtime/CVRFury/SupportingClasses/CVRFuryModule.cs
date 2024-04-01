@@ -106,6 +106,15 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
 
   [Serializable]
+  public class deleteOnUpload : CVRFuryModule
+  {
+    public deleteOnUpload()
+      : base("DeleteOnUpload") { }
+
+    public GameObject target;
+  }
+
+  [Serializable]
   public abstract class CVRFuryModuleLinker : CVRFuryModule
   {
     protected CVRFuryModuleLinker(string moduleType)

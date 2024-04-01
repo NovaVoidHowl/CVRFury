@@ -1,4 +1,4 @@
-// { "version": "0.0.33" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
+// { "version": "0.0.34" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -109,6 +109,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_SIFP
           importShowInFirstPersonFeature(featureClassInstance, rootVisualElement, positionInList);
+          #endif
+
+          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_DOU
+          importDeleteOnUploadFeature(featureClassInstance, rootVisualElement, positionInList);
           #endif
 
 
