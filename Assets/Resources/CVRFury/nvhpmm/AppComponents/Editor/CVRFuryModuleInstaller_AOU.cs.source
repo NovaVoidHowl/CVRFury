@@ -1,4 +1,4 @@
-// { "version": "0.2.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
+// { "version": "0.3.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -24,7 +24,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public class objectStateSetterProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
     {
       // Implementation for objectStateSetter
       // console print to say this function is being called
@@ -64,7 +64,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   public class objectDefaultMaterialSetterProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
     {
       // Implementation for objectDefaultMaterialSetter
       // console print to say this function is being called
@@ -123,5 +123,38 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
   }
+
+  public class blockBlinkSetterProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    {
+      // Implementation for objectDefaultMaterialSetter
+      // console print to say this function is being called
+      CoreLog("objectDefaultMaterialSetter.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // access the CVRAvatar component on the targetAvatar
+      CVRAvatar avatar = targetAvatar.GetComponent<CVRAvatar>();
+
+      // check if the avatar exists
+      if (avatar != null)
+      {
+        // set the useBlinkBlendshapes to the inverse of the blockBlink value
+        avatar.useBlinkBlendshapes = !((blockBlinkSetter)module).blockBlink;
+
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        Debug.LogError("Avatar does not exist");
+      }
+
+    }
+  }
+
+
+
 }
 // #endif

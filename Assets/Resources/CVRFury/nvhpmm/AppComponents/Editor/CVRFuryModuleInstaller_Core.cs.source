@@ -1,4 +1,4 @@
-// { "version": "0.8.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.9.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -22,7 +22,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public interface IModuleProcessor
   {
-    void ProcessModule(CVRFuryModule module);
+    void ProcessModule(CVRFuryModule module, GameObject targetAvatar);
   }
 
   public partial class CVRFuryModuleInstaller
@@ -37,7 +37,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
 
 
-    public static void HandleModule(CVRFuryModule module)
+    public static void HandleModule(CVRFuryModule module, GameObject uploadedObject)
     {
         IModuleProcessor processor = null;
         // case statement to process the module based on its type
@@ -50,6 +50,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 processor = new objectDefaultMaterialSetterProcessor();
                 break;
 
+            case blockBlinkSetter:
+                processor = new blockBlinkSetterProcessor();
+                break;
+
             default:
                 // console print to say that the module type is not recognised
                 CoreLog("Module type not recognised");
@@ -58,7 +62,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         if (processor != null)
         {
-            processor.ProcessModule(module);
+            processor.ProcessModule(module, uploadedObject);
         }
 
         // console print to say that the module has been processed
@@ -119,7 +123,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         EditorUtility.ClearProgressBar();
 
         // Start processing the modules
-        ProcessModules(dataStorageUnits);
+        ProcessModules(dataStorageUnits, uploadedObject);
       }
       else
       {
@@ -131,7 +135,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-    private static void ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits)
+    private static void ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits, GameObject uploadedObject)
     {
       // Process each data storage unit
       for (int i = 0; i < dataStorageUnits.Length; i++)
@@ -162,7 +166,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // module processing trigger code
           // get the module
           var module = modules[j];
-          HandleModule(module);
+          HandleModule(module, uploadedObject);
 
           // Update the progress bar after processing the module
           progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
@@ -240,7 +244,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // close the progress bar
         EditorUtility.ClearProgressBar();
         // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
-        await ProcessModulesAsync(dataStorageUnits);
+        await ProcessModulesAsync(dataStorageUnits, uploadedObject);
       }
       else
       {
@@ -252,7 +256,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-    private static async Task ProcessModulesAsync(CVRFuryDataStorageUnit[] dataStorageUnits)
+    private static async Task ProcessModulesAsync(CVRFuryDataStorageUnit[] dataStorageUnits, GameObject uploadedObject)
     {
       // Process each data storage unit
       for (int i = 0; i < dataStorageUnits.Length; i++)
@@ -288,7 +292,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // module processing trigger code
           // get the module
           var module = modules[j];
-          HandleModule(module);
+          HandleModule(module, uploadedObject);
 
           // Update the progress bar after processing the module
           progress = progressPerModule * (j + 1);

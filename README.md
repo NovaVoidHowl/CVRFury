@@ -143,7 +143,7 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |  PoiyomiUVTileAction   |          ❔🔽           |        ❔🔽         |                                                      |
 | MaterialPropertyAction |          ❔🔽           |        ❔🔽         |                                                      |
 |      ScaleAction       |          ✔️           |         ❌         |                                                      |
-|  BlockBlinkingAction   |          ✔️           |         ❌         |                                                      |
+|  BlockBlinkingAction   |          ✔️           |        ✔️         |                                                      |
 |   BlockVisemesAction   |          ✔️           |         ❌         |                                                      |
 |  ResetPhysboneAction   |           🚫           |         🚫         | No Physbones in CVR, hence not needed                |
 | FlipBookBuilderAction  |           ❔           |         ❔         |                                                      |
