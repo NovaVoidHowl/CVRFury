@@ -1,4 +1,4 @@
-// { "version": "0.0.21" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.22" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -129,7 +129,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     toggleEntry.name = prefix + toggleParam.name;
 
                     // set the CVRAdvancedSettingsEntry's machineName to the toggle parameter's name with the prefix
-                    toggleEntry.machineName = prefix + toggleParam.name;
+                    toggleEntry.machineName = (prefix + toggleParam.name).Replace(" ", "");
 
                     // create a new CVRAdvancesAvatarSettingGameObjectToggle
                     CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
@@ -176,7 +176,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     dropdownEntry.name = prefix + dropdownParam.name;
 
                     // set the CVRAdvancedSettingsEntry's machineName to the dropdown parameter's name with the prefix
-                    dropdownEntry.machineName = prefix + dropdownParam.name;
+                    dropdownEntry.machineName = (prefix + dropdownParam.name).Replace(" ", "");
 
                     // create a new CVRAdvancesAvatarSettingGameObjectDropdown
                     CVRAdvancesAvatarSettingGameObjectDropdown dropdownSetting = new CVRAdvancesAvatarSettingGameObjectDropdown();
