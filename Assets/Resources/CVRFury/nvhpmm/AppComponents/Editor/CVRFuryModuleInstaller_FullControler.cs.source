@@ -1,4 +1,4 @@
-// { "version": "0.0.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.12" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -11,6 +11,7 @@ using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Scripts;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
@@ -40,6 +41,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (avatar != null)
       {
 
+        // get the avatarSettings from the avatar
+        CVRAdvancedAvatarSettings advancedAvatarSettings = avatar.avatarSettings;
+
+        // get the list of menu stores from the avatarSettings (settings public variable)
+        List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList = advancedAvatarSettings.settings;
+
+
         // section to handle CVR Fury Controllers
         // check and see if the module has any controllers
         if ((module as fullControllerModule).controllers.Count > 0)
@@ -50,6 +58,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // log the controller's name to the console
             CoreLog("controller.name: " + controller.name);
 
+            // TODO
           }
         }
 
@@ -62,6 +71,101 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             // log the menu's name to the console
             CoreLog("menuEntry.menu.name: " + menuEntry.menu.name);
+
+            // get the menu's prefix
+            string prefix = menuEntry.prefix;
+
+            if (!menuEntry.forcePrefixStringFormat)
+            {
+              // force all backslashes to forward slashes in the prefix
+              // this is to ensure that the menu structure is correctly formatted
+              // for DakyModsCVR's ActionMenu mod (if the user has it installed)
+              // ref https://github.com/dakyneko/DakyModsCVR/tree/master/ActionMenu
+              prefix = prefix.Replace("\\", "/");
+            }
+
+            // load the menu file from the menuEntry
+            CVRFuryMenuStore menu = menuEntry.menu;
+
+            // check if the menu exists
+            if (menu != null)
+            {
+              // now we can access the menu's properties
+              // load the menu's menuItems
+              List<menuParameter> menuItems = menu.menuItems;
+
+              // loop through the menuItems
+              foreach (menuParameter menuItem in menuItems)
+              {
+                // case statement to handle the different types of menu items
+                switch (menuItem.MenuParameterType)
+                {
+                  case "toggleParameter":
+                    // cast the menuItem to a toggleParameter
+                    toggleParameter toggleParam = menuItem as toggleParameter;
+
+                    // log the toggle parameter's name to the console
+                    CoreLog("toggleParam.name: " + toggleParam.name);
+
+                    // log the toggle parameter's default state to the console
+                    CoreLog("toggleParam.defaultState: " + toggleParam.defaultState);
+
+                    // log the toggle parameter's generate type to the console
+                    CoreLog("toggleParam.generateType: " + toggleParam.generateType);
+
+                    // create CVRAdvancedSettingsEntry for the toggle parameter
+                    CVRAdvancedSettingsEntry toggleEntry = new CVRAdvancedSettingsEntry();
+
+                    // set the CVRAdvancedSettingsEntry's type to SettingsType.GameObjectToggle
+                    toggleEntry.type = CVRAdvancedSettingsEntry.SettingsType.GameObjectToggle;
+
+                    // set the CVRAdvancedSettingsEntry's name to the toggle parameter's name with the prefix
+                    toggleEntry.name = prefix +"/"+ toggleParam.name;
+
+                    // set the CVRAdvancedSettingsEntry's machienName to the toggle parameter's name with the prefix
+                    toggleEntry.machineName = prefix +"/"+ toggleParam.name;
+
+                    // create a new CVRAdvancesAvatarSettingGameObjectToggle
+                    CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
+
+                    // set the CVRAdvancesAvatarSettingGameObjectToggle's defaultValue to the toggle parameter's default state
+                    toggleSetting.defaultValue = toggleParam.defaultState;
+
+                    // set the CVRAdvancesAvatarSettingGameObjectToggle's usedType to the toggle parameter's generate type via a cast
+                    switch (toggleParam.generateType)
+                    {
+                      case toggleParameter.GenerateType.Bool:
+                        toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateBool;
+                        break;
+                      case toggleParameter.GenerateType.Float:
+                        toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateFloat;
+                        break;
+                      case toggleParameter.GenerateType.Int:
+                        toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateInt;
+                        break;
+                    }
+
+                    // put the CVRAdvancesAvatarSettingGameObjectToggle into the CVRAdvancedSettingsEntry's value
+                    toggleEntry.setting = toggleSetting;
+
+                    // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+                    CVRAdvancedAvatarMenuList.Add(toggleEntry);
+
+                    break;
+
+
+
+
+                  default:
+                    // if the menuItem is not valid, log an error to the console
+                    Debug.LogError("Unknown menu item type: " + menuItem.MenuParameterType);
+                    break;
+                }
+
+
+
+              }
+            }
 
           }
         }
@@ -76,6 +180,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // log the parameter's name to the console
             CoreLog("paramEntry.parameters.name: " + paramEntry.parameters.name);
 
+            // TODO
+
           }
         }
 
@@ -88,6 +194,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             // log the smoothed parameter's name to the console
             CoreLog("smoothedParamEntry.name: " + smoothedParamEntry.name);
+
+            // TODO
 
           }
         }
@@ -102,12 +210,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // log the global parameter's name to the console
             CoreLog("globalParam: " + globalParam);
 
+            // TODO
+
           }
         }
 
         // section to handle CVR Fury Toggle Parameter
         // check and see if the module has a toggle parameter
-        if ((module as fullControllerModule).toggleParam != null)
+        if (!string.IsNullOrWhiteSpace((module as fullControllerModule).toggleParam))
         {
           // log the toggle parameter's name to the console
           CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
@@ -123,9 +233,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // log the binding rewrite's name to the console
             CoreLog("rewrite.from: "
                     + rewrite.from
-                    + "/n rewrite.to: "
+                    + "\n rewrite.to: "
                     + rewrite.to
-                    + "/n rewrite.delete: " + rewrite.delete);
+                    + "\n rewrite.delete: " + rewrite.delete);
+
+
 
           }
         }

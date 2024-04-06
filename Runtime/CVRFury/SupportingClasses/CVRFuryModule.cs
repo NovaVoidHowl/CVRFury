@@ -53,6 +53,10 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     {
       public CVRFuryMenuStore menu;
       public string prefix;
+
+      // var to allow overriding the string format of the prefix ( \ to / )
+      // only use this if you know what you are doing
+      public bool forcePrefixStringFormat = false;
     }
 
     [Serializable]
