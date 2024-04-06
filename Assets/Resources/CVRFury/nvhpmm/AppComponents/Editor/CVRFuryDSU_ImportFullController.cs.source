@@ -1,4 +1,4 @@
-// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
+// { "version": "0.0.16" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -139,11 +139,29 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // get the binding rewrites from the VRCFuryControllerFeature
           List<FullController.BindingRewrite> rewriteBindings = VRCFuryControllerFeature.rewriteBindings;
 
+          // check if there are any controllers
+          if (controllers.Count > 0)
+          {
+            // initialise the controllers list in the fullControllerModule
+            fullControllerModule.controllers = new List<RuntimeAnimatorController>();
+
+          }
 
           // loop through the controllers, and add them to the fullControllerModule
           foreach (var controller in controllers)
           {
             fullControllerModule.controllers.Add(controller.controller.objRef as RuntimeAnimatorController);
+          }
+
+          // clean out any null entries in the controllers list
+          fullControllerModule.controllers = fullControllerModule.controllers.Where(x => x != null).ToList();
+
+
+          // check if there are any menus
+          if (menus.Count > 0)
+          {
+            // initialise the menus list in the fullControllerModule
+            fullControllerModule.menus = new List<fullControllerModule.MenuEntry>();
           }
 
           // loop through the menus, and add them to the fullControllerModule
@@ -152,6 +170,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             // get the menu from the menu entry
             var sourceMenu = menu.menu.objRef;
+
+            // check if the sourceMenu is null
+            if (sourceMenu == null)
+            {
+              // print to console that the sourceMenu is null
+              CoreLog("sourceMenu is null");
+              continue;
+            }
 
             // get the path to the source menu file
             string sourceMenuPath = AssetDatabase.GetAssetPath(sourceMenu);
@@ -190,8 +216,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               return;
             }
 
+          }
 
+          // clean out any null entries in the menus list
+          fullControllerModule.menus = fullControllerModule.menus.Where(x => x.menu != null).ToList();
 
+          // check if there are any parameters
+          if (parameters.Count > 0)
+          {
+            // initialise the parameters list in the fullControllerModule
+            fullControllerModule.parameters = new List<fullControllerModule.ParamsEntry>();
           }
 
           // loop through the parameters, and add them to the fullControllerModule
@@ -199,6 +233,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             // get the parameters from the parameters entry
             var sourcePrms = prms.parameters.objRef;
+
+            // check if the sourcePrms is null
+            if (sourcePrms == null)
+            {
+              // print to console that the sourcePrms is null
+              CoreLog("sourcePrms is null");
+              continue;
+            }
 
             // get the path to the source parameters file
             string sourcePrmsPath = AssetDatabase.GetAssetPath(sourcePrms);
@@ -235,9 +277,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             }
           }
 
+          // clean out any null entries in the parameters list
+          fullControllerModule.parameters = fullControllerModule.parameters.Where(x => x.parameters != null).ToList();
+
+          // check if there are any smoothed parameters
+          if (smoothedPrms.Count > 0)
+          {
+            // initialise the smoothedPrms list in the fullControllerModule
+            fullControllerModule.smoothedPrms = new List<fullControllerModule.SmoothParamEntry>();
+          }
+
           // loop through the smoothed parameters, and add them to the fullControllerModule
           foreach (var smoothedPrm in smoothedPrms)
           {
+            // if the name is null/blank/empty, skip this entry
+            if (string.IsNullOrWhiteSpace(smoothedPrm.name))
+            {
+              continue;
+            }
             fullControllerModule.smoothedPrms.Add(new fullControllerModule.SmoothParamEntry
             {
               name = smoothedPrm.name,
@@ -245,18 +302,45 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             });
           }
 
+          // clean out any null entries in the smoothedPrms list
+          fullControllerModule.smoothedPrms = fullControllerModule.smoothedPrms.Where(x => x.name != null).ToList();
+
+          // check if there are any global parameters
+          if (globalParams.Count > 0)
+          {
+            // initialise the globalParams list in the fullControllerModule
+            fullControllerModule.globalParams = new List<string>();
+          }
+
           // loop through the global parameters, and add them to the fullControllerModule
           foreach (var globalParam in globalParams)
           {
-            fullControllerModule.globalParams.Add(globalParam);
+            // check if the global parameter is not null/empty/blankspace
+            if (!string.IsNullOrWhiteSpace(globalParam))
+            {
+              fullControllerModule.globalParams.Add(globalParam);
+            }
           }
+
 
           // set the toggle parameter in the fullControllerModule
           fullControllerModule.toggleParam = toggleParam;
 
+          // check if there are any binding rewrites
+          if (rewriteBindings.Count > 0)
+          {
+            // initialise the rewriteBindings list in the fullControllerModule
+            fullControllerModule.rewriteBindings = new List<fullControllerModule.BindingRewrite>();
+          }
+
           // loop through the binding rewrites, and add them to the fullControllerModule
           foreach (var rewriteBinding in rewriteBindings)
           {
+            // if both the from and to are null, skip this entry
+            if (string.IsNullOrWhiteSpace(rewriteBinding.from) && string.IsNullOrWhiteSpace(rewriteBinding.to))
+            {
+              continue;
+            }
             fullControllerModule.rewriteBindings.Add(new fullControllerModule.BindingRewrite
             {
               from = rewriteBinding.from,
@@ -264,6 +348,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               delete = rewriteBinding.delete
             });
           }
+
+          // clean out any null entries in the rewriteBindings list
+          fullControllerModule.rewriteBindings = fullControllerModule.rewriteBindings.Where(x => x.from != null).ToList();
 
           // add the fullControllerModule to the DSU
           modules.Add(fullControllerModule);

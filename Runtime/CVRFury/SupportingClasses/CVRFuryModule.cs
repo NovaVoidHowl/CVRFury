@@ -38,15 +38,15 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public fullControllerModule()
       : base("fullControllerModule") { }
 
-    public List<RuntimeAnimatorController> controllers = new List<RuntimeAnimatorController>();
-    public List<MenuEntry> menus = new List<MenuEntry>();
-    public List<ParamsEntry> parameters = new List<ParamsEntry>();
-    public List<SmoothParamEntry> smoothedPrms = new List<SmoothParamEntry>();
-    public List<string> globalParams = new List<string>();
+    public List<RuntimeAnimatorController> controllers;
+    public List<MenuEntry> menus;
+    public List<ParamsEntry> parameters;
+    public List<SmoothParamEntry> smoothedPrms;
+    public List<string> globalParams;
 
     public string toggleParam;
 
-    public List<BindingRewrite> rewriteBindings = new List<BindingRewrite>();
+    public List<BindingRewrite> rewriteBindings;
 
     [Serializable]
     public class MenuEntry
