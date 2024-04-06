@@ -1,4 +1,4 @@
-// { "version": "0.4.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
+// { "version": "0.5.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -179,6 +179,32 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // if it doesn't, log an error to the console
         Debug.LogError("Avatar does not exist");
+      }
+
+    }
+  }
+
+  public class deleteOnUploadProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    {
+      // Implementation for deleteOnUploadAction
+      // console print to say this function is being called
+      CoreLog("deleteOnUploadAction.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // check if the GameObject exists
+      if (((deleteOnUpload)module).target != null)
+      {
+        // destroy the GameObject
+        GameObject.Destroy(((deleteOnUpload)module).target);
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        Debug.LogError("GameObject " +((deleteOnUpload)module).target.name + " does not exist");
       }
 
     }

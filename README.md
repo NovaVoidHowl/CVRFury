@@ -168,7 +168,7 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |      MoveMenuItem      |          ❔🔽           |        ❔🔽         |                                                      |
 |     GestureDriver      |          ❔🔽           |        ❔🔽         |                                                      |
 |         Gizmo          |          ❌🔽           |        ❌🔽         |                                                      |
-|   DeleteDuringUpload   |          ✔️           |         ❔         |                                                      |
+|   DeleteDuringUpload   |          ✔️           |        ✔️         |                                                      |
 |     BlendShapeLink     |          ❔🔽           |        ❔🔽         |                                                      |
 |        SetIcon         |           🚫           |         🚫         | There are no icons on CVR menus                      |
 |  OverrideMenuSettings  |           🚫           |         🚫         | Related to VRC menu structure only                   |
