@@ -150,7 +150,7 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |                        |                       |                   |                                                      |
 |        Blinking        |           ❔           |         ❔         |                                                      |
 |       Breathing        |           ❔           |         ❔         |                                                      |
-|     FullController     |          ✔️           |         ❌         |                                                      |
+|     FullController     |          ✔️           |        ⚙️         |                                                      |
 |         Toggle         |          ❌🔽           |        ❌🔽         |                                                      |
 |         Puppet         |           ❔           |         ❔         |                                                      |
 |      SecurityLock      |          ❌🔽           |        ❌🔽         |                                                      |

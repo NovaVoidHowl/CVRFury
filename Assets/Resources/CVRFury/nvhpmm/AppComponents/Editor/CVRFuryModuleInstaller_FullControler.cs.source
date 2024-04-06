@@ -1,0 +1,150 @@
+// { "version": "0.0.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+using Math = System.Math;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Components;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+
+/// <summary>
+/// fullController Module
+/// this is handles avatar controller/config (menus, animators etc.) just before upload/play
+/// </summary>
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public class fullControllerModuleProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    {
+      // Implementation for fullControllerModuleProcessor
+      // console print to say this function is being called
+      CoreLog("fullControllerModuleProcessor.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // access the CVRAvatar component on the targetAvatar
+      CVRAvatar avatar = targetAvatar.GetComponent<CVRAvatar>();
+
+      // check if the avatar exists
+      if (avatar != null)
+      {
+
+        // section to handle CVR Fury Controllers
+        // check and see if the module has any controllers
+        if ((module as fullControllerModule).controllers.Count > 0)
+        {
+          // loop through the controllers in the module
+          foreach (RuntimeAnimatorController controller in (module as fullControllerModule).controllers)
+          {
+            // log the controller's name to the console
+            CoreLog("controller.name: " + controller.name);
+
+          }
+        }
+
+        // section to handle CVR Fury Menu Store
+        // check and see if the module has any menus
+        if ((module as fullControllerModule).menus.Count > 0)
+        {
+          // loop through the menus in the module
+          foreach (fullControllerModule.MenuEntry menuEntry in (module as fullControllerModule).menus)
+          {
+            // log the menu's name to the console
+            CoreLog("menuEntry.menu.name: " + menuEntry.menu.name);
+
+          }
+        }
+
+        // section to handel CVR Fury Parameters
+        // check and see if the module has any parameters
+        if ((module as fullControllerModule).parameters.Count > 0)
+        {
+          // loop through the parameters in the module
+          foreach (fullControllerModule.ParamsEntry paramEntry in (module as fullControllerModule).parameters)
+          {
+            // log the parameter's name to the console
+            CoreLog("paramEntry.parameters.name: " + paramEntry.parameters.name);
+
+          }
+        }
+
+        // section to handle CVR Fury Smoothed Parameters
+        // check and see if the module has any smoothed parameters
+        if ((module as fullControllerModule).smoothedPrms.Count > 0)
+        {
+          // loop through the smoothed parameters in the module
+          foreach (fullControllerModule.SmoothParamEntry smoothedParamEntry in (module as fullControllerModule).smoothedPrms)
+          {
+            // log the smoothed parameter's name to the console
+            CoreLog("smoothedParamEntry.name: " + smoothedParamEntry.name);
+
+          }
+        }
+
+        // section to handle CVR Fury Global Parameters
+        // check and see if the module has any global parameters
+        if ((module as fullControllerModule).globalParams.Count > 0)
+        {
+          // loop through the global parameters in the module
+          foreach (string globalParam in (module as fullControllerModule).globalParams)
+          {
+            // log the global parameter's name to the console
+            CoreLog("globalParam: " + globalParam);
+
+          }
+        }
+
+        // section to handle CVR Fury Toggle Parameter
+        // check and see if the module has a toggle parameter
+        if ((module as fullControllerModule).toggleParam != null)
+        {
+          // log the toggle parameter's name to the console
+          CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
+        }
+
+        // section to handle CVR Fury Binding Rewrites
+        // check and see if the module has any binding rewrites
+        if ((module as fullControllerModule).rewriteBindings.Count > 0)
+        {
+          // loop through the binding rewrites in the module
+          foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
+          {
+            // log the binding rewrite's name to the console
+            CoreLog("rewrite.from: "
+                    + rewrite.from
+                    + "/n rewrite.to: "
+                    + rewrite.to
+                    + "/n rewrite.delete: " + rewrite.delete);
+
+          }
+        }
+
+
+
+
+
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        Debug.LogError("Avatar does not exist");
+      }
+
+    }
+  }
+
+
+
+}
+// #endif
