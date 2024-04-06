@@ -1,4 +1,4 @@
-// { "version": "0.11.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.12.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -60,6 +60,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             case deleteOnUpload:
                 processor = new deleteOnUploadProcessor();
+                break;
+
+            case showInFirstPerson:
+                processor = new showInFirstPersonProcessor();
                 break;
 
             default:
