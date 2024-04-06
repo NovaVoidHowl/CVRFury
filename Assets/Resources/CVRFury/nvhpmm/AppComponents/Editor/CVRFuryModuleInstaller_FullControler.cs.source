@@ -1,4 +1,4 @@
-// { "version": "0.0.20" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.21" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -75,6 +75,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get the menu's prefix
             string prefix = menuEntry.prefix;
 
+            // if the prefix is not null or empty add a forward slash to the end
+            if (!string.IsNullOrEmpty(prefix))
+            {
+              prefix += "/";
+            }
+
             if (!menuEntry.forcePrefixStringFormat)
             {
               // force all backslashes to forward slashes in the prefix
@@ -120,10 +126,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     toggleEntry.type = CVRAdvancedSettingsEntry.SettingsType.GameObjectToggle;
 
                     // set the CVRAdvancedSettingsEntry's name to the toggle parameter's name with the prefix
-                    toggleEntry.name = prefix +"/"+ toggleParam.name;
+                    toggleEntry.name = prefix + toggleParam.name;
 
                     // set the CVRAdvancedSettingsEntry's machineName to the toggle parameter's name with the prefix
-                    toggleEntry.machineName = prefix +"/"+ toggleParam.name;
+                    toggleEntry.machineName = prefix + toggleParam.name;
 
                     // create a new CVRAdvancesAvatarSettingGameObjectToggle
                     CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
@@ -167,10 +173,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     dropdownEntry.type = CVRAdvancedSettingsEntry.SettingsType.GameObjectDropdown;
 
                     // set the CVRAdvancedSettingsEntry's name to the dropdown parameter's name with the prefix
-                    dropdownEntry.name = prefix +"/"+ dropdownParam.name;
+                    dropdownEntry.name = prefix + dropdownParam.name;
 
                     // set the CVRAdvancedSettingsEntry's machineName to the dropdown parameter's name with the prefix
-                    dropdownEntry.machineName = prefix +"/"+ dropdownParam.name;
+                    dropdownEntry.machineName = prefix + dropdownParam.name;
 
                     // create a new CVRAdvancesAvatarSettingGameObjectDropdown
                     CVRAdvancesAvatarSettingGameObjectDropdown dropdownSetting = new CVRAdvancesAvatarSettingGameObjectDropdown();
