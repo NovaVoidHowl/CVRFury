@@ -1,4 +1,4 @@
-// { "version": "0.0.23" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.27" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -124,6 +124,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     break;
 
+                  case "sliderParameter":
+                    // cast the menuItem to a sliderParameter
+                    sliderParameter sliderParam = menuItem as sliderParameter;
+
+                    // call the ProcessSliderParameter function to handle the slider parameter
+                    ProcessSliderParameter(sliderParam, prefix, CVRAdvancedAvatarMenuList);
+
+                    break;
+
 
 
                   default:
@@ -227,6 +236,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 //// ---------------------------------------------- supporting functions -----------------------------------------------
 
+  // general functions
+
+    private string formatParameterNameForMachineName(string name)
+    {
+      // remove any spaces from the name
+      return name.Replace(" ", "");
+    }
+
   // functions to handle CVR Fury Menu Store bits
 
     public void ProcessToggleParameter (toggleParameter toggleParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
@@ -250,7 +267,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       toggleEntry.name = prefix + toggleParam.name;
 
       // set the CVRAdvancedSettingsEntry's machineName to the toggle parameter's name with the prefix
-      toggleEntry.machineName = (prefix + toggleParam.name).Replace(" ", "");
+      toggleEntry.machineName = formatParameterNameForMachineName(prefix + toggleParam.name);
 
       // create a new CVRAdvancesAvatarSettingGameObjectToggle
       CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
@@ -296,7 +313,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       dropdownEntry.name = prefix + dropdownParam.name;
 
       // set the CVRAdvancedSettingsEntry's machineName to the dropdown parameter's name with the prefix
-      dropdownEntry.machineName = (prefix + dropdownParam.name).Replace(" ", "");
+      dropdownEntry.machineName = formatParameterNameForMachineName(prefix + dropdownParam.name);
 
       // create a new CVRAdvancesAvatarSettingGameObjectDropdown
       CVRAdvancesAvatarSettingGameObjectDropdown dropdownSetting = new CVRAdvancesAvatarSettingGameObjectDropdown();
@@ -349,6 +366,37 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
 
+
+    public void ProcessSliderParameter(sliderParameter sliderParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    {
+      // log the slider parameter's name to the console
+      CoreLog("sliderParam.name: " + sliderParam.name);
+
+      // create CVRAdvancedSettingsEntry for the slider parameter
+      CVRAdvancedSettingsEntry sliderEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.Slider
+      sliderEntry.type = CVRAdvancedSettingsEntry.SettingsType.Slider;
+
+      // set the CVRAdvancedSettingsEntry's name to the slider parameter's name with the prefix
+      sliderEntry.name = prefix + sliderParam.name;
+
+      // set the CVRAdvancedSettingsEntry's machineName to the slider parameter's name with the prefix
+      sliderEntry.machineName = formatParameterNameForMachineName(prefix + sliderParam.name);
+
+      // create a new CVRAdvancesAvatarSettingSlider
+      CVRAdvancesAvatarSettingSlider sliderSetting = new CVRAdvancesAvatarSettingSlider();
+
+      // set the CVRAdvancesAvatarSettingSlider's defaultValue to the slider parameter's default value
+      sliderSetting.defaultValue = sliderParam.defaultValue;
+
+      // put the CVRAdvancesAvatarSettingSlider into the CVRAdvancedSettingsEntry's value
+      sliderEntry.setting = sliderSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(sliderEntry);
+
+    }
 
 
   }
