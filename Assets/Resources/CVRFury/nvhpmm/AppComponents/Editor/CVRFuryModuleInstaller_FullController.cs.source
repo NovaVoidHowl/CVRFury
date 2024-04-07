@@ -1,4 +1,4 @@
-// { "version": "0.0.35" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.36" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -70,7 +70,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             if (overrides == null && baseController == null)
             {
               // if they don't, log an error to the console
-              Debug.LogError("No base controller or overrides found");
+              Debug.LogError("No base controller or overrides found, restoring defaults");
 
               // set the  the CCK default animator controller to the controller file at path
               // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
