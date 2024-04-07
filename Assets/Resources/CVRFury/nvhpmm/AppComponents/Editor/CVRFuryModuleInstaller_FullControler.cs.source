@@ -256,9 +256,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       return name.Replace(" ", "");
     }
 
-  // functions to handle CVR Fury Menu Store bits
+  // functions to handle CVR Fury Menu Store bits ----------------------------------------------------------------------
 
-    public void ProcessToggleParameter (toggleParameter toggleParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessToggleParameter (toggleParameter toggleParam,
+                                        string prefix,
+                                        List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
     {
       // log the toggle parameter's name to the console
       CoreLog("toggleParam.name: " + toggleParam.name);
@@ -309,8 +311,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
 
-
-    public void ProcessDropdownParameter (dropdownParameter dropdownParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessDropdownParameter (dropdownParameter dropdownParam,
+                                          string prefix,
+                                          List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
     {
       // log the dropdown parameter's name to the console
       CoreLog("dropdownParam.name: " + dropdownParam.name);
@@ -378,8 +381,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
 
-
-    public void ProcessSliderParameter(sliderParameter sliderParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessSliderParameter(sliderParameter sliderParam,
+                                       string prefix,
+                                       List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
     {
       // log the slider parameter's name to the console
       CoreLog("sliderParam.name: " + sliderParam.name);
@@ -410,7 +414,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
 
-    public void ProcessTwoDJoystickParameter(twoDJoystickParameter twoDJoystickParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessTwoDJoystickParameter(twoDJoystickParameter twoDJoystickParam,
+                                             string prefix,
+                                             List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
     {
       // log the twoDJoystick parameter's name to the console
       CoreLog("twoDJoystickParam.name: " + twoDJoystickParam.name);
@@ -448,7 +454,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
 
-    public void ProcessThreeDJoystickParameter(threeDJoystickParameter threeDJoystickParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessThreeDJoystickParameter(threeDJoystickParameter threeDJoystickParam,
+                                               string prefix,
+                                               List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
     {
       // log the threeDJoystick parameter's name to the console
       CoreLog("threeDJoystickParam.name: " + threeDJoystickParam.name);
