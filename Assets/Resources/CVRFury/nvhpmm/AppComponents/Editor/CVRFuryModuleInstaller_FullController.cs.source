@@ -40,13 +40,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check if the avatar exists
       if (avatar != null)
       {
-
         // get the avatarSettings from the avatar
         CVRAdvancedAvatarSettings advancedAvatarSettings = avatar.avatarSettings;
 
         // get the list of menu stores from the avatarSettings (settings public variable)
         List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList = advancedAvatarSettings.settings;
-
 
         // section to handle CVR Fury Controllers
         // check and see if the module has any controllers
@@ -57,6 +55,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             // log the controller's name to the console
             CoreLog("controller.name: " + controller.name);
+
+            // get the AnimatorOverrideController (overrides) from the avatarSettings
+            AnimatorOverrideController overrides = advancedAvatarSettings.overrides;
+
+            // get the baseController from the avatarSettings
+            RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
+
+            // check if both the overrides and baseController don't exist
+            if (overrides == null && baseController == null)
+            {
+              // if they don't, log an error to the console
+              Debug.LogError("No base controller or overrides found");
+
+              // set the  the CCK default animator controller to the controller file at path
+              // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
+              avatar.animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+                "Assets/ABI.CCK/Animations/AvatarAnimator.controller"
+              );
+            }
 
             // TODO
           }
@@ -146,22 +163,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     break;
 
-
                   default:
                     // if the menuItem is not valid, log an error to the console
                     Debug.LogError("Unknown menu item type: " + menuItem.MenuParameterType);
                     break;
                 }
-
-
-
               }
             }
-
           }
         }
 
-        // section to handel CVR Fury Parameters
+        // TODO: // section to handel CVR Fury Parameters
         // check and see if the module has any parameters
         if ((module as fullControllerModule).parameters.Count > 0)
         {
@@ -172,26 +184,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             CoreLog("paramEntry.parameters.name: " + paramEntry.parameters.name);
 
             // TODO
-
           }
         }
 
-        // section to handle CVR Fury Smoothed Parameters
+        // TODO: // section to handle CVR Fury Smoothed Parameters
         // check and see if the module has any smoothed parameters
         if ((module as fullControllerModule).smoothedPrms.Count > 0)
         {
           // loop through the smoothed parameters in the module
-          foreach (fullControllerModule.SmoothParamEntry smoothedParamEntry in (module as fullControllerModule).smoothedPrms)
+          foreach (
+            fullControllerModule.SmoothParamEntry smoothedParamEntry in (module as fullControllerModule).smoothedPrms
+          )
           {
             // log the smoothed parameter's name to the console
             CoreLog("smoothedParamEntry.name: " + smoothedParamEntry.name);
 
             // TODO
-
           }
         }
 
-        // section to handle CVR Fury Global Parameters
+        // TODO: // section to handle CVR Fury Global Parameters
         // check and see if the module has any global parameters
         if ((module as fullControllerModule).globalParams.Count > 0)
         {
@@ -202,11 +214,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             CoreLog("globalParam: " + globalParam);
 
             // TODO
-
           }
         }
 
-        // section to handle CVR Fury Toggle Parameter
+        // TODO: // section to handle CVR Fury Toggle Parameter
         // check and see if the module has a toggle parameter
         if (!string.IsNullOrWhiteSpace((module as fullControllerModule).toggleParam))
         {
@@ -214,7 +225,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
         }
 
-        // section to handle CVR Fury Binding Rewrites
+        // TODO: // section to handle CVR Fury Binding Rewrites
         // check and see if the module has any binding rewrites
         if ((module as fullControllerModule).rewriteBindings.Count > 0)
         {
@@ -222,33 +233,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
           {
             // log the binding rewrite's name to the console
-            CoreLog("rewrite.from: "
-                    + rewrite.from
-                    + "\n rewrite.to: "
-                    + rewrite.to
-                    + "\n rewrite.delete: " + rewrite.delete);
-
-
-
+            CoreLog(
+              "rewrite.from: " + rewrite.from + "\n rewrite.to: " + rewrite.to + "\n rewrite.delete: " + rewrite.delete
+            );
           }
         }
-
-
-
-
-
       }
       else
       {
         // if it doesn't, log an error to the console
         Debug.LogError("Avatar does not exist");
       }
-
     }
 
-//// ---------------------------------------------- supporting functions -----------------------------------------------
+    //// ---------------------------------------------- supporting functions -----------------------------------------------
 
-  // general functions
+    // general functions
 
     private string formatParameterNameForMachineName(string name)
     {
@@ -256,11 +256,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       return name.Replace(" ", "");
     }
 
-  // functions to handle CVR Fury Menu Store bits ----------------------------------------------------------------------
+    // functions to handle CVR Fury Menu Store bits ----------------------------------------------------------------------
 
-    public void ProcessToggleParameter (toggleParameter toggleParam,
-                                        string prefix,
-                                        List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessToggleParameter(
+      toggleParameter toggleParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+    )
     {
       // log the toggle parameter's name to the console
       CoreLog("toggleParam.name: " + toggleParam.name);
@@ -308,12 +310,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
       CVRAdvancedAvatarMenuList.Add(toggleEntry);
-
     }
 
-    public void ProcessDropdownParameter (dropdownParameter dropdownParam,
-                                          string prefix,
-                                          List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessDropdownParameter(
+      dropdownParameter dropdownParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+    )
     {
       // log the dropdown parameter's name to the console
       CoreLog("dropdownParam.name: " + dropdownParam.name);
@@ -341,7 +344,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // console print the dropdown parameter's generate type
       CoreLog("dropdownParam.generateType: " + dropdownParam.generateType);
-
 
       // set the CVRAdvancesAvatarSettingGameObjectDropdown's usedType to the dropdown parameter's generate type via a cast
       switch (dropdownParam.generateType)
@@ -378,12 +380,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
       CVRAdvancedAvatarMenuList.Add(dropdownEntry);
-
     }
 
-    public void ProcessSliderParameter(sliderParameter sliderParam,
-                                       string prefix,
-                                       List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessSliderParameter(
+      sliderParameter sliderParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+    )
     {
       // log the slider parameter's name to the console
       CoreLog("sliderParam.name: " + sliderParam.name);
@@ -411,12 +414,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
       CVRAdvancedAvatarMenuList.Add(sliderEntry);
-
     }
 
-    public void ProcessTwoDJoystickParameter(twoDJoystickParameter twoDJoystickParam,
-                                             string prefix,
-                                             List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessTwoDJoystickParameter(
+      twoDJoystickParameter twoDJoystickParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+    )
     {
       // log the twoDJoystick parameter's name to the console
       CoreLog("twoDJoystickParam.name: " + twoDJoystickParam.name);
@@ -451,12 +455,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
       CVRAdvancedAvatarMenuList.Add(twoDJoystickEntry);
-
     }
 
-    public void ProcessThreeDJoystickParameter(threeDJoystickParameter threeDJoystickParam,
-                                               string prefix,
-                                               List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    public void ProcessThreeDJoystickParameter(
+      threeDJoystickParameter threeDJoystickParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+    )
     {
       // log the threeDJoystick parameter's name to the console
       CoreLog("threeDJoystickParam.name: " + threeDJoystickParam.name);
@@ -478,25 +483,32 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // set the CVRAdvancesAvatarSettingThreeDJoystick's defaultValue to the threeDJoystick parameter's default values
       // note in this case the default value is a Vector3, filled by three floats
-      threeDJoystickSetting.defaultValue = new Vector3(threeDJoystickParam.defaultXValue, threeDJoystickParam.defaultYValue, threeDJoystickParam.defaultZValue);
+      threeDJoystickSetting.defaultValue = new Vector3(
+        threeDJoystickParam.defaultXValue,
+        threeDJoystickParam.defaultYValue,
+        threeDJoystickParam.defaultZValue
+      );
 
       // set the minimum set of values for the threeDJoystick parameter
-      threeDJoystickSetting.rangeMin = new Vector3(threeDJoystickParam.minXValue, threeDJoystickParam.minYValue, threeDJoystickParam.minZValue);
+      threeDJoystickSetting.rangeMin = new Vector3(
+        threeDJoystickParam.minXValue,
+        threeDJoystickParam.minYValue,
+        threeDJoystickParam.minZValue
+      );
 
       // set the maximum set of values for the threeDJoystick parameter
-      threeDJoystickSetting.rangeMax = new Vector3(threeDJoystickParam.maxXValue, threeDJoystickParam.maxYValue, threeDJoystickParam.maxZValue);
+      threeDJoystickSetting.rangeMax = new Vector3(
+        threeDJoystickParam.maxXValue,
+        threeDJoystickParam.maxYValue,
+        threeDJoystickParam.maxZValue
+      );
 
       // put the CVRAdvancesAvatarSettingThreeDJoystick into the CVRAdvancedSettingsEntry's value
       threeDJoystickEntry.setting = threeDJoystickSetting;
 
       // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
       CVRAdvancedAvatarMenuList.Add(threeDJoystickEntry);
-
     }
-
-
-
-
   }
 }
 // #endif
