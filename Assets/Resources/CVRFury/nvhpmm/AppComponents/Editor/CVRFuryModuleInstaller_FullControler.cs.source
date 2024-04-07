@@ -1,4 +1,4 @@
-// { "version": "0.0.27" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.32" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -109,7 +109,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   case "toggleParameter":
                     // cast the menuItem to a toggleParameter
                     toggleParameter toggleParam = menuItem as toggleParameter;
-
                     // call the ProcessToggleParameter function to handle the toggle parameter
                     ProcessToggleParameter(toggleParam, prefix, CVRAdvancedAvatarMenuList);
 
@@ -118,7 +117,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   case "dropdownParameter":
                     // cast the menuItem to a dropdownParameter
                     dropdownParameter dropdownParam = menuItem as dropdownParameter;
-
                     // call the ProcessDropdownParameter function to handle the dropdown parameter
                     ProcessDropdownParameter(dropdownParam, prefix, CVRAdvancedAvatarMenuList);
 
@@ -127,12 +125,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   case "sliderParameter":
                     // cast the menuItem to a sliderParameter
                     sliderParameter sliderParam = menuItem as sliderParameter;
-
                     // call the ProcessSliderParameter function to handle the slider parameter
                     ProcessSliderParameter(sliderParam, prefix, CVRAdvancedAvatarMenuList);
 
                     break;
 
+                  case "twoDJoystickParameter":
+                    // cast the menuItem to a twoDJoystickParameter
+                    twoDJoystickParameter twoDJoystickParam = menuItem as twoDJoystickParameter;
+                    // call the ProcessTwoDJoystickParameter function to handle the twoDJoystick parameter
+                    ProcessTwoDJoystickParameter(twoDJoystickParam, prefix, CVRAdvancedAvatarMenuList);
+
+                    break;
+
+                  case "threeDJoystickParameter":
+                    // cast the menuItem to a threeDJoystickParameter
+                    threeDJoystickParameter threeDJoystickParam = menuItem as threeDJoystickParameter;
+                    // call the ProcessThreeDJoystickParameter function to handle the threeDJoystick parameter
+                    ProcessThreeDJoystickParameter(threeDJoystickParam, prefix, CVRAdvancedAvatarMenuList);
+
+                    break;
 
 
                   default:
@@ -397,6 +409,84 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CVRAdvancedAvatarMenuList.Add(sliderEntry);
 
     }
+
+    public void ProcessTwoDJoystickParameter(twoDJoystickParameter twoDJoystickParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    {
+      // log the twoDJoystick parameter's name to the console
+      CoreLog("twoDJoystickParam.name: " + twoDJoystickParam.name);
+
+      // create CVRAdvancedSettingsEntry for the twoDJoystick parameter
+      CVRAdvancedSettingsEntry twoDJoystickEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.Joystick2D
+      twoDJoystickEntry.type = CVRAdvancedSettingsEntry.SettingsType.Joystick2D;
+
+      // set the CVRAdvancedSettingsEntry's name to the twoDJoystick parameter's name with the prefix
+      twoDJoystickEntry.name = prefix + twoDJoystickParam.name;
+
+      // set the CVRAdvancedSettingsEntry's machineName to the twoDJoystick parameter's name with the prefix
+      twoDJoystickEntry.machineName = formatParameterNameForMachineName(prefix + twoDJoystickParam.name);
+
+      // create a new CVRAdvancesAvatarSettingJoystick2D
+      CVRAdvancesAvatarSettingJoystick2D twoDJoystickSetting = new CVRAdvancesAvatarSettingJoystick2D();
+
+      // set the CVRAdvancesAvatarSettingTwoDJoystick's defaultValue to the twoDJoystick parameter's default values
+      // note in this case the default value is a Vector2, filled by two floats
+      twoDJoystickSetting.defaultValue = new Vector2(twoDJoystickParam.defaultXValue, twoDJoystickParam.defaultYValue);
+
+      // set the minimum pair of values for the twoDJoystick parameter
+      twoDJoystickSetting.rangeMin = new Vector2(twoDJoystickParam.minXValue, twoDJoystickParam.minYValue);
+
+      // set the maximum pair of values for the twoDJoystick parameter
+      twoDJoystickSetting.rangeMax = new Vector2(twoDJoystickParam.maxXValue, twoDJoystickParam.maxYValue);
+
+      // put the CVRAdvancesAvatarSettingTwoDJoystick into the CVRAdvancedSettingsEntry's value
+      twoDJoystickEntry.setting = twoDJoystickSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(twoDJoystickEntry);
+
+    }
+
+    public void ProcessThreeDJoystickParameter(threeDJoystickParameter threeDJoystickParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    {
+      // log the threeDJoystick parameter's name to the console
+      CoreLog("threeDJoystickParam.name: " + threeDJoystickParam.name);
+
+      // create CVRAdvancedSettingsEntry for the threeDJoystick parameter
+      CVRAdvancedSettingsEntry threeDJoystickEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.ThreeDJoystick
+      threeDJoystickEntry.type = CVRAdvancedSettingsEntry.SettingsType.Joystick3D;
+
+      // set the CVRAdvancedSettingsEntry's name to the threeDJoystick parameter's name with the prefix
+      threeDJoystickEntry.name = prefix + threeDJoystickParam.name;
+
+      // set the CVRAdvancedSettingsEntry's machineName to the threeDJoystick parameter's name with the prefix
+      threeDJoystickEntry.machineName = formatParameterNameForMachineName(prefix + threeDJoystickParam.name);
+
+      // create a new CVRAdvancesAvatarSettingJoystick3D
+      CVRAdvancesAvatarSettingJoystick3D threeDJoystickSetting = new CVRAdvancesAvatarSettingJoystick3D();
+
+      // set the CVRAdvancesAvatarSettingThreeDJoystick's defaultValue to the threeDJoystick parameter's default values
+      // note in this case the default value is a Vector3, filled by three floats
+      threeDJoystickSetting.defaultValue = new Vector3(threeDJoystickParam.defaultXValue, threeDJoystickParam.defaultYValue, threeDJoystickParam.defaultZValue);
+
+      // set the minimum set of values for the threeDJoystick parameter
+      threeDJoystickSetting.rangeMin = new Vector3(threeDJoystickParam.minXValue, threeDJoystickParam.minYValue, threeDJoystickParam.minZValue);
+
+      // set the maximum set of values for the threeDJoystick parameter
+      threeDJoystickSetting.rangeMax = new Vector3(threeDJoystickParam.maxXValue, threeDJoystickParam.maxYValue, threeDJoystickParam.maxZValue);
+
+      // put the CVRAdvancesAvatarSettingThreeDJoystick into the CVRAdvancedSettingsEntry's value
+      threeDJoystickEntry.setting = threeDJoystickSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(threeDJoystickEntry);
+
+    }
+
+
 
 
   }
