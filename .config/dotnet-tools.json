@@ -6,6 +6,12 @@
         "dotnet-csharpier"
       ],
       "version": "0.22.1"
+    },
+    "husky": {
+      "commands": [
+        "husky"
+      ],
+      "version": "0.6.4"
     }
   },
   "version": 1

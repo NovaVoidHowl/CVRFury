@@ -1,0 +1,18 @@
+{
+  "tasks": [
+    {
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "./.run-csharpier.ps1",
+        "${staged}"
+      ],
+      "command": "powershell",
+      "include": [
+        "**/*.cs",
+        "**/*.cs.source"
+      ],
+      "name": "Run csharpier with .source support"
+    }
+  ]
+}
