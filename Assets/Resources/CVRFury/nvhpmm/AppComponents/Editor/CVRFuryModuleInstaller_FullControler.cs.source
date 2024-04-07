@@ -1,4 +1,4 @@
-// { "version": "0.0.22" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.23" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -110,52 +110,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // cast the menuItem to a toggleParameter
                     toggleParameter toggleParam = menuItem as toggleParameter;
 
-                    // log the toggle parameter's name to the console
-                    CoreLog("toggleParam.name: " + toggleParam.name);
-
-                    // log the toggle parameter's default state to the console
-                    CoreLog("toggleParam.defaultState: " + toggleParam.defaultState);
-
-                    // log the toggle parameter's generate type to the console
-                    CoreLog("toggleParam.generateType: " + toggleParam.generateType);
-
-                    // create CVRAdvancedSettingsEntry for the toggle parameter
-                    CVRAdvancedSettingsEntry toggleEntry = new CVRAdvancedSettingsEntry();
-
-                    // set the CVRAdvancedSettingsEntry's type to SettingsType.GameObjectToggle
-                    toggleEntry.type = CVRAdvancedSettingsEntry.SettingsType.GameObjectToggle;
-
-                    // set the CVRAdvancedSettingsEntry's name to the toggle parameter's name with the prefix
-                    toggleEntry.name = prefix + toggleParam.name;
-
-                    // set the CVRAdvancedSettingsEntry's machineName to the toggle parameter's name with the prefix
-                    toggleEntry.machineName = (prefix + toggleParam.name).Replace(" ", "");
-
-                    // create a new CVRAdvancesAvatarSettingGameObjectToggle
-                    CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
-
-                    // set the CVRAdvancesAvatarSettingGameObjectToggle's defaultValue to the toggle parameter's default state
-                    toggleSetting.defaultValue = toggleParam.defaultState;
-
-                    // set the CVRAdvancesAvatarSettingGameObjectToggle's usedType to the toggle parameter's generate type via a cast
-                    switch (toggleParam.generateType)
-                    {
-                      case toggleParameter.GenerateType.Bool:
-                        toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateBool;
-                        break;
-                      case toggleParameter.GenerateType.Float:
-                        toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateFloat;
-                        break;
-                      case toggleParameter.GenerateType.Int:
-                        toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateInt;
-                        break;
-                    }
-
-                    // put the CVRAdvancesAvatarSettingGameObjectToggle into the CVRAdvancedSettingsEntry's value
-                    toggleEntry.setting = toggleSetting;
-
-                    // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
-                    CVRAdvancedAvatarMenuList.Add(toggleEntry);
+                    // call the ProcessToggleParameter function to handle the toggle parameter
+                    ProcessToggleParameter(toggleParam, prefix, CVRAdvancedAvatarMenuList);
 
                     break;
 
@@ -163,69 +119,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // cast the menuItem to a dropdownParameter
                     dropdownParameter dropdownParam = menuItem as dropdownParameter;
 
-                    // log the dropdown parameter's name to the console
-                    CoreLog("dropdownParam.name: " + dropdownParam.name);
-
-                    // create CVRAdvancedSettingsEntry for the dropdown parameter
-                    CVRAdvancedSettingsEntry dropdownEntry = new CVRAdvancedSettingsEntry();
-
-                    // set the CVRAdvancedSettingsEntry's type to SettingsType.GameObjectDropdown
-                    dropdownEntry.type = CVRAdvancedSettingsEntry.SettingsType.GameObjectDropdown;
-
-                    // set the CVRAdvancedSettingsEntry's name to the dropdown parameter's name with the prefix
-                    dropdownEntry.name = prefix + dropdownParam.name;
-
-                    // set the CVRAdvancedSettingsEntry's machineName to the dropdown parameter's name with the prefix
-                    dropdownEntry.machineName = (prefix + dropdownParam.name).Replace(" ", "");
-
-                    // create a new CVRAdvancesAvatarSettingGameObjectDropdown
-                    CVRAdvancesAvatarSettingGameObjectDropdown dropdownSetting = new CVRAdvancesAvatarSettingGameObjectDropdown();
-
-                    // set the CVRAdvancesAvatarSettingGameObjectDropdown's defaultValue to the dropdown parameter's default index
-                    dropdownSetting.defaultValue = dropdownParam.defaultIndex;
-
-                    // console print the dropdown parameter's default index
-                    CoreLog("dropdownParam.defaultIndex: " + dropdownParam.defaultIndex);
-
-                    // console print the dropdown parameter's generate type
-                    CoreLog("dropdownParam.generateType: " + dropdownParam.generateType);
-
-
-                    // set the CVRAdvancesAvatarSettingGameObjectDropdown's usedType to the dropdown parameter's generate type via a cast
-                    switch (dropdownParam.generateType)
-                    {
-                      case dropdownParameter.GenerateType.Float:
-                        dropdownSetting.usedType = CVRAdvancesAvatarSettingGameObjectDropdown.ParameterType.GenerateFloat;
-                        break;
-                      case dropdownParameter.GenerateType.Int:
-                        dropdownSetting.usedType = CVRAdvancesAvatarSettingGameObjectDropdown.ParameterType.GenerateInt;
-                        break;
-                    }
-
-                    // create a CVRAdvancedSettingsDropDownEntry list for the dropdownSetting's options
-                    List<CVRAdvancedSettingsDropDownEntry> dropdownOptions = new List<CVRAdvancedSettingsDropDownEntry>();
-
-                    // loop through the dropdownParam's options
-                    foreach (string option in dropdownParam.dropdownList)
-                    {
-                      // create a new CVRAdvancedSettingsDropDownEntry
-                      CVRAdvancedSettingsDropDownEntry dropdownOption = new CVRAdvancedSettingsDropDownEntry();
-
-                      // set the CVRAdvancedSettingsDropDownEntry's name to the option
-                      dropdownOption.name = option;
-
-                      // add the CVRAdvancedSettingsDropDownEntry to the dropdownOptions list
-                      dropdownOptions.Add(dropdownOption);
-                    }
-
-                    // set the CVRAdvancesAvatarSettingGameObjectDropdown's options to the dropdownOptions list
-                    dropdownSetting.options = dropdownOptions;
-
-                    // put the CVRAdvancesAvatarSettingGameObjectDropdown into the CVRAdvancedSettingsEntry's value
-                    dropdownEntry.setting = dropdownSetting;
-
-                    // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
-                    CVRAdvancedAvatarMenuList.Add(dropdownEntry);
+                    // call the ProcessDropdownParameter function to handle the dropdown parameter
+                    ProcessDropdownParameter(dropdownParam, prefix, CVRAdvancedAvatarMenuList);
 
                     break;
 
@@ -329,9 +224,133 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
     }
+
+//// ---------------------------------------------- supporting functions -----------------------------------------------
+
+  // functions to handle CVR Fury Menu Store bits
+
+    public void ProcessToggleParameter (toggleParameter toggleParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    {
+      // log the toggle parameter's name to the console
+      CoreLog("toggleParam.name: " + toggleParam.name);
+
+      // log the toggle parameter's default state to the console
+      CoreLog("toggleParam.defaultState: " + toggleParam.defaultState);
+
+      // log the toggle parameter's generate type to the console
+      CoreLog("toggleParam.generateType: " + toggleParam.generateType);
+
+      // create CVRAdvancedSettingsEntry for the toggle parameter
+      CVRAdvancedSettingsEntry toggleEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.GameObjectToggle
+      toggleEntry.type = CVRAdvancedSettingsEntry.SettingsType.GameObjectToggle;
+
+      // set the CVRAdvancedSettingsEntry's name to the toggle parameter's name with the prefix
+      toggleEntry.name = prefix + toggleParam.name;
+
+      // set the CVRAdvancedSettingsEntry's machineName to the toggle parameter's name with the prefix
+      toggleEntry.machineName = (prefix + toggleParam.name).Replace(" ", "");
+
+      // create a new CVRAdvancesAvatarSettingGameObjectToggle
+      CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
+
+      // set the CVRAdvancesAvatarSettingGameObjectToggle's defaultValue to the toggle parameter's default state
+      toggleSetting.defaultValue = toggleParam.defaultState;
+
+      // set the CVRAdvancesAvatarSettingGameObjectToggle's usedType to the toggle parameter's generate type via a cast
+      switch (toggleParam.generateType)
+      {
+        case toggleParameter.GenerateType.Bool:
+          toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateBool;
+          break;
+        case toggleParameter.GenerateType.Float:
+          toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateFloat;
+          break;
+        case toggleParameter.GenerateType.Int:
+          toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.GenerateInt;
+          break;
+      }
+
+      // put the CVRAdvancesAvatarSettingGameObjectToggle into the CVRAdvancedSettingsEntry's value
+      toggleEntry.setting = toggleSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(toggleEntry);
+
+    }
+
+
+    public void ProcessDropdownParameter (dropdownParameter dropdownParam, string prefix, List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList)
+    {
+      // log the dropdown parameter's name to the console
+      CoreLog("dropdownParam.name: " + dropdownParam.name);
+
+      // create CVRAdvancedSettingsEntry for the dropdown parameter
+      CVRAdvancedSettingsEntry dropdownEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.GameObjectDropdown
+      dropdownEntry.type = CVRAdvancedSettingsEntry.SettingsType.GameObjectDropdown;
+
+      // set the CVRAdvancedSettingsEntry's name to the dropdown parameter's name with the prefix
+      dropdownEntry.name = prefix + dropdownParam.name;
+
+      // set the CVRAdvancedSettingsEntry's machineName to the dropdown parameter's name with the prefix
+      dropdownEntry.machineName = (prefix + dropdownParam.name).Replace(" ", "");
+
+      // create a new CVRAdvancesAvatarSettingGameObjectDropdown
+      CVRAdvancesAvatarSettingGameObjectDropdown dropdownSetting = new CVRAdvancesAvatarSettingGameObjectDropdown();
+
+      // set the CVRAdvancesAvatarSettingGameObjectDropdown's defaultValue to the dropdown parameter's default index
+      dropdownSetting.defaultValue = dropdownParam.defaultIndex;
+
+      // console print the dropdown parameter's default index
+      CoreLog("dropdownParam.defaultIndex: " + dropdownParam.defaultIndex);
+
+      // console print the dropdown parameter's generate type
+      CoreLog("dropdownParam.generateType: " + dropdownParam.generateType);
+
+
+      // set the CVRAdvancesAvatarSettingGameObjectDropdown's usedType to the dropdown parameter's generate type via a cast
+      switch (dropdownParam.generateType)
+      {
+        case dropdownParameter.GenerateType.Float:
+          dropdownSetting.usedType = CVRAdvancesAvatarSettingGameObjectDropdown.ParameterType.GenerateFloat;
+          break;
+        case dropdownParameter.GenerateType.Int:
+          dropdownSetting.usedType = CVRAdvancesAvatarSettingGameObjectDropdown.ParameterType.GenerateInt;
+          break;
+      }
+
+      // create a CVRAdvancedSettingsDropDownEntry list for the dropdownSetting's options
+      List<CVRAdvancedSettingsDropDownEntry> dropdownOptions = new List<CVRAdvancedSettingsDropDownEntry>();
+
+      // loop through the dropdownParam's options
+      foreach (string option in dropdownParam.dropdownList)
+      {
+        // create a new CVRAdvancedSettingsDropDownEntry
+        CVRAdvancedSettingsDropDownEntry dropdownOption = new CVRAdvancedSettingsDropDownEntry();
+
+        // set the CVRAdvancedSettingsDropDownEntry's name to the option
+        dropdownOption.name = option;
+
+        // add the CVRAdvancedSettingsDropDownEntry to the dropdownOptions list
+        dropdownOptions.Add(dropdownOption);
+      }
+
+      // set the CVRAdvancesAvatarSettingGameObjectDropdown's options to the dropdownOptions list
+      dropdownSetting.options = dropdownOptions;
+
+      // put the CVRAdvancesAvatarSettingGameObjectDropdown into the CVRAdvancedSettingsEntry's value
+      dropdownEntry.setting = dropdownSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(dropdownEntry);
+
+    }
+
+
+
   }
-
-
-
 }
 // #endif
