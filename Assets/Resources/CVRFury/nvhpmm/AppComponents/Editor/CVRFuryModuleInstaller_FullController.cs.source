@@ -1,4 +1,4 @@
-// { "version": "0.0.32" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.35" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -40,6 +40,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check if the avatar exists
       if (avatar != null)
       {
+        // we have the avatar, and it is valid, also we have a FullController type Module
+        // so we need to ensure that 'advanced avatar settings' is enabled on the avatar
+        avatar.avatarUsesAdvancedSettings = true;
+
         // get the avatarSettings from the avatar
         CVRAdvancedAvatarSettings advancedAvatarSettings = avatar.avatarSettings;
 
@@ -70,10 +74,23 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // set the  the CCK default animator controller to the controller file at path
               // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
-              avatar.animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+              advancedAvatarSettings.baseController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
                 "Assets/ABI.CCK/Animations/AvatarAnimator.controller"
               );
             }
+
+            // notes: under advancedAvatarSettings there are the following public variables
+            // settings: List<CVRAdvancedSettingsEntry> - list of settings for the avatar
+            // animator: Animator - the final animator for the avatar (after compiling all layers etc)
+            // overrides: AnimatorOverrideController - the overrides for the avatar animator above
+            // baseController: RuntimeAnimatorController - the base controller for the avatar
+            // baseOverrideController: RuntimeAnimatorController - the base override controller for the avatar
+            //                         ref baseController
+            // the base ones are used as input for the final animator to be built atop
+
+
+
+
 
             // TODO
           }
