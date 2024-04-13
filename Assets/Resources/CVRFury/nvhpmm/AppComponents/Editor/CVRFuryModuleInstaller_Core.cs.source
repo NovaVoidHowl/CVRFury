@@ -1,10 +1,11 @@
-// { "version": "0.13.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.14.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -143,6 +144,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // Start processing the modules
         ProcessModules(dataStorageUnits, uploadedObject);
+
+        // execute the the cleanup code
+        ModulesInstallationFinalise(uploadedObject);
       }
       else
       {
@@ -262,8 +266,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules started", progress, 2000);
         // close the progress bar
         EditorUtility.ClearProgressBar();
-        // Start processing the modules asynchronously, then call ModuleInstallOnBuild.OnInstallationComplete when done
+        // Start processing the modules asynchronously
         await ProcessModulesAsync(dataStorageUnits, uploadedObject);
+
+        // execute the the cleanup code
+        ModulesInstallationFinalise(uploadedObject);
       }
       else
       {
@@ -328,6 +335,37 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         EditorUtility.ClearProgressBar();
       }
       // all modules done
+    }
+
+    //// assistive functions --------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// This function is called to finalise the module installation and do trigger any final cleanup code
+    /// </summary>
+    public static void ModulesInstallationFinalise(GameObject uploadedObject)
+    {
+      // trigger lock file cleanup
+      LockfileCleanup(uploadedObject);
+
+      // finalise the module installation
+      CoreLog("Module installation finalised");
+    }
+
+    /// <summary>
+    /// This function clears up relevant lock files
+    /// </summary>
+    public static void LockfileCleanup(GameObject avatar)
+    {
+      // only do this if the full controller module is present
+      #if NVH_CVRFURY_EXISTS_MI_FC
+      // get the lock file path for the current avatar controller creation and delete it if it exists
+      string lockFilePath = Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/" + avatar.name + "/processing.lock";
+      if (File.Exists(lockFilePath))
+      {
+        File.Delete(lockFilePath);
+      }
+      #endif
+
     }
 
   }

@@ -1,10 +1,12 @@
-// { "version": "0.0.36" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.57" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -60,24 +62,271 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // log the controller's name to the console
             CoreLog("controller.name: " + controller.name);
 
-            // get the AnimatorOverrideController (overrides) from the avatarSettings
-            AnimatorOverrideController overrides = advancedAvatarSettings.overrides;
-
             // get the baseController from the avatarSettings
             RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
 
-            // check if both the overrides and baseController don't exist
-            if (overrides == null && baseController == null)
+            // check if baseController don't exist
+            if (baseController == null)
             {
               // if they don't, log an error to the console
               Debug.LogError("No base controller or overrides found, restoring defaults");
 
               // set the  the CCK default animator controller to the controller file at path
               // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
-              advancedAvatarSettings.baseController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+              advancedAvatarSettings.baseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
                 "Assets/ABI.CCK/Animations/AvatarAnimator.controller"
               );
             }
+            // so we now have a baseController we can build upon should there not be any built ones
+
+            // create a folder in the project to store the generated controller
+            // this is based on Constants.ASSETS_MANAGED_FOLDER + /GeneratedControllers/+ AvatarName
+            string generatedControllersFolder = Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/" + avatar.name;
+
+            // create the folder if it doesn't exist for Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/
+            if (!AssetDatabase.IsValidFolder(generatedControllersFolder))
+            {
+              AssetDatabase.CreateFolder(Constants.ASSETS_MANAGED_FOLDER, "GeneratedControllers");
+            }
+
+            // create the folder if it doesn't exist for avatar.name
+            if (!AssetDatabase.IsValidFolder(generatedControllersFolder))
+            {
+              AssetDatabase.CreateFolder(Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers", avatar.name);
+            }
+
+            //// file paths for the generated controllers/locks etc.
+
+            // create a new override controller file path based on the generatedControllersFolder called 'overrides_controller_'avatar.name
+            string overrideControllerPath = generatedControllersFolder + "/overrides_controller_" + avatar.name + ".overrideController";
+
+            // create a new animator controller file path based on the generatedControllersFolder called 'final_controller_'avatar.name
+            string finalControllerPath = generatedControllersFolder + "/final_controller_" + avatar.name + ".controller";
+
+            // create animatorProcessing lock file path based on the generatedControllersFolder called 'processing.lock'
+            string processingLockPath = generatedControllersFolder + "/processing.lock";
+
+            // create baseControllerImport lock file path based on the generatedControllersFolder called 'baseControllerImport.lock'
+            string baseControllerImportLockPath = generatedControllersFolder + "/baseControllerImport.lock";
+
+            //// flow checks
+            
+            // check the lock file to see if controller processing is in progress
+            // if it is, we already have a controller in progress from this and can add to it
+            // if it isn't, then what we have is the old controller and we need to start fresh
+            
+            //vars to hold the controller/override files
+            AnimatorOverrideController CVRFuryOverrides;
+            AnimatorController CVRFuryFinalController;
+
+
+            // check if the processing lock file exists
+            if (AssetDatabase.LoadAssetAtPath<TextAsset>(processingLockPath) != null)
+            {
+              // currently exists so there should be a controller set in progress so load them
+              // load the override controller file
+              CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(
+                overrideControllerPath
+              );
+
+              // load the animator controller file
+              CVRFuryFinalController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+                finalControllerPath
+              );
+            }
+            else
+            {
+              // no lock file so we need to start fresh
+              // get rid of any existing controller/import lock files
+              AssetDatabase.DeleteAsset(overrideControllerPath);
+              AssetDatabase.DeleteAsset(finalControllerPath);
+              AssetDatabase.DeleteAsset(baseControllerImportLockPath);
+
+              // create the override file
+              AssetDatabase.CreateAsset(new AnimatorOverrideController(), overrideControllerPath);
+
+              // load the override controller file
+              CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(
+                overrideControllerPath
+              );
+
+              // create the controller file
+              AssetDatabase.CreateAsset(new AnimatorController(), finalControllerPath);
+
+              // load the animator controller file
+              CVRFuryFinalController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+                finalControllerPath
+              );
+
+              // create the lock file
+              AssetDatabase.CreateAsset(new TextAsset(), processingLockPath);
+            }
+            // at this point we have the override controller and the final controller loaded
+            
+            // link the final controller to the overrides
+            CVRFuryOverrides.runtimeAnimatorController = CVRFuryFinalController;
+
+            // check to see if the baseControllerImport lock file exists
+            if (AssetDatabase.LoadAssetAtPath<TextAsset>(baseControllerImportLockPath) == null)
+            {
+              // if it doesn't, we need to import the base controller/user's controller
+              // set the baseControllerImport lock file
+              AssetDatabase.CreateAsset(new TextAsset(), baseControllerImportLockPath);
+
+              // load the animator from the advancedAvatarSettings
+              AnimatorController userAnimator = advancedAvatarSettings.animator;
+
+              // load the overrides from the advancedAvatarSettings
+              AnimatorOverrideController userOverrides = advancedAvatarSettings.overrides;
+
+              
+
+              // now if the user already has an animator and overrides we need to use those as a base if not we use the base controller
+              if (userAnimator != null)
+              {
+                // loop through the parameters of the user's animator and add them to the final controller
+                foreach (AnimatorControllerParameter parameter in userAnimator.parameters)
+                {
+                  CVRFuryFinalController.AddParameter(parameter);
+                }
+
+                // loop through the layers of the user's animator and add them to the final controller
+                foreach (AnimatorControllerLayer layer in userAnimator.layers)
+                {
+                  CVRFuryFinalController.AddLayer(layer);
+                }
+
+                // now handel the user overrides
+
+                if (userOverrides != null)
+                {
+                  // Create a list to hold the overrides
+                  List<KeyValuePair<AnimationClip, AnimationClip>> overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+
+                  // Get the overrides from the user's AnimatorOverrideController
+                  userOverrides.GetOverrides(overrides);
+
+                  // Loop through the overrides and add them to the final controller
+                  foreach (KeyValuePair<AnimationClip, AnimationClip> overrideClip in overrides)
+                  {
+                    // Assuming CVRFuryOverrides is an AnimatorOverrideController
+                    CVRFuryOverrides[overrideClip.Key] = overrideClip.Value;
+                  }
+                }
+              }
+              else 
+              {
+                // Cast the baseController to AnimatorController
+                AnimatorController baseAnimatorController = baseController as AnimatorController;
+
+                if (baseAnimatorController != null)
+                {
+                  // loop through the parameters of the base controller and add them to the final controller
+                  foreach (AnimatorControllerParameter parameter in baseAnimatorController.parameters)
+                  {
+                    CVRFuryFinalController.AddParameter(parameter);
+                  }
+
+                  // loop through the layers of the base controller and add them to the final controller
+                  foreach (AnimatorControllerLayer layer in baseAnimatorController.layers)
+                  {
+                    CVRFuryFinalController.AddLayer(layer);
+                  }
+                }
+                else
+                {
+                  // Handle the case where baseController could not be cast to AnimatorController
+                  Debug.LogError("baseController is not an AnimatorController");
+                }
+              }
+
+            }
+
+            // ok so at this point we should have everything from the base controller in the final controller
+            // along with any previous module's additions (we only import the base once, hence the lock file)
+            // so now we need to add bits the current controller we are processing
+
+            // get the parameters from the controller
+            AnimatorController animatorController = controller as AnimatorController;
+
+            // check if the controller is an AnimatorController
+            if (animatorController != null)
+            {
+
+              // get a list of the parameters from the controller
+              List<AnimatorControllerParameter> parameters = new List<AnimatorControllerParameter>(animatorController.parameters);
+
+              // get a list of the layers from the controller
+              List<AnimatorControllerLayer> layers = new List<AnimatorControllerLayer>(animatorController.layers);
+
+              // get a list of layers from the final controller
+              List<AnimatorControllerLayer> finalLayers = new List<AnimatorControllerLayer>(CVRFuryFinalController.layers);
+
+              // get a list of the parameters from the final controller
+              List<AnimatorControllerParameter> finalParameters = new List<AnimatorControllerParameter>(CVRFuryFinalController.parameters);
+
+              // check if any of the parameters from the controller are already in the final controller
+              foreach (AnimatorControllerParameter parameter in parameters)
+              {
+                // check if the parameter is already in the final controller
+                if (!finalParameters.Any(p => p.name == parameter.name))
+                {
+                  // if it isn't, add the parameter to the final controller
+                  CVRFuryFinalController.AddParameter(parameter);
+                }
+                else
+                {
+                  // Handle the case where the parameter is already in the final controller
+                  Debug.LogError("Parameter " + parameter.name + " already exists in the final controller");
+                }
+              }
+
+              // check if any of the layers from the controller are already in the final controller
+              foreach (AnimatorControllerLayer layer in layers)
+              {
+                // check if the layer is already in the final controller
+                if (!finalLayers.Contains(layer))
+                {
+                  // check if there is any content in the layer (don't want to add empty layers)
+                  if (layer.stateMachine.states.Length > 0)
+                  {
+                    // if it isn't, add the layer to the final controller
+                    CVRFuryFinalController.AddLayer(layer);
+                  }
+                }
+                else
+                {
+                  // Handle the case where the layer is already in the final controller
+                  Debug.LogError("Layer " + layer.name + " already exists in the final controller");
+                }
+              }
+
+              // TODO: really need to handel the case where there are conflicts between the base controller
+              //       and the one we are making, rather than just skipping the conflicts
+             
+            }
+            else
+            {
+              // Handle the case where controller could not be cast to AnimatorController
+              Debug.LogError("controller is not an AnimatorController");
+            }
+
+            // at this point we need to set the animator and overrides in the advancedAvatarSettings
+            // so that they can be used in the next module (additive process)
+
+            // set the animator in the advancedAvatarSettings
+            advancedAvatarSettings.animator = CVRFuryFinalController;
+
+            // set the overrides in the advancedAvatarSettings
+            advancedAvatarSettings.overrides = CVRFuryOverrides;
+
+            // set the core Overrides in the avatar
+            avatar.overrides = CVRFuryOverrides;
+
+           
+
+
+            
 
             // notes: under advancedAvatarSettings there are the following public variables
             // settings: List<CVRAdvancedSettingsEntry> - list of settings for the avatar
