@@ -1,4 +1,4 @@
-// { "version": "0.14.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.15.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -144,9 +144,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // Start processing the modules
         ProcessModules(dataStorageUnits, uploadedObject);
-
-        // execute the the cleanup code
-        ModulesInstallationFinalise(uploadedObject);
       }
       else
       {
@@ -156,6 +153,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // close the progress bar
         EditorUtility.ClearProgressBar();
       }
+      // execute the the cleanup code
+      ModulesInstallationFinalise(uploadedObject);
     }
 
     private static void ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits, GameObject uploadedObject)
@@ -268,9 +267,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         EditorUtility.ClearProgressBar();
         // Start processing the modules asynchronously
         await ProcessModulesAsync(dataStorageUnits, uploadedObject);
-
-        // execute the the cleanup code
-        ModulesInstallationFinalise(uploadedObject);
       }
       else
       {
@@ -280,6 +276,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // close the progress bar
         EditorUtility.ClearProgressBar();
       }
+      // execute the the cleanup code
+      ModulesInstallationFinalise(uploadedObject);
     }
 
     private static async Task ProcessModulesAsync(CVRFuryDataStorageUnit[] dataStorageUnits, GameObject uploadedObject)
@@ -366,6 +364,53 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
       #endif
 
+    }
+  }
+  public class ReportBuilderSupport
+  {
+    public static void ReportInit(string buildReportPath, CVRAvatar avatar, CVRFuryModule module)
+    {
+      // create a new build report file using the buildReportPath
+      File.WriteAllText(buildReportPath, string.Empty);
+
+      // add a header to the build report file
+      File.AppendAllText(buildReportPath, "Build Report\n\n");
+
+      // add a timestamp to the build report file
+      File.AppendAllText(buildReportPath, "Timestamp: " + System.DateTime.Now + "\n\n");
+
+      // add the avatar name to the build report file
+      File.AppendAllText(buildReportPath, "Avatar Name: " + avatar.name + "\n\n");
+
+      // add the module name to the build report file
+      File.AppendAllText(buildReportPath, "Module Name: " + module.name + "\n\n");
+
+      // add a separator to the build report file
+      File.AppendAllText(buildReportPath, "----------------------------------------\n\n");
+    }
+    
+    public static void ReportAddBlankLine(string buildReportPath)
+    {
+      // add a blank line to the build report file
+      File.AppendAllText(buildReportPath, "\n");
+    }
+
+    public static void ReportAddLine(string buildReportPath, string message)
+    {
+      // add a message to the build report file
+      File.AppendAllText(buildReportPath, message + "\n");
+    }
+
+    public static void ReportAddErrorLine(string buildReportPath, string message)
+    {
+      // add an error message to the build report file
+      File.AppendAllText(buildReportPath, "Error: " + message + "\n");
+    }
+
+    public static void ReportEnd(string buildReportPath)
+    {
+      // add a separator to the build report file
+      File.AppendAllText(buildReportPath, "\n----------------------------------------\n\n");
     }
 
   }

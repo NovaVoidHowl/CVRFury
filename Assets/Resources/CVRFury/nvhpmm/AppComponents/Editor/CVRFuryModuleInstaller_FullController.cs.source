@@ -1,10 +1,11 @@
-// { "version": "0.0.57" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.68" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.UIElements;
@@ -17,6 +18,7 @@ using ABI.CCK.Scripts;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using static uk.novavoidhowl.dev.cvrfury.deployable.ReportBuilderSupport;
 
 /// <summary>
 /// fullController Module
@@ -56,11 +58,58 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // check and see if the module has any controllers
         if ((module as fullControllerModule).controllers.Count > 0)
         {
+          //// path vars section
+          
+          // create a folder in the project to store the generated controller
+          // this is based on Constants.ASSETS_MANAGED_FOLDER + /GeneratedControllers/+ AvatarName
+          string generatedControllersFolder = Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/" + avatar.name;
+
+          // create the folder if it doesn't exist for Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/
+          if (!AssetDatabase.IsValidFolder(generatedControllersFolder))
+          {
+            AssetDatabase.CreateFolder(Constants.ASSETS_MANAGED_FOLDER, "GeneratedControllers");
+          }
+
+          // create the folder if it doesn't exist for avatar.name
+          if (!AssetDatabase.IsValidFolder(generatedControllersFolder))
+          {
+            AssetDatabase.CreateFolder(Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers", avatar.name);
+          }
+
+          //// file paths for the generated controllers/locks etc.
+
+          // create a new override controller file path based on the generatedControllersFolder called 'overrides_controller_'avatar.name
+          string overrideControllerPath = generatedControllersFolder + "/overrides_controller_" + avatar.name + ".overrideController";
+
+          // create a new animator controller file path based on the generatedControllersFolder called 'final_controller_'avatar.name
+          string finalControllerPath = generatedControllersFolder + "/final_controller_" + avatar.name + ".controller";
+
+          // create animatorProcessing lock file path based on the generatedControllersFolder called 'processing.lock'
+          string processingLockPath = generatedControllersFolder + "/processing.lock";
+
+          // create baseControllerImport lock file path based on the generatedControllersFolder called 'baseControllerImport.lock'
+          string baseControllerImportLockPath = generatedControllersFolder + "/baseControllerImport.lock";
+
+          // create build report file path based on the generatedControllersFolder called 'build_report.txt'
+          string buildReportPath = generatedControllersFolder + "/"+module.ModuleType+"_build_report_"+module.name+".txt";
+
+          // call the report init function if the build report file doesn't exist
+          if (!File.Exists(buildReportPath))
+          {
+            // call the report init function
+            ReportInit(buildReportPath, avatar, module);
+          }
+
+
+
           // loop through the controllers in the module
           foreach (RuntimeAnimatorController controller in (module as fullControllerModule).controllers)
           {
+
             // log the controller's name to the console
             CoreLog("controller.name: " + controller.name);
+            ReportAddLine(buildReportPath, "controller.name: " + controller.name);
+            ReportAddBlankLine(buildReportPath);
 
             // get the baseController from the avatarSettings
             RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
@@ -69,8 +118,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             if (baseController == null)
             {
               // if they don't, log an error to the console
-              Debug.LogError("No base controller or overrides found, restoring defaults");
-
+              Debug.LogError("No base controller found, restoring defaults");
+              ReportAddErrorLine(buildReportPath, "No base controller found, restoring defaults");
               // set the  the CCK default animator controller to the controller file at path
               // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
               advancedAvatarSettings.baseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
@@ -79,35 +128,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             }
             // so we now have a baseController we can build upon should there not be any built ones
 
-            // create a folder in the project to store the generated controller
-            // this is based on Constants.ASSETS_MANAGED_FOLDER + /GeneratedControllers/+ AvatarName
-            string generatedControllersFolder = Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/" + avatar.name;
-
-            // create the folder if it doesn't exist for Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/
-            if (!AssetDatabase.IsValidFolder(generatedControllersFolder))
-            {
-              AssetDatabase.CreateFolder(Constants.ASSETS_MANAGED_FOLDER, "GeneratedControllers");
-            }
-
-            // create the folder if it doesn't exist for avatar.name
-            if (!AssetDatabase.IsValidFolder(generatedControllersFolder))
-            {
-              AssetDatabase.CreateFolder(Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers", avatar.name);
-            }
-
-            //// file paths for the generated controllers/locks etc.
-
-            // create a new override controller file path based on the generatedControllersFolder called 'overrides_controller_'avatar.name
-            string overrideControllerPath = generatedControllersFolder + "/overrides_controller_" + avatar.name + ".overrideController";
-
-            // create a new animator controller file path based on the generatedControllersFolder called 'final_controller_'avatar.name
-            string finalControllerPath = generatedControllersFolder + "/final_controller_" + avatar.name + ".controller";
-
-            // create animatorProcessing lock file path based on the generatedControllersFolder called 'processing.lock'
-            string processingLockPath = generatedControllersFolder + "/processing.lock";
-
-            // create baseControllerImport lock file path based on the generatedControllersFolder called 'baseControllerImport.lock'
-            string baseControllerImportLockPath = generatedControllersFolder + "/baseControllerImport.lock";
+           
 
             //// flow checks
             
@@ -121,8 +142,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 
             // check if the processing lock file exists
-            if (AssetDatabase.LoadAssetAtPath<TextAsset>(processingLockPath) != null)
+            if (File.Exists(processingLockPath))
             {
+              //console print to say we are continuing with controller processing
+              CoreLog("Continuing with controller processing");
+              ReportAddBlankLine(buildReportPath);
+              ReportAddLine(buildReportPath, "Continuing with controller processing");
+
               // currently exists so there should be a controller set in progress so load them
               // load the override controller file
               CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(
@@ -136,6 +162,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             }
             else
             {
+              //console print to say we are starting fresh
+              CoreLog("New processing run creating fresh controllers");
+              ReportAddBlankLine(buildReportPath);
+              ReportAddLine(buildReportPath, "New processing run creating fresh controllers");
+
               // no lock file so we need to start fresh
               // get rid of any existing controller/import lock files
               AssetDatabase.DeleteAsset(overrideControllerPath);
@@ -159,7 +190,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               );
 
               // create the lock file
-              AssetDatabase.CreateAsset(new TextAsset(), processingLockPath);
+              File.WriteAllText(processingLockPath, string.Empty);
             }
             // at this point we have the override controller and the final controller loaded
             
@@ -167,11 +198,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             CVRFuryOverrides.runtimeAnimatorController = CVRFuryFinalController;
 
             // check to see if the baseControllerImport lock file exists
-            if (AssetDatabase.LoadAssetAtPath<TextAsset>(baseControllerImportLockPath) == null)
+            if (!File.Exists(baseControllerImportLockPath))
             {
               // if it doesn't, we need to import the base controller/user's controller
               // set the baseControllerImport lock file
-              AssetDatabase.CreateAsset(new TextAsset(), baseControllerImportLockPath);
+              File.WriteAllText(baseControllerImportLockPath, string.Empty);
 
               // load the animator from the advancedAvatarSettings
               AnimatorController userAnimator = advancedAvatarSettings.animator;
@@ -180,10 +211,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               AnimatorOverrideController userOverrides = advancedAvatarSettings.overrides;
 
               
-
+              ReportAddLine(buildReportPath, "Importing base controller");
               // now if the user already has an animator and overrides we need to use those as a base if not we use the base controller
               if (userAnimator != null)
               {
+                // print to console that user controller is being used
+                CoreLog("Using current AAS controller as base controller");
+                ReportAddLine(buildReportPath, "Using current AAS controller as base controller");
                 // loop through the parameters of the user's animator and add them to the final controller
                 foreach (AnimatorControllerParameter parameter in userAnimator.parameters)
                 {
@@ -216,6 +250,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               }
               else 
               {
+                // print to console that base controller is being used
+                CoreLog("Using base controller as user controller is null");
+                ReportAddLine(buildReportPath, "Using base controller as user controller is null");
                 // Cast the baseController to AnimatorController
                 AnimatorController baseAnimatorController = baseController as AnimatorController;
 
@@ -237,6 +274,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 {
                   // Handle the case where baseController could not be cast to AnimatorController
                   Debug.LogError("baseController is not an AnimatorController");
+                  ReportAddErrorLine(buildReportPath, "[CRITICAL]: baseController is not an AnimatorController");
                 }
               }
 
@@ -246,8 +284,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // along with any previous module's additions (we only import the base once, hence the lock file)
             // so now we need to add bits the current controller we are processing
 
-            // get the parameters from the controller
+            // get the controller
             AnimatorController animatorController = controller as AnimatorController;
+
+            // log the controller's name to the console and build report
+            CoreLog("animatorController.name: " + animatorController.name);
+            ReportAddLine(buildReportPath, "animatorController.name: " + animatorController.name);
+            ReportAddBlankLine(buildReportPath);
 
             // check if the controller is an AnimatorController
             if (animatorController != null)
@@ -265,6 +308,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // get a list of the parameters from the final controller
               List<AnimatorControllerParameter> finalParameters = new List<AnimatorControllerParameter>(CVRFuryFinalController.parameters);
 
+              // add parameters heading to the build report
+              ReportAddLine(buildReportPath, "Adding parameters from controller");
+              ReportAddBlankLine(buildReportPath);
               // check if any of the parameters from the controller are already in the final controller
               foreach (AnimatorControllerParameter parameter in parameters)
               {
@@ -273,13 +319,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 {
                   // if it isn't, add the parameter to the final controller
                   CVRFuryFinalController.AddParameter(parameter);
+                  // add the parameter to the build report
+                  ReportAddLine(buildReportPath, "Parameter " + parameter.name + " added to final controller");
                 }
                 else
                 {
                   // Handle the case where the parameter is already in the final controller
                   Debug.LogError("Parameter " + parameter.name + " already exists in the final controller");
+                  ReportAddErrorLine(buildReportPath, "[WARNING]: Parameter " + parameter.name + " already exists in the final controller");
                 }
               }
+
+              // add layers heading to the build report
+              ReportAddLine(buildReportPath, "Adding layers from controller");
+              ReportAddBlankLine(buildReportPath);
 
               // check if any of the layers from the controller are already in the final controller
               foreach (AnimatorControllerLayer layer in layers)
@@ -292,12 +345,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   {
                     // if it isn't, add the layer to the final controller
                     CVRFuryFinalController.AddLayer(layer);
+                    // add the layer to the build report
+                    ReportAddLine(buildReportPath, "Layer " + layer.name + " added to final controller");
+
                   }
                 }
                 else
                 {
                   // Handle the case where the layer is already in the final controller
                   Debug.LogError("Layer " + layer.name + " already exists in the final controller");
+                  ReportAddErrorLine(buildReportPath, "[WARNING]: Layer " + layer.name + " already exists in the final controller");
                 }
               }
 
@@ -309,6 +366,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             {
               // Handle the case where controller could not be cast to AnimatorController
               Debug.LogError("controller is not an AnimatorController");
+              ReportAddErrorLine(buildReportPath, "[CRITICAL]: controller is not an AnimatorController");
             }
 
             // at this point we need to set the animator and overrides in the advancedAvatarSettings
@@ -322,6 +380,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             // set the core Overrides in the avatar
             avatar.overrides = CVRFuryOverrides;
+
+            // report that the controller has been processed
+            ReportAddLine(buildReportPath, "Controller processed");
 
            
 
@@ -343,6 +404,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             // TODO
           }
+        
+          // end the report
+          ReportEnd(buildReportPath);
         }
 
         // section to handle CVR Fury Menu Store
@@ -521,6 +585,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // remove any spaces from the name
       return name.Replace(" ", "");
     }
+
+    
 
     // functions to handle CVR Fury Menu Store bits ----------------------------------------------------------------------
 
