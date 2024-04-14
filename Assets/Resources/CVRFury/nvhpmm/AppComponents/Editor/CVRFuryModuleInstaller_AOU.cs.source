@@ -1,4 +1,4 @@
-// { "version": "0.6.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
+// { "version": "0.7.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -24,7 +24,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public class objectStateSetterProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber)
     {
       // Implementation for objectStateSetter
       // console print to say this function is being called
@@ -64,7 +64,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   public class objectDefaultMaterialSetterProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber)
     {
       // Implementation for objectDefaultMaterialSetter
       // console print to say this function is being called
@@ -126,7 +126,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   public class blockBlinkSetterProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber)
     {
       // Implementation for blockBlinkSetterProcessor
       // console print to say this function is being called
@@ -156,7 +156,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   public class blockVisemesSetterProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber)
     {
       // Implementation for blockVisemesSetterProcessor
       // console print to say this function is being called
@@ -186,7 +186,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   public class deleteOnUploadProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber)
     {
       // Implementation for deleteOnUploadAction
       // console print to say this function is being called
@@ -212,7 +212,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   public class showInFirstPersonProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber)
     {
       // Implementation for showInFirstPersonAction
       // console print to say this function is being called

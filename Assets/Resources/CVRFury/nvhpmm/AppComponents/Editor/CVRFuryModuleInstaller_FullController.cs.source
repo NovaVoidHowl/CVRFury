@@ -1,4 +1,4 @@
-// { "version": "0.0.68" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.70" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -29,7 +29,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public class fullControllerModuleProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber)
     {
       // Implementation for fullControllerModuleProcessor
       // console print to say this function is being called

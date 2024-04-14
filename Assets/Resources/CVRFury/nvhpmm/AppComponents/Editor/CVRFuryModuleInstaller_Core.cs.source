@@ -1,4 +1,4 @@
-// { "version": "0.15.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.16.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -23,7 +23,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public interface IModuleProcessor
   {
-    void ProcessModule(CVRFuryModule module, GameObject targetAvatar);
+    void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber);
   }
 
   public partial class CVRFuryModuleInstaller
@@ -38,7 +38,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
 
 
-    public static void HandleModule(CVRFuryModule module, GameObject uploadedObject)
+    public static void HandleModule(CVRFuryModule module, GameObject uploadedObject, int DSUNumber)
     {
         IModuleProcessor processor = null;
         // case statement to process the module based on its type
@@ -82,7 +82,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         if (processor != null)
         {
-            processor.ProcessModule(module, uploadedObject);
+            processor.ProcessModule(module, uploadedObject, DSUNumber);
         }
 
         // console print to say that the module has been processed
@@ -188,7 +188,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // module processing trigger code
           // get the module
           var module = modules[j];
-          HandleModule(module, uploadedObject);
+          HandleModule(module, uploadedObject, i);
 
           // Update the progress bar after processing the module
           progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
@@ -316,7 +316,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // module processing trigger code
           // get the module
           var module = modules[j];
-          HandleModule(module, uploadedObject);
+          HandleModule(module, uploadedObject, i);
 
           // Update the progress bar after processing the module
           progress = progressPerModule * (j + 1);
