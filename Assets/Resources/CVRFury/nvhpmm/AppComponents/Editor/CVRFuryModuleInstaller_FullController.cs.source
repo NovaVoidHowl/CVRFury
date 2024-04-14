@@ -59,7 +59,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         if ((module as fullControllerModule).controllers.Count > 0)
         {
           //// path vars section
-          
+
           // create a folder in the project to store the generated controller
           // this is based on Constants.ASSETS_MANAGED_FOLDER + /GeneratedControllers/+ AvatarName
           string generatedControllersFolder = Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/" + avatar.name;
@@ -78,20 +78,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           //// file paths for the generated controllers/locks etc.
 
-          // create a new override controller file path based on the generatedControllersFolder called 'overrides_controller_'avatar.name
-          string overrideControllerPath = generatedControllersFolder + "/overrides_controller_" + avatar.name + ".overrideController";
+          // create a new override controller file path based on the generatedControllersFolder
+          // called 'overrides_controller_'avatar.name
+          string overrideControllerPath =
+            generatedControllersFolder + "/overrides_controller_" + avatar.name + ".overrideController";
 
-          // create a new animator controller file path based on the generatedControllersFolder called 'final_controller_'avatar.name
+          // create a new animator controller file path based on the generatedControllersFolder
+          // called 'final_controller_'avatar.name
           string finalControllerPath = generatedControllersFolder + "/final_controller_" + avatar.name + ".controller";
 
           // create animatorProcessing lock file path based on the generatedControllersFolder called 'processing.lock'
           string processingLockPath = generatedControllersFolder + "/processing.lock";
 
-          // create baseControllerImport lock file path based on the generatedControllersFolder called 'baseControllerImport.lock'
+          // create baseControllerImport lock file path based on the generatedControllersFolder
+          // called 'baseControllerImport.lock'
           string baseControllerImportLockPath = generatedControllersFolder + "/baseControllerImport.lock";
 
           // create build report file path based on the generatedControllersFolder called 'build_report.txt'
-          string buildReportPath = generatedControllersFolder + "/"+module.ModuleType+"_build_report_"+module.name+".txt";
+          string buildReportPath =
+            generatedControllersFolder + "/" + module.ModuleType + "_build_report_" + module.name + ".txt";
 
           // call the report init function if the build report file doesn't exist
           if (!File.Exists(buildReportPath))
@@ -100,12 +105,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             ReportInit(buildReportPath, avatar, module);
           }
 
-
-
           // loop through the controllers in the module
           foreach (RuntimeAnimatorController controller in (module as fullControllerModule).controllers)
           {
-
             // log the controller's name to the console
             CoreLog("controller.name: " + controller.name);
             ReportAddLine(buildReportPath, "controller.name: " + controller.name);
@@ -128,18 +130,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             }
             // so we now have a baseController we can build upon should there not be any built ones
 
-           
+
 
             //// flow checks
-            
+
             // check the lock file to see if controller processing is in progress
             // if it is, we already have a controller in progress from this and can add to it
             // if it isn't, then what we have is the old controller and we need to start fresh
-            
+
             //vars to hold the controller/override files
             AnimatorOverrideController CVRFuryOverrides;
             AnimatorController CVRFuryFinalController;
-
 
             // check if the processing lock file exists
             if (File.Exists(processingLockPath))
@@ -151,14 +152,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // currently exists so there should be a controller set in progress so load them
               // load the override controller file
-              CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(
-                overrideControllerPath
-              );
+              CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(overrideControllerPath);
 
               // load the animator controller file
-              CVRFuryFinalController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
-                finalControllerPath
-              );
+              CVRFuryFinalController = AssetDatabase.LoadAssetAtPath<AnimatorController>(finalControllerPath);
             }
             else
             {
@@ -177,23 +174,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               AssetDatabase.CreateAsset(new AnimatorOverrideController(), overrideControllerPath);
 
               // load the override controller file
-              CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(
-                overrideControllerPath
-              );
+              CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(overrideControllerPath);
 
               // create the controller file
               AssetDatabase.CreateAsset(new AnimatorController(), finalControllerPath);
 
               // load the animator controller file
-              CVRFuryFinalController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
-                finalControllerPath
-              );
+              CVRFuryFinalController = AssetDatabase.LoadAssetAtPath<AnimatorController>(finalControllerPath);
 
               // create the lock file
               File.WriteAllText(processingLockPath, string.Empty);
             }
             // at this point we have the override controller and the final controller loaded
-            
+
             // link the final controller to the overrides
             CVRFuryOverrides.runtimeAnimatorController = CVRFuryFinalController;
 
@@ -210,9 +203,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // load the overrides from the advancedAvatarSettings
               AnimatorOverrideController userOverrides = advancedAvatarSettings.overrides;
 
-              
               ReportAddLine(buildReportPath, "Importing base controller");
-              // now if the user already has an animator and overrides we need to use those as a base if not we use the base controller
+              // now if the user already has an animator and overrides we need to use those as a base,
+              // if not we use the base controller
               if (userAnimator != null)
               {
                 // print to console that user controller is being used
@@ -235,7 +228,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 if (userOverrides != null)
                 {
                   // Create a list to hold the overrides
-                  List<KeyValuePair<AnimationClip, AnimationClip>> overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+                  List<KeyValuePair<AnimationClip, AnimationClip>> overrides =
+                    new List<KeyValuePair<AnimationClip, AnimationClip>>();
 
                   // Get the overrides from the user's AnimatorOverrideController
                   userOverrides.GetOverrides(overrides);
@@ -248,7 +242,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   }
                 }
               }
-              else 
+              else
               {
                 // print to console that base controller is being used
                 CoreLog("Using base controller as user controller is null");
@@ -277,7 +271,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   ReportAddErrorLine(buildReportPath, "[CRITICAL]: baseController is not an AnimatorController");
                 }
               }
-
             }
 
             // ok so at this point we should have everything from the base controller in the final controller
@@ -295,18 +288,23 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // check if the controller is an AnimatorController
             if (animatorController != null)
             {
-
               // get a list of the parameters from the controller
-              List<AnimatorControllerParameter> parameters = new List<AnimatorControllerParameter>(animatorController.parameters);
+              List<AnimatorControllerParameter> parameters = new List<AnimatorControllerParameter>(
+                animatorController.parameters
+              );
 
               // get a list of the layers from the controller
               List<AnimatorControllerLayer> layers = new List<AnimatorControllerLayer>(animatorController.layers);
 
               // get a list of layers from the final controller
-              List<AnimatorControllerLayer> finalLayers = new List<AnimatorControllerLayer>(CVRFuryFinalController.layers);
+              List<AnimatorControllerLayer> finalLayers = new List<AnimatorControllerLayer>(
+                CVRFuryFinalController.layers
+              );
 
               // get a list of the parameters from the final controller
-              List<AnimatorControllerParameter> finalParameters = new List<AnimatorControllerParameter>(CVRFuryFinalController.parameters);
+              List<AnimatorControllerParameter> finalParameters = new List<AnimatorControllerParameter>(
+                CVRFuryFinalController.parameters
+              );
 
               // add parameters heading to the build report
               ReportAddLine(buildReportPath, "Adding parameters from controller");
@@ -321,7 +319,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   (module as fullControllerModule).globalParams = new List<string>();
                 }
 
-
                 // check if the parameter is a global parameter
                 if ((module as fullControllerModule).globalParams.Contains(parameter.name))
                 {
@@ -331,13 +328,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // if it isn't, add the parameter to the final controller
                     CVRFuryFinalController.AddParameter(parameter);
                     // add the parameter to the build report
-                    ReportAddLine(buildReportPath, "Parameter " + parameter.name + " (Global) added to final controller");
+                    ReportAddLine(
+                      buildReportPath,
+                      "Parameter " + parameter.name + " (Global) added to final controller"
+                    );
                   }
                   else
                   {
                     // Handle the case where the parameter is already in the final controller
                     Debug.LogError("Global Parameter " + parameter.name + " already exists in the final controller");
-                    ReportAddErrorLine(buildReportPath, "Global Parameter " + parameter.name + " already exists in the final controller");
+                    ReportAddErrorLine(
+                      buildReportPath,
+                      "Global Parameter " + parameter.name + " already exists in the final controller"
+                    );
                   }
                 }
                 else
@@ -352,18 +355,28 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     parameter.name = newParameterName;
                     CVRFuryFinalController.AddParameter(parameter);
                     // add the parameter to the build report
-                    ReportAddLine(buildReportPath, "Parameter " + parameter.name + " (Standard) added to final controller");
+                    ReportAddLine(
+                      buildReportPath,
+                      "Parameter " + parameter.name + " (Standard) added to final controller"
+                    );
                   }
                   else
                   {
-                    // Handle the case where the parameter is already in the final controller, (should not be possible, but best to check)
-                    Debug.LogError("Standard Parameter " + parameter.name + " already exists in the final controller\nPlease check the module for duplicate parameters");
-                    ReportAddErrorLine(buildReportPath, "[CRITICAL]: Standard Parameter " + parameter.name + " already exists in the final controller\nPlease check the module for duplicate parameters");
+                    // Handle the case where the parameter is already in the final controller,
+                    // (should not be possible, but best to check)
+                    Debug.LogError(
+                      "Standard Parameter "
+                        + parameter.name
+                        + " already exists in the final controller\nPlease check the module for duplicate parameters"
+                    );
+                    ReportAddErrorLine(
+                      buildReportPath,
+                      "[CRITICAL]: Standard Parameter "
+                        + parameter.name
+                        + " already exists in the final controller\nPlease check the module for duplicate parameters"
+                    );
                   }
                 }
-                
-
-                
               }
 
               // add layers heading to the build report
@@ -383,20 +396,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     CVRFuryFinalController.AddLayer(layer);
                     // add the layer to the build report
                     ReportAddLine(buildReportPath, "Layer " + layer.name + " added to final controller");
-
                   }
                 }
                 else
                 {
                   // Handle the case where the layer is already in the final controller
                   Debug.LogError("Layer " + layer.name + " already exists in the final controller");
-                  ReportAddErrorLine(buildReportPath, "[WARNING]: Layer " + layer.name + " already exists in the final controller");
+                  ReportAddErrorLine(
+                    buildReportPath,
+                    "[WARNING]: Layer " + layer.name + " already exists in the final controller"
+                  );
                 }
               }
 
               // TODO: really need to handel the case where there are conflicts between the base controller
               //       and the one we are making, rather than just skipping the conflicts
-             
             }
             else
             {
@@ -420,11 +434,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // report that the controller has been processed
             ReportAddLine(buildReportPath, "Controller processed");
 
-           
-
-
-            
-
             // notes: under advancedAvatarSettings there are the following public variables
             // settings: List<CVRAdvancedSettingsEntry> - list of settings for the avatar
             // animator: Animator - the final animator for the avatar (after compiling all layers etc)
@@ -440,7 +449,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             // TODO
           }
-        
+
           // end the report
           ReportEnd(buildReportPath);
         }
@@ -598,7 +607,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-    //// ---------------------------------------------- supporting functions -----------------------------------------------
+    //// -------------------------------------------- supporting functions ---------------------------------------------
 
     // general functions
 
@@ -608,9 +617,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       return name.Replace(" ", "");
     }
 
-    
-
-    // functions to handle CVR Fury Menu Store bits ----------------------------------------------------------------------
+    // functions to handle CVR Fury Menu Store bits --------------------------------------------------------------------
 
     public void ProcessToggleParameter(
       toggleParameter toggleParam,
@@ -699,7 +706,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // console print the dropdown parameter's generate type
       CoreLog("dropdownParam.generateType: " + dropdownParam.generateType);
 
-      // set the CVRAdvancesAvatarSettingGameObjectDropdown's usedType to the dropdown parameter's generate type via a cast
+      // set the CVRAdvancesAvatarSettingGameObjectDropdown's usedType to the dropdown parameter's
+      // generate type via a cast
       switch (dropdownParam.generateType)
       {
         case dropdownParameter.GenerateType.Float:
