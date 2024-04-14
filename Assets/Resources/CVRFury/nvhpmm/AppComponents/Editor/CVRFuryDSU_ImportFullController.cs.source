@@ -1,4 +1,4 @@
-// { "version": "0.0.16" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
+// { "version": "0.0.19" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -302,9 +302,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             });
           }
 
-          // clean out any null entries in the smoothedPrms list
-          fullControllerModule.smoothedPrms = fullControllerModule.smoothedPrms.Where(x => x.name != null).ToList();
-
+          //check if there are any smoothed parameters (and if there are any null entries in the list get rid of them)
+          if(fullControllerModule.smoothedPrms != null)
+          {
+            // clean out any null entries in the smoothedPrms list
+            fullControllerModule.smoothedPrms = fullControllerModule.smoothedPrms.Where(x => x.name != null).ToList();
+          }
+        
+          
           // check if there are any global parameters
           if (globalParams.Count > 0)
           {
@@ -349,8 +354,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             });
           }
 
-          // clean out any null entries in the rewriteBindings list
-          fullControllerModule.rewriteBindings = fullControllerModule.rewriteBindings.Where(x => x.from != null).ToList();
+          // check if there are any binding rewrites (and if there are any null entries in the list get rid of them)
+          if(fullControllerModule.rewriteBindings != null)
+          {
+            // clean out any null entries in the rewriteBindings list
+            fullControllerModule.rewriteBindings = fullControllerModule.rewriteBindings.Where(x => x.from != null).ToList();
+          }
 
           // add the fullControllerModule to the DSU
           modules.Add(fullControllerModule);
