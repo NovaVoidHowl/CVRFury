@@ -1,4 +1,4 @@
-// { "version": "0.0.70" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.75" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -311,23 +311,59 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // add parameters heading to the build report
               ReportAddLine(buildReportPath, "Adding parameters from controller");
               ReportAddBlankLine(buildReportPath);
-              // check if any of the parameters from the controller are already in the final controller
+              // process the parameters from the controller
               foreach (AnimatorControllerParameter parameter in parameters)
               {
-                // check if the parameter is already in the final controller
-                if (!finalParameters.Any(p => p.name == parameter.name))
+                // check the global parameters from the module is null and if so make an empty list
+                // this is to prevent null reference exceptions
+                if ((module as fullControllerModule).globalParams == null)
                 {
-                  // if it isn't, add the parameter to the final controller
-                  CVRFuryFinalController.AddParameter(parameter);
-                  // add the parameter to the build report
-                  ReportAddLine(buildReportPath, "Parameter " + parameter.name + " added to final controller");
+                  (module as fullControllerModule).globalParams = new List<string>();
+                }
+
+
+                // check if the parameter is a global parameter
+                if ((module as fullControllerModule).globalParams.Contains(parameter.name))
+                {
+                  // check if the parameter is already in the final controller
+                  if (!finalParameters.Any(p => p.name == parameter.name))
+                  {
+                    // if it isn't, add the parameter to the final controller
+                    CVRFuryFinalController.AddParameter(parameter);
+                    // add the parameter to the build report
+                    ReportAddLine(buildReportPath, "Parameter " + parameter.name + " (Global) added to final controller");
+                  }
+                  else
+                  {
+                    // Handle the case where the parameter is already in the final controller
+                    Debug.LogError("Global Parameter " + parameter.name + " already exists in the final controller");
+                    ReportAddErrorLine(buildReportPath, "Global Parameter " + parameter.name + " already exists in the final controller");
+                  }
                 }
                 else
                 {
-                  // Handle the case where the parameter is already in the final controller
-                  Debug.LogError("Parameter " + parameter.name + " already exists in the final controller");
-                  ReportAddErrorLine(buildReportPath, "[WARNING]: Parameter " + parameter.name + " already exists in the final controller");
+                  // build new parameter name based on DSU number
+                  string newParameterName = "[CVRFury_" + DSUNumber + "]_" + parameter.name;
+
+                  // check if the new parameter name is already in the final controller
+                  if (!finalParameters.Any(p => p.name == newParameterName))
+                  {
+                    // if it isn't, update the name and add the parameter to the final controller
+                    parameter.name = newParameterName;
+                    CVRFuryFinalController.AddParameter(parameter);
+                    // add the parameter to the build report
+                    ReportAddLine(buildReportPath, "Parameter " + parameter.name + " (Standard) added to final controller");
+                  }
+                  else
+                  {
+                    // Handle the case where the parameter is already in the final controller, (should not be possible, but best to check)
+                    Debug.LogError("Standard Parameter " + parameter.name + " already exists in the final controller\nPlease check the module for duplicate parameters");
+                    ReportAddErrorLine(buildReportPath, "[CRITICAL]: Standard Parameter " + parameter.name + " already exists in the final controller\nPlease check the module for duplicate parameters");
+                  }
                 }
+                
+
+                
               }
 
               // add layers heading to the build report
@@ -505,69 +541,55 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // TODO: // section to handel CVR Fury Parameters
         // check and see if the module has any parameters
-        if ((module as fullControllerModule).parameters.Count > 0)
-        {
-          // loop through the parameters in the module
-          foreach (fullControllerModule.ParamsEntry paramEntry in (module as fullControllerModule).parameters)
-          {
-            // log the parameter's name to the console
-            CoreLog("paramEntry.parameters.name: " + paramEntry.parameters.name);
+        // if ((module as fullControllerModule).parameters.Count > 0)
+        // {
+        //   // loop through the parameters in the module
+        //   foreach (fullControllerModule.ParamsEntry paramEntry in (module as fullControllerModule).parameters)
+        //   {
+        //     // log the parameter's name to the console
+        //     CoreLog("paramEntry.parameters.name: " + paramEntry.parameters.name);
 
-            // TODO
-          }
-        }
+        //     // TODO
+        //   }
+        // }
 
         // TODO: // section to handle CVR Fury Smoothed Parameters
         // check and see if the module has any smoothed parameters
-        if ((module as fullControllerModule).smoothedPrms.Count > 0)
-        {
-          // loop through the smoothed parameters in the module
-          foreach (
-            fullControllerModule.SmoothParamEntry smoothedParamEntry in (module as fullControllerModule).smoothedPrms
-          )
-          {
-            // log the smoothed parameter's name to the console
-            CoreLog("smoothedParamEntry.name: " + smoothedParamEntry.name);
+        // if ((module as fullControllerModule).smoothedPrms.Count > 0)
+        // {
+        //   // loop through the smoothed parameters in the module
+        //   foreach (
+        //     fullControllerModule.SmoothParamEntry smoothedParamEntry in (module as fullControllerModule).smoothedPrms
+        //   )
+        //   {
+        //     // log the smoothed parameter's name to the console
+        //     CoreLog("smoothedParamEntry.name: " + smoothedParamEntry.name);
 
-            // TODO
-          }
-        }
-
-        // TODO: // section to handle CVR Fury Global Parameters
-        // check and see if the module has any global parameters
-        if ((module as fullControllerModule).globalParams.Count > 0)
-        {
-          // loop through the global parameters in the module
-          foreach (string globalParam in (module as fullControllerModule).globalParams)
-          {
-            // log the global parameter's name to the console
-            CoreLog("globalParam: " + globalParam);
-
-            // TODO
-          }
-        }
+        //     // TODO
+        //   }
+        // }
 
         // TODO: // section to handle CVR Fury Toggle Parameter
         // check and see if the module has a toggle parameter
-        if (!string.IsNullOrWhiteSpace((module as fullControllerModule).toggleParam))
-        {
-          // log the toggle parameter's name to the console
-          CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
-        }
+        // if (!string.IsNullOrWhiteSpace((module as fullControllerModule).toggleParam))
+        // {
+        //   // log the toggle parameter's name to the console
+        //   CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
+        // }
 
         // TODO: // section to handle CVR Fury Binding Rewrites
         // check and see if the module has any binding rewrites
-        if ((module as fullControllerModule).rewriteBindings.Count > 0)
-        {
-          // loop through the binding rewrites in the module
-          foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
-          {
-            // log the binding rewrite's name to the console
-            CoreLog(
-              "rewrite.from: " + rewrite.from + "\n rewrite.to: " + rewrite.to + "\n rewrite.delete: " + rewrite.delete
-            );
-          }
-        }
+        // if ((module as fullControllerModule).rewriteBindings.Count > 0)
+        // {
+        //   // loop through the binding rewrites in the module
+        //   foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
+        //   {
+        //     // log the binding rewrite's name to the console
+        //     CoreLog(
+        //       "rewrite.from: " + rewrite.from + "\n rewrite.to: " + rewrite.to + "\n rewrite.delete: " + rewrite.delete
+        //     );
+        //   }
+        // }
       }
       else
       {
