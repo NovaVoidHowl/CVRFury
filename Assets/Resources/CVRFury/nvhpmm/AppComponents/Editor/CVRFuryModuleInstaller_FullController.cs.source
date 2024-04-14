@@ -1,4 +1,4 @@
-// { "version": "0.0.125" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.128" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -383,6 +383,27 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   (module as fullControllerModule).globalParams = new List<string>();
                 }
 
+                // concatenate the global parameters from the module with the global parameters from the
+                // constants class to get a list of all global parameters
+                // note: source parameters constants are:
+                //  - ALWAYS_GLOBAL_PARAMETERS_FROM_CVR
+                // and
+                //  - ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
+                // this is to ensure all parameters people expect to be global are global
+                // only add the ones from VRC if the module is marked as imported from VRCFury (importedFromVRCFury)
+                List<string> globalParams = (module as fullControllerModule).globalParams
+                  .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
+                  .Concat((module as fullControllerModule).importedFromVRCFury
+                    ? Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
+                    : new List<string>())
+                  .ToList();
+                
+                // de-dupe the global parameters list
+                globalParams = globalParams.Distinct().ToList();
+
+                // put the global parameters list back into the module
+                (module as fullControllerModule).globalParams = globalParams;
+                
                 // check if the parameter is a global parameter
                 if ((module as fullControllerModule).globalParams.Contains(parameter.name))
                 {
@@ -573,6 +594,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                               threshold = condition.threshold
                             });
                             
+                          }
+                          else
+                          {
+                            // Add the condition to the temp transition list
+                            tempConditions.Add(condition);
                           }
                         }
 
