@@ -1,4 +1,4 @@
-// { "version": "0.0.75" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.125" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -19,6 +19,9 @@ using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using static uk.novavoidhowl.dev.cvrfury.deployable.ReportBuilderSupport;
+
+// temp using for testing
+using System.Text;
 
 /// <summary>
 /// fullController Module
@@ -64,16 +67,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // this is based on Constants.ASSETS_MANAGED_FOLDER + /GeneratedControllers/+ AvatarName
           string generatedControllersFolder = Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/" + avatar.name;
 
-          // create the folder if it doesn't exist for Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/
-          if (!AssetDatabase.IsValidFolder(generatedControllersFolder))
+          if (!Directory.Exists(generatedControllersFolder))
           {
-            AssetDatabase.CreateFolder(Constants.ASSETS_MANAGED_FOLDER, "GeneratedControllers");
+              Directory.CreateDirectory(generatedControllersFolder);
           }
 
-          // create the folder if it doesn't exist for avatar.name
-          if (!AssetDatabase.IsValidFolder(generatedControllersFolder))
+          // ensure the temp folder exists
+          if (!Directory.Exists(Constants.ASSETS_TEMP_FOLDER))
           {
-            AssetDatabase.CreateFolder(Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers", avatar.name);
+            Directory.CreateDirectory(Constants.ASSETS_TEMP_FOLDER);
           }
 
           //// file paths for the generated controllers/locks etc.
@@ -217,14 +219,35 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   CVRFuryFinalController.AddParameter(parameter);
                 }
 
+                // get the file path for the user's animator
+                string userAnimatorPath = AssetDatabase.GetAssetPath(userAnimator);
+
+                // create UUID for the user's animator temp file
+                System.Guid ephemeralUserAnimatorUUID = System.Guid.NewGuid();
+
+                // temp file path
+                string tempUserAnimatorPath = Constants.ASSETS_TEMP_FOLDER + "/" + ephemeralUserAnimatorUUID + ".controller";
+                // copy the user's animator to a temp file
+                AssetDatabase.CopyAsset(userAnimatorPath, tempUserAnimatorPath);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+
+                // load the temp user's animator
+                AnimatorController tempUserAnimator = AssetDatabase.LoadAssetAtPath<AnimatorController>(tempUserAnimatorPath);
+
+
                 // loop through the layers of the user's animator and add them to the final controller
-                foreach (AnimatorControllerLayer layer in userAnimator.layers)
+                foreach (AnimatorControllerLayer layer in tempUserAnimator.layers)
                 {
                   CVRFuryFinalController.AddLayer(layer);
                 }
 
+                // null the temp user's animator
+                tempUserAnimator = null;
+
                 // now handel the user overrides
 
+                // check if the user's overrides are not null
                 if (userOverrides != null)
                 {
                   // Create a list to hold the overrides
@@ -258,11 +281,31 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     CVRFuryFinalController.AddParameter(parameter);
                   }
 
+                  // get the file path for the base controller
+                  string baseControllerPath = AssetDatabase.GetAssetPath(baseController);
+
+                  // create UUID for the base controller temp file
+                  System.Guid ephemeralBaseControllerUUID = System.Guid.NewGuid();
+
+                  // temp file path
+                  string tempBaseControllerPath = Constants.ASSETS_TEMP_FOLDER + "/" + ephemeralBaseControllerUUID + ".controller";
+                  // copy the base controller to a temp file
+                  
+                  AssetDatabase.CopyAsset(baseControllerPath, tempBaseControllerPath);
+                  AssetDatabase.SaveAssets();
+                  AssetDatabase.Refresh();
+
+                  // load the temp base controller
+                  AnimatorController tempBaseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(tempBaseControllerPath);
+
                   // loop through the layers of the base controller and add them to the final controller
-                  foreach (AnimatorControllerLayer layer in baseAnimatorController.layers)
+                  foreach (AnimatorControllerLayer layer in tempBaseController.layers)
                   {
                     CVRFuryFinalController.AddLayer(layer);
                   }
+
+                  // null the temp base controller
+                  tempBaseController = null;
                 }
                 else
                 {
@@ -278,7 +321,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // so now we need to add bits the current controller we are processing
 
             // get the controller
-            AnimatorController animatorController = controller as AnimatorController;
+            AnimatorController sourceAnimatorController = controller as AnimatorController;
+
+            // get the file path for the controller
+            string controllerPath = AssetDatabase.GetAssetPath(sourceAnimatorController);
+
+            // create UUID for the controller temp file
+            System.Guid ephemeralControllerUUID = System.Guid.NewGuid();
+
+            // temp file path
+            string tempControllerPath = Constants.ASSETS_TEMP_FOLDER + "/" + ephemeralControllerUUID + ".controller";
+
+            // copy the controller to a temp file
+            AssetDatabase.CopyAsset(controllerPath, tempControllerPath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            // load the temp controller
+            AnimatorController animatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(tempControllerPath);
 
             // log the controller's name to the console and build report
             CoreLog("animatorController.name: " + animatorController.name);
@@ -309,6 +369,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // add parameters heading to the build report
               ReportAddLine(buildReportPath, "Adding parameters from controller");
               ReportAddBlankLine(buildReportPath);
+
+              // list to hold converted standard parameters (tuple of old name and new name)
+              List<(string OldName, string NewName)> convertedStandardParams = new List<(string OldName, string NewName)>();
+
               // process the parameters from the controller
               foreach (AnimatorControllerParameter parameter in parameters)
               {
@@ -351,6 +415,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // check if the new parameter name is already in the final controller
                   if (!finalParameters.Any(p => p.name == newParameterName))
                   {
+                    // add the old and new parameter names to the convertedStandardParams list
+                    convertedStandardParams.Add((parameter.name, newParameterName));
+
                     // if it isn't, update the name and add the parameter to the final controller
                     parameter.name = newParameterName;
                     CVRFuryFinalController.AddParameter(parameter);
@@ -379,6 +446,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 }
               }
 
+              // TODO: remove this debug log
+              // debug log the converted standard parameters
+              // Initialize an empty string to hold the debug message
+              StringBuilder debugMessage = new StringBuilder();
+
+              // Append each converted parameter to the debug message
+              foreach ((string OldName, string NewName) convertedParam in convertedStandardParams)
+              {
+                debugMessage.AppendLine("Converted standard parameter: " + convertedParam.OldName + " to " + convertedParam.NewName);
+              }
+
+              // Debug log the entire message
+              Debug.Log(debugMessage.ToString());
+
               // add layers heading to the build report
               ReportAddLine(buildReportPath, "Adding layers from controller");
               ReportAddBlankLine(buildReportPath);
@@ -386,16 +467,131 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // check if any of the layers from the controller are already in the final controller
               foreach (AnimatorControllerLayer layer in layers)
               {
-                // check if the layer is already in the final controller
-                if (!finalLayers.Contains(layer))
+                // build new layer name based on DSU number
+                string newLayerName = "[CVRFury_" + DSUNumber + "]_" + layer.name;
+
+                // get a list of layer names form the final controller
+                List<string> finalLayerNames = finalLayers.Select(l => l.name).ToList();
+
+                // check if the new layer name is already in that list
+                if (!finalLayerNames.Contains(newLayerName))
                 {
-                  // check if there is any content in the layer (don't want to add empty layers)
+                  // only bother processing the layer if it has states (to avoid empty layers)
                   if (layer.stateMachine.states.Length > 0)
                   {
-                    // if it isn't, add the layer to the final controller
-                    CVRFuryFinalController.AddLayer(layer);
-                    // add the layer to the build report
-                    ReportAddLine(buildReportPath, "Layer " + layer.name + " added to final controller");
+
+                    // instantiate a new layer
+                    AnimatorControllerLayer newLayer = new AnimatorControllerLayer();
+
+                    // copy all the existing layer properties to the new layer
+                    newLayer.avatarMask = layer.avatarMask;
+                    newLayer.blendingMode = layer.blendingMode;
+                    newLayer.defaultWeight = layer.defaultWeight;
+                    newLayer.iKPass = layer.iKPass;
+                    newLayer.name = newLayerName;
+                    newLayer.stateMachine = layer.stateMachine;
+
+                    // ok so now we have a new layer instance so it should have new references etc
+
+
+                    
+                    ReportAddLine(buildReportPath, "Layer " + newLayer.name + " added to final controller");
+
+                    // console print the number of states in the layer
+                    CoreLog("Layer " + newLayer.name + " has " + newLayer.stateMachine.states.Length + " states");
+                    
+                    // console print the name of each state in the layer
+                    foreach (ChildAnimatorState state in newLayer.stateMachine.states)
+                    {
+                      CoreLog("State: " + state.state.name);
+
+                      // temp transitions list
+                      List<AnimatorStateTransition> transitions = new List<AnimatorStateTransition>();
+
+                      // get all out bound transitions from the state
+                      for (int i = 0; i < state.state.transitions.Length; i++)
+                      {
+                        // make new transition so the ids are not the same
+                        AnimatorStateTransition transition = new AnimatorStateTransition();
+
+                        // copy the transition parameters from the state
+                        transition.canTransitionToSelf = state.state.transitions[i].canTransitionToSelf;
+                        transition.duration = state.state.transitions[i].duration;
+                        transition.exitTime = state.state.transitions[i].exitTime;
+                        transition.hasExitTime = state.state.transitions[i].hasExitTime;
+                        transition.hasFixedDuration = state.state.transitions[i].hasFixedDuration;
+                        transition.interruptionSource = state.state.transitions[i].interruptionSource;
+                        transition.offset = state.state.transitions[i].offset;
+                        transition.conditions = state.state.transitions[i].conditions;
+                        transition.destinationState = state.state.transitions[i].destinationState;
+                        transition.destinationStateMachine = state.state.transitions[i].destinationStateMachine;
+                        transition.isExit = state.state.transitions[i].isExit;
+                        transition.mute = state.state.transitions[i].mute;
+                        transition.solo = state.state.transitions[i].solo;
+                        transition.hideFlags = state.state.transitions[i].hideFlags;
+                        transition.name = state.state.transitions[i].name;
+
+                        // now we have a new transition instance we can process it
+
+
+                        // console print the name of the transition
+                        CoreLog("Transition ID: " + transition.GetInstanceID());
+                      
+                        // console print the name of the destination state
+                        CoreLog("Destination State: " + transition.destinationState.name);
+                      
+                        // temp array to hold the conditions
+                        
+                        List<AnimatorCondition> tempConditions = new List<AnimatorCondition>();
+
+                        // for each condition in the transition
+                        for (int j = 0; j < transition.conditions.Length; j++)
+                        {
+                          AnimatorCondition condition = transition.conditions[j];
+                      
+                          // console print the name of the condition
+                          CoreLog("Condition: " + condition.parameter + " " + condition.mode + " " + condition.threshold);
+                      
+                          // check if the condition.parameter is on the convertedStandardParams list and if so update it
+                          if (convertedStandardParams.Any(p => p.OldName == condition.parameter))
+                          {
+                            // get the new parameter name from the convertedStandardParams list
+                            string newParameterName = convertedStandardParams.First(p => p.OldName == condition.parameter).NewName;
+                      
+                            // get the old parameter name
+                            string paramOldName = condition.parameter;
+                      
+                            // console print the updated condition name
+                            CoreLog("Updated Condition parameter from " + paramOldName + " to " + newParameterName);
+                      
+                      
+                            // Add a new condition with the new parameter name to the temp transition list
+                            tempConditions.Add(new AnimatorCondition
+                            {
+                              parameter = newParameterName,
+                              mode = condition.mode,
+                              threshold = condition.threshold
+                            });
+                            
+                          }
+                        }
+
+                        // overwrite the conditions in the transition with the temp list
+                        transition.conditions = tempConditions.ToArray();
+
+
+                        // write the transition to the temp transition list
+                        transitions.Add(transition);
+
+                      }
+                      // overwrite the transitions in the state with the temp list
+                      state.state.transitions = transitions.ToArray();
+                    }
+
+                    // add the layer to the final controller
+                    CVRFuryFinalController.AddLayer(newLayer);
+
+
                   }
                 }
                 else
@@ -433,6 +629,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             // report that the controller has been processed
             ReportAddLine(buildReportPath, "Controller processed");
+
+            // null the temp controller
+            animatorController = null;
+
 
             // notes: under advancedAvatarSettings there are the following public variables
             // settings: List<CVRAdvancedSettingsEntry> - list of settings for the avatar
