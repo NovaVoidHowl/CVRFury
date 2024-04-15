@@ -24,7 +24,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "Swimming"
       }
     );
-    // ref https://creators.vrchat.com/avatars/animator-parameters/
 
   }
 }
