@@ -115,6 +115,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get the baseController from the avatarSettings
             RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
 
+            #region baseController vlaidation
             // check if baseController don't exist
             if (baseController == null)
             {
@@ -127,12 +128,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 "Assets/ABI.CCK/Animations/AvatarAnimator.controller"
               );
             }
+            #endregion
             // so we now have a baseController we can build upon should there not be any built ones
 
-
-
-            //// flow checks
-
+            #region processing flow logic
             // check the lock file to see if controller processing is in progress
             // if it is, we already have a controller in progress from this and can add to it
             // if it isn't, then what we have is the old controller and we need to start fresh
@@ -189,11 +188,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               AssetDatabase.SaveAssets();
               AssetDatabase.Refresh();
             }
+            
+            #endregion
             // at this point we have the override controller and the final controller loaded
 
             // link the final controller to the overrides
             CVRFuryOverrides.runtimeAnimatorController = CVRFuryFinalController;
 
+            #region baseController import logic
             // check to see if the baseControllerImport lock file exists
             if (!File.Exists(baseControllerImportLockPath))
             {
@@ -253,6 +255,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               }
             }
 
+            #endregion
             // ok so at this point we should have everything from the base controller in the final controller
             // along with any previous module's additions (we only import the base once, hence the lock file)
             // so now we need to add bits the current controller we are processing
@@ -392,12 +395,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // baseOverrideController: RuntimeAnimatorController - the base override controller for the avatar
               //                         ref baseController
               // the base ones are used as input for the final animator to be built atop
-
-
-
-
-
-              // TODO
             }
           }
 
@@ -530,7 +527,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           }
         }
 
+        // not sure if this part is needed, but leaving it in for now
         // TODO: // section to handel CVR Fury Parameters
+        #region Parameters store      
         // check and see if the module has any parameters
         // if ((module as fullControllerModule).parameters.Count > 0)
         // {
@@ -543,7 +542,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         //     // TODO
         //   }
         // }
+        #endregion
 
+        // no smoothing logic for now, may be better to point people to the BTKS for this
+        // https://github.com/ddakebono/BTKSAUtils
+        // as that sorts all the smoothing out for you (no avatar side work needed)
+        #region smoothing logic
         // TODO: // section to handle CVR Fury Smoothed Parameters
         // check and see if the module has any smoothed parameters
         // if ((module as fullControllerModule).smoothedPrms.Count > 0)
@@ -559,16 +563,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         //     // TODO
         //   }
         // }
+        #endregion
 
         // TODO: // section to handle CVR Fury Toggle Parameter
+        #region Toggle Parameter
         // check and see if the module has a toggle parameter
         // if (!string.IsNullOrWhiteSpace((module as fullControllerModule).toggleParam))
         // {
         //   // log the toggle parameter's name to the console
         //   CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
         // }
+        #endregion
 
         // TODO: // section to handle CVR Fury Binding Rewrites
+        #region Binding Rewrites
         // check and see if the module has any binding rewrites
         // if ((module as fullControllerModule).rewriteBindings.Count > 0)
         // {
@@ -581,6 +589,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         //     );
         //   }
         // }
+        #endregion
       }
       else
       {
