@@ -1,4 +1,4 @@
-// { "version": "0.16.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.17.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -8,6 +8,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -342,11 +343,56 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// </summary>
     public static void ModulesInstallationFinalise(GameObject uploadedObject)
     {
+      // animator controller cleanup
+      AnimatorControllerCleanup(uploadedObject);
       // trigger lock file cleanup
       LockfileCleanup(uploadedObject);
 
       // finalise the module installation
       CoreLog("Module installation finalised");
+    }
+
+    /// <summary>
+    /// This function removes empty layers from the final animator controller
+    /// </summary>
+    public static void AnimatorControllerCleanup(GameObject avatar)
+    {
+      // only do this if the full controller module is present
+      #if NVH_CVRFURY_EXISTS_MI_FC
+      // get the avatar component
+      var avatarComponent = avatar.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+      
+
+      // loop through the layers in the animator controller
+      for (int i = animatorController.layers.Length - 1; i >= 0; i--)
+      {
+        // get the layer
+        var layer = animatorController.layers[i];
+
+        // get the state machine from the layer
+        var stateMachine = layer.stateMachine;
+
+        // get the number of states in the state machine
+        int numStates = stateMachine.states.Length;
+
+        // if there are no states in the state machine
+        if (numStates == 0)
+        {
+          // remove the layer from the animator controller
+          animatorController.RemoveLayer(i);
+        }
+      }
+
+      // save the animator controller
+      EditorUtility.SetDirty(animatorController);
+      AssetDatabase.SaveAssets();
+      #endif
     }
 
     /// <summary>
