@@ -259,6 +259,12 @@ This repo contains stub components (in the folder VRCFury_stub), that are deriva
 codebase, please see <https://github.com/VRCFury/VRCFury>, unlike the rest of the code in this repo the VRCFury stubs
 are licensed under CC BY-NC 4.0
 
+### Avatars-3.0-Manager
+
+This project makes use of the Animator Controller copying/merging logic.
+Please see <https://github.com/VRLabs/Avatars-3.0-Manager/tree/main> for details
+Licence MIT
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- PROJECT TOOLS -->

@@ -9,3 +9,8 @@ if you want to use the stubs you will have to follow their licence for that cont
 [LGPL2.1_LICENSE](LGPL2.1_LICENSE)
 
 The subfolders containing said code have a separate LICENCE.md in their root.
+
+## Additions exceptions
+
+CVRFuryXA3M_AnimatorCloner.cs.source is under the MIT Licence,
+as the original code it is created from is under that Licence.

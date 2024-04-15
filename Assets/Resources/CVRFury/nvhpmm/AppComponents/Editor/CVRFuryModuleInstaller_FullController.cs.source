@@ -1,4 +1,4 @@
-// { "version": "0.0.128" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.145" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -171,6 +171,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               AssetDatabase.DeleteAsset(overrideControllerPath);
               AssetDatabase.DeleteAsset(finalControllerPath);
               AssetDatabase.DeleteAsset(baseControllerImportLockPath);
+              // refresh the asset database
+              AssetDatabase.Refresh();
 
               // create the override file
               AssetDatabase.CreateAsset(new AnimatorOverrideController(), overrideControllerPath);
@@ -186,6 +188,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // create the lock file
               File.WriteAllText(processingLockPath, string.Empty);
+              // finalise assets writes
+              AssetDatabase.SaveAssets();
+              AssetDatabase.Refresh();
             }
             // at this point we have the override controller and the final controller loaded
 
@@ -213,57 +218,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 // print to console that user controller is being used
                 CoreLog("Using current AAS controller as base controller");
                 ReportAddLine(buildReportPath, "Using current AAS controller as base controller");
-                // loop through the parameters of the user's animator and add them to the final controller
-                foreach (AnimatorControllerParameter parameter in userAnimator.parameters)
-                {
-                  CVRFuryFinalController.AddParameter(parameter);
-                }
 
-                // get the file path for the user's animator
-                string userAnimatorPath = AssetDatabase.GetAssetPath(userAnimator);
+                // input will be - userAnimator
+                // target will be - CVRFuryFinalController
+                // no need to change any parameters, as this is the first import
+                // direct write to the target controller (CVRFuryFinalController)
+                AnimatorCloner.MergeControllers(CVRFuryFinalController, userAnimator, null, false);
 
-                // create UUID for the user's animator temp file
-                System.Guid ephemeralUserAnimatorUUID = System.Guid.NewGuid();
+                // debug print that the merge was successful (TODO: remove this debug print)
+                CoreLog("Merge successful");
 
-                // temp file path
-                string tempUserAnimatorPath = Constants.ASSETS_TEMP_FOLDER + "/" + ephemeralUserAnimatorUUID + ".controller";
-                // copy the user's animator to a temp file
-                AssetDatabase.CopyAsset(userAnimatorPath, tempUserAnimatorPath);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-
-                // load the temp user's animator
-                AnimatorController tempUserAnimator = AssetDatabase.LoadAssetAtPath<AnimatorController>(tempUserAnimatorPath);
-
-
-                // loop through the layers of the user's animator and add them to the final controller
-                foreach (AnimatorControllerLayer layer in tempUserAnimator.layers)
-                {
-                  CVRFuryFinalController.AddLayer(layer);
-                }
-
-                // null the temp user's animator
-                tempUserAnimator = null;
-
-                // now handel the user overrides
-
-                // check if the user's overrides are not null
-                if (userOverrides != null)
-                {
-                  // Create a list to hold the overrides
-                  List<KeyValuePair<AnimationClip, AnimationClip>> overrides =
-                    new List<KeyValuePair<AnimationClip, AnimationClip>>();
-
-                  // Get the overrides from the user's AnimatorOverrideController
-                  userOverrides.GetOverrides(overrides);
-
-                  // Loop through the overrides and add them to the final controller
-                  foreach (KeyValuePair<AnimationClip, AnimationClip> overrideClip in overrides)
-                  {
-                    // Assuming CVRFuryOverrides is an AnimatorOverrideController
-                    CVRFuryOverrides[overrideClip.Key] = overrideClip.Value;
-                  }
-                }
               }
               else
               {
@@ -275,37 +239,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                 if (baseAnimatorController != null)
                 {
-                  // loop through the parameters of the base controller and add them to the final controller
-                  foreach (AnimatorControllerParameter parameter in baseAnimatorController.parameters)
-                  {
-                    CVRFuryFinalController.AddParameter(parameter);
-                  }
-
-                  // get the file path for the base controller
-                  string baseControllerPath = AssetDatabase.GetAssetPath(baseController);
-
-                  // create UUID for the base controller temp file
-                  System.Guid ephemeralBaseControllerUUID = System.Guid.NewGuid();
-
-                  // temp file path
-                  string tempBaseControllerPath = Constants.ASSETS_TEMP_FOLDER + "/" + ephemeralBaseControllerUUID + ".controller";
-                  // copy the base controller to a temp file
+                  // input will be - baseAnimatorController
+                  // target will be - CVRFuryFinalController
+                  // no need to change any parameters, as this is the first import
+                  // direct write to the target controller (CVRFuryFinalController)
+                  AnimatorCloner.MergeControllers(CVRFuryFinalController, baseAnimatorController, null, false);
                   
-                  AssetDatabase.CopyAsset(baseControllerPath, tempBaseControllerPath);
-                  AssetDatabase.SaveAssets();
-                  AssetDatabase.Refresh();
+                  // debug print that the merge was successful (TODO: remove this debug print)
+                  CoreLog("Merge successful");
 
-                  // load the temp base controller
-                  AnimatorController tempBaseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(tempBaseControllerPath);
-
-                  // loop through the layers of the base controller and add them to the final controller
-                  foreach (AnimatorControllerLayer layer in tempBaseController.layers)
-                  {
-                    CVRFuryFinalController.AddLayer(layer);
-                  }
-
-                  // null the temp base controller
-                  tempBaseController = null;
                 }
                 else
                 {
@@ -320,360 +262,160 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // along with any previous module's additions (we only import the base once, hence the lock file)
             // so now we need to add bits the current controller we are processing
 
+       
             // get the controller
             AnimatorController sourceAnimatorController = controller as AnimatorController;
 
-            // get the file path for the controller
-            string controllerPath = AssetDatabase.GetAssetPath(sourceAnimatorController);
-
-            // create UUID for the controller temp file
-            System.Guid ephemeralControllerUUID = System.Guid.NewGuid();
-
-            // temp file path
-            string tempControllerPath = Constants.ASSETS_TEMP_FOLDER + "/" + ephemeralControllerUUID + ".controller";
-
-            // copy the controller to a temp file
-            AssetDatabase.CopyAsset(controllerPath, tempControllerPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            // load the temp controller
-            AnimatorController animatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(tempControllerPath);
-
-            // log the controller's name to the console and build report
-            CoreLog("animatorController.name: " + animatorController.name);
-            ReportAddLine(buildReportPath, "animatorController.name: " + animatorController.name);
-            ReportAddBlankLine(buildReportPath);
-
-            // check if the controller is an AnimatorController
-            if (animatorController != null)
+            //check if the sourceAnimatorController is null
+            if (sourceAnimatorController == null)
             {
-              // get a list of the parameters from the controller
-              List<AnimatorControllerParameter> parameters = new List<AnimatorControllerParameter>(
-                animatorController.parameters
-              );
-
-              // get a list of the layers from the controller
-              List<AnimatorControllerLayer> layers = new List<AnimatorControllerLayer>(animatorController.layers);
-
-              // get a list of layers from the final controller
-              List<AnimatorControllerLayer> finalLayers = new List<AnimatorControllerLayer>(
-                CVRFuryFinalController.layers
-              );
-
-              // get a list of the parameters from the final controller
-              List<AnimatorControllerParameter> finalParameters = new List<AnimatorControllerParameter>(
-                CVRFuryFinalController.parameters
-              );
-
-              // add parameters heading to the build report
-              ReportAddLine(buildReportPath, "Adding parameters from controller");
-              ReportAddBlankLine(buildReportPath);
-
-              // list to hold converted standard parameters (tuple of old name and new name)
-              List<(string OldName, string NewName)> convertedStandardParams = new List<(string OldName, string NewName)>();
-
-              // process the parameters from the controller
-              foreach (AnimatorControllerParameter parameter in parameters)
-              {
-                // check the global parameters from the module is null and if so make an empty list
-                // this is to prevent null reference exceptions
-                if ((module as fullControllerModule).globalParams == null)
-                {
-                  (module as fullControllerModule).globalParams = new List<string>();
-                }
-
-                // concatenate the global parameters from the module with the global parameters from the
-                // constants class to get a list of all global parameters
-                // note: source parameters constants are:
-                //  - ALWAYS_GLOBAL_PARAMETERS_FROM_CVR
-                // and
-                //  - ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
-                // this is to ensure all parameters people expect to be global are global
-                // only add the ones from VRC if the module is marked as imported from VRCFury (importedFromVRCFury)
-                List<string> globalParams = (module as fullControllerModule).globalParams
-                  .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
-                  .Concat((module as fullControllerModule).importedFromVRCFury
-                    ? Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
-                    : new List<string>())
-                  .ToList();
-                
-                // de-dupe the global parameters list
-                globalParams = globalParams.Distinct().ToList();
-
-                // put the global parameters list back into the module
-                (module as fullControllerModule).globalParams = globalParams;
-                
-                // check if the parameter is a global parameter
-                if ((module as fullControllerModule).globalParams.Contains(parameter.name))
-                {
-                  // check if the parameter is already in the final controller
-                  if (!finalParameters.Any(p => p.name == parameter.name))
-                  {
-                    // if it isn't, add the parameter to the final controller
-                    CVRFuryFinalController.AddParameter(parameter);
-                    // add the parameter to the build report
-                    ReportAddLine(
-                      buildReportPath,
-                      "Parameter " + parameter.name + " (Global) added to final controller"
-                    );
-                  }
-                  else
-                  {
-                    // Handle the case where the parameter is already in the final controller
-                    Debug.LogError("Global Parameter " + parameter.name + " already exists in the final controller");
-                    ReportAddErrorLine(
-                      buildReportPath,
-                      "Global Parameter " + parameter.name + " already exists in the final controller"
-                    );
-                  }
-                }
-                else
-                {
-                  // build new parameter name based on DSU number
-                  string newParameterName = "[CVRFury_" + DSUNumber + "]_" + parameter.name;
-
-                  // check if the new parameter name is already in the final controller
-                  if (!finalParameters.Any(p => p.name == newParameterName))
-                  {
-                    // add the old and new parameter names to the convertedStandardParams list
-                    convertedStandardParams.Add((parameter.name, newParameterName));
-
-                    // if it isn't, update the name and add the parameter to the final controller
-                    parameter.name = newParameterName;
-                    CVRFuryFinalController.AddParameter(parameter);
-                    // add the parameter to the build report
-                    ReportAddLine(
-                      buildReportPath,
-                      "Parameter " + parameter.name + " (Standard) added to final controller"
-                    );
-                  }
-                  else
-                  {
-                    // Handle the case where the parameter is already in the final controller,
-                    // (should not be possible, but best to check)
-                    Debug.LogError(
-                      "Standard Parameter "
-                        + parameter.name
-                        + " already exists in the final controller\nPlease check the module for duplicate parameters"
-                    );
-                    ReportAddErrorLine(
-                      buildReportPath,
-                      "[CRITICAL]: Standard Parameter "
-                        + parameter.name
-                        + " already exists in the final controller\nPlease check the module for duplicate parameters"
-                    );
-                  }
-                }
-              }
-
-              // TODO: remove this debug log
-              // debug log the converted standard parameters
-              // Initialize an empty string to hold the debug message
-              StringBuilder debugMessage = new StringBuilder();
-
-              // Append each converted parameter to the debug message
-              foreach ((string OldName, string NewName) convertedParam in convertedStandardParams)
-              {
-                debugMessage.AppendLine("Converted standard parameter: " + convertedParam.OldName + " to " + convertedParam.NewName);
-              }
-
-              // Debug log the entire message
-              Debug.Log(debugMessage.ToString());
-
-              // add layers heading to the build report
-              ReportAddLine(buildReportPath, "Adding layers from controller");
-              ReportAddBlankLine(buildReportPath);
-
-              // check if any of the layers from the controller are already in the final controller
-              foreach (AnimatorControllerLayer layer in layers)
-              {
-                // build new layer name based on DSU number
-                string newLayerName = "[CVRFury_" + DSUNumber + "]_" + layer.name;
-
-                // get a list of layer names form the final controller
-                List<string> finalLayerNames = finalLayers.Select(l => l.name).ToList();
-
-                // check if the new layer name is already in that list
-                if (!finalLayerNames.Contains(newLayerName))
-                {
-                  // only bother processing the layer if it has states (to avoid empty layers)
-                  if (layer.stateMachine.states.Length > 0)
-                  {
-
-                    // instantiate a new layer
-                    AnimatorControllerLayer newLayer = new AnimatorControllerLayer();
-
-                    // copy all the existing layer properties to the new layer
-                    newLayer.avatarMask = layer.avatarMask;
-                    newLayer.blendingMode = layer.blendingMode;
-                    newLayer.defaultWeight = layer.defaultWeight;
-                    newLayer.iKPass = layer.iKPass;
-                    newLayer.name = newLayerName;
-                    newLayer.stateMachine = layer.stateMachine;
-
-                    // ok so now we have a new layer instance so it should have new references etc
-
-
-                    
-                    ReportAddLine(buildReportPath, "Layer " + newLayer.name + " added to final controller");
-
-                    // console print the number of states in the layer
-                    CoreLog("Layer " + newLayer.name + " has " + newLayer.stateMachine.states.Length + " states");
-                    
-                    // console print the name of each state in the layer
-                    foreach (ChildAnimatorState state in newLayer.stateMachine.states)
-                    {
-                      CoreLog("State: " + state.state.name);
-
-                      // temp transitions list
-                      List<AnimatorStateTransition> transitions = new List<AnimatorStateTransition>();
-
-                      // get all out bound transitions from the state
-                      for (int i = 0; i < state.state.transitions.Length; i++)
-                      {
-                        // make new transition so the ids are not the same
-                        AnimatorStateTransition transition = new AnimatorStateTransition();
-
-                        // copy the transition parameters from the state
-                        transition.canTransitionToSelf = state.state.transitions[i].canTransitionToSelf;
-                        transition.duration = state.state.transitions[i].duration;
-                        transition.exitTime = state.state.transitions[i].exitTime;
-                        transition.hasExitTime = state.state.transitions[i].hasExitTime;
-                        transition.hasFixedDuration = state.state.transitions[i].hasFixedDuration;
-                        transition.interruptionSource = state.state.transitions[i].interruptionSource;
-                        transition.offset = state.state.transitions[i].offset;
-                        transition.conditions = state.state.transitions[i].conditions;
-                        transition.destinationState = state.state.transitions[i].destinationState;
-                        transition.destinationStateMachine = state.state.transitions[i].destinationStateMachine;
-                        transition.isExit = state.state.transitions[i].isExit;
-                        transition.mute = state.state.transitions[i].mute;
-                        transition.solo = state.state.transitions[i].solo;
-                        transition.hideFlags = state.state.transitions[i].hideFlags;
-                        transition.name = state.state.transitions[i].name;
-
-                        // now we have a new transition instance we can process it
-
-
-                        // console print the name of the transition
-                        CoreLog("Transition ID: " + transition.GetInstanceID());
-                      
-                        // console print the name of the destination state
-                        CoreLog("Destination State: " + transition.destinationState.name);
-                      
-                        // temp array to hold the conditions
-                        
-                        List<AnimatorCondition> tempConditions = new List<AnimatorCondition>();
-
-                        // for each condition in the transition
-                        for (int j = 0; j < transition.conditions.Length; j++)
-                        {
-                          AnimatorCondition condition = transition.conditions[j];
-                      
-                          // console print the name of the condition
-                          CoreLog("Condition: " + condition.parameter + " " + condition.mode + " " + condition.threshold);
-                      
-                          // check if the condition.parameter is on the convertedStandardParams list and if so update it
-                          if (convertedStandardParams.Any(p => p.OldName == condition.parameter))
-                          {
-                            // get the new parameter name from the convertedStandardParams list
-                            string newParameterName = convertedStandardParams.First(p => p.OldName == condition.parameter).NewName;
-                      
-                            // get the old parameter name
-                            string paramOldName = condition.parameter;
-                      
-                            // console print the updated condition name
-                            CoreLog("Updated Condition parameter from " + paramOldName + " to " + newParameterName);
-                      
-                      
-                            // Add a new condition with the new parameter name to the temp transition list
-                            tempConditions.Add(new AnimatorCondition
-                            {
-                              parameter = newParameterName,
-                              mode = condition.mode,
-                              threshold = condition.threshold
-                            });
-                            
-                          }
-                          else
-                          {
-                            // Add the condition to the temp transition list
-                            tempConditions.Add(condition);
-                          }
-                        }
-
-                        // overwrite the conditions in the transition with the temp list
-                        transition.conditions = tempConditions.ToArray();
-
-
-                        // write the transition to the temp transition list
-                        transitions.Add(transition);
-
-                      }
-                      // overwrite the transitions in the state with the temp list
-                      state.state.transitions = transitions.ToArray();
-                    }
-
-                    // add the layer to the final controller
-                    CVRFuryFinalController.AddLayer(newLayer);
-
-
-                  }
-                }
-                else
-                {
-                  // Handle the case where the layer is already in the final controller
-                  Debug.LogError("Layer " + layer.name + " already exists in the final controller");
-                  ReportAddErrorLine(
-                    buildReportPath,
-                    "[WARNING]: Layer " + layer.name + " already exists in the final controller"
-                  );
-                }
-              }
-
-              // TODO: really need to handel the case where there are conflicts between the base controller
-              //       and the one we are making, rather than just skipping the conflicts
+              // if it is, log an error to the console
+              Debug.LogError("sourceAnimatorController is null");
+              ReportAddErrorLine(buildReportPath, "[CRITICAL]: sourceAnimatorController is null");
             }
             else
             {
-              // Handle the case where controller could not be cast to AnimatorController
-              Debug.LogError("controller is not an AnimatorController");
-              ReportAddErrorLine(buildReportPath, "[CRITICAL]: controller is not an AnimatorController");
+              // ok so that means we should have a valid sourceAnimatorController (not null)
+
+              // debug print the sourceAnimatorController's name
+              CoreLog("sourceAnimatorController.name: " + sourceAnimatorController.name);
+
+              // debug print to say global parameters are being processed
+              CoreLog("Processing global parameters");
+
+              // ok so now we need to know the full list of parameters that are to be global/unchanged
+              // concatenate the global parameters from the module with the global parameters from the
+              // constants class to get a list of all global parameters
+              // note: source parameters constants are:
+              //  - ALWAYS_GLOBAL_PARAMETERS_FROM_CVR
+              // and
+              //  - ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
+              // this is to ensure all parameters people expect to be global are global
+              // only add the ones from VRC if the module is marked as imported from VRCFury (importedFromVRCFury)
+              List<string> globalParams = (module as fullControllerModule).globalParams
+                .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
+                .Concat((module as fullControllerModule).importedFromVRCFury
+                  ? Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
+                  : new List<string>())
+                .ToList();
+
+              // debug print to say global parameters are being processed
+              CoreLog("Processing global parameters - composite list made");
+              
+              
+              // de-dupe the global parameters list
+              globalParams = globalParams.Distinct().ToList();
+
+              // debug print to say global parameters are being processed
+              CoreLog("Processing global parameters - de-duped list made");
+              CoreLog("Processing global parameters - count: " + globalParams.Count);
+
+              // debug print all global parameters in one debug console print (TODO: remove this debug print)
+              StringBuilder globalParamsDebug = new StringBuilder();
+              foreach (string param in globalParams)
+              {
+                globalParamsDebug.Append(param + "\n");
+              }
+              CoreLog("globalParams: \n" + globalParamsDebug.ToString());
+
+              // get the list of parameter names from the sourceAnimatorController
+              List<string> sourceParameters = new List<string>(
+                sourceAnimatorController.parameters.Select(p => p.name)
+              );
+
+              // debug print to say parameters list acquired from sourceAnimatorController
+              CoreLog("Processing parameters - source parameter name list made - count: " + sourceParameters.Count);
+
+              // temp list to hold the parameters that need re-naming (assuming structure is oldName -> newName)
+              Dictionary<string, string> parametersPairToRename = null;
+
+              // check if the sourceParameters list is not empty
+              if(sourceParameters.Count > 0)
+              {
+                // debug log to say we are processing parameters (TODO: remove this debug print)
+                CoreLog("Processing parameters");
+                // loop through the source parameters and if they are not global add them to the parametersPairToRename list
+                foreach (string parameter in sourceParameters)
+                {
+                  // debug print the parameter name (TODO: remove this debug print)
+                  CoreLog("processing parameter: " + parameter);
+                  if (!globalParams.Contains(parameter))
+                  {
+                    if (parametersPairToRename == null)
+                    {
+                      // init the parametersPairToRename list
+                      parametersPairToRename = new Dictionary<string, string>();
+                    }
+
+                    parametersPairToRename.Add(parameter, "[CVRFury_" + DSUNumber + "]_" + parameter);
+                    //debug print the parametersPairToRename entire
+                    CoreLog("parametersPairToRename: " + parameter + " -> " + "[CVRFury_" + DSUNumber + "]_" + parameter);
+                  }
+                  else
+                  {
+                    // debug print the parameter name (TODO: remove this debug print)
+                    CoreLog("parameter is global: " + parameter);
+                  }
+                }
+              }
+
+              if (parametersPairToRename != null)
+              {
+                // debug print the parametersPairToRename entries all in one debug console print
+                StringBuilder parametersPairToRenameDebug = new StringBuilder();
+                foreach (KeyValuePair<string, string> pair in parametersPairToRename)
+                {
+                  parametersPairToRenameDebug.Append(pair.Key + " -> " + pair.Value + "\n");
+                }
+                CoreLog("parametersPairToRename: \n" + parametersPairToRenameDebug.ToString());
+              }
+              
+              
+
+
+              // log the controller's name to the console and build report
+              CoreLog("animatorController.name: " + sourceAnimatorController.name);
+              ReportAddLine(buildReportPath, "animatorController.name: " + sourceAnimatorController.name);
+              ReportAddBlankLine(buildReportPath);
+
+              // merge the source into the final controller, renaming the parameters that are not global
+              // again direct merge to the target controller (CVRFuryFinalController)
+              AnimatorCloner.MergeControllers(CVRFuryFinalController, sourceAnimatorController, parametersPairToRename, false);
+
+              // at this point we need to set the animator and overrides in the advancedAvatarSettings
+              // so that they can be used in the next module (additive process)
+
+              // set the animator in the advancedAvatarSettings
+              advancedAvatarSettings.animator = CVRFuryFinalController;
+
+              // set the overrides in the advancedAvatarSettings
+              advancedAvatarSettings.overrides = CVRFuryOverrides;
+
+              // set the core Overrides in the avatar
+              avatar.overrides = CVRFuryOverrides;
+
+              // report that the controller has been processed
+              ReportAddLine(buildReportPath, "Controller processed");
+
+              // null the temp controller
+              sourceAnimatorController = null;
+
+
+              // notes: under advancedAvatarSettings there are the following public variables
+              // settings: List<CVRAdvancedSettingsEntry> - list of settings for the avatar
+              // animator: Animator - the final animator for the avatar (after compiling all layers etc)
+              // overrides: AnimatorOverrideController - the overrides for the avatar animator above
+              // baseController: RuntimeAnimatorController - the base controller for the avatar
+              // baseOverrideController: RuntimeAnimatorController - the base override controller for the avatar
+              //                         ref baseController
+              // the base ones are used as input for the final animator to be built atop
+
+
+
+
+
+              // TODO
             }
-
-            // at this point we need to set the animator and overrides in the advancedAvatarSettings
-            // so that they can be used in the next module (additive process)
-
-            // set the animator in the advancedAvatarSettings
-            advancedAvatarSettings.animator = CVRFuryFinalController;
-
-            // set the overrides in the advancedAvatarSettings
-            advancedAvatarSettings.overrides = CVRFuryOverrides;
-
-            // set the core Overrides in the avatar
-            avatar.overrides = CVRFuryOverrides;
-
-            // report that the controller has been processed
-            ReportAddLine(buildReportPath, "Controller processed");
-
-            // null the temp controller
-            animatorController = null;
-
-
-            // notes: under advancedAvatarSettings there are the following public variables
-            // settings: List<CVRAdvancedSettingsEntry> - list of settings for the avatar
-            // animator: Animator - the final animator for the avatar (after compiling all layers etc)
-            // overrides: AnimatorOverrideController - the overrides for the avatar animator above
-            // baseController: RuntimeAnimatorController - the base controller for the avatar
-            // baseOverrideController: RuntimeAnimatorController - the base override controller for the avatar
-            //                         ref baseController
-            // the base ones are used as input for the final animator to be built atop
-
-
-
-
-
-            // TODO
           }
 
           // end the report
