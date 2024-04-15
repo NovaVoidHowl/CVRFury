@@ -1,4 +1,4 @@
-// { "version": "0.17.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.18.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -105,6 +105,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CoreLogCritical("InstallCVRFuryModules called in play mode");
         return;
       }
+
+      // Run modules pre tasks
+      RunModulesPreTasks(uploadedObject);
 
       // Initialize the overlay unity progress bar
       float progress = 0;
@@ -228,6 +231,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         return;
       }
 
+      // Run modules pre tasks
+      RunModulesPreTasks(uploadedObject);
+
       // Initialize the overlay unity progress bar
       float progress = 0;
       await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Initializing...", progress, 500);
@@ -337,6 +343,36 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
 
     //// assistive functions --------------------------------------------------------------------------------------------
+    /// <summary>
+    /// this function is called to run any pre-tasks before the module installation
+    /// ie. cleanup of previous runs
+    /// </summary>
+    public static void RunModulesPreTasks(GameObject uploadedObject)
+    {
+      // purge old temp files
+      PurgeTempFiles(uploadedObject);
+
+      // console print to say that the pre-tasks have been run
+      CoreLog("Pre-tasks run");
+    }
+
+    /// <summary>
+    /// This function is called to purge any temp files from previous runs
+    /// </summary>
+    public static void PurgeTempFiles(GameObject uploadedObject)
+    {
+      // get the temp folder path for the current avatar controller creation
+      string tempFolderPath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + uploadedObject.name + "/temp_items";
+
+      // if the temp folder exists, delete it
+      if (Directory.Exists(tempFolderPath))
+      {
+        Directory.Delete(tempFolderPath, true);
+      }
+      //update asset database
+      AssetDatabase.Refresh();
+    }
+
 
     /// <summary>
     /// This function is called to finalise the module installation and do trigger any final cleanup code
@@ -403,7 +439,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // only do this if the full controller module is present
       #if NVH_CVRFURY_EXISTS_MI_FC
       // get the lock file path for the current avatar controller creation and delete it if it exists
-      string lockFilePath = Constants.ASSETS_MANAGED_FOLDER + "/GeneratedControllers/" + avatar.name + "/processing.lock";
+      string lockFilePath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + avatar.name + "/processing.lock";
       if (File.Exists(lockFilePath))
       {
         File.Delete(lockFilePath);
