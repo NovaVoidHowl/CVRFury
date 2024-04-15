@@ -1,4 +1,4 @@
-// { "version": "0.18.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.19.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -24,7 +24,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public interface IModuleProcessor
   {
-    void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber);
+    void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject);
   }
 
   public partial class CVRFuryModuleInstaller
@@ -39,7 +39,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
 
 
-    public static void HandleModule(CVRFuryModule module, GameObject uploadedObject, int DSUNumber)
+    public static void HandleModule(CVRFuryModule module, GameObject uploadedObject, int DSUNumber, GameObject DSUObject)
     {
         IModuleProcessor processor = null;
         // case statement to process the module based on its type
@@ -83,7 +83,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         if (processor != null)
         {
-            processor.ProcessModule(module, uploadedObject, DSUNumber);
+            processor.ProcessModule(module, uploadedObject, DSUNumber, DSUObject);
         }
 
         // console print to say that the module has been processed
@@ -181,6 +181,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         float progressOnUnityProgressBar = 0;
         DisplayProgressBarAndSleep("CVRFury Module Installation", "Processing modules started", progressOnUnityProgressBar, 500);
 
+        // get the object the DSU is attached to
+        var DSUObject = dataStorageUnit.gameObject;
+
         // for each module in modules
         for (int j = 0; j < numModules; j++)
         {
@@ -192,7 +195,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // module processing trigger code
           // get the module
           var module = modules[j];
-          HandleModule(module, uploadedObject, i);
+          HandleModule(module, uploadedObject, i, DSUObject);
 
           // Update the progress bar after processing the module
           progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
@@ -312,6 +315,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         float progress = 0;
         ModalWindow.UpdateSubProgressBar(i, progress);
 
+        // get the object the DSU is attached to
+        var DSUObject = dataStorageUnit.gameObject;
+
         // for each module in modules
         for (int j = 0; j < numModules; j++)
         {
@@ -323,7 +329,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // module processing trigger code
           // get the module
           var module = modules[j];
-          HandleModule(module, uploadedObject, i);
+          HandleModule(module, uploadedObject, i, DSUObject);
 
           // Update the progress bar after processing the module
           progress = progressPerModule * (j + 1);

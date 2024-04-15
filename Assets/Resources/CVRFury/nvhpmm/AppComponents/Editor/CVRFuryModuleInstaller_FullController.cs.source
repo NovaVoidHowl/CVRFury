@@ -1,4 +1,4 @@
-// { "version": "0.0.156" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.157" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -32,7 +32,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public class fullControllerModuleProcessor : IModuleProcessor
   {
-    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber)
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
     {
       // Implementation for fullControllerModuleProcessor
       // console print to say this function is being called
@@ -400,6 +400,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // check if the module is imported from VRCFury
               if ((module as fullControllerModule).importedFromVRCFury)
               {
+                // get the parent DSU of the module
+
+
+
                 // debug print to say we are re-binding animation clips
                 CoreLog("Rebinding animation clips - VRCFury Import");
 
