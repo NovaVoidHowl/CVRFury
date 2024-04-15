@@ -19,6 +19,8 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     public CVRFuryModuleInfo moduleInfo;
     public CVRFuryModules modules;
+
+    public string VRCFuryPrefabName;
   }
 
   [Serializable]

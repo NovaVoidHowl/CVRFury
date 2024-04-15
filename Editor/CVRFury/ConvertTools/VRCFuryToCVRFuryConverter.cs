@@ -377,10 +377,19 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
             // Add the component to the instance
             instance.AddComponent<CVRFuryDataStorageUnit>();
 
+
+
             // get remove the extension from the file path
             var filePathWithoutExtension = Path.ChangeExtension(filePath, null);
             // add the new extension .CVRFury.prefab
             var newFilePath = filePathWithoutExtension + ".CVRFury.prefab";
+
+            // load the component
+            CVRFuryDataStorageUnit cvrFuryDataStorageUnit = instance.GetComponent<CVRFuryDataStorageUnit>();
+
+            // set the VRCFuryPrefabName to the name of the prefab file without the extension
+            cvrFuryDataStorageUnit.VRCFuryPrefabName = Path.GetFileNameWithoutExtension(filePath);
+            
 
             // Disconnect the instance from the original prefab
             PrefabUtility.UnpackPrefabInstance(instance, PrefabUnpackMode.Completely, InteractionMode.UserAction);
