@@ -1,4 +1,4 @@
-// { "version": "0.0.145" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.151" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -57,6 +57,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // get the list of menu stores from the avatarSettings (settings public variable)
         List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList = advancedAvatarSettings.settings;
 
+        // create a temp over all parameter rewrite list (<string, string>)
+        Dictionary<string, string> perModuleParametersPairToRename = null;
+
         // section to handle CVR Fury Controllers
         // check and see if the module has any controllers
         if ((module as fullControllerModule).controllers.Count > 0)
@@ -69,13 +72,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           if (!Directory.Exists(generatedControllersFolder))
           {
-              Directory.CreateDirectory(generatedControllersFolder);
-          }
-
-          // ensure the temp folder exists
-          if (!Directory.Exists(Constants.ASSETS_TEMP_FOLDER))
-          {
-            Directory.CreateDirectory(Constants.ASSETS_TEMP_FOLDER);
+            Directory.CreateDirectory(generatedControllersFolder);
           }
 
           //// file paths for the generated controllers/locks etc.
@@ -227,7 +224,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                 // debug print that the merge was successful (TODO: remove this debug print)
                 CoreLog("Merge successful");
-
               }
               else
               {
@@ -244,10 +240,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // no need to change any parameters, as this is the first import
                   // direct write to the target controller (CVRFuryFinalController)
                   AnimatorCloner.MergeControllers(CVRFuryFinalController, baseAnimatorController, null, false);
-                  
+
                   // debug print that the merge was successful (TODO: remove this debug print)
                   CoreLog("Merge successful");
-
                 }
                 else
                 {
@@ -262,7 +257,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // along with any previous module's additions (we only import the base once, hence the lock file)
             // so now we need to add bits the current controller we are processing
 
-       
+
             // get the controller
             AnimatorController sourceAnimatorController = controller as AnimatorController;
 
@@ -283,28 +278,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // debug print to say global parameters are being processed
               CoreLog("Processing global parameters");
 
-              // ok so now we need to know the full list of parameters that are to be global/unchanged
-              // concatenate the global parameters from the module with the global parameters from the
-              // constants class to get a list of all global parameters
-              // note: source parameters constants are:
-              //  - ALWAYS_GLOBAL_PARAMETERS_FROM_CVR
-              // and
-              //  - ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
-              // this is to ensure all parameters people expect to be global are global
-              // only add the ones from VRC if the module is marked as imported from VRCFury (importedFromVRCFury)
-              List<string> globalParams = (module as fullControllerModule).globalParams
-                .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
-                .Concat((module as fullControllerModule).importedFromVRCFury
-                  ? Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
-                  : new List<string>())
-                .ToList();
-
-              // debug print to say global parameters are being processed
-              CoreLog("Processing global parameters - composite list made");
-              
-              
-              // de-dupe the global parameters list
-              globalParams = globalParams.Distinct().ToList();
+              // get the list of global parameters from the module
+              List<string> globalParams = getGlobalParameters(module);
 
               // debug print to say global parameters are being processed
               CoreLog("Processing global parameters - de-duped list made");
@@ -319,9 +294,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               CoreLog("globalParams: \n" + globalParamsDebug.ToString());
 
               // get the list of parameter names from the sourceAnimatorController
-              List<string> sourceParameters = new List<string>(
-                sourceAnimatorController.parameters.Select(p => p.name)
-              );
+              List<string> sourceParameters = new List<string>(sourceAnimatorController.parameters.Select(p => p.name));
 
               // debug print to say parameters list acquired from sourceAnimatorController
               CoreLog("Processing parameters - source parameter name list made - count: " + sourceParameters.Count);
@@ -330,7 +303,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               Dictionary<string, string> parametersPairToRename = null;
 
               // check if the sourceParameters list is not empty
-              if(sourceParameters.Count > 0)
+              if (sourceParameters.Count > 0)
               {
                 // debug log to say we are processing parameters (TODO: remove this debug print)
                 CoreLog("Processing parameters");
@@ -346,10 +319,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                       // init the parametersPairToRename list
                       parametersPairToRename = new Dictionary<string, string>();
                     }
-
-                    parametersPairToRename.Add(parameter, "[CVRFury_" + DSUNumber + "]_" + parameter);
+                    if (perModuleParametersPairToRename == null)
+                    {
+                      // init the perModuleParametersPairToRename list
+                      perModuleParametersPairToRename = new Dictionary<string, string>();
+                    }
+                    // new name string
+                    string newParameterName = "[CVRFury_" + DSUNumber + "]_" + parameter;
+                    // add the parameter to the parametersPairToRename list
+                    parametersPairToRename.Add(parameter, newParameterName);
+                    // add the parameter to the perModuleParametersPairToRename list
+                    perModuleParametersPairToRename.Add(parameter, newParameterName);
                     //debug print the parametersPairToRename entire
-                    CoreLog("parametersPairToRename: " + parameter + " -> " + "[CVRFury_" + DSUNumber + "]_" + parameter);
+                    CoreLog("parametersPairToRename: " + parameter + " -> " + newParameterName);
                   }
                   else
                   {
@@ -369,9 +351,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 }
                 CoreLog("parametersPairToRename: \n" + parametersPairToRenameDebug.ToString());
               }
-              
-              
-
 
               // log the controller's name to the console and build report
               CoreLog("animatorController.name: " + sourceAnimatorController.name);
@@ -380,7 +359,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // merge the source into the final controller, renaming the parameters that are not global
               // again direct merge to the target controller (CVRFuryFinalController)
-              AnimatorCloner.MergeControllers(CVRFuryFinalController, sourceAnimatorController, parametersPairToRename, false);
+              AnimatorCloner.MergeControllers(
+                CVRFuryFinalController,
+                sourceAnimatorController,
+                parametersPairToRename,
+                false
+              );
 
               // at this point we need to set the animator and overrides in the advancedAvatarSettings
               // so that they can be used in the next module (additive process)
@@ -399,7 +383,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // null the temp controller
               sourceAnimatorController = null;
-
 
               // notes: under advancedAvatarSettings there are the following public variables
               // settings: List<CVRAdvancedSettingsEntry> - list of settings for the avatar
@@ -426,6 +409,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // check and see if the module has any menus
         if ((module as fullControllerModule).menus.Count > 0)
         {
+          // check if the perModuleParametersPairToRename is null and if so init it
+          if (perModuleParametersPairToRename == null)
+          {
+            perModuleParametersPairToRename = new Dictionary<string, string>();
+          }
+
           // loop through the menus in the module
           foreach (fullControllerModule.MenuEntry menuEntry in (module as fullControllerModule).menus)
           {
@@ -470,7 +459,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // cast the menuItem to a toggleParameter
                     toggleParameter toggleParam = menuItem as toggleParameter;
                     // call the ProcessToggleParameter function to handle the toggle parameter
-                    ProcessToggleParameter(toggleParam, prefix, CVRAdvancedAvatarMenuList);
+                    ProcessToggleParameter(
+                      toggleParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
 
                     break;
 
@@ -478,7 +472,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // cast the menuItem to a dropdownParameter
                     dropdownParameter dropdownParam = menuItem as dropdownParameter;
                     // call the ProcessDropdownParameter function to handle the dropdown parameter
-                    ProcessDropdownParameter(dropdownParam, prefix, CVRAdvancedAvatarMenuList);
+                    ProcessDropdownParameter(
+                      dropdownParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
 
                     break;
 
@@ -486,7 +485,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // cast the menuItem to a sliderParameter
                     sliderParameter sliderParam = menuItem as sliderParameter;
                     // call the ProcessSliderParameter function to handle the slider parameter
-                    ProcessSliderParameter(sliderParam, prefix, CVRAdvancedAvatarMenuList);
+                    ProcessSliderParameter(
+                      sliderParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
 
                     break;
 
@@ -494,7 +498,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // cast the menuItem to a twoDJoystickParameter
                     twoDJoystickParameter twoDJoystickParam = menuItem as twoDJoystickParameter;
                     // call the ProcessTwoDJoystickParameter function to handle the twoDJoystick parameter
-                    ProcessTwoDJoystickParameter(twoDJoystickParam, prefix, CVRAdvancedAvatarMenuList);
+                    ProcessTwoDJoystickParameter(
+                      twoDJoystickParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
 
                     break;
 
@@ -502,7 +511,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // cast the menuItem to a threeDJoystickParameter
                     threeDJoystickParameter threeDJoystickParam = menuItem as threeDJoystickParameter;
                     // call the ProcessThreeDJoystickParameter function to handle the threeDJoystick parameter
-                    ProcessThreeDJoystickParameter(threeDJoystickParam, prefix, CVRAdvancedAvatarMenuList);
+                    ProcessThreeDJoystickParameter(
+                      threeDJoystickParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
 
                     break;
 
@@ -585,12 +599,50 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       return name.Replace(" ", "");
     }
 
+    private List<string> getGlobalParameters(CVRFuryModule module)
+    {
+      // check if can cast the module to fullControllerModule
+      if (!(module is fullControllerModule))
+      {
+        // if it can't, log an error to the console
+        Debug.LogError("Module is not a fullControllerModule");
+        // return an empty list
+        return new List<string>();
+      }
+
+      // concatenate the global parameters from the module with the global parameters from the
+      // constants class to get a list of all global parameters
+      // note: source parameters constants are:
+      //  - ALWAYS_GLOBAL_PARAMETERS_FROM_CVR
+      // and
+      //  - ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
+      // this is to ensure all parameters people expect to be global are global
+      // only add the ones from VRC if the module is marked as imported from VRCFury (importedFromVRCFury)
+      List<string> globalParams = (module as fullControllerModule).globalParams
+        .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
+        .Concat(
+          (module as fullControllerModule).importedFromVRCFury
+            ? Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
+            : new List<string>()
+        )
+        .ToList();
+
+      // de-dupe the global parameters list
+      globalParams = globalParams.Distinct().ToList();
+
+      // console print the global parameters list count
+      CoreLog("globalParams.Count: " + globalParams.Count);
+      // return the list of global parameters
+      return globalParams;
+    }
+
     // functions to handle CVR Fury Menu Store bits --------------------------------------------------------------------
 
     public void ProcessToggleParameter(
       toggleParameter toggleParam,
       string prefix,
-      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
     )
     {
       // log the toggle parameter's name to the console
@@ -611,8 +663,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the toggle parameter's name with the prefix
       toggleEntry.name = prefix + toggleParam.name;
 
-      // set the CVRAdvancedSettingsEntry's machineName to the toggle parameter's name with the prefix
-      toggleEntry.machineName = formatParameterNameForMachineName(prefix + toggleParam.name);
+      // check if the parameter's name is in the perModuleParametersPairToRename list
+      if (perModuleParametersPairToRename.ContainsKey(toggleParam.name))
+      {
+        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
+        toggleEntry.machineName = perModuleParametersPairToRename[toggleParam.name];
+      }
+      else
+      {
+        // if it isn't, set the CVRAdvancedSettingsEntry's machineName to the toggle parameter's name with the prefix
+        toggleEntry.machineName = formatParameterNameForMachineName(toggleParam.name);
+      }
 
       // create a new CVRAdvancesAvatarSettingGameObjectToggle
       CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
@@ -644,7 +705,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public void ProcessDropdownParameter(
       dropdownParameter dropdownParam,
       string prefix,
-      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
     )
     {
       // log the dropdown parameter's name to the console
@@ -659,8 +721,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the dropdown parameter's name with the prefix
       dropdownEntry.name = prefix + dropdownParam.name;
 
-      // set the CVRAdvancedSettingsEntry's machineName to the dropdown parameter's name with the prefix
-      dropdownEntry.machineName = formatParameterNameForMachineName(prefix + dropdownParam.name);
+      // check if the parameter's name is in the perModuleParametersPairToRename list
+      if (perModuleParametersPairToRename.ContainsKey(dropdownParam.name))
+      {
+        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
+        dropdownEntry.machineName = perModuleParametersPairToRename[dropdownParam.name];
+      }
+      else
+      {
+        // if it isn't, set the CVRAdvancedSettingsEntry's machineName to the dropdown parameter's name with the prefix
+        dropdownEntry.machineName = formatParameterNameForMachineName(dropdownParam.name);
+      }
 
       // create a new CVRAdvancesAvatarSettingGameObjectDropdown
       CVRAdvancesAvatarSettingGameObjectDropdown dropdownSetting = new CVRAdvancesAvatarSettingGameObjectDropdown();
@@ -715,7 +786,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public void ProcessSliderParameter(
       sliderParameter sliderParam,
       string prefix,
-      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
     )
     {
       // log the slider parameter's name to the console
@@ -730,8 +802,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the slider parameter's name with the prefix
       sliderEntry.name = prefix + sliderParam.name;
 
-      // set the CVRAdvancedSettingsEntry's machineName to the slider parameter's name with the prefix
-      sliderEntry.machineName = formatParameterNameForMachineName(prefix + sliderParam.name);
+      // check if the parameter's name is in the perModuleParametersPairToRename list
+      if (perModuleParametersPairToRename.ContainsKey(sliderParam.name))
+      {
+        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
+        sliderEntry.machineName = perModuleParametersPairToRename[sliderParam.name];
+      }
+      else
+      {
+        // set the CVRAdvancedSettingsEntry's machineName to the slider parameter's name with the prefix
+        sliderEntry.machineName = formatParameterNameForMachineName(sliderParam.name);
+      }
 
       // create a new CVRAdvancesAvatarSettingSlider
       CVRAdvancesAvatarSettingSlider sliderSetting = new CVRAdvancesAvatarSettingSlider();
@@ -749,7 +830,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public void ProcessTwoDJoystickParameter(
       twoDJoystickParameter twoDJoystickParam,
       string prefix,
-      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
     )
     {
       // log the twoDJoystick parameter's name to the console
@@ -764,8 +846,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the twoDJoystick parameter's name with the prefix
       twoDJoystickEntry.name = prefix + twoDJoystickParam.name;
 
-      // set the CVRAdvancedSettingsEntry's machineName to the twoDJoystick parameter's name with the prefix
-      twoDJoystickEntry.machineName = formatParameterNameForMachineName(prefix + twoDJoystickParam.name);
+      // check if the parameter's name is in the perModuleParametersPairToRename list
+      if (perModuleParametersPairToRename.ContainsKey(twoDJoystickParam.name))
+      {
+        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
+        twoDJoystickEntry.machineName = perModuleParametersPairToRename[twoDJoystickParam.name];
+      }
+      else
+      {
+        // if it isn't, set the CVRAdvancedSettingsEntry's machineName to the twoDJoystick parameter's name with the prefix
+        twoDJoystickEntry.machineName = formatParameterNameForMachineName(twoDJoystickParam.name);
+      }
 
       // create a new CVRAdvancesAvatarSettingJoystick2D
       CVRAdvancesAvatarSettingJoystick2D twoDJoystickSetting = new CVRAdvancesAvatarSettingJoystick2D();
@@ -790,7 +881,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public void ProcessThreeDJoystickParameter(
       threeDJoystickParameter threeDJoystickParam,
       string prefix,
-      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
     )
     {
       // log the threeDJoystick parameter's name to the console
@@ -805,8 +897,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the threeDJoystick parameter's name with the prefix
       threeDJoystickEntry.name = prefix + threeDJoystickParam.name;
 
-      // set the CVRAdvancedSettingsEntry's machineName to the threeDJoystick parameter's name with the prefix
-      threeDJoystickEntry.machineName = formatParameterNameForMachineName(prefix + threeDJoystickParam.name);
+      // check if the parameter's name is in the perModuleParametersPairToRename list
+      if (perModuleParametersPairToRename.ContainsKey(threeDJoystickParam.name))
+      {
+        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
+        threeDJoystickEntry.machineName = perModuleParametersPairToRename[threeDJoystickParam.name];
+      }
+      else
+      {
+        // set the CVRAdvancedSettingsEntry's machineName to the threeDJoystick parameter's name with the prefix
+        threeDJoystickEntry.machineName = formatParameterNameForMachineName(threeDJoystickParam.name);
+      }
 
       // create a new CVRAdvancesAvatarSettingJoystick3D
       CVRAdvancesAvatarSettingJoystick3D threeDJoystickSetting = new CVRAdvancesAvatarSettingJoystick3D();
