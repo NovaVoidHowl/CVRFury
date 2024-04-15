@@ -115,7 +115,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get the baseController from the avatarSettings
             RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
 
-            #region baseController vlaidation
+            #region baseController validation
             // check if baseController don't exist
             if (baseController == null)
             {
