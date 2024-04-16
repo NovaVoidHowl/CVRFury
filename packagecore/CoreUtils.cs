@@ -57,6 +57,30 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       // Wait for the specified amount of time
       await Task.Delay(sleepTime);
     }
+
+    public static string GetHierarchyPath(GameObject start, GameObject end)
+    {
+      if (start == null || end == null)
+      {
+        return "";
+      }
+
+      List<string> path = new List<string>();
+      Transform current = end.transform;
+
+      while (current != null)
+      {
+        path.Add(current.name);
+        if (current == start.transform)
+        {
+          break;
+        }
+        current = current.parent;
+      }
+
+      path.Reverse();
+      return string.Join("/", path);
+    }
 #endif
   }
 }
