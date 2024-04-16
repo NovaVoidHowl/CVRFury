@@ -17,6 +17,13 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       Debug.Log($"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] {message.ToString()}");
     }
 
+    public static void CoreLogError(object message)
+    {
+      Debug.LogError(
+        $"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] <color={Constants.APP_COLOUR_ERROR}>[ERROR]</color> {message.ToString()}"
+      );
+    }
+
     public static void CoreLogCritical(object message)
     {
       Debug.LogError(
