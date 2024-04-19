@@ -10,6 +10,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public const string APP_COLOUR = "#0080FF";
     public const string APP_COLOUR_ERROR = "#FF8000";
     public const string APP_COLOUR_CRIT = "#FF0000";
+    public const string APP_COLOUR_DBG = "#B7FF00";
+    public const string DEBUG_PRINT_EDITOR_PREF = "CVRFURY_DEBUG";
   
     public const string SCRIPTING_DEFINE_SYMBOL = "NVH_CVRFURY_EXISTS";
     public const string PACKAGE_NAME = "uk.novavoidhowl.dev.cvrfury";
@@ -25,6 +27,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     public static readonly Color UI_UPDATE_DOWNGRADE_COLOR = new Color(0.0f, 0.0f, 1.0f); // Blue
     public static readonly Color UI_UPDATE_DOWNGRADE_COLOR_TEXT = new Color(0.4f, 0.4f, 1.0f); // Blue
+
+    public static readonly int CLIP_VIEW_DELAY = 4000;
 
   }
 }

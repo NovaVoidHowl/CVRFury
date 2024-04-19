@@ -31,6 +31,16 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       );
     }
 
+    public static void CoreLogDebug(object message)
+    {
+      if(EditorPrefs.GetBool(Constants.DEBUG_PRINT_EDITOR_PREF, true))
+      {
+        Debug.Log(
+          $"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] <color={Constants.APP_COLOUR_DBG}>[DEBUG]</color> {message.ToString()}"
+        );
+      }
+    }
+
     public static string GetGameObjectPath(GameObject obj)
     {
       string path = "/" + obj.name;
@@ -49,6 +59,9 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
 #if UNITY_EDITOR
     // this bit needs editor to work
+
+    //function to add a menu item to the Unity Editor
+
 
     public static void DisplayProgressBarAndSleep(string title, string message, float progress, int sleepTime)
     {
@@ -89,5 +102,28 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       return string.Join("/", path);
     }
 #endif
+  }
+
+  public class CoreDebugPrintMenu
+  {
+    private const string MENU_PATH =
+      "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Console Debug Print Enable";
+    private const string EDITOR_PREFS_KEY = Constants.DEBUG_PRINT_EDITOR_PREF;
+    [MenuItem(MENU_PATH)]
+    private static void ToggleConsoleDebugPrint()
+    {
+      // Toggle the value
+      bool currentValue = EditorPrefs.GetBool(EDITOR_PREFS_KEY, false);
+      EditorPrefs.SetBool(EDITOR_PREFS_KEY, !currentValue);
+    }
+
+    [MenuItem(MENU_PATH, true)]
+    private static bool ToggleConsoleDebugPrintValidation()
+    {
+      // Toggle the checked state
+      Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, false));
+      return true;
+    }
+
   }
 }
