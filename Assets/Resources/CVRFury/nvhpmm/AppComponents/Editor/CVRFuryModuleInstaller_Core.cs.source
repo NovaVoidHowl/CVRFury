@@ -1,4 +1,4 @@
-// { "version": "0.19.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.19.33" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -157,8 +158,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // close the progress bar
         EditorUtility.ClearProgressBar();
       }
+      // log cleanup process is triggered
+      CoreLog("Cleanup process triggered");
+
       // execute the the cleanup code
       ModulesInstallationFinalise(uploadedObject);
+
+      // log that the module installation has been completed
+      CoreLog("Module installation completed");
     }
 
     private static void ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits, GameObject uploadedObject)
@@ -217,6 +224,58 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 
     //// Async functions -----------------------------------------------------------------------------------------------
+    public static async Task SelectAnimationClipsAsync(string tempItemsFolderPath)
+    {
+      // Get all animation clip files in the tempItemsFolderPath
+      string[] animationClipFiles = Directory.GetFiles(tempItemsFolderPath, "*.anim", SearchOption.AllDirectories);
+      
+      // core log that the animation clip files paths have been loaded
+      CoreLog("Animation clip files paths loaded");
+      // log the number of animation clip files
+      CoreLog("Number of animation clip files: " + animationClipFiles.Length);
+
+      // Convert the file paths to asset paths
+      string[] animationClipAssets = animationClipFiles.Select(x => x.Replace(Application.dataPath, "").Replace('\\', '/')).ToArray();
+      
+      // core log that the animation clip assets paths have been loaded
+      CoreLog("Animation clip assets paths loaded");
+      // log the number of animation clip assets
+      CoreLog("Number of animation clip assets: " + animationClipAssets.Length);
+
+      foreach (string animationClipAsset in animationClipAssets)
+      {
+        CoreLog("Processing animation clip asset: " + animationClipAsset);
+
+        // Get the animation clip
+        AnimationClip animationClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationClipAsset);
+
+        if (animationClip == null)
+        {
+          CoreLog("Failed to load animation clip at path: " + animationClipAsset);
+          continue;
+        }
+
+        // Delay the selection of the animation clip until the next Editor update
+        EditorApplication.delayCall += () =>
+        {
+            // Ping the animation clip in the Project window
+            EditorGUIUtility.PingObject(animationClip);
+
+            // Select the animation clip in the Unity Editor
+            Selection.activeObject = animationClip;
+
+            // log that the animation clip has been selected
+            CoreLog("Animation clip selected: " + animationClip.name);
+        };
+
+        // Wait for a short time to allow the Unity Editor to update
+        await Task.Delay(Constants.CLIP_VIEW_DELAY);
+      }
+
+      // deselect all objects in the Unity Editor
+      Selection.activeObject = null;
+    }
+
 
     /// <summary>
     /// Install CVRFury Modules on a given GameObject, Async for play mode
@@ -286,8 +345,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // close the progress bar
         EditorUtility.ClearProgressBar();
       }
+      // log cleanup process is triggered
+      CoreLog("Cleanup process triggered");
+
       // execute the the cleanup code
       ModulesInstallationFinalise(uploadedObject);
+
+      // get the path to the temp items folder
+      string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + uploadedObject.name + "/temp_items";
+
+      // await SelectAnimationClipsAsync(tempItemsFolderPath);
+
+      // log that the module installation has been completed
+      CoreLog("Module installation completed");
     }
 
     private static async Task ProcessModulesAsync(CVRFuryDataStorageUnit[] dataStorageUnits, GameObject uploadedObject)
@@ -355,6 +425,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// </summary>
     public static void RunModulesPreTasks(GameObject uploadedObject)
     {
+      // deselect all objects in the Unity Editor
+      Selection.activeObject = null;
+
       // purge old temp files
       PurgeTempFiles(uploadedObject);
 
@@ -370,11 +443,53 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the temp folder path for the current avatar controller creation
       string tempFolderPath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + uploadedObject.name + "/temp_items";
 
-      // if the temp folder exists, delete it
+      // if the temp folder exists, try to delete it
       if (Directory.Exists(tempFolderPath))
       {
-        Directory.Delete(tempFolderPath, true);
+        try
+        {
+          Directory.Delete(tempFolderPath, true);
+        }
+        catch (Exception e)
+        {
+          // log that the temp folder could not be deleted
+          CoreLogError("Could not delete temp folder: " + tempFolderPath + "\n" + e.Message);
+        }
       }
+
+      // provided that the folder was removed successfully, try to get rid of the meta file for the folder
+      string tempFolderPathMeta = tempFolderPath + ".meta";
+      if (File.Exists(tempFolderPathMeta))
+      {
+        try
+        {
+          File.Delete(tempFolderPathMeta);
+        }
+        catch (Exception e)
+        {
+          // log that the temp folder meta file could not be deleted
+          CoreLogError("Could not delete temp folder meta file: " + tempFolderPathMeta + "\n" + e.Message);
+        }
+      }
+
+      // if the folder and meta file are still there, loop through the files in the folder and try to delete them
+      if (Directory.Exists(tempFolderPath))
+      {
+        string[] files = Directory.GetFiles(tempFolderPath);
+        foreach (string file in files)
+        {
+          try
+          {
+            File.Delete(file);
+          }
+          catch (Exception e)
+          {
+            // log that the file could not be deleted
+            CoreLogError("Could not delete file: " + file + "\n" + e.Message);
+          }
+        }
+      }
+      
       //update asset database
       AssetDatabase.Refresh();
     }
@@ -385,10 +500,44 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// </summary>
     public static void ModulesInstallationFinalise(GameObject uploadedObject)
     {
+      // console print to say that the module installation is being finalised
+      CoreLog("Module installation finalising");
       // animator controller cleanup
       AnimatorControllerCleanup(uploadedObject);
+      //core log that the animator controller has been cleaned up
+      CoreLog("Animator controller cleaned up");
+
+
       // trigger lock file cleanup
       LockfileCleanup(uploadedObject);
+      //core log that the lock file has been cleaned up
+      CoreLog("Lock files cleaned up");
+
+      // wait for 1 seconds
+      System.Threading.Thread.Sleep(1000);
+
+      // get the path to the temp items folder
+      string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + uploadedObject.name + "/temp_items";
+
+      // reimport all assets in the the temp_items folder
+      AssetDatabase.ImportAsset(tempItemsFolderPath, ImportAssetOptions.ImportRecursive);
+
+      // log that the assets have been reimported
+      CoreLog("Assets reimported");
+
+
+      // force refresh the asset database
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+      EditorApplication.QueuePlayerLoopUpdate();
+
+      // log that asset database has been refreshed
+      CoreLog("Asset database refreshed");
+
+      // wait for 1 seconds
+      System.Threading.Thread.Sleep(1000);
+
+
 
       // finalise the module installation
       CoreLog("Module installation finalised");
@@ -450,6 +599,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         File.Delete(lockFilePath);
       }
+      // and get rid of the meta file for the lock file
+      string lockFilePathMeta = lockFilePath + ".meta";
+      if (File.Exists(lockFilePathMeta))
+      {
+        File.Delete(lockFilePathMeta);
+      }
+
       #endif
 
     }
