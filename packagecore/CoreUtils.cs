@@ -12,6 +12,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
   public static class CoreUtils
   {
+    #if UNITY_EDITOR
     public static void CoreLog(object message)
     {
       Debug.Log($"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] {message.ToString()}");
@@ -40,6 +41,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         );
       }
     }
+    #endif
 
     public static string GetGameObjectPath(GameObject obj)
     {
@@ -103,7 +105,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     }
 #endif
   }
-
+#if UNITY_EDITOR
   public class CoreDebugPrintMenu
   {
     private const string MENU_PATH =
@@ -126,4 +128,5 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     }
 
   }
+  #endif
 }
