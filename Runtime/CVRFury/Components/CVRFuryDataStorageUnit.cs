@@ -22,6 +22,30 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     public string VRCFuryPrefabName;
     public string CVRFuryPrefabName;
+
+    // getter to get the VRCFuryPrefabName or the CVRFuryPrefabName depending on which is set
+    public string prefabName
+    {
+      get
+      {
+        // if the VRCFuryPrefabName is set, return it
+        if (!string.IsNullOrEmpty(VRCFuryPrefabName))
+        {
+          return VRCFuryPrefabName;
+        }
+        // if the CVRFuryPrefabName is set, return it
+        else if (!string.IsNullOrEmpty(CVRFuryPrefabName))
+        {
+          return CVRFuryPrefabName;
+        }
+        // if neither are set, return an null string
+        else
+        {
+          return null;
+        }
+      }
+    }
+
   }
 
   [Serializable]
