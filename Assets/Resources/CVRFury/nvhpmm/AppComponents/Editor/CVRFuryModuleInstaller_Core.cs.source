@@ -1,4 +1,4 @@
-// { "version": "0.19.33" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.19.34" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -159,7 +159,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         EditorUtility.ClearProgressBar();
       }
       // log cleanup process is triggered
-      CoreLog("Cleanup process triggered");
+      CoreLogDebug("Cleanup process triggered");
 
       // execute the the cleanup code
       ModulesInstallationFinalise(uploadedObject);
@@ -346,7 +346,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         EditorUtility.ClearProgressBar();
       }
       // log cleanup process is triggered
-      CoreLog("Cleanup process triggered");
+      CoreLogDebug("Cleanup process triggered");
 
       // execute the the cleanup code
       ModulesInstallationFinalise(uploadedObject);
@@ -505,16 +505,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // animator controller cleanup
       AnimatorControllerCleanup(uploadedObject);
       //core log that the animator controller has been cleaned up
-      CoreLog("Animator controller cleaned up");
+      CoreLogDebug("Animator controller cleaned up");
 
 
       // trigger lock file cleanup
       LockfileCleanup(uploadedObject);
       //core log that the lock file has been cleaned up
-      CoreLog("Lock files cleaned up");
+      CoreLogDebug("Lock files cleaned up");
 
       // wait for 1 seconds
-      System.Threading.Thread.Sleep(1000);
+      System.Threading.Thread.Sleep(500);
 
       // get the path to the temp items folder
       string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + uploadedObject.name + "/temp_items";
@@ -523,7 +523,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       AssetDatabase.ImportAsset(tempItemsFolderPath, ImportAssetOptions.ImportRecursive);
 
       // log that the assets have been reimported
-      CoreLog("Assets reimported");
+      CoreLogDebug("Assets reimported");
 
 
       // force refresh the asset database
@@ -532,10 +532,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       EditorApplication.QueuePlayerLoopUpdate();
 
       // log that asset database has been refreshed
-      CoreLog("Asset database refreshed");
+      CoreLogDebug("Asset database refreshed");
 
       // wait for 1 seconds
-      System.Threading.Thread.Sleep(1000);
+      System.Threading.Thread.Sleep(500);
 
 
 

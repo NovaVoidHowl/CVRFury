@@ -1,4 +1,4 @@
-// { "version": "0.0.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE_UI", dependencies: []}
+// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE_UI", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -59,7 +59,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       window.position = new Rect(mainWindowPos.xMin + (mainWindowPos.width - size.x) * 0.5f, mainWindowPos.yMin + 100, size.x, size.y);
       window.ShowPopup();
       // print to console to show that the window has been shown
-      CoreLog("ModalWindow shown");
+      CoreLogDebug("ModalWindow shown");
     }
 
     public static void UpdateSubProgressBar(int index, float progress)
@@ -283,7 +283,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         EditorApplication.update -= closeWindowAction;
 
         // debug print to show that the window is closing
-        CoreLog("ModalWindow closing");
+        CoreLogDebug("ModalWindow closing");
 
         // Close the window
         GetWindow<ModalWindow>().Close();

@@ -24,7 +24,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.supporting_classes
       List<System.Tuple<EditorCurveBinding, EditorCurveBinding>> curveBindingsPairs = new List<System.Tuple<EditorCurveBinding, EditorCurveBinding>>();
     
       //console print the curve bindings count
-      CoreLog("Number of curveBindings: " + curveBindings.Length);
+      CoreLogDebug("Number of curveBindings: " + curveBindings.Length);
       
       // loop through the curve bindings
       foreach (EditorCurveBinding curveBinding in curveBindings)
@@ -37,7 +37,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.supporting_classes
           string replacementFullPath = curveBinding.path.Replace(oldPathString, newPathString);
 
           // console print to say we are replacing the path for the curve binding
-          CoreLog("Replacing path "+ curveBinding.path +" with "+ replacementFullPath +" for curve binding");
+          CoreLogDebug("Replacing path "+ curveBinding.path +" with "+ replacementFullPath +" for curve binding");
 
           // if it does, create a new curve binding with the replaced path
           EditorCurveBinding newCurveBinding = new EditorCurveBinding

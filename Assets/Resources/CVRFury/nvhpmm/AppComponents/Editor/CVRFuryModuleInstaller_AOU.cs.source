@@ -1,4 +1,4 @@
-// { "version": "0.8.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
+// { "version": "0.8.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -28,7 +28,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Implementation for objectStateSetter
       // console print to say this function is being called
-      CoreLog("objectStateSetterProcessor.ProcessModule() called");
+      CoreLogDebug("objectStateSetterProcessor.ProcessModule() called");
 
       // log the module's moduleType to the console
       CoreLog("module.ModuleType: " + module.ModuleType);
@@ -68,7 +68,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Implementation for objectDefaultMaterialSetter
       // console print to say this function is being called
-      CoreLog("objectDefaultMaterialSetter.ProcessModule() called");
+      CoreLogDebug("objectDefaultMaterialSetter.ProcessModule() called");
 
       // log the module's moduleType to the console
       CoreLog("module.ModuleType: " + module.ModuleType);
@@ -130,7 +130,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Implementation for blockBlinkSetterProcessor
       // console print to say this function is being called
-      CoreLog("blockBlinkSetterProcessor.ProcessModule() called");
+      CoreLogDebug("blockBlinkSetterProcessor.ProcessModule() called");
 
       // log the module's moduleType to the console
       CoreLog("module.ModuleType: " + module.ModuleType);
@@ -160,7 +160,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Implementation for blockVisemesSetterProcessor
       // console print to say this function is being called
-      CoreLog("blockVisemesSetterProcessor.ProcessModule() called");
+      CoreLogDebug("blockVisemesSetterProcessor.ProcessModule() called");
 
       // log the module's moduleType to the console
       CoreLog("module.ModuleType: " + module.ModuleType);
@@ -190,7 +190,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Implementation for deleteOnUploadAction
       // console print to say this function is being called
-      CoreLog("deleteOnUploadAction.ProcessModule() called");
+      CoreLogDebug("deleteOnUploadAction.ProcessModule() called");
 
       // log the module's moduleType to the console
       CoreLog("module.ModuleType: " + module.ModuleType);
@@ -216,7 +216,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Implementation for showInFirstPersonAction
       // console print to say this function is being called
-      CoreLog("showInFirstPersonAction.ProcessModule() called");
+      CoreLogDebug("showInFirstPersonAction.ProcessModule() called");
 
       // log the module's moduleType to the console
       CoreLog("module.ModuleType: " + module.ModuleType);
