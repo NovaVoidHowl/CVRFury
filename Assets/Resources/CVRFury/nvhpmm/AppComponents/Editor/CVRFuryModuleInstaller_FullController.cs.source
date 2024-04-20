@@ -1,4 +1,4 @@
-// { "version": "0.0.195" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.200" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -398,6 +398,93 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               DSUObjectPath = DSUObjectPath.Substring(targetAvatar.name.Length + 1);
               #endregion
 
+              // section to handle manual clip curve path rewrites
+              #region rebind animation clips - Manual
+                // this has to happen before prefab related rebinds, as it is intended to be used for
+                // to get edit animation clip paths to match the prefab base
+
+                // check and see if the module has any binding rewrites
+                if ((module as fullControllerModule).rewriteBindings.Count > 0)
+                {
+                  // loop through the binding rewrites in the module
+                  foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
+                  {
+                    // log the binding rewrite's name to the console
+                    CoreLog(
+                      "rewrite.from: " + rewrite.from + "\n rewrite.to: " + rewrite.to + "\n rewrite.delete: " + rewrite.delete
+                    );
+
+                    // get the animation clips from the source controller
+                    AnimationClip[] sourceClips = tempSourceAnimatorController.animationClips;
+
+                    // loop through the animation clips
+                    foreach (AnimationClip clip in sourceClips)
+                    {
+                      // get the clip's path
+                      string clipPath = AssetDatabase.GetAssetPath(clip);
+
+                      //get the filename of the clip, excluding the path and extension
+                      string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
+
+                      // generate a guid for the temp clip
+                      System.Guid tempClipGUID = System.Guid.NewGuid();
+
+                      // generate a temp clip path
+                      string tempClipPath = tempItemsPath + "/" + clipFileName + "_clip_gen_pre_" + tempClipGUID + ".anim";
+
+                      // copy the clip to the temp clip
+                      AssetDatabase.CopyAsset(clipPath, tempClipPath);
+
+                      // load the temp clip
+                      AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+
+                      // loop through the layers
+                      for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+                      {
+                        var layer = tempSourceAnimatorController.layers[i];
+                        var stateMachine = layer.stateMachine;
+
+                        // loop through the states
+                        for (int j = 0; j < stateMachine.states.Length; j++)
+                        {
+                          var state = stateMachine.states[j].state;
+
+                          // if the state's motion is the original clip, replace it with the temp clip
+                          if (state.motion == clip)
+                          {
+
+                            if (rewrite.delete)
+                            {
+                              rewrite.to = "";
+                            }
+                            
+                            // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
+                            tempClip = rewriteAnimationClipCurvePaths(tempClip, rewrite.from, rewrite.to);
+
+                            // mark the tempClip as dirty
+                            EditorUtility.SetDirty(tempClip);
+
+                            // set the file path as dirty
+                            AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
+
+                            // save the temp clip
+                            AssetDatabase.SaveAssets();
+                            AssetDatabase.Refresh();
+                            
+                            state.motion = tempClip;
+                          }
+                        }
+                      }
+
+                      // save the temp source controller
+                      AssetDatabase.SaveAssets();
+                      AssetDatabase.Refresh();
+                    }
+
+                  }
+                }
+              #endregion
+
 
               #region rebind animation clips - Prefab Instance
               // rebind prefab name to current name in hierarchy, this needs to be done so that the created animation 
@@ -435,6 +522,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                   // generate a guid for the temp clip
                   System.Guid tempClipGUID = System.Guid.NewGuid();
+
+                  // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
+                  if (clipFileName.Contains("_clip_gen_pre_"))
+                  {
+                    clipFileName = clipFileName.Substring(0, clipFileName.IndexOf("_clip_gen_pre_"));
+                  }
 
                   // generate a temp clip path
                   string tempClipPath = tempItemsPath + "/" + clipFileName + "_clip_gen_" + tempClipGUID + ".anim";
@@ -705,21 +798,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // }
         #endregion
 
-        // TODO: // section to handle CVR Fury Binding Rewrites
-        #region Binding Rewrites
-        // check and see if the module has any binding rewrites
-        // if ((module as fullControllerModule).rewriteBindings.Count > 0)
-        // {
-        //   // loop through the binding rewrites in the module
-        //   foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
-        //   {
-        //     // log the binding rewrite's name to the console
-        //     CoreLog(
-        //       "rewrite.from: " + rewrite.from + "\n rewrite.to: " + rewrite.to + "\n rewrite.delete: " + rewrite.delete
-        //     );
-        //   }
-        // }
-        #endregion
+        
       }
       else
       {
