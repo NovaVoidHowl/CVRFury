@@ -1,4 +1,4 @@
-// { "version": "0.0.188" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.194" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -87,7 +87,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             Directory.CreateDirectory(tempItemsPath);
           }
-
 
           // create a new override controller file path based on the generatedItemsFolder
           // called 'overrides_controller_'avatar.name
@@ -200,7 +199,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               AssetDatabase.SaveAssets();
               AssetDatabase.Refresh();
             }
-            
+
             #endregion
             // at this point we have the override controller and the final controller loaded
 
@@ -297,16 +296,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               List<string> globalParams = getGlobalParameters(module);
 
               // debug print to say global parameters are being processed
-              CoreLog("Processing global parameters - de-duped list made");
-              CoreLog("Processing global parameters - count: " + globalParams.Count);
+              CoreLogDebug("Processing global parameters - de-duped list made");
+              CoreLogDebug("Processing global parameters - count: " + globalParams.Count);
 
-              // debug print all global parameters in one debug console print (TODO: remove this debug print)
+              // debug print all global parameters in one debug console print
               StringBuilder globalParamsDebug = new StringBuilder();
               foreach (string param in globalParams)
               {
                 globalParamsDebug.Append(param + "\n");
               }
-              CoreLog("globalParams: \n" + globalParamsDebug.ToString());
+              CoreLogDebug("globalParams: \n" + globalParamsDebug.ToString());
 
               // get the list of parameter names from the sourceAnimatorController
               List<string> sourceParameters = new List<string>(sourceAnimatorController.parameters.Select(p => p.name));
@@ -320,13 +319,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // check if the sourceParameters list is not empty
               if (sourceParameters.Count > 0)
               {
-                // debug log to say we are processing parameters (TODO: remove this debug print)
-                CoreLog("Processing parameters");
                 // loop through the source parameters and if they are not global add them to the parametersPairToRename list
                 foreach (string parameter in sourceParameters)
                 {
-                  // debug print the parameter name (TODO: remove this debug print)
-                  CoreLog("processing parameter: " + parameter);
+                  // check if the parameter is not global
                   if (!globalParams.Contains(parameter))
                   {
                     if (parametersPairToRename == null)
@@ -380,7 +376,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               System.Guid tempSourceControllerGUID = System.Guid.NewGuid();
 
               // path of temp the source controller
-              string tempSourceControllerPath = tempItemsPath + "/temp_source_controller_" + tempSourceControllerGUID + ".controller";
+              string tempSourceControllerPath =
+                tempItemsPath + "/temp_source_controller_" + tempSourceControllerGUID + ".controller";
 
               // get path of the source controller
               string sourceControllerPath = AssetDatabase.GetAssetPath(sourceAnimatorController);
@@ -389,7 +386,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               AssetDatabase.CopyAsset(sourceControllerPath, tempSourceControllerPath);
 
               // load the temp source controller
-              AnimatorController tempSourceAnimatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(tempSourceControllerPath);
+              AnimatorController tempSourceAnimatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+                tempSourceControllerPath
+              );
 
               #region get DSU location info
               // get the hierarchy path of the DSUObject under the targetAvatar
@@ -400,21 +399,28 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               #endregion
 
 
-              #region rebind animation clips - VRCFury Import
-              // so when we import from VRCFury the prefab gets an extra suffix of .CVRFury
-              // this needs to be taken in to account when rebinding the animation clips
+              #region rebind animation clips - Prefab Instance
+              // rebind prefab name to current name in hierarchy, this needs to be done so that the created animation 
+              // clips link correctly to the prefab instances
+
+
+              // debug print to say we are re-binding animation clips
+              CoreLog("Rebinding animation clips - Prefab Instance");
 
               
 
-              // check if the module is imported from VRCFury
-              if ((module as fullControllerModule).importedFromVRCFury)
+              // Try to get the PrefabName from the CVRFuryDataStorageUnit component on the DSUObject
+              string FuryPrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
+
+              // check if the FuryPrefabName is null or empty
+              if (string.IsNullOrEmpty(FuryPrefabName))
               {
-                // debug print to say we are re-binding animation clips
-                CoreLog("Rebinding animation clips - VRCFury Import");
-
-                // get the VRCFuryPrefabName from the CVRFuryDataStorageUnit component on the DSUObject
-                string VRCFuryPrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().VRCFuryPrefabName;
-
+                // if it is, log an error to the console
+                CoreLogCritical("PrefabName is null or empty, please ensure the DSUObject at " + DSUObjectPath + " has a valid prefabName");
+                ReportAddErrorLine(buildReportPath, "[CRITICAL]: FuryPrefabName is null or empty");
+              }
+              else
+              {
                 // get the animation clips from the source controller
                 AnimationClip[] sourceClips = tempSourceAnimatorController.animationClips;
 
@@ -424,11 +430,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // get the clip's path
                   string clipPath = AssetDatabase.GetAssetPath(clip);
 
+                  //get the filename of the clip, excluding the path and extension
+                  string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
+
                   // generate a guid for the temp clip
                   System.Guid tempClipGUID = System.Guid.NewGuid();
 
                   // generate a temp clip path
-                  string tempClipPath = tempItemsPath + "/temp_clip_" + tempClipGUID + ".anim";
+                  string tempClipPath = tempItemsPath + "/" + clipFileName + "_clip_gen_" + tempClipGUID + ".anim";
 
                   // copy the clip to the temp clip
                   AssetDatabase.CopyAsset(clipPath, tempClipPath);
@@ -450,107 +459,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                       // if the state's motion is the original clip, replace it with the temp clip
                       if (state.motion == clip)
                       {
-
-                        // check if the VRCFuryPrefabName and the DSUObjectPath match (if they do, we don't need to rewrite the paths)
-                        if (VRCFuryPrefabName != DSUObjectPath)
+                        // check if the FuryPrefabName and the DSUObjectPath match (if they do, we don't need to rewrite the paths)
+                        if (FuryPrefabName != DSUObjectPath)
                         {
                           // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
-                          tempClip = rewriteAnimationClipCurvePaths(tempClip, VRCFuryPrefabName, DSUObjectPath);
-
-                          // mark the tempClip as dirty
-                          EditorUtility.SetDirty(tempClip);
-
-                          // set the file path as dirty
-                          AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
-
-                          // save the temp clip
-                          AssetDatabase.SaveAssets();
-                          AssetDatabase.Refresh();
-                        }
-
-
-                        state.motion = tempClip;
-                      }
-                    }
-                  }
-
-                  // save the temp source controller
-                  AssetDatabase.SaveAssets();
-                  AssetDatabase.Refresh();
-
-                  // // load the file at tempClipPath as text file (so we can direct edit the paths)
-                  // string tempClipText = File.ReadAllText(tempClipPath);
-
-                  // // replace the VRCFuryPrefabName with the DSUObjectPath in the tempClipText
-                  // tempClipText = tempClipText.Replace("path: " + VRCFuryPrefabName, "path: " + DSUObjectPath) ;
-
-                  // // write the tempClipText back to the tempClipPath
-                  // File.WriteAllText(tempClipPath, tempClipText);
-
-                  // // re-import the tempClipPath
-                  // AssetDatabase.ImportAsset(tempClipPath);
-
-                  // // asset DB update
-                  // AssetDatabase.SaveAssets();
-                  // AssetDatabase.Refresh();
-
-                }
-              }
-              #endregion
-              
-              #region rebind animation clips - Native Import
-              //now we need to rebind the animation clips related to VRCFury import (the native CVRFury Modules)
-              // this is so we can edit paths in future without tainting the original files
-
-              // check if the module is imported from VRCFury
-              if (!(module as fullControllerModule).importedFromVRCFury)
-              {
-                // debug print to say we are re-binding animation clips
-                CoreLog("Rebinding animation clips - Native Import");
-
-                // get the CVRFuryPrefabName from the CVRFuryDataStorageUnit component on the DSUObject
-                string CVRFuryPrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().CVRFuryPrefabName;
-
-                // get the animation clips from the source controller
-                AnimationClip[] sourceClips = tempSourceAnimatorController.animationClips;
-
-                // loop through the animation clips
-                foreach (AnimationClip clip in sourceClips)
-                {
-                  // get the clip's path
-                  string clipPath = AssetDatabase.GetAssetPath(clip);
-
-                  // generate a guid for the temp clip
-                  System.Guid tempClipGUID = System.Guid.NewGuid();
-
-                  // generate a temp clip path
-                  string tempClipPath = tempItemsPath + "/temp_clip_" + tempClipGUID + ".anim";
-
-                  // copy the clip to the temp clip
-                  AssetDatabase.CopyAsset(clipPath, tempClipPath);
-
-                  // load the temp clip
-                  AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
-
-                  // loop through the layers
-                  for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
-                  {
-                    var layer = tempSourceAnimatorController.layers[i];
-                    var stateMachine = layer.stateMachine;
-
-                    // loop through the states
-                    for (int j = 0; j < stateMachine.states.Length; j++)
-                    {
-                      var state = stateMachine.states[j].state;
-
-                      // if the state's motion is the original clip, replace it with the temp clip
-                      if (state.motion == clip)
-                      {
-                        // check if the CVRFuryPrefabName and the DSUObjectPath match (if they do, we don't need to rewrite the paths)
-                        if (CVRFuryPrefabName != DSUObjectPath)
-                        {
-                          // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
-                          tempClip = rewriteAnimationClipCurvePaths(tempClip, CVRFuryPrefabName, DSUObjectPath);
+                          tempClip = rewriteAnimationClipCurvePaths(tempClip, FuryPrefabName, DSUObjectPath);
 
                           // mark the tempClip as dirty
                           EditorUtility.SetDirty(tempClip);
@@ -571,26 +484,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // save the temp source controller
                   AssetDatabase.SaveAssets();
                   AssetDatabase.Refresh();
-
-                  // // load the file at tempClipPath as text file (so we can direct edit the paths)
-                  // string tempClipText = File.ReadAllText(tempClipPath);
-
-                  // // replace the CVRFuryPrefabName with the DSUObjectPath in the tempClipText
-                  // tempClipText = tempClipText.Replace("path: " + CVRFuryPrefabName, "path: " + DSUObjectPath);
-
-                  // // write the tempClipText back to the tempClipPath
-                  // File.WriteAllText(tempClipPath, tempClipText);
-
-                  // // re-import the tempClipPath
-                  // AssetDatabase.ImportAsset(tempClipPath);
-
-                  // // asset DB update
-                  // AssetDatabase.SaveAssets();
-                  // AssetDatabase.Refresh();
                 }
               }
 
               #endregion
+
+            
               // merge the source into the final controller, renaming the parameters that are not global
               // again direct merge to the target controller (CVRFuryFinalController)
               AnimatorCloner.MergeControllers(
@@ -760,7 +659,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // not sure if this part is needed, but leaving it in for now
         // TODO: // section to handel CVR Fury Parameters
-        #region Parameters store      
+        #region Parameters store
         // check and see if the module has any parameters
         // if ((module as fullControllerModule).parameters.Count > 0)
         // {
@@ -865,7 +764,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       globalParams = globalParams.Distinct().ToList();
 
       // console print the global parameters list count
-      CoreLog("globalParams.Count: " + globalParams.Count);
+      CoreLogDebug("globalParams.Count: " + globalParams.Count);
       // return the list of global parameters
       return globalParams;
     }
@@ -882,13 +781,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     )
     {
       // log the toggle parameter's name to the console
-      CoreLog("toggleParam.name: " + toggleParam.name);
+      CoreLogDebug("toggleParam.name: " + toggleParam.name);
 
       // log the toggle parameter's default state to the console
-      CoreLog("toggleParam.defaultState: " + toggleParam.defaultState);
+      CoreLogDebug("toggleParam.defaultState: " + toggleParam.defaultState);
 
       // log the toggle parameter's generate type to the console
-      CoreLog("toggleParam.generateType: " + toggleParam.generateType);
+      CoreLogDebug("toggleParam.generateType: " + toggleParam.generateType);
 
       // create CVRAdvancedSettingsEntry for the toggle parameter
       CVRAdvancedSettingsEntry toggleEntry = new CVRAdvancedSettingsEntry();
