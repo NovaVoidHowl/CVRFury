@@ -1,4 +1,4 @@
-// { "version": "0.19.35" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.20.16" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -73,6 +73,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             #if NVH_CVRFURY_EXISTS_MI_FC
             case fullControllerModule:
                 processor = new fullControllerModuleProcessor();
+                break;
+            #endif
+            #if NVH_CVRFURY_EXISTS_MI_AL
+            case armatureLink:
+                processor = new armatureLinkModuleProcessor();
                 break;
             #endif
 
@@ -190,6 +195,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // get the object the DSU is attached to
         var DSUObject = dataStorageUnit.gameObject;
+
+        // re-order the modules such that all the modules that are of ModuleType="armatureLink" are processed last
+        modules.Sort((x, y) =>
+        {
+          if (string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase) && !string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase))
+          {
+            return 1; // x is "greater", i.e., it should come later
+          }
+          if (!string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase) && string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase))
+          {
+            return -1; // x is "less", i.e., it should come earlier
+          }
+          return 0; // x and y are "equal" in terms of sorting
+        });
 
         // for each module in modules
         for (int j = 0; j < numModules; j++)
@@ -387,6 +406,23 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // get the object the DSU is attached to
         var DSUObject = dataStorageUnit.gameObject;
+
+        // console print to say that the module order is being re-ordered (TODO: remove this line in production)
+        CoreLogDebug("Re-ordering modules");
+
+        // re-order the modules such that all the modules that are of ModuleType="armatureLink" are processed last
+        modules.Sort((x, y) =>
+        {
+          if (string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase) && !string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase))
+          {
+            return 1; // x is "greater", i.e., it should come later
+          }
+          if (!string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase) && string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase))
+          {
+            return -1; // x is "less", i.e., it should come earlier
+          }
+          return 0; // x and y are "equal" in terms of sorting
+        });
 
         // for each module in modules
         for (int j = 0; j < numModules; j++)
