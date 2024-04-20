@@ -23,6 +23,7 @@ using Newtonsoft.Json.Linq;
 // and the asmdef, to bind to project specific constants
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
@@ -44,7 +45,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 
       if (jsonFile == null)
       {
-        Debug.LogError("File not found: Assets/Resources/Dependencies/ThirdPartyDependencies.json");
+        CoreLogError("File not found: Assets/Resources/Dependencies/ThirdPartyDependencies.json");
         SharedData.ThirdPartyDependencies = new List<ThirdPartyPackageDependency>(); // Set to empty list
         return;
       }
@@ -55,7 +56,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       }
       catch (Newtonsoft.Json.JsonReaderException ex)
       {
-        Debug.LogError("Invalid JSON: " + ex.Message);
+        CoreLogError("Invalid JSON: " + ex.Message);
         return;
       }
 

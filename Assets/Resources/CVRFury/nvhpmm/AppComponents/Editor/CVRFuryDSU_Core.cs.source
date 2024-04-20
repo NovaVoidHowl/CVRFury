@@ -1,4 +1,4 @@
-// { "version": "0.2.7" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.2.8" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using uk.novavoidhowl.dev.cvrfury.runtime;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using ABI.CCK.Components;
 using Newtonsoft.Json.Linq;
 using ABI.CCK.Scripts.Editor;
@@ -46,7 +47,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Check if the UXML file was loaded
       if (baseTree == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load UXML file at 'UnityUXML/CVRFuryDataStorageUnitInspector'. Please ensure the file exists at the specified path."
         );
         // If the UXML file was not loaded add a new label to the root.
@@ -62,7 +63,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Check if the StyleSheet was loaded
       if (stylesheet == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load StyleSheet at 'UnityStyleSheets/CVRFuryDataStorageUnitInspector'. Please ensure the file exists at the specified path."
         );
         // If the StyleSheet was not loaded add a new label to the root.
@@ -91,7 +92,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Check if the logo was loaded
       if (logoTexture == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load logo at 'Logos/CVRFuryLogo'. Please ensure the file exists at the specified path."
         );
         // If the logo was not loaded add a new label to the root.

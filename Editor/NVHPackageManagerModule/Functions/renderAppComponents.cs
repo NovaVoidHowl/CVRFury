@@ -307,7 +307,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             // copy file from resource folder to assets folder
             if (!File.Exists(sourceFile))
             {
-              Debug.LogError("Could not find file at path: " + sourceFile);
+              CoreLogError("Could not find file at path: " + sourceFile);
               return;
             }
             string directoryPath = Path.GetDirectoryName(targetFile);
@@ -344,7 +344,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             {
               // if the scriptingDefineSymbolSuffix string is empty, then we can't add the define symbol
               // show error message
-              Debug.LogError("Could not find defineSymbolSuffix in file at path: " + sourceFile);
+              CoreLogError("Could not find defineSymbolSuffix in file at path: " + sourceFile);
             }
             else
             {
@@ -404,7 +404,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             {
               // if the scriptingDefineSymbolSuffix string is empty, then we can't remove the define symbol
               // show error message
-              Debug.LogError("Could not find defineSymbolSuffix in file at path: " + targetFile);
+              CoreLogError("Could not find defineSymbolSuffix in file at path: " + targetFile);
             }
             else
             {

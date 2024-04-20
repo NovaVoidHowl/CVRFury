@@ -72,7 +72,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
       // Check if the UXML file was loaded
       if (baseTree == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load UXML file at 'UnityUXML/VRCFuryToCVRFuryConverter'. Please ensure the file exists at the specified path."
         );
         // If the UXML file was not loaded add a new label to the root.
@@ -88,7 +88,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
       // Check if the StyleSheet was loaded
       if (stylesheet == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load StyleSheet at 'UnityStyleSheets/VRCFuryToCVRFuryConverter'. Please ensure the file exists at the specified path."
         );
         // If the StyleSheet was not loaded add a new label to the root.
@@ -335,7 +335,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
         {
           // if the file is null
           // display an error message
-          Debug.LogError("Failed to load file at path: " + filePath);
+          CoreLogError("Failed to load file at path: " + filePath);
           return;
         }
 

@@ -1,4 +1,4 @@
-// { "version": "0.8.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
+// { "version": "0.8.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -54,7 +54,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         else
         {
           // if it doesn't, log an error to the console
-          Debug.LogError("GameObject " + pair.objectToSetStateOn.name + " does not exist");
+          CoreLogError("GameObject " + pair.objectToSetStateOn.name + " does not exist");
         }
       }
 
@@ -112,13 +112,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         else
         {
           // if it isn't, log an error to the console
-          Debug.LogError("Renderer index " + rendererIndex + " is invalid");
+          CoreLogError("Renderer index " + rendererIndex + " is invalid");
         }
       }
       else
       {
         // if it doesn't, log an error to the console
-        Debug.LogError("Renderer " + renderer.name + " does not exist");
+        CoreLogError("Renderer " + renderer.name + " does not exist");
       }
 
     }
@@ -148,7 +148,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       else
       {
         // if it doesn't, log an error to the console
-        Debug.LogError("Avatar does not exist");
+        CoreLogError("Avatar does not exist");
       }
 
     }
@@ -178,7 +178,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       else
       {
         // if it doesn't, log an error to the console
-        Debug.LogError("Avatar does not exist");
+        CoreLogError("Avatar does not exist");
       }
 
     }
@@ -204,7 +204,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       else
       {
         // if it doesn't, log an error to the console
-        Debug.LogError("GameObject " +((deleteOnUpload)module).target.name + " does not exist");
+        CoreLogError("GameObject " +((deleteOnUpload)module).target.name + " does not exist");
       }
 
     }
@@ -237,7 +237,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       else
       {
         // if it doesn't, log an error to the console
-        Debug.LogError("GameObject " +((showInFirstPerson)module).target.name + " does not exist");
+        CoreLogError("GameObject " +((showInFirstPerson)module).target.name + " does not exist");
       }
 
     }

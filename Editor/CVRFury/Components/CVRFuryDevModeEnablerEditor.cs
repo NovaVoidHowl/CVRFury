@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using uk.novavoidhowl.dev.cvrfury.runtime;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.editor.components
 {
@@ -33,7 +34,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       // Check if the StyleSheet was loaded
       if (stylesheet == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load StyleSheet at 'UnityStyleSheets/CVRFuryDevModeEnablerInspector'. Please ensure the file exists at the specified path."
         );
         // If the StyleSheet was not loaded add a new label to the root.

@@ -1,4 +1,4 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE_UI", dependencies: []}
+// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE_UI", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -80,7 +80,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Check if the UXML file was loaded
       if (baseTree == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load UXML file at 'UnityUXML/buildProgressWindow'. Please ensure the file exists at the specified path."
         );
         // If the UXML file was not loaded add a new label to the root.
@@ -96,7 +96,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Check if the StyleSheet was loaded
       if (stylesheet == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load StyleSheet at 'UnityStyleSheets/buildProgressWindow'. Please ensure the file exists at the specified path."
         );
         // If the StyleSheet was not loaded add a new label to the root.

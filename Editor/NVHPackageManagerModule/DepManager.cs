@@ -119,7 +119,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       // Check if the UXML file was loaded
       if (baseTree == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load UXML file at 'UnityUXML/ToolSetup'. Please ensure the file exists at the specified path."
         );
         // If the UXML file was not loaded add a new label to the root.
@@ -135,7 +135,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       // Check if the StyleSheet was loaded
       if (stylesheet == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load StyleSheet at 'UnityStyleSheets/DepManager'. Please ensure the file exists at the specified path."
         );
         // If the StyleSheet was not loaded add a new label to the root.
@@ -167,19 +167,19 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       // Check if the containers were found
       if (primaryDependenciesContainer == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to find 'primaryDependenciesContainer'. Please ensure the element exists in the UXML file."
         );
         return;
       }
       if (appComponentsContainer == null)
       {
-        Debug.LogError("Failed to find 'appComponentsContainer'. Please ensure the element exists in the UXML file.");
+        CoreLogError("Failed to find 'appComponentsContainer'. Please ensure the element exists in the UXML file.");
         return;
       }
       if (thirdPartyDependenciesContainer == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to find 'thirdPartyDependenciesContainer'. Please ensure the element exists in the UXML file."
         );
         return;

@@ -32,6 +32,7 @@ using Newtonsoft.Json.Linq;
 // and the asmdef, to bind to project specific constants
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
@@ -39,7 +40,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
   {
     private static VisualElement renderCoreError(string errorMessageUI, String errorMessageConsole)
     {
-      Debug.LogError(errorMessageConsole);
+      CoreLogError(errorMessageConsole);
 
       //add error message container
       var errorContainer = new VisualElement();

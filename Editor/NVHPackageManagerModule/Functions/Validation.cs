@@ -27,6 +27,7 @@ using UnityEngine.UIElements;
 // and the asmdef, to bind to project specific constants
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
@@ -60,7 +61,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       }
       else if (request.Status >= StatusCode.Failure)
       {
-        Debug.LogError("Failed to list packages: " + request.Error.message);
+        CoreLogError("Failed to list packages: " + request.Error.message);
       }
 
       return false; // Package is not installed
@@ -126,7 +127,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         }
         catch (JsonReaderException ex)
         {
-          Debug.LogError("JsonReaderException: " + ex.Message);
+          CoreLogError("JsonReaderException: " + ex.Message);
         }
 
         // Check if the config was loaded

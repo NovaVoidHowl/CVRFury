@@ -1,4 +1,4 @@
-// { "version": "0.0.194" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.0.195" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -131,7 +131,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             if (baseController == null)
             {
               // if they don't, log an error to the console
-              Debug.LogError("No base controller found, restoring defaults");
+              CoreLogError("No base controller found, restoring defaults");
               ReportAddErrorLine(buildReportPath, "No base controller found, restoring defaults");
               // set the  the CCK default animator controller to the controller file at path
               // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
@@ -260,7 +260,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 else
                 {
                   // Handle the case where baseController could not be cast to AnimatorController
-                  Debug.LogError("baseController is not an AnimatorController");
+                  CoreLogError("baseController is not an AnimatorController");
                   ReportAddErrorLine(buildReportPath, "[CRITICAL]: baseController is not an AnimatorController");
                 }
               }
@@ -279,7 +279,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             if (sourceAnimatorController == null)
             {
               // if it is, log an error to the console
-              Debug.LogError("sourceAnimatorController is null");
+              CoreLogError("sourceAnimatorController is null");
               ReportAddErrorLine(buildReportPath, "[CRITICAL]: sourceAnimatorController is null");
             }
             else
@@ -649,7 +649,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                   default:
                     // if the menuItem is not valid, log an error to the console
-                    Debug.LogError("Unknown menu item type: " + menuItem.MenuParameterType);
+                    CoreLogError("Unknown menu item type: " + menuItem.MenuParameterType);
                     break;
                 }
               }
@@ -724,7 +724,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       else
       {
         // if it doesn't, log an error to the console
-        Debug.LogError("Avatar does not exist");
+        CoreLogError("Avatar does not exist");
       }
     }
 
@@ -738,7 +738,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (!(module is fullControllerModule))
       {
         // if it can't, log an error to the console
-        Debug.LogError("Module is not a fullControllerModule");
+        CoreLogError("Module is not a fullControllerModule");
         // return an empty list
         return new List<string>();
       }

@@ -11,6 +11,7 @@ using VF.Model;
 using VF.Model.Feature;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using uk.novavoidhowl.dev.cvrfury.runtime;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury
 {
@@ -42,7 +43,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       // Check if the UXML file was loaded
       if (baseTree == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load UXML file at 'UnityUXML/VRCFuryInspector'. Please ensure the file exists at the specified path."
         );
         // If the UXML file was not loaded add a new label to the root.
@@ -58,7 +59,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       // Check if the StyleSheet was loaded
       if (stylesheet == null)
       {
-        Debug.LogError(
+        CoreLogError(
           "Failed to load StyleSheet at 'UnityStyleSheets/VRCFuryInspector'. Please ensure the file exists at the specified path."
         );
         // If the StyleSheet was not loaded add a new label to the root.
