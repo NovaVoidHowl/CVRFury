@@ -1,3 +1,5 @@
+//this whole file is editor only
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -16,3 +18,4 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.supporting_classes
     }
   } 
 }
+#endif
