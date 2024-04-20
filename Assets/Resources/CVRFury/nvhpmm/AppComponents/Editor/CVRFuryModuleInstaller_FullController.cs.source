@@ -1,4 +1,4 @@
-// { "version": "0.0.200" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -789,6 +789,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         #endregion
 
         // TODO: // section to handle CVR Fury Toggle Parameter
+        // not sure how this could be done as CVR has a flat menu structure, and thus no toggles linked to menu sections
+        // need to add a warning if the module has a toggle parameter
         #region Toggle Parameter
         // check and see if the module has a toggle parameter
         // if (!string.IsNullOrWhiteSpace((module as fullControllerModule).toggleParam))

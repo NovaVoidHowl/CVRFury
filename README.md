@@ -131,53 +131,53 @@ Icon Key:
 The following table gives a breakdown of what features from VRCFury are supported for import/install.\
 Note at this time there is no native config UI for CVRFury modules (save the dev debug interface)
 
-|        Feature         | Data Import Supported | Install Supported | Notes                                                |
-| :--------------------: | :-------------------: | :---------------: | :--------------------------------------------------- |
-|   ObjectToggleAction   |          ✔️           |        ✔️         |                                                      |
-|     MaterialAction     |          ✔️           |        ✔️         |                                                      |
-|    BlendShapeAction    |          ✔️           |         ❌         |                                                      |
-|      SpsOnAction       |           🚫           |         🚫         |                                                      |
-|     FxFloatAction      |          ✔️           |        ❌🔽         |                                                      |
-|  AnimationClipAction   |          ❔🔽           |        ❔🔽         |                                                      |
-| ShaderInventoryAction  |          ❔🔽           |        ❔🔽         |                                                      |
-|  PoiyomiUVTileAction   |          ❔🔽           |        ❔🔽         |                                                      |
-| MaterialPropertyAction |          ❔🔽           |        ❔🔽         |                                                      |
-|      ScaleAction       |          ✔️           |         ❌         |                                                      |
-|  BlockBlinkingAction   |          ✔️           |        ✔️         |                                                      |
-|   BlockVisemesAction   |          ✔️           |        ✔️         |                                                      |
-|  ResetPhysboneAction   |           🚫           |         🚫         | No Physbones in CVR, hence not needed                |
-| FlipBookBuilderAction  |           ❔           |         ❔         |                                                      |
-|                        |                       |                   |                                                      |
-|        Blinking        |           ❔           |         ❔         |                                                      |
-|       Breathing        |           ❔           |         ❔         |                                                      |
-|     FullController     |          ✔️           |        ⚙️         |                                                      |
-|         Toggle         |          ❌🔽           |        ❌🔽         |                                                      |
-|         Puppet         |           ❔           |         ❔         |                                                      |
-|      SecurityLock      |          ❌🔽           |        ❌🔽         |                                                      |
-|   SenkyGestureDriver   |           🚫           |         🚫         |                                                      |
-|        Talking         |          ❌🔽           |        ❌🔽         |                                                      |
-|      Toes Puppet       |          ❌🔽           |        ❌🔽         |                                                      |
-|    Advanced Visemes    |           ❔           |         ❔         |                                                      |
-|      ArmatureLink      |          ✔️           |        ❌🔼         |                                                      |
-|     BoundingBoxFix     |          ❔🔽           |        ❔🔽         |                                                      |
-|     BoneConstraint     |           🚫           |         🚫         | Not in VRCFury UI, likely superseded by ArmatureLink |
-|    FixWriteDefaults    |          ❔🔽           |        ❔🔽         |                                                      |
-|   RemoveHandGestures   |          ❌🔽           |        ❌🔽         |                                                      |
-|      CrossEyeFix       |           🚫           |         🚫         |                                                      |
-|   AnchorOverrideFix    |          ❔🔽           |        ❔🔽         |                                                      |
-|      MoveMenuItem      |          ❔🔽           |        ❔🔽         |                                                      |
-|     GestureDriver      |          ❔🔽           |        ❔🔽         |                                                      |
-|         Gizmo          |          ❌🔽           |        ❌🔽         |                                                      |
-|   DeleteDuringUpload   |          ✔️           |        ✔️         |                                                      |
-|     BlendShapeLink     |          ❔🔽           |        ❔🔽         |                                                      |
-|        SetIcon         |           🚫           |         🚫         | There are no icons on CVR menus                      |
-|  OverrideMenuSettings  |           🚫           |         🚫         | Related to VRC menu structure only                   |
-|  BlendshapeOptimizer   |          ❔🔽           |        ❔🔽         |                                                      |
-|        Slot4Fix        |           ❔           |         ❔         |                                                      |
-|  DirectTreeOptimizer   |          ❔🔽           |        ❔🔽         |                                                      |
-|   ShowInFirstPerson    |          ✔️           |        ✔️         |                                                      |
-|       SpsOptions       |           🚫           |         🚫         |                                                      |
-|    MmdCompatibility    |          ❔🔽           |        ❔🔽         |                                                      |
+|        Feature         | Data Import Supported | Install Supported | Notes                                                                                 |
+| :--------------------: | :-------------------: | :---------------: | :------------------------------------------------------------------------------------ |
+|   ObjectToggleAction   |         ✔️          |       ✔️        |                                                                                       |
+|     MaterialAction     |         ✔️          |       ✔️        |                                                                                       |
+|    BlendShapeAction    |         ✔️          |        ❌         |                                                                                       |
+|      SpsOnAction       |          🚫          |        🚫        |                                                                                       |
+|     FxFloatAction      |         ✔️          |       ❌🔽       |                                                                                       |
+|  AnimationClipAction   |         ❔🔽         |       ❔🔽       |                                                                                       |
+| ShaderInventoryAction  |         ❔🔽         |       ❔🔽       |                                                                                       |
+|  PoiyomiUVTileAction   |         ❔🔽         |       ❔🔽       |                                                                                       |
+| MaterialPropertyAction |         ❔🔽         |       ❔🔽       |                                                                                       |
+|      ScaleAction       |         ✔️          |        ❌         |                                                                                       |
+|  BlockBlinkingAction   |         ✔️          |       ✔️        |                                                                                       |
+|   BlockVisemesAction   |         ✔️          |       ✔️        |                                                                                       |
+|  ResetPhysboneAction   |          🚫          |        🚫        | No Physbones in CVR, hence not needed                                                 |
+| FlipBookBuilderAction  |          ❔           |        ❔         |                                                                                       |
+|                        |                       |                   |                                                                                       |
+|        Blinking        |          ❔           |        ❔         |                                                                                       |
+|       Breathing        |          ❔           |        ❔         |                                                                                       |
+|     FullController     |         ✔️          |     ✔️      | Note: no support for menu section triggered toggles (CVR menu is flat not tree) |
+|         Toggle         |         ❌🔽         |       ❌🔽       |                                                                                       |
+|         Puppet         |          ❔           |        ❔         |                                                                                       |
+|      SecurityLock      |         ❌🔽         |       ❌🔽       |                                                                                       |
+|   SenkyGestureDriver   |          🚫          |        🚫        |                                                                                       |
+|        Talking         |         ❌🔽         |       ❌🔽       |                                                                                       |
+|      Toes Puppet       |         ❌🔽         |       ❌🔽       |                                                                                       |
+|    Advanced Visemes    |          ❔           |        ❔         |                                                                                       |
+|      ArmatureLink      |         ✔️          |       ❌🔼       |                                                                                       |
+|     BoundingBoxFix     |         ❔🔽         |       ❔🔽       |                                                                                       |
+|     BoneConstraint     |          🚫          |        🚫        | Not in VRCFury UI, likely superseded by ArmatureLink                                  |
+|    FixWriteDefaults    |         ❔🔽         |       ❔🔽       |                                                                                       |
+|   RemoveHandGestures   |         ❌🔽         |       ❌🔽       |                                                                                       |
+|      CrossEyeFix       |          🚫          |        🚫        |                                                                                       |
+|   AnchorOverrideFix    |         ❔🔽         |       ❔🔽       |                                                                                       |
+|      MoveMenuItem      |         ❔🔽         |       ❔🔽       |                                                                                       |
+|     GestureDriver      |         ❔🔽         |       ❔🔽       |                                                                                       |
+|         Gizmo          |         ❌🔽         |       ❌🔽       |                                                                                       |
+|   DeleteDuringUpload   |         ✔️          |       ✔️        |                                                                                       |
+|     BlendShapeLink     |         ❔🔽         |       ❔🔽       |                                                                                       |
+|        SetIcon         |          🚫          |        🚫        | There are no icons on CVR menus                                                       |
+|  OverrideMenuSettings  |          🚫          |        🚫        | Related to VRC menu structure only                                                    |
+|  BlendshapeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                       |
+|        Slot4Fix        |          ❔           |        ❔         |                                                                                       |
+|  DirectTreeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                       |
+|   ShowInFirstPerson    |         ✔️          |       ✔️        |                                                                                       |
+|       SpsOptions       |          🚫          |        🚫        |                                                                                       |
+|    MmdCompatibility    |         ❔🔽         |       ❔🔽       |                                                                                       |
 
 ## Things that are not included
 
