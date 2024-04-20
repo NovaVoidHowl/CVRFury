@@ -1,4 +1,4 @@
-// { "version": "0.19.34" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.19.35" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -431,8 +431,40 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // purge old temp files
       PurgeTempFiles(uploadedObject);
 
+      // prefab unpacker
+      PrefabUnpacker(uploadedObject);
+
       // console print to say that the pre-tasks have been run
       CoreLog("Pre-tasks run");
+    }
+
+    /// <summary>
+    /// function to walk the whole uploadedObject hierarchy and fully unpack any prefabs it finds
+    /// </summary>
+    public static void PrefabUnpacker(GameObject uploadedObject)
+    {
+      // debug log that the prefab unpacker is running
+      CoreLogDebug("Prefab unpacker running");
+
+      // get the root game object of the uploadedObject
+      var root = uploadedObject.transform.root;
+
+      // get the children of the root game object
+      var children = root.GetComponentsInChildren<Transform>();
+
+      // loop through the children
+      foreach (var child in children)
+      {
+        // if the child is a prefab
+        if (PrefabUtility.IsPartOfAnyPrefab(child.gameObject))
+        {
+          // unpack the prefab
+          PrefabUtility.UnpackPrefabInstance(child.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        }
+      }
+
+      // debug log that the prefab unpacker has finished
+      CoreLogDebug("Prefab unpacker finished");
     }
 
     /// <summary>
