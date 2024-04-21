@@ -1,4 +1,4 @@
-// { "version": "0.20.16" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.20.17" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -73,6 +73,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             #if NVH_CVRFURY_EXISTS_MI_FC
             case fullControllerModule:
                 processor = new fullControllerModuleProcessor();
+                break;
+            #endif
+            #if NVH_CVRFURY_EXISTS_MI_PARAM_STREAM
+            case parameterStreamLink:
+                processor = new parameterStreamLinkModuleProcessor();
                 break;
             #endif
             #if NVH_CVRFURY_EXISTS_MI_AL
