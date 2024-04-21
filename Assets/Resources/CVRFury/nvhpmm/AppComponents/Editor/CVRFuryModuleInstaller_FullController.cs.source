@@ -1,4 +1,4 @@
-// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.1.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -19,8 +19,8 @@ using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using static uk.novavoidhowl.dev.cvrfury.deployable.ReportBuilderSupport;
-using static uk.novavoidhowl.dev.cvrfury.editor.supporting_classes.Animation;
-using static uk.novavoidhowl.dev.cvrfury.editor.supporting_classes.General;
+using static uk.novavoidhowl.dev.cvrfury.supporting_classes.editor.Animation;
+using static uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime.General;
 
 // temp using for testing
 using System.Text;
@@ -400,101 +400,105 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // section to handle manual clip curve path rewrites
               #region rebind animation clips - Manual
-                // this has to happen before prefab related rebinds, as it is intended to be used for
-                // to get edit animation clip paths to match the prefab base
+              // this has to happen before prefab related rebinds, as it is intended to be used for
+              // to get edit animation clip paths to match the prefab base
 
-                // check and see if the module has any binding rewrites
-                if ((module as fullControllerModule).rewriteBindings.Count > 0)
+              // check and see if the module has any binding rewrites
+              if ((module as fullControllerModule).rewriteBindings.Count > 0)
+              {
+                // loop through the binding rewrites in the module
+                foreach (
+                  fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings
+                )
                 {
-                  // loop through the binding rewrites in the module
-                  foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
+                  // log the binding rewrite's name to the console
+                  CoreLog(
+                    "rewrite.from: "
+                      + rewrite.from
+                      + "\n rewrite.to: "
+                      + rewrite.to
+                      + "\n rewrite.delete: "
+                      + rewrite.delete
+                  );
+
+                  // get the animation clips from the source controller
+                  AnimationClip[] sourceClips = tempSourceAnimatorController.animationClips;
+
+                  // loop through the animation clips
+                  foreach (AnimationClip clip in sourceClips)
                   {
-                    // log the binding rewrite's name to the console
-                    CoreLog(
-                      "rewrite.from: " + rewrite.from + "\n rewrite.to: " + rewrite.to + "\n rewrite.delete: " + rewrite.delete
-                    );
+                    // get the clip's path
+                    string clipPath = AssetDatabase.GetAssetPath(clip);
 
-                    // get the animation clips from the source controller
-                    AnimationClip[] sourceClips = tempSourceAnimatorController.animationClips;
+                    //get the filename of the clip, excluding the path and extension
+                    string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
 
-                    // loop through the animation clips
-                    foreach (AnimationClip clip in sourceClips)
+                    // generate a guid for the temp clip
+                    System.Guid tempClipGUID = System.Guid.NewGuid();
+
+                    // generate a temp clip path
+                    string tempClipPath =
+                      tempItemsPath + "/" + clipFileName + "_clip_gen_pre_" + tempClipGUID + ".anim";
+
+                    // copy the clip to the temp clip
+                    AssetDatabase.CopyAsset(clipPath, tempClipPath);
+
+                    // load the temp clip
+                    AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+
+                    // loop through the layers
+                    for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
                     {
-                      // get the clip's path
-                      string clipPath = AssetDatabase.GetAssetPath(clip);
+                      var layer = tempSourceAnimatorController.layers[i];
+                      var stateMachine = layer.stateMachine;
 
-                      //get the filename of the clip, excluding the path and extension
-                      string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
-
-                      // generate a guid for the temp clip
-                      System.Guid tempClipGUID = System.Guid.NewGuid();
-
-                      // generate a temp clip path
-                      string tempClipPath = tempItemsPath + "/" + clipFileName + "_clip_gen_pre_" + tempClipGUID + ".anim";
-
-                      // copy the clip to the temp clip
-                      AssetDatabase.CopyAsset(clipPath, tempClipPath);
-
-                      // load the temp clip
-                      AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
-
-                      // loop through the layers
-                      for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+                      // loop through the states
+                      for (int j = 0; j < stateMachine.states.Length; j++)
                       {
-                        var layer = tempSourceAnimatorController.layers[i];
-                        var stateMachine = layer.stateMachine;
+                        var state = stateMachine.states[j].state;
 
-                        // loop through the states
-                        for (int j = 0; j < stateMachine.states.Length; j++)
+                        // if the state's motion is the original clip, replace it with the temp clip
+                        if (state.motion == clip)
                         {
-                          var state = stateMachine.states[j].state;
-
-                          // if the state's motion is the original clip, replace it with the temp clip
-                          if (state.motion == clip)
+                          if (rewrite.delete)
                           {
-
-                            if (rewrite.delete)
-                            {
-                              rewrite.to = "";
-                            }
-                            
-                            // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
-                            tempClip = rewriteAnimationClipCurvePaths(tempClip, rewrite.from, rewrite.to);
-
-                            // mark the tempClip as dirty
-                            EditorUtility.SetDirty(tempClip);
-
-                            // set the file path as dirty
-                            AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
-
-                            // save the temp clip
-                            AssetDatabase.SaveAssets();
-                            AssetDatabase.Refresh();
-                            
-                            state.motion = tempClip;
+                            rewrite.to = "";
                           }
+
+                          // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
+                          tempClip = rewriteAnimationClipCurvePaths(tempClip, rewrite.from, rewrite.to);
+
+                          // mark the tempClip as dirty
+                          EditorUtility.SetDirty(tempClip);
+
+                          // set the file path as dirty
+                          AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
+
+                          // save the temp clip
+                          AssetDatabase.SaveAssets();
+                          AssetDatabase.Refresh();
+
+                          state.motion = tempClip;
                         }
                       }
-
-                      // save the temp source controller
-                      AssetDatabase.SaveAssets();
-                      AssetDatabase.Refresh();
                     }
 
+                    // save the temp source controller
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
                   }
                 }
+              }
               #endregion
 
 
               #region rebind animation clips - Prefab Instance
-              // rebind prefab name to current name in hierarchy, this needs to be done so that the created animation 
+              // rebind prefab name to current name in hierarchy, this needs to be done so that the created animation
               // clips link correctly to the prefab instances
 
 
               // debug print to say we are re-binding animation clips
               CoreLog("Rebinding animation clips - Prefab Instance");
-
-              
 
               // Try to get the PrefabName from the CVRFuryDataStorageUnit component on the DSUObject
               string FuryPrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
@@ -503,7 +507,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               if (string.IsNullOrEmpty(FuryPrefabName))
               {
                 // if it is, log an error to the console
-                CoreLogCritical("PrefabName is null or empty, please ensure the DSUObject at " + DSUObjectPath + " has a valid prefabName");
+                CoreLogCritical(
+                  "PrefabName is null or empty, please ensure the DSUObject at "
+                    + DSUObjectPath
+                    + " has a valid prefabName"
+                );
                 ReportAddErrorLine(buildReportPath, "[CRITICAL]: FuryPrefabName is null or empty");
               }
               else
@@ -582,7 +590,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               #endregion
 
-            
+
               // merge the source into the final controller, renaming the parameters that are not global
               // again direct merge to the target controller (CVRFuryFinalController)
               AnimatorCloner.MergeControllers(
@@ -632,6 +640,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // check if the perModuleParametersPairToRename is null and if so init it
           if (perModuleParametersPairToRename == null)
           {
+            CoreLogDebug("perModuleParametersPairToRename is null, init now");
             perModuleParametersPairToRename = new Dictionary<string, string>();
           }
 
@@ -644,8 +653,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get the menu's prefix
             string prefix = menuEntry.prefix;
 
-            // if the prefix is not null or empty add a forward slash to the end
-            if (!string.IsNullOrEmpty(prefix))
+            // if the prefix is not null or empty add a forward slash to the end if there is not already one
+            if (!string.IsNullOrEmpty(prefix) && !prefix.EndsWith("/"))
             {
               prefix += "/";
             }
@@ -799,8 +808,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         //   CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
         // }
         #endregion
-
-        
       }
       else
       {
@@ -852,6 +859,34 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     #endregion
     // functions to handle CVR Fury Menu Store bits --------------------------------------------------------------------
+    #region  supporting functions for CVR Fury Menu Store
+
+    public string ProcessParameterMachineName(
+      Dictionary<string, string> perModuleParametersPairToRename,
+      string MachineName
+    )
+    {
+      // check if the parameter's name is in the perModuleParametersPairToRename list
+      if (perModuleParametersPairToRename.ContainsKey(MachineName))
+      {
+        //console print the toggle parameter's name and the value in the perModuleParametersPairToRename list
+        CoreLogDebug("input param name: " + MachineName + " -> " + perModuleParametersPairToRename[MachineName]);
+
+        // if it is, return the value in the perModuleParametersPairToRename list
+        return perModuleParametersPairToRename[MachineName];
+      }
+      else
+      {
+        // console print the toggle parameter's MachineName
+        CoreLog("No change to input param name: " + MachineName);
+
+        // if it isn't, return the toggle parameter's MachineName
+        return MachineName;
+      }
+    }
+
+    #endregion
+
     #region CVR Fury Menu Store functions
 
     public void ProcessToggleParameter(
@@ -879,17 +914,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the toggle parameter's name with the prefix
       toggleEntry.name = prefix + toggleParam.name;
 
-      // check if the parameter's name is in the perModuleParametersPairToRename list
-      if (perModuleParametersPairToRename.ContainsKey(toggleParam.name))
-      {
-        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
-        toggleEntry.machineName = perModuleParametersPairToRename[toggleParam.name];
-      }
-      else
-      {
-        // if it isn't, set the CVRAdvancedSettingsEntry's machineName to the toggle parameter's name with the prefix
-        toggleEntry.machineName = formatParameterNameForMachineName(toggleParam.name);
-      }
+      // process the toggle parameter's MachineName, based on the perModuleParametersPairToRename list
+      toggleEntry.machineName = ProcessParameterMachineName(perModuleParametersPairToRename, toggleParam.MachineName);
 
       // create a new CVRAdvancesAvatarSettingGameObjectToggle
       CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
@@ -937,17 +963,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the dropdown parameter's name with the prefix
       dropdownEntry.name = prefix + dropdownParam.name;
 
-      // check if the parameter's name is in the perModuleParametersPairToRename list
-      if (perModuleParametersPairToRename.ContainsKey(dropdownParam.name))
-      {
-        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
-        dropdownEntry.machineName = perModuleParametersPairToRename[dropdownParam.name];
-      }
-      else
-      {
-        // if it isn't, set the CVRAdvancedSettingsEntry's machineName to the dropdown parameter's name with the prefix
-        dropdownEntry.machineName = formatParameterNameForMachineName(dropdownParam.name);
-      }
+      // process the dropdownEntry parameter's MachineName, based on the perModuleParametersPairToRename list
+      dropdownEntry.machineName = ProcessParameterMachineName(
+        perModuleParametersPairToRename,
+        dropdownParam.MachineName
+      );
 
       // create a new CVRAdvancesAvatarSettingGameObjectDropdown
       CVRAdvancesAvatarSettingGameObjectDropdown dropdownSetting = new CVRAdvancesAvatarSettingGameObjectDropdown();
@@ -1018,17 +1038,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the slider parameter's name with the prefix
       sliderEntry.name = prefix + sliderParam.name;
 
-      // check if the parameter's name is in the perModuleParametersPairToRename list
-      if (perModuleParametersPairToRename.ContainsKey(sliderParam.name))
-      {
-        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
-        sliderEntry.machineName = perModuleParametersPairToRename[sliderParam.name];
-      }
-      else
-      {
-        // set the CVRAdvancedSettingsEntry's machineName to the slider parameter's name with the prefix
-        sliderEntry.machineName = formatParameterNameForMachineName(sliderParam.name);
-      }
+      // process the slider parameter's MachineName, based on the perModuleParametersPairToRename list
+      sliderEntry.machineName = ProcessParameterMachineName(perModuleParametersPairToRename, sliderParam.MachineName);
 
       // create a new CVRAdvancesAvatarSettingSlider
       CVRAdvancesAvatarSettingSlider sliderSetting = new CVRAdvancesAvatarSettingSlider();
@@ -1062,17 +1073,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the twoDJoystick parameter's name with the prefix
       twoDJoystickEntry.name = prefix + twoDJoystickParam.name;
 
-      // check if the parameter's name is in the perModuleParametersPairToRename list
-      if (perModuleParametersPairToRename.ContainsKey(twoDJoystickParam.name))
-      {
-        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
-        twoDJoystickEntry.machineName = perModuleParametersPairToRename[twoDJoystickParam.name];
-      }
-      else
-      {
-        // if it isn't, set the CVRAdvancedSettingsEntry's machineName to the twoDJoystick parameter's name with the prefix
-        twoDJoystickEntry.machineName = formatParameterNameForMachineName(twoDJoystickParam.name);
-      }
+      // process the twoDJoystick parameter's MachineName, based on the perModuleParametersPairToRename list
+      twoDJoystickEntry.machineName = ProcessParameterMachineName(
+        perModuleParametersPairToRename,
+        twoDJoystickParam.MachineName
+      );
 
       // create a new CVRAdvancesAvatarSettingJoystick2D
       CVRAdvancesAvatarSettingJoystick2D twoDJoystickSetting = new CVRAdvancesAvatarSettingJoystick2D();
@@ -1113,17 +1118,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the threeDJoystick parameter's name with the prefix
       threeDJoystickEntry.name = prefix + threeDJoystickParam.name;
 
-      // check if the parameter's name is in the perModuleParametersPairToRename list
-      if (perModuleParametersPairToRename.ContainsKey(threeDJoystickParam.name))
-      {
-        // if it is, set the CVRAdvancedSettingsEntry's name to the value in the perModuleParametersPairToRename list
-        threeDJoystickEntry.machineName = perModuleParametersPairToRename[threeDJoystickParam.name];
-      }
-      else
-      {
-        // set the CVRAdvancedSettingsEntry's machineName to the threeDJoystick parameter's name with the prefix
-        threeDJoystickEntry.machineName = formatParameterNameForMachineName(threeDJoystickParam.name);
-      }
+      // process the threeDJoystick parameter's MachineName, based on the perModuleParametersPairToRename list
+      threeDJoystickEntry.machineName = ProcessParameterMachineName(
+        perModuleParametersPairToRename,
+        threeDJoystickParam.MachineName
+      );
 
       // create a new CVRAdvancesAvatarSettingJoystick3D
       CVRAdvancesAvatarSettingJoystick3D threeDJoystickSetting = new CVRAdvancesAvatarSettingJoystick3D();
