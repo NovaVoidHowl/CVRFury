@@ -1,9 +1,3 @@
-//this whole file is editor only
-// #if UNITY_EDITOR
-// using System.Collections.Generic;
-// using UnityEditor;
-// using UnityEditor.Animations;
-// using UnityEngine;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
@@ -18,4 +12,3 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime
     }
   } 
 }
-// #endif
