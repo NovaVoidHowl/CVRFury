@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace uk.novavoidhowl.dev.cvrfury.runtime
+namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime
 {
   [Serializable]
   public class CVRFurySemVer

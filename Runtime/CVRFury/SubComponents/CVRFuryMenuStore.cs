@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime.General;
 
 namespace uk.novavoidhowl.dev.cvrfury.runtime
 {
@@ -21,6 +22,12 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   {
     public bool viewerFoldoutState = false;
     public string name;
+
+    // getter that returns the machineName based on formatParameterNameForMachineName() and name
+    public string MachineName
+    {
+      get { return formatParameterNameForMachineName(name); }
+    }
 
     [SerializeField]
     private string menuParameterType;

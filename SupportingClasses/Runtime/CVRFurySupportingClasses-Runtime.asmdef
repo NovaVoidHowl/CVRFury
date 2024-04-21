@@ -1,8 +1,7 @@
 {
-  "name": "uk.novavoidhowl.dev.cvrfury.editor.supporting_classes",
+  "name": "uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime",
   "references": [
-    "uk.novavoidhowl.dev.cvrfury.packagecore",
-    "uk.novavoidhowl.dev.cvrfury.runtime"
+    "uk.novavoidhowl.dev.cvrfury.packagecore"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

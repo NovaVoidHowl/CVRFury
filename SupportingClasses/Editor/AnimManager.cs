@@ -7,7 +7,7 @@ using UnityEngine;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
-namespace uk.novavoidhowl.dev.cvrfury.editor.supporting_classes
+namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
 {
   public static class Animation
   {

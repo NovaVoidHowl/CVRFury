@@ -1,4 +1,4 @@
-// { "version": "0.2.8" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.2.10" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -12,6 +12,7 @@ using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime;
 using ABI.CCK.Components;
 using Newtonsoft.Json.Linq;
 using ABI.CCK.Scripts.Editor;
