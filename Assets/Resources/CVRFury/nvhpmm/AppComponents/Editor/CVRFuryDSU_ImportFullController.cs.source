@@ -1,4 +1,4 @@
-// { "version": "0.0.19" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
+// { "version": "0.0.34" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -6,11 +6,13 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using ABI.CCK.Components;
 using Newtonsoft.Json.Linq;
@@ -155,6 +157,136 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // clean out any null entries in the controllers list
           fullControllerModule.controllers = fullControllerModule.controllers.Where(x => x != null).ToList();
+
+          // get a full list of parameters composited from all the controllers
+          List<string> allControllerParametersToLink = new List<string>();
+
+          // loop through the controllers, and add their parameters to the allControllerParametersToLink list
+          foreach (var controller in controllers)
+          {
+            // get the controller from the controller entry
+            var sourceController = controller.controller.objRef;
+
+            // check if the sourceController is null
+            if (sourceController == null)
+            {
+              // print to console that the sourceController is null
+              CoreLogDebug("sourceController is null");
+              continue;
+            }
+
+            // get the path to the source controller file
+            string sourceControllerPath = AssetDatabase.GetAssetPath(sourceController);
+
+            // get the controller from the source controller file
+            var controllerAsset = AssetDatabase.LoadAssetAtPath<AnimatorController>(sourceControllerPath);
+
+            // check if the controllerAsset is null
+            if (controllerAsset == null)
+            {
+              // print to console that the controllerAsset is null
+              CoreLogDebug("controllerAsset is null");
+              continue;
+            }
+
+            // get the parameters from the controllerAsset
+            var controllerParameters = controllerAsset.parameters;
+
+            // loop through the controllerParameter
+            foreach (var controllerParameter in controllerParameters)
+            {
+              // check if the controllerParameter is one of the ones on the Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC,
+              // but not in the Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR
+              if (Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC.Contains(controllerParameter.name) &&
+                  !Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR.Contains(controllerParameter.name))
+              {
+                allControllerParametersToLink.Add(controllerParameter.name);
+              }
+            }
+          }
+          // deduplicate the allControllerParametersToLink list
+          allControllerParametersToLink = allControllerParametersToLink.Distinct().ToList();
+
+          // loop through allControllerParametersToLink
+          foreach (var parameterToLink in allControllerParametersToLink)
+          {
+            // check if the parameterToLink is in the the Constants.VRC_PARAMETER_STREAM_MAPPINGS dictionary
+            if (Constants.VRC_PARAMETER_STREAM_MAPPINGS.ContainsKey(parameterToLink))
+            {
+              // get the parameterStreamMapping from the Constants.VRC_PARAMETER_STREAM_MAPPINGS dictionary
+              VRCParameterTranslation parameterStreamMapping = Constants.VRC_PARAMETER_STREAM_MAPPINGS[parameterToLink];
+
+              // check if the parameterStreamMapping is not null
+              if (parameterStreamMapping != null)
+              {
+                // at this point we have a valid parameterStreamMapping, now we need to see what type it is
+                // check if the parameterStreamMapping's NeedsParameterStream is true
+                if (parameterStreamMapping.NeedsParameterStream)
+                {
+                  // ok good its a NeedsParameterStream type, now this is what we need for this section of the code
+                  // debug print to say a parameterStreamLink module is being created for the parameterToLink
+                  CoreLogDebug("Creating a parameterStreamLink module for " + parameterToLink);
+
+                  // bool to abort the creation of the parameterStreamLink module if something goes wrong
+                  bool abort = false;
+
+                  // first check if the DSU already has a parameterStreamLink module
+                  parameterStreamLink parameterStreamLinkModule = modules.FirstOrDefault(module => module.GetType().Name == "parameterStreamLink") as parameterStreamLink;
+
+                  if (parameterStreamLinkModule == null)
+                  {
+                    // create a new parameterStreamLink module
+                    parameterStreamLinkModule = new parameterStreamLink();
+                  }
+
+                  // set the justImported flag to true
+                  parameterStreamLinkModule.justImported = true;
+
+                  // set the importedFromVRCFury flag to true
+                  parameterStreamLinkModule.importedFromVRCFury = true;
+
+
+                  // get the type based on parameterStreamMapping.CVR string value for CVRFuryParameterStreamEntry.Type enum
+                  CVRFuryParameterStreamEntry.Type typeForEnum = default;
+
+                  CVRFuryParameterStreamEntry.Type typeOutput;
+                  if (Enum.TryParse(parameterStreamMapping.CVR, out typeOutput))
+                  {
+                    // The string was successfully parsed into the enum type
+                    // set the type of the CVRFuryParameterStreamEntry
+                    typeForEnum = typeOutput;
+                  }
+                  else
+                  {
+                    CoreLogCritical("Could not parse the enum string '" + parameterStreamMapping.CVR + "' into the CVRFuryParameterStreamEntry.Type enum");
+                    abort = true;
+                  }
+
+                  if (!abort || !parameterStreamMapping.Supported)
+                  {
+                    // add section to entries (of type CVRFuryParameterStreamEntry)
+                    CVRFuryParameterStreamEntry entry = new CVRFuryParameterStreamEntry
+                    {
+                      parameterName = parameterToLink,
+                      applicationType = CVRFuryParameterStreamEntry.ApplicationType.Override,
+                      targetType = CVRFuryParameterStreamEntry.TargetType.AvatarAnimator,
+                      type = typeForEnum
+                    };
+                    parameterStreamLinkModule.entries.Add(entry);
+
+                    // add the parameterStreamLink module to the DSU
+                    if (!modules.Contains(parameterStreamLinkModule))
+                    {
+                      modules.Add(parameterStreamLinkModule);
+                    }
+                  }
+
+                }
+              }
+            }
+          }
+
+
 
 
           // check if there are any menus
