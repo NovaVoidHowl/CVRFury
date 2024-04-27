@@ -1,4 +1,4 @@
-// { "version": "0.1.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -69,8 +69,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           //// path vars section
 
           // create a folder in the project to store the generated controller
-          // this is based on Constants.ASSETS_MANAGED_FOLDER + /Generated/+ AvatarName
-          string generatedItemsFolder = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + avatar.name;
+          // this is based on Constants.ASSETS_MANAGED_FOLDER_GENERATED + AvatarName
+          string generatedItemsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name;
 
           if (!Directory.Exists(generatedItemsFolder))
           {

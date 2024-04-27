@@ -1,4 +1,4 @@
-// { "version": "0.20.17" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.21.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -376,7 +376,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       ModulesInstallationFinalise(uploadedObject);
 
       // get the path to the temp items folder
-      string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + uploadedObject.name + "/temp_items";
+      string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
 
       // await SelectAnimationClipsAsync(tempItemsFolderPath);
 
@@ -514,7 +514,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public static void PurgeTempFiles(GameObject uploadedObject)
     {
       // get the temp folder path for the current avatar controller creation
-      string tempFolderPath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + uploadedObject.name + "/temp_items";
+      string tempFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
 
       // if the temp folder exists, try to delete it
       if (Directory.Exists(tempFolderPath))
@@ -590,7 +590,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       System.Threading.Thread.Sleep(500);
 
       // get the path to the temp items folder
-      string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + uploadedObject.name + "/temp_items";
+      string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
 
       // reimport all assets in the the temp_items folder
       AssetDatabase.ImportAsset(tempItemsFolderPath, ImportAssetOptions.ImportRecursive);
@@ -667,7 +667,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // only do this if the full controller module is present
       #if NVH_CVRFURY_EXISTS_MI_FC
       // get the lock file path for the current avatar controller creation and delete it if it exists
-      string lockFilePath = Constants.ASSETS_MANAGED_FOLDER + "/Generated/" + avatar.name + "/processing.lock";
+      string lockFilePath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name + "/processing.lock";
       if (File.Exists(lockFilePath))
       {
         File.Delete(lockFilePath);
