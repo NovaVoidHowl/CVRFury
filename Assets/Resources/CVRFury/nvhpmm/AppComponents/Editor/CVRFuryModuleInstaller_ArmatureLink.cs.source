@@ -1,0 +1,281 @@
+// { "version": "0.0.28" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+using Math = System.Math;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.IO;
+using UnityEditor;
+using UnityEditor.Animations;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Scripts;
+using ABI.CCK.Components;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using static uk.novavoidhowl.dev.cvrfury.deployable.ReportBuilderSupport;
+using static uk.novavoidhowl.dev.cvrfury.supporting_classes.editor.Animation;
+using static uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime.General;
+
+// temp using for testing
+using System.Text;
+
+/// <summary>
+/// armatureLink Module
+/// this is handles binding objects to the armature of the avatar and merging addon armatures
+/// </summary>
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public class armatureLinkModuleProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      // Implementation for armatureLinkModuleProcessor
+      // console print to say this function is being called
+      CoreLog("armatureLinkModuleProcessor.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // access the CVRAvatar component on the targetAvatar
+      CVRAvatar avatar = targetAvatar.GetComponent<CVRAvatar>();
+
+      // check if the avatar exists
+      if (avatar != null)
+      {
+        // we have the avatar, and it is valid,
+
+        // bool to say if we have need mesh rebind mode
+        bool needsMeshRebind = true;
+
+
+        // check if there are any animator components on the DSUObject or any of its children
+        if (DSUObject.GetComponent<Animator>() == null && DSUObject.GetComponentsInChildren<Animator>().Length == 0)
+        {
+          // if there are no animator components on the DSUObject or any of its children, then we don't need mesh rebind
+          needsMeshRebind = false;
+        }
+
+        // cast the module to a armatureLinkModule
+        armatureLink armatureLinkModule = (armatureLink)module;
+
+        switch (armatureLinkModule.addonLinkMode)
+        {
+          case CVRFuryModuleLinker.linkMode.MeshRebind:
+            // Handle MeshRebind case
+            // this needs to compare the avatar's armature to the armature linked to skinned mesh renderers in/under
+            // the DSUObject, and then merge the too armatures together adding in any missing bones, then rebind the
+            // skinned mesh renderers to the new armature
+            // note this needs to start at the bone specified in the armatureBoneToLinkTo (this being a unity standard
+            // bone name) and put the two armatures together from there
+
+            performMeshRebind(avatar, DSUObject, armatureLinkModule);
+            break;
+          case CVRFuryModuleLinker.linkMode.MergeAsChildren:
+            // Deprecated, but kept for redirecting to MeshRebind
+            // Handle MergeAsChildren case
+            // redirect to the same as MeshRebind
+            performMeshRebind(avatar, DSUObject, armatureLinkModule);
+            break;
+          case CVRFuryModuleLinker.linkMode.ParentConstraint:
+            // Deprecated, but kept for redirecting to MeshRebind
+            // Handle ParentConstraint case
+            // redirect to the same as MeshRebind
+            performMeshRebind(avatar, DSUObject, armatureLinkModule);
+            break;
+          case CVRFuryModuleLinker.linkMode.ReparentRoot:
+            // Handle ReparentRoot case
+            // this needs to move the addonObjectToLink to be a child of the armatureBoneToLinkTo while keeping the
+            // object's position and rotation relative to the bone
+            performReparentRoot(avatar, DSUObject, armatureLinkModule);
+            break;
+          case CVRFuryModuleLinker.linkMode.Auto:
+            // Handle Auto case
+            // this needs to check if the DSUObject has any skinned mesh renderers, if it does then it should use
+            // MeshRebind, if it doesn't then it should use ReparentRoot
+            if (needsMeshRebind)
+            {
+              performMeshRebind(avatar, DSUObject, armatureLinkModule);
+            }
+            else
+            {
+              performReparentRoot(avatar, DSUObject, armatureLinkModule);
+            }
+            break;
+          default:
+            // Handle unexpected case
+            // log a critical error to the console (should be impossible to reach this point)
+            CoreLogCritical("Unexpected module.addonLinkMode: " + armatureLinkModule.addonLinkMode 
+                            + " this should not happen, please report this to the developer");
+            break;
+        }
+      }
+    }
+
+    private void performMeshRebind(CVRAvatar avatar, GameObject DSUObject, armatureLink armatureLinkModule)
+    {
+      // Implementation for performMeshRebind
+      // console print to say this function is being called
+      CoreLog("performMeshRebind() called");
+
+      // TODO: Implement performMeshRebind
+      CoreLogError("MeshRebind is not yet implemented");
+    }
+
+    private void performReparentRoot(CVRAvatar avatar, GameObject DSUObject, armatureLink armatureLinkModule)
+    {
+      // Implementation for performReparentRoot
+      // console print to say this function is being called
+      CoreLog("performReparentRoot() called");
+
+      // get the path to the avatar
+      string avatarPath = GetGameObjectPath(avatar.gameObject);
+
+      // get the current path of the addonObjectToLink and store it
+      string addonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
+
+      // remove the avatarPath from the start of the addonObjectToLinkPath
+      addonObjectToLinkPath = addonObjectToLinkPath.Replace(avatarPath, "");
+
+      // remove the starting `/` from the addonObjectToLinkPath if it exists
+      if (addonObjectToLinkPath.StartsWith("/"))
+      {
+        addonObjectToLinkPath = addonObjectToLinkPath.Substring(1);
+      }
+
+      // move the addonObjectToLink to be a child of the armatureBoneToLinkTo, note armatureBoneToLinkTo is of
+      // type HumanBodyBones, the addonObjectToLink is of type GameObject and the addonObjectToLink should not move in
+      // scene space but just be parented to the bone (this is so the user can position the object where they want it)
+      
+      // get the Animator component from the avatar
+      Animator animator = avatar.GetComponent<Animator>();
+
+      // get the HumanBodyBones enum value from the armatureBoneToLinkTo
+      HumanBodyBones boneToLinkTo = armatureLinkModule.armatureBoneToLinkTo;
+
+      // get the GameObject of the boneToLinkTo
+      GameObject boneToLinkToGameObject = animator.GetBoneTransform(boneToLinkTo).gameObject;
+      
+      // perform the reparenting
+      armatureLinkModule.addonObjectToLink.transform.SetParent(boneToLinkToGameObject.transform, true);
+
+      // debug log to console that the object has been reparented
+      CoreLogDebug("Object has been reparented to: " + boneToLinkToGameObject.name);
+
+      // get the new path of the addonObjectToLink and store it
+      string newAddonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
+
+      // remove the avatarPath from the start of the newAddonObjectToLinkPath
+      newAddonObjectToLinkPath = newAddonObjectToLinkPath.Replace(avatarPath, "");
+
+      // remove the starting `/` from the newAddonObjectToLinkPath if it exists
+      if (newAddonObjectToLinkPath.StartsWith("/"))
+      {
+        newAddonObjectToLinkPath = newAddonObjectToLinkPath.Substring(1);
+      }
+
+      // check if the path of the addonObjectToLink has changed if it has not then stop here
+      if (addonObjectToLinkPath == newAddonObjectToLinkPath)
+      {
+        // log to console that the object has not moved
+        CoreLogDebug("No animation rebind needed as Object has not moved");
+        return;
+      }
+
+
+
+      // loop through all the animation clips in the folder related to the avatar 'Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name'
+      // and update the animation clips to reflect the new bone position
+      // get the path to the folder containing the animation clips
+      string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name + "/temp_items";
+
+      // check if the folder exists
+      if (!Directory.Exists(animationClipsFolder))
+      {
+        // if the folder does not exist, log an error to the console and return
+        CoreLogError("Animation clips folder does not exist: " + animationClipsFolder);
+        return;
+      }
+
+      // debug print the path of the animation clips folder
+      CoreLogDebug("Animation clips folder: " + animationClipsFolder);
+
+      // loop through all the animation clips in the folder
+      foreach (string animationClipPath in Directory.GetFiles(animationClipsFolder))
+      {
+        // check if there is a file at the path
+        if (!File.Exists(animationClipPath))
+        {
+          // should not be possible to reach this point, but adding as a null check
+          // report critical error to the console
+          CoreLogCritical("File does not exist: " + animationClipPath);
+
+          // if there is no file at the path, skip this file
+          continue;
+        }
+
+        // check if the file name ends with .anim, if not then skip this file
+        if (!animationClipPath.EndsWith(".anim"))
+        {
+          // skip this file, if it is not an animation clip we are not interested in it
+          continue;
+        }
+
+        // debug print the old and new paths of the addonObjectToLink
+        CoreLogDebug("addonObjectToLinkPath: " + addonObjectToLinkPath);
+        CoreLogDebug("newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
+
+        // Load the animation clip
+        AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationClipPath);
+        
+        // Get the editor curves from the clip
+        EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
+        
+        // Iterate over the curves
+        foreach (EditorCurveBinding curveBinding in curveBindings)
+        {
+          // debug print the path of the curve
+          CoreLogDebug("Current curveBinding.path: " + curveBinding.path);
+
+          // If the path of the curve matches addonObjectToLinkPath, replace it with newAddonObjectToLinkPath
+          if (curveBinding.path == addonObjectToLinkPath)
+          {
+            // Create a new binding with the new path
+            EditorCurveBinding newCurveBinding = new EditorCurveBinding
+            {
+              path = newAddonObjectToLinkPath,
+              type = curveBinding.type,
+              propertyName = curveBinding.propertyName
+            };
+        
+            // Get the curve from the old binding
+            AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, curveBinding);
+        
+            // Remove the old curve
+            AnimationUtility.SetEditorCurve(clip, curveBinding, null);
+        
+            // Set the curve to the new binding
+            AnimationUtility.SetEditorCurve(clip, newCurveBinding, curve);
+          }
+        }
+        
+        // Save the changes to the animation clip
+        AssetDatabase.SaveAssets();
+
+        // mark the animation clip as dirty
+        EditorUtility.SetDirty(clip);
+
+        // update the asset database
+        AssetDatabase.Refresh();
+      }
+      
+    }
+  }
+}
+// #endif
