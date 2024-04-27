@@ -53,7 +53,8 @@
     "vrcfury",
     "vrchat",
     "VRCSDK",
-    "vrcstub"
+    "vrcstub",
+    "struct"
   ],
   "colorize.hide_current_line_decorations": false,
   "colorize.languages": [
