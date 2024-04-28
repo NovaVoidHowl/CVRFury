@@ -518,6 +518,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     // set the generateType of the new toggle to bool
                     newToggle.generateType = toggleParameter.GenerateType.Bool;
 
+                    // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
+                    newToggle.forceMachineName = true;
+
                     // add the new toggle to the convertedMenu
                     convertedMenu.menuItems.Add(newToggle);
 
@@ -591,6 +594,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                       // the value of the control is the default value of the the VRC menu open value, is bool
                       // so we can ignore that as it does not exist in CVR
 
+                      // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
+                      newJoystick.forceMachineName = true;
+
                       // rest of the values should be taken care of by the defaults in the class
 
                       // add the new joystick to the convertedMenu
@@ -620,6 +626,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
 
                     // the value of the control is the default value of the the VRC menu open value, is bool
                     // so we can ignore that as it does not exist in CVR
+
+                    // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
+                    newSlider.forceMachineName = true;
 
                     // add the new slider to the convertedMenu
                     convertedMenu.menuItems.Add(newSlider);

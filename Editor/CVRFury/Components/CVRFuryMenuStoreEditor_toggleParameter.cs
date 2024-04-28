@@ -34,8 +34,11 @@ public partial class CVRFuryMenuStoreEditor : Editor
       // Find the 'name' property
       SerializedProperty nameProperty = element.FindPropertyRelative("name");
 
+      // find the 'forceMachineName' property
+      SerializedProperty forceMachineNameProperty = element.FindPropertyRelative("forceMachineName");
+
       // Create a string that contains the information to display
-      string info = " " + TranslateMenuNameToParameterName(nameProperty.stringValue);
+      string info = " " + TranslateMenuNameToParameterName(nameProperty.stringValue, forceMachineNameProperty.boolValue);
 
       // Display the 'Parameter:' label using EditorGUI.PrefixLabel
       EditorGUI.PrefixLabel(

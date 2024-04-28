@@ -22,11 +22,23 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   {
     public bool viewerFoldoutState = false;
     public string name;
+    public bool forceMachineName = false;
 
-    // getter that returns the machineName based on formatParameterNameForMachineName() and name
+    // getter that returns the machineName based on formatParameterNameForMachineName() and name, if forceMachineName is
+    // false (the default) then it will pass the name through formatParameterNameForMachineName() to get the machineName
+    // if forceMachineName is true then it will return the name as is 
     public string MachineName
     {
-      get { return formatParameterNameForMachineName(name); }
+      get { 
+        if (forceMachineName)
+         { 
+          return name;
+         }
+        else
+         { 
+          return formatParameterNameForMachineName(name); 
+         }
+      }
     }
 
     [SerializeField]
