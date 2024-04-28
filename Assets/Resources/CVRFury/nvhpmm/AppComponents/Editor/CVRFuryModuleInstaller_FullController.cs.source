@@ -1,4 +1,4 @@
-// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.2.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -341,8 +341,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     parametersPairToRename.Add(parameter, newParameterName);
                     // add the parameter to the perModuleParametersPairToRename list
                     perModuleParametersPairToRename.Add(parameter, newParameterName);
-                    //debug print the parametersPairToRename entire
-                    CoreLog("parametersPairToRename: " + parameter + " -> " + newParameterName);
                   }
                   else
                   {
@@ -360,7 +358,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 {
                   parametersPairToRenameDebug.Append(pair.Key + " -> " + pair.Value + "\n");
                 }
-                CoreLog("parametersPairToRename: \n" + parametersPairToRenameDebug.ToString());
+                CoreLog("parametersPairToRename List: \n" + parametersPairToRenameDebug.ToString());
               }
 
               // log the controller's name to the console and build report
