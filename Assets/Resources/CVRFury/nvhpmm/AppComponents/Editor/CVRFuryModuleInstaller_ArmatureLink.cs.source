@@ -1,4 +1,4 @@
-// { "version": "0.0.28" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.45" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -53,7 +53,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // bool to say if we have need mesh rebind mode
         bool needsMeshRebind = true;
-
 
         // check if there are any animator components on the DSUObject or any of its children
         if (DSUObject.GetComponent<Animator>() == null && DSUObject.GetComponentsInChildren<Animator>().Length == 0)
@@ -111,8 +110,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           default:
             // Handle unexpected case
             // log a critical error to the console (should be impossible to reach this point)
-            CoreLogCritical("Unexpected module.addonLinkMode: " + armatureLinkModule.addonLinkMode 
-                            + " this should not happen, please report this to the developer");
+            CoreLogCritical(
+              "Unexpected module.addonLinkMode: "
+                + armatureLinkModule.addonLinkMode
+                + " this should not happen, please report this to the developer"
+            );
             break;
         }
       }
@@ -124,9 +126,311 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // console print to say this function is being called
       CoreLog("performMeshRebind() called");
 
-      // TODO: Implement performMeshRebind
-      CoreLogError("MeshRebind is not yet implemented");
+      // get the path to the avatar
+      string avatarPath = GetGameObjectPath(avatar.gameObject);
+
+      // get the current path of the addonObjectToLink and store it
+      string addonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
+
+      // get the new path of the addonObjectToLink and store it
+      string newAddonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
+
+      // ok this is mesh rebind mode, so first we need to figure out what sub object is the root of the addon armature
+      // so check if there are any animator components on the DSUObject or any of its children
+      if (DSUObject.GetComponent<Animator>() == null && DSUObject.GetComponentsInChildren<Animator>().Length == 0)
+      {
+        // if there are no animator components on the DSUObject or any of its children, then we can't do mesh rebind
+        // log an error to the console and return
+        CoreLogError("No Animator component found on DSUObject or any of its children, cannot perform mesh rebind");
+        return;
+      }
+
+      // TODO: need to figure out how to handle the case of multiple animator components on the DSUObject or its children
+      // for now just get the first one from only the DSUObject
+
+      // check if there is not an animator component on the DSUObject and if so abort
+      if (DSUObject.GetComponent<Animator>() == null)
+      {
+        // log an error to the console and return
+        CoreLogError("No Animator component found on DSUObject, cannot perform mesh rebind");
+        return;
+      }
+
+      // at this point we know there is an animator component on the DSUObject, so check if it has a avatar assigned
+      if (DSUObject.GetComponent<Animator>().avatar == null)
+      {
+        // log an error to the console and return
+        CoreLogError("No Avatar assigned to Animator component on DSUObject, cannot perform mesh rebind");
+        return;
+      }
+
+      // get the gameobject of the AddonObjectToLink
+      GameObject addonObjectToLink = armatureLinkModule.addonObjectToLink;
+
+      // finding the root of the armature
+      // Start with the addonObjectToLink
+      Transform current = addonObjectToLink.transform;
+
+      // Walk up the hierarchy until we reach the top
+      while (current.parent != null && current.parent != DSUObject.transform)
+      {
+        current = current.parent;
+      }
+
+      // current is now the root GameObject of the armature, so now we can use that for exclusion purposes
+      GameObject armatureRoot = current.gameObject;
+
+      // now all animations will have been made assuming the base is the same object that has the Animator component
+      // but now we are adding it to an avatar, so we need to adjust the paths of the animations to match the new
+      // hierarchy
+
+      // first we need a list of all the objects directly under the object that the animator is on, but that do not
+      // include the armatureRoot object
+      List<GameObject> objectsToRebind = new List<GameObject>();
+      foreach (Transform child in DSUObject.transform)
+      {
+        if (child.gameObject != armatureRoot)
+        {
+          objectsToRebind.Add(child.gameObject);
+        }
+      }
+
+      // get the current path of the object that the animator is on under the avatar
+      string animatorObjectPath = GetGameObjectPath(DSUObject);
+      
+
+      // now we need to make a rewrite dictionary to store the old paths and the new paths
+      Dictionary<string, string> pathRewrite = new Dictionary<string, string>();
+
+      // for each of the objects to rebind, we need to get the current path and store it in the pathRewrite
+      // then we need to prefix that path with the animatorObjectPath and store that as the new path
+      foreach (GameObject obj in objectsToRebind)
+      {
+        // get the current path of the object relative to the animatorObjectPath
+        string currentPath = GetGameObjectPath(obj);
+        // remove the animatorObjectPath from the start of the currentPath
+        currentPath = currentPath.Replace(animatorObjectPath, "");
+        // the above line will leave a leading `/` so remove it
+        if (currentPath.StartsWith("/"))
+        {
+          currentPath = currentPath.Substring(1);
+        }
+        //this should now be the path relative to the animatorObjectPath, which should match up to the animator provided
+        // with the prefab to be linked
+
+        // get the object's path relative to the avatar
+        string objectPath = GetGameObjectPath(obj);
+        // remove the avatarPath from the start of the objectPath
+        objectPath = objectPath.Replace(avatarPath, "");
+        // remove the starting `/` from the objectPath if it exists
+        if (objectPath.StartsWith("/"))
+        {
+          objectPath = objectPath.Substring(1);
+        }
+
+        // store the currentPath and the new path in the pathRewrite
+        pathRewrite[currentPath] = objectPath;
+
+      }
+
+      // debug print all the pathRewrite entries in one go
+      StringBuilder pathRewriteDebug = new StringBuilder();
+      foreach (KeyValuePair<string, string> entry in pathRewrite)
+      {
+        pathRewriteDebug.Append("Key: ");
+        pathRewriteDebug.Append(entry.Key);
+        pathRewriteDebug.Append(", Value: ");
+        pathRewriteDebug.Append(entry.Value);
+        pathRewriteDebug.Append("\n");
+      }
+      CoreLogDebug("pathRewrite:\n" + pathRewriteDebug.ToString());
+
+      // now we need to go through all the animations and update the paths
+      // loop over the dictionary
+      foreach (KeyValuePair<string, string> entry in pathRewrite)
+      {
+        // get the current path and the new path
+        string currentPath = entry.Key;
+        string newPath = entry.Value;
+
+        // check if the currentPath is the same as the newPath, if it is then skip this entry
+        if (currentPath == newPath)
+        {
+          continue;
+        }
+
+        //update the animation clips
+        UpdateAnimationClips(avatar.name, currentPath, newPath);
+      }
+      // that should take care of the animations, for all the mesh items sitting next to the armature
+      // now we need to merge the armatures together and rebind the meshes to the new armature
+
+      // get the Animator component from the avatar
+      Animator animator = avatar.GetComponent<Animator>();
+      // get the HumanBodyBones enum value from the armatureBoneToLinkTo
+      HumanBodyBones boneToLinkTo = armatureLinkModule.armatureBoneToLinkTo;
+      // get the GameObject of the boneToLinkTo
+      GameObject boneToLinkToGameObject = animator.GetBoneTransform(boneToLinkTo).gameObject;
+
+      // now we have the target bone on the avatar, that we are going to merge this onto
+
+      // compare the child bones of the armatureRoot to the child bones of the boneToLinkToGameObject
+      // and add any missing bones to the boneToLinkToGameObject
+      // this is done by checking the names of the bones and adding any that are missing
+
+      // walk the bones of avatar's armature starting from the parent of the boneToLinkTo and compare
+      // to the armatureRoot's children
+      Transform[] avatarBones = boneToLinkToGameObject.GetComponentsInChildren<Transform>();
+      Transform[] addonBones = armatureRoot.GetComponentsInChildren<Transform>();
+
+      // create a list of the names of the bones in the avatar's armature
+      List<string> avatarBoneNames = new List<string>();
+      foreach (Transform bone in avatarBones)
+      {
+        avatarBoneNames.Add(bone.name);
+      }
+
+      // create a list of the names of the bones in the addon's armature
+      List<BoneData> addonBoneNames = new List<BoneData>();
+      foreach (Transform bone in addonBones)
+      {
+        addonBoneNames.Add(new BoneData { name = bone.name, parentName = bone.parent != null ? bone.parent.name : "" });
+      }
+
+      // ensure that any 'bone' in the addonBones list whose name matches that of the armatureRoot is removed
+      addonBoneNames.RemoveAll(b => b.name == armatureRoot.name);
+
+      // debug print the armatureRoot name
+      CoreLogDebug("armatureRoot.name: " + armatureRoot.name);
+
+      // debug print the addonBoneNames list after removing the armatureRoot
+      StringBuilder addonBoneNamesStringBuilder2 = new StringBuilder();
+      foreach (BoneData boneData in addonBoneNames)
+      {
+        addonBoneNamesStringBuilder2.Append("name: " + boneData.name + ", parentName: " + boneData.parentName + "\n");
+      }
+      CoreLogDebug("addonBoneNames after removing armatureRoot:\n" + addonBoneNamesStringBuilder2.ToString());
+
+      // create a list of the names of the bones in the addon's armature for comparison
+      List<string> addonBoneNamesList = addonBoneNames.Select(b => b.name).ToList();
+
+      // create a list of the bones that are in the addon's armature but not in the avatar's armature
+      List<string> missingBones = addonBoneNamesList.Except(avatarBoneNames).ToList();
+
+      // print missingBones to console in one block
+      StringBuilder missingBonesStringBuilder = new StringBuilder();
+      foreach (string missingBone in missingBones)
+      {
+        missingBonesStringBuilder.Append(missingBone + "\n");
+      }
+      CoreLogDebug("missingBones:\n" + missingBonesStringBuilder.ToString());
+
+      // list of bones that have been added to the avatar's armature
+      List<string> addedBones = new List<string>();
+
+      // loop over the missingBones and reparent them into the avatar's armature, note that they must not be moved or scaled
+      // from their current position, just reparented
+      foreach (string missingBoneName in missingBones)
+      {
+        // find the bone in the addonBones list
+        BoneData missingBone = addonBoneNames.Find(b => b.name == missingBoneName);
+
+        // check if the current missing bone's parent is in the addedBones list, if it is then skip this bone
+        if (addedBones.Contains(missingBone.parentName))
+        {
+          // skipping this bone as the parent is the top of an addon leaf bone tree
+          // but we need to put it on the addedBones list so that the next bones down the tree can be handled
+          addedBones.Add(missingBoneName);
+          // now continue to the next bone
+          continue;
+        }
+
+        // find the parent bone in the avatarBones list
+        Transform parentBone = avatarBones.FirstOrDefault(b => b.name == missingBone.parentName);
+
+        // if the parentBone is null then there is an issue, log an error to the console and continue to the next bone
+        if (parentBone == null)
+        {
+          // log as a critical error to the console, as this should not happen
+          // should never get here as all leaf bone trees should have already been filtered out
+          CoreLogCritical("Parent bone not found for: " + missingBoneName);
+          continue;
+        }
+
+        // find the bone in the addonBones list
+        Transform bone = addonBones.FirstOrDefault(b => b.name == missingBoneName);
+
+        // reparent the bone to the parentBone
+        bone.SetParent(parentBone, true);
+
+        // add the bone name to the addedBones list
+        addedBones.Add(missingBoneName);
+
+        // debug log to console that the bone has been reparented
+        CoreLogDebug("Bone has been reparented to: " + parentBone.name);
+      }
+
+      // now all the bones have been added to the avatar's armature, we need to rebind the skinned mesh renderers
+      // to the new armature at the boneToLinkTo
+
+      // get all the skinned mesh renderers under the DSUObject
+      SkinnedMeshRenderer[] skinnedMeshRenderers = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+      // debug print the skinnedMeshRenderers in one block
+      StringBuilder skinnedMeshRenderersStringBuilder = new StringBuilder();
+      foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
+      {
+        skinnedMeshRenderersStringBuilder.Append(skinnedMeshRenderer.name + "\n");
+      }
+      CoreLogDebug("skinnedMeshRenderers:\n" + skinnedMeshRenderersStringBuilder.ToString());
+      
+      // TODO: figure out why no skinned mesh renderers are being found 
+
+      // // loop over the skinned mesh renderers and rebind them to the new armature
+      // foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
+      // {
+      //   // get the bones of the skinned mesh renderer
+      //   Transform[] bones = skinnedMeshRenderer.bones;
+
+      //   // create a new list of bones to store the new bones
+      //   List<Transform> newBones = new List<Transform>();
+
+      //   // loop over the bones and find the new bone in the avatar's armature
+      //   foreach (Transform bone in bones)
+      //   {
+      //     // find the new bone in the avatar's armature
+      //     Transform newBone = avatarBones.FirstOrDefault(b => b.name == bone.name);
+
+      //     // if the newBone is null then there is an issue, log an error to the console and continue to the next bone
+      //     if (newBone == null)
+      //     {
+      //       // log as a critical error to the console, as this should not happen
+      //       CoreLogCritical("New bone not found for: " + bone.name);
+      //       continue;
+      //     }
+
+      //     // add the new bone to the newBones list
+      //     newBones.Add(newBone);
+      //   }
+
+      //   // rebind the skinned mesh renderer to the new armature
+      //   skinnedMeshRenderer.bones = newBones.ToArray();
+      //   skinnedMeshRenderer.rootBone = boneToLinkToGameObject.transform;
+
+      //   // debug log to console that the skinned mesh renderer has been rebound
+      //   CoreLogDebug("Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
+      // }
+
+
     }
+
+    // struct to store bone data (name and parent name)
+    public struct BoneData
+    {
+      public string name;
+      public string parentName;
+    }
+
 
     private void performReparentRoot(CVRAvatar avatar, GameObject DSUObject, armatureLink armatureLinkModule)
     {
@@ -152,7 +456,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // move the addonObjectToLink to be a child of the armatureBoneToLinkTo, note armatureBoneToLinkTo is of
       // type HumanBodyBones, the addonObjectToLink is of type GameObject and the addonObjectToLink should not move in
       // scene space but just be parented to the bone (this is so the user can position the object where they want it)
-      
+
       // get the Animator component from the avatar
       Animator animator = avatar.GetComponent<Animator>();
 
@@ -161,7 +465,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the GameObject of the boneToLinkTo
       GameObject boneToLinkToGameObject = animator.GetBoneTransform(boneToLinkTo).gameObject;
-      
+
       // perform the reparenting
       armatureLinkModule.addonObjectToLink.transform.SetParent(boneToLinkToGameObject.transform, true);
 
@@ -188,93 +492,64 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         return;
       }
 
+      //update the animation clips
+      UpdateAnimationClips(avatar.name, addonObjectToLinkPath, newAddonObjectToLinkPath);
+    }
 
+    public void UpdateAnimationClips(string avatarName, string addonObjectToLinkPath, string newAddonObjectToLinkPath)
+    {
+      string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items";
 
-      // loop through all the animation clips in the folder related to the avatar 'Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name'
-      // and update the animation clips to reflect the new bone position
-      // get the path to the folder containing the animation clips
-      string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name + "/temp_items";
-
-      // check if the folder exists
       if (!Directory.Exists(animationClipsFolder))
       {
-        // if the folder does not exist, log an error to the console and return
         CoreLogError("Animation clips folder does not exist: " + animationClipsFolder);
         return;
       }
 
-      // debug print the path of the animation clips folder
       CoreLogDebug("Animation clips folder: " + animationClipsFolder);
 
-      // loop through all the animation clips in the folder
       foreach (string animationClipPath in Directory.GetFiles(animationClipsFolder))
       {
-        // check if there is a file at the path
         if (!File.Exists(animationClipPath))
         {
-          // should not be possible to reach this point, but adding as a null check
-          // report critical error to the console
           CoreLogCritical("File does not exist: " + animationClipPath);
-
-          // if there is no file at the path, skip this file
           continue;
         }
 
-        // check if the file name ends with .anim, if not then skip this file
         if (!animationClipPath.EndsWith(".anim"))
         {
-          // skip this file, if it is not an animation clip we are not interested in it
           continue;
         }
 
-        // debug print the old and new paths of the addonObjectToLink
         CoreLogDebug("addonObjectToLinkPath: " + addonObjectToLinkPath);
         CoreLogDebug("newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
 
-        // Load the animation clip
         AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationClipPath);
-        
-        // Get the editor curves from the clip
         EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
-        
-        // Iterate over the curves
+
         foreach (EditorCurveBinding curveBinding in curveBindings)
         {
-          // debug print the path of the curve
           CoreLogDebug("Current curveBinding.path: " + curveBinding.path);
 
-          // If the path of the curve matches addonObjectToLinkPath, replace it with newAddonObjectToLinkPath
           if (curveBinding.path == addonObjectToLinkPath)
           {
-            // Create a new binding with the new path
             EditorCurveBinding newCurveBinding = new EditorCurveBinding
             {
               path = newAddonObjectToLinkPath,
               type = curveBinding.type,
               propertyName = curveBinding.propertyName
             };
-        
-            // Get the curve from the old binding
+
             AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, curveBinding);
-        
-            // Remove the old curve
             AnimationUtility.SetEditorCurve(clip, curveBinding, null);
-        
-            // Set the curve to the new binding
             AnimationUtility.SetEditorCurve(clip, newCurveBinding, curve);
           }
         }
-        
-        // Save the changes to the animation clip
+
         AssetDatabase.SaveAssets();
-
-        // mark the animation clip as dirty
         EditorUtility.SetDirty(clip);
-
-        // update the asset database
         AssetDatabase.Refresh();
       }
-      
     }
   }
 }
