@@ -76,6 +76,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         foreach (Transform child in parent.transform)
         {
             result.Add(child.gameObject);
+            result.AddRange(child.gameObject.GetAllChildGameObjects());
         }
         return result;
     }
