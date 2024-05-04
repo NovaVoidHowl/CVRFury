@@ -70,6 +70,16 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
     }
 
+    public static List<GameObject> GetAllChildGameObjects(this GameObject parent)
+    {
+        List<GameObject> result = new List<GameObject>();
+        foreach (Transform child in parent.transform)
+        {
+            result.Add(child.gameObject);
+        }
+        return result;
+    }
+
 #if UNITY_EDITOR
     // this bit needs editor to work
 
