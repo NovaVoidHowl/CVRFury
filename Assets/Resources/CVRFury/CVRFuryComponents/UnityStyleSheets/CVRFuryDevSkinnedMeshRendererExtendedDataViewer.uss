@@ -28,6 +28,11 @@
   height: 14px;
 }
 
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .boneIcon {
+  width: 14px;
+  height: 14px;
+}
+
 #CVRFuryDevSkinnedMeshRendererExtendedDataViewer .meshField .unity-label {
   margin-right: 2px;
   margin-top: 2px;
@@ -39,6 +44,10 @@
   margin-top: 2px;
   margin-bottom: 2px;
   margin-right: 2px;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .container .unity-scroll-view {
+  width: 100%;
 }
 
 #CVRFuryDevSkinnedMeshRendererExtendedDataViewer .rootBoneFieldBorder {
@@ -69,4 +78,28 @@
   margin-right: 2px;
   margin-top: 2px;
   margin-bottom: 2px;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .bone-element {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start; /* Align items at the start */
+
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .unity-foldout {
+
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .bone-label {
+
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .bone-icon {
+
+  width: 16px;
+  height: 16px;
+  left: -8px;
+
 }
