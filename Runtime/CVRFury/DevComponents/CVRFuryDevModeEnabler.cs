@@ -11,7 +11,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   /// just add one to the same GameObject that holds the one
   /// you want to put in dev mode
   /// </summary>
-  [AddComponentMenu("")] // hide from add component menu
+  [AddComponentMenu("CVRFury/Dev/Component Dev Mode Enabler")]
   public class CVRFuryDevModeEnabler : MonoBehaviour
   {
     [System.Serializable]

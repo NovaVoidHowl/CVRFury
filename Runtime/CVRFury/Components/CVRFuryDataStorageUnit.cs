@@ -8,7 +8,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   /// <summary>
   ///
   /// </summary>
-  [AddComponentMenu("CVRFury Data Storage Unit")]
+  [AddComponentMenu("CVRFury/Data Storage Unit")]
   public class CVRFuryDataStorageUnit : MonoBehaviour
   {
     // label to Say that the DSU has not correctly loaded and

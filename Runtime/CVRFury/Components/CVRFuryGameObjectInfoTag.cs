@@ -7,7 +7,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   /// this component is used to
   /// to store info about GameObjects that have been added to the base avatar via CVRFury
   /// </summary>
-  [AddComponentMenu("")] // hide from add component menu
+  [AddComponentMenu("CVRFury/System/GameObjectInfoTag")]
   public class CVRFuryGameObjectInfoTag : MonoBehaviour
   {
     public string sourcePrefabName;
