@@ -1,0 +1,72 @@
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .meshFieldBorder {
+  background-color: #333333;
+  padding-left: 2px;
+  padding-right: 2px;
+  border-width: 1px;
+  border-color: #666666;
+  flex-grow: 1;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .container {
+  display: flex;
+  flex-direction: row;
+
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .meshField {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .meshIcon {
+  margin-left: 2px;
+  margin-right: 2px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  width: 14px;
+  height: 14px;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .meshField .unity-label {
+  margin-right: 2px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .container .unity-label {
+  margin-top: 2px;
+  margin-bottom: 2px;
+  margin-right: 2px;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .rootBoneFieldBorder {
+  background-color: #333333;
+  padding-left: 2px;
+  padding-right: 2px;
+  border-width: 1px;
+  border-color: #666666;
+  flex-grow: 1;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .rootBoneField {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .rootBoneIcon {
+  margin-left: 2px;
+  margin-right: 2px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  width: 14px;
+  height: 14px;
+}
+
+#CVRFuryDevSkinnedMeshRendererExtendedDataViewer .rootBoneField .unity-label {
+  margin-right: 2px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
