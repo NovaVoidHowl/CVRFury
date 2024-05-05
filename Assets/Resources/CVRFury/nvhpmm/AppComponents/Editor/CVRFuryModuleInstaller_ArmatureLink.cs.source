@@ -1,4 +1,4 @@
-// { "version": "0.0.90" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.100" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -386,6 +386,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
       CoreLogDebug("skinnedMeshRenderers:\n" + skinnedMeshRenderersStringBuilder.ToString());
 
+      // TODO: still need to finish implementing this section
       #region Mesh re-processing
       // loop over the skinned mesh renderers and get the vertices that are affected by the bones that are different
       foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
@@ -687,44 +688,131 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // to the new armature at the boneToLinkTo
   
       #region Skinned mesh renderer rebind
-      // loop over the skinned mesh renderers and rebind them to the new armature
-      // foreach (SkinnedMeshRenderer skinnedMeshRendererToRebind in skinnedMeshRenderers)
-      // {
-      //   // get the bones of the skinned mesh renderer
-      //   Transform[] bonesToRebind = skinnedMeshRendererToRebind.bones;
+      //  loop over the skinned mesh renderers and rebind them to the new armature
+      foreach (SkinnedMeshRenderer skinnedMeshRendererToRebind in skinnedMeshRenderers)
+      {
+        // check if skinnedMeshRendererToRebind.bones is null, if it is then there is an issue, log an error to the console and continue to the next skinned mesh renderer
+        if (skinnedMeshRendererToRebind.bones == null)
+        {
+          // log as a critical error to the console, as this should not happen
+          CoreLogCritical("Bones not found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name);
+        }
+        else
+        {
+          // log as a debug to the console
+          CoreLogDebug("Bones found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name);
 
-      //   // create a new list of bones to store the new bones
-      //   List<Transform> newBones = new List<Transform>();
+          // get the bones of the skinned mesh renderer
+          Transform[] bonesToRebind = skinnedMeshRendererToRebind.bones;
 
-      //   // loop over the bones and find the new bone in the avatar's armature
-      //   foreach (Transform boneToRebind in bonesToRebind)
-      //   {
-      //     // find the new bone in the avatar's armature
-      //     Transform newBone = avatarBones.FirstOrDefault(b => b.name == boneToRebind.name);
+          // list the bones that are in the skinned mesh renderer in one block
+          StringBuilder bonesToRebindStringBuilder = new StringBuilder();
+          foreach (Transform boneToRebind in bonesToRebind)
+          {
+            bonesToRebindStringBuilder.Append(boneToRebind.name + "\n");
+          }
+          CoreLogDebug("bonesToRebind:\n" + bonesToRebindStringBuilder.ToString());
 
-      //     // if the newBone is null then there is an issue, log an error to the console and continue to the next bone
-      //     if (newBone == null)
-      //     {
-      //       // log as a critical error to the console, as this should not happen
-      //       CoreLogCritical("New bone not found for: " + boneToRebind.name);
-      //       continue;
-      //     }
+          // now we need only rebind bones that are common to the avatar and the addon (all the others
+          // are already bound to the mesh so no point in messing with them) thus the 'commonBones' list
+          // will be of help to filter the bones that need to be rebound (note that its just a list of names,
+          // not actual bone refs)
 
-      //     // add the new bone to the newBones list
-      //     newBones.Add(newBone);
-      //   }
+          // create a list of bones to update from the bonesToRebind list that are in the commonBones list
+          List<Transform> bonesToUpdate = new List<Transform>();
 
-      //   // rebind the skinned mesh renderer to the new armature
-      //   skinnedMeshRendererToRebind.bones = newBones.ToArray();
-      //   skinnedMeshRendererToRebind.rootBone = boneToLinkToGameObject.transform;
+          // loop over the bonesToRebind and find the bones that are in the commonBones list
+          foreach (Transform boneToRebind in bonesToRebind)
+          {
+            // check if the boneToRebind is in the commonBones list
+            if (commonBones.Contains(boneToRebind.name))
+            {
+              // add the boneToRebind to the bonesToUpdate list
+              bonesToUpdate.Add(boneToRebind);
+            }
+          }
 
-      //   // TODO: sort out the Anchor Override (if needed)        
+          // print bonesToUpdate to console in one block
+          StringBuilder bonesToUpdateStringBuilder = new StringBuilder();
+          foreach (Transform boneToUpdate in bonesToUpdate)
+          {
+            bonesToUpdateStringBuilder.Append(boneToUpdate.name + "\n");
+          }
+          CoreLogDebug("bonesToUpdate:\n" + bonesToUpdateStringBuilder.ToString());
 
-      //   // debug log to console that the skinned mesh renderer has been rebound
-      //   CoreLogDebug("Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
-      // }
+          // now we have the bones that need to be rebound, we need to rebind them to the new armature
+
+          // loop over the bonesToUpdate and rebind them to the avatar's armature
+          for (int i = 0; i < bonesToUpdate.Count; i++)
+          {
+            // find the bone in the avatarBones list
+            Transform newBone = avatarBones.FirstOrDefault(b => b.name == bonesToUpdate[i].name);
+
+            // if the newBone is null then there is an issue, log an error to the console and continue to the next bone
+            if (newBone == null)
+            {
+              // log as a critical error to the console, as this should not happen
+              CoreLogCritical("New bone not found for: " + bonesToUpdate[i].name);
+              continue;
+            }
+
+            // rebind the bone to the newBone
+            bonesToUpdate[i] = newBone;
+
+            // debug log to console that the bone has been rebound
+            CoreLogDebug("Bone has been rebound to: " + newBone.name);
+          }
+
+
+        
+        }
+
+        // even if no bones were found, we still need to rebind the root bone (and that is always there)
+        skinnedMeshRendererToRebind.rootBone = boneToLinkToGameObject.transform;
+
+        // check if the Anchor Override is set on the skinned mesh renderer, if it is then set it to the matching bone in the avatar's armature
+        if (skinnedMeshRendererToRebind.probeAnchor != null)
+        {
+          // find the bone in the avatarBones list
+          Transform anchorOverride = avatarBones.FirstOrDefault(b => b.name == skinnedMeshRendererToRebind.probeAnchor.name);
+
+          // if the anchorOverride target is null then there is an issue, log an error to the console and continue to the next skinned mesh renderer
+          if (anchorOverride == null)
+          {
+            // log as a critical error to the console, as this should not happen
+            CoreLogCritical("Anchor Override target not found for: " + skinnedMeshRendererToRebind.probeAnchor.name);
+            continue;
+          }
+
+          // set the anchorOverride to the anchorOverride
+          skinnedMeshRendererToRebind.probeAnchor = anchorOverride;
+
+          // debug log to console that the skinned mesh renderer has been rebound
+          CoreLogDebug("Skinned mesh renderer has been rebound to: " + anchorOverride.name);
+        }
+        else
+        {
+          // debug log to console that the skinned mesh renderer has been rebound
+          CoreLogDebug("Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
+        }    
+
+        // debug log to console that the skinned mesh renderer has been rebound
+        CoreLogDebug("Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
+      }
 
       #endregion
+    
+      // TODO: add in a section that takes care of updating the animations to match the new bone structure
+      #region Animation rebind
+      // from the addonBoneNamesList we can get the bones that are in the addon's armature
+      // given that we can use that as half the information we need to rebind the animations
+      // the other half is the bones that are in the avatar's armature, we can get that from the avatarBones list
+      // so we can loop over the addonBoneNamesList and find the corresponding bone in the avatarBones list
+      // then we can update the animation clips to match the new bone structure
+
+     
+      #endregion
+    
     }
     
     private void performReparentRoot(CVRAvatar avatar, GameObject DSUObject, int DSUNumber, armatureLink armatureLinkModule)
