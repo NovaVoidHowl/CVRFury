@@ -289,6 +289,6 @@ Licence MIT
 [issues-shield]: https://img.shields.io/github/issues/NovaVoidHowl/CVRFury.svg?style=plastic
 [issues-url]: https://github.com/NovaVoidHowl/CVRFury/issues
 [license-shield]: https://img.shields.io/badge/License-LGPL_2.1-blue
-[license-url]: https://github.com/NovaVoidHowl/CVRFury/blob/master/LICENCE.md
+[license-url]: https://github.com/NovaVoidHowl/CVRFury/blob/master/LICENSE.md
 [stars-shield]: https://img.shields.io/github/stars/NovaVoidHowl/CVRFury.svg?style=plastic
 [stars-url]: https://github.com/NovaVoidHowl/CVRFury/stargazers
