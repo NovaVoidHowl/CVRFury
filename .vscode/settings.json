@@ -29,6 +29,7 @@
     "Newtonsoft",
     "novavoidhowl",
     "nvhpmm",
+    "organise",
     "packagecore",
     "Physbone",
     "Physbones",
@@ -40,6 +41,7 @@
     "Reparent",
     "Scriptable",
     "Senky",
+    "struct",
     "Stubber",
     "stylesheet",
     "subfolders",
@@ -53,8 +55,7 @@
     "vrcfury",
     "vrchat",
     "VRCSDK",
-    "vrcstub",
-    "struct"
+    "vrcstub"
   ],
   "colorize.hide_current_line_decorations": false,
   "colorize.languages": [
