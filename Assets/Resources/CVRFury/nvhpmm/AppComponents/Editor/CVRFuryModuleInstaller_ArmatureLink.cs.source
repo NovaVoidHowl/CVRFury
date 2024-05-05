@@ -1,4 +1,4 @@
-// { "version": "0.0.45" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.90" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -74,25 +74,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // note this needs to start at the bone specified in the armatureBoneToLinkTo (this being a unity standard
             // bone name) and put the two armatures together from there
 
-            performMeshRebind(avatar, DSUObject, armatureLinkModule);
+            performMeshRebind(avatar, DSUObject, DSUNumber, armatureLinkModule);
             break;
           case CVRFuryModuleLinker.linkMode.MergeAsChildren:
             // Deprecated, but kept for redirecting to MeshRebind
             // Handle MergeAsChildren case
             // redirect to the same as MeshRebind
-            performMeshRebind(avatar, DSUObject, armatureLinkModule);
+            performMeshRebind(avatar, DSUObject, DSUNumber, armatureLinkModule);
             break;
           case CVRFuryModuleLinker.linkMode.ParentConstraint:
             // Deprecated, but kept for redirecting to MeshRebind
             // Handle ParentConstraint case
             // redirect to the same as MeshRebind
-            performMeshRebind(avatar, DSUObject, armatureLinkModule);
+            performMeshRebind(avatar, DSUObject, DSUNumber, armatureLinkModule);
             break;
           case CVRFuryModuleLinker.linkMode.ReparentRoot:
             // Handle ReparentRoot case
             // this needs to move the addonObjectToLink to be a child of the armatureBoneToLinkTo while keeping the
             // object's position and rotation relative to the bone
-            performReparentRoot(avatar, DSUObject, armatureLinkModule);
+            performReparentRoot(avatar, DSUObject, DSUNumber, armatureLinkModule);
             break;
           case CVRFuryModuleLinker.linkMode.Auto:
             // Handle Auto case
@@ -100,11 +100,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // MeshRebind, if it doesn't then it should use ReparentRoot
             if (needsMeshRebind)
             {
-              performMeshRebind(avatar, DSUObject, armatureLinkModule);
+              performMeshRebind(avatar, DSUObject, DSUNumber, armatureLinkModule);
             }
             else
             {
-              performReparentRoot(avatar, DSUObject, armatureLinkModule);
+              performReparentRoot(avatar, DSUObject, DSUNumber, armatureLinkModule);
             }
             break;
           default:
@@ -120,11 +120,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-    private void performMeshRebind(CVRAvatar avatar, GameObject DSUObject, armatureLink armatureLinkModule)
+    private void performMeshRebind(CVRAvatar avatar, GameObject DSUObject, int DSUNumber, armatureLink armatureLinkModule)
     {
       // Implementation for performMeshRebind
       // console print to say this function is being called
       CoreLog("performMeshRebind() called");
+
+      // call function to add the CVRFuryGameObjectInfoTag to the DSUObject + children
+      AddCVRFuryGameObjectInfoTagToAddon(DSUObject, DSUNumber);
 
       // get the path to the avatar
       string avatarPath = GetGameObjectPath(avatar.gameObject);
@@ -317,6 +320,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // create a list of the bones that are in the addon's armature but not in the avatar's armature
       List<string> missingBones = addonBoneNamesList.Except(avatarBoneNames).ToList();
 
+      // create a List of bones that are on both the avatar and the addon 
+      //(this is so we can check for differentials in the rotation/position/scale of the bones)
+      List<string> commonBones = addonBoneNamesList.Intersect(avatarBoneNames).ToList();
+
       // print missingBones to console in one block
       StringBuilder missingBonesStringBuilder = new StringBuilder();
       foreach (string missingBone in missingBones)
@@ -328,6 +335,312 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // list of bones that have been added to the avatar's armature
       List<string> addedBones = new List<string>();
 
+      // list to store bones that have a different rotation/position/scale
+      List<string> differentBones = new List<string>();
+
+      // loop over the commonBones and check if the rotation/position/scale of the bones are different
+      foreach (string commonBoneName in commonBones)
+      {
+        // find the bone in the addonBones list
+        BoneData commonBone = addonBoneNames.Find(b => b.name == commonBoneName);
+
+        // find the bone in the avatarBones list
+        Transform avatarBone = avatarBones.FirstOrDefault(b => b.name == commonBoneName);
+
+        // find the bone in the addonBones list
+        Transform addonBone = addonBones.FirstOrDefault(b => b.name == commonBoneName);
+
+        // check if the rotation/position/scale of the bones are different
+        if (avatarBone.rotation != addonBone.rotation || avatarBone.position != addonBone.position || avatarBone.localScale != addonBone.localScale)
+        {
+          // add the bone name to the differentBones list
+          differentBones.Add(commonBoneName);
+        }
+      }
+
+      // if there are any differentBones then log a warning to the console (including the bone names)
+      if (differentBones.Count > 0)
+      {
+        // print differentBones to console in one block
+        StringBuilder differentBonesStringBuilder = new StringBuilder();
+        foreach (string differentBone in differentBones)
+        {
+          differentBonesStringBuilder.Append(differentBone + "\n");
+        }
+        CoreLogError("The following bones have different rotation/position/scale in the addon's armature compared to the avatar's armature:\n" + differentBonesStringBuilder.ToString());
+      }
+
+      // get a list of vertices that are affected by the bones that are different
+      // this is so we can warn the user that the vertices will not move as expected
+      // this is done by getting the skinned mesh renderers that are affected by the bones that are different
+      // and then getting the vertices that are affected by those skinned mesh renderers
+
+      // get all the skinned mesh renderers under the DSUObject
+      SkinnedMeshRenderer[] skinnedMeshRenderers = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
+      // debug print the skinnedMeshRenderers in one block
+      StringBuilder skinnedMeshRenderersStringBuilder = new StringBuilder();
+      foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
+      {
+        skinnedMeshRenderersStringBuilder.Append(skinnedMeshRenderer.name + "\n");
+      }
+      CoreLogDebug("skinnedMeshRenderers:\n" + skinnedMeshRenderersStringBuilder.ToString());
+
+      #region Mesh re-processing
+      // loop over the skinned mesh renderers and get the vertices that are affected by the bones that are different
+      foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
+      {
+        // get the bones of the skinned mesh renderer
+        Transform[] bones = skinnedMeshRenderer.bones;
+
+        // create a new list of bones to store the bones that are different
+        List<Transform> differentBonesTransforms = new List<Transform>();
+
+        // loop over the bones and find the bones that are different
+        foreach (Transform bone in bones)
+        {
+          // find the bone in the differentBones list
+          if (differentBones.Contains(bone.name))
+          {
+            // add the bone to the differentBonesTransforms list
+            differentBonesTransforms.Add(bone);
+          }
+        }
+
+        // get the mesh of the skinned mesh renderer
+        Mesh mesh = skinnedMeshRenderer.sharedMesh;
+
+        // get the vertices of the mesh
+        Vector3[] vertices = mesh.vertices;
+
+        // create a new list of vertices to store the vertices that are affected by the bones that are different
+        List<Vector3> affectedVertices = new List<Vector3>();
+
+        // loop over the vertices and find the vertices that are affected by the bones that are different
+        foreach (Vector3 vertex in vertices)
+        {
+          // get the bone weights of the vertex
+          BoneWeight[] boneWeights = mesh.boneWeights;
+
+          // loop over the bone weights and find the bone weights that are affected by the bones that are different
+          foreach (BoneWeight boneWeight in boneWeights)
+          {
+            // check if the bone weight is affected by the bones that are different
+            if (differentBonesTransforms.Contains(bones[boneWeight.boneIndex0]) ||
+                differentBonesTransforms.Contains(bones[boneWeight.boneIndex1]) ||
+                differentBonesTransforms.Contains(bones[boneWeight.boneIndex2]) ||
+                differentBonesTransforms.Contains(bones[boneWeight.boneIndex3]))
+            {
+              // add the vertex to the affectedVertices list
+              affectedVertices.Add(vertex);
+            }
+          }
+        }
+
+        // if there are any affectedVertices then log a warning to the console (including the number of vertices)
+        if (affectedVertices.Count > 0)
+        {
+          CoreLogError("The following vertices are affected by the bones that have different rotation/position/scale "
+                       + " in the addon's armature compared to the avatar's armature, these vertices will not"
+                       + " move as expected: " + affectedVertices.Count);
+          
+          // ok so this is bad news. for some reason or the bones don't match up, and are going to impact the vertices
+          // need to make a copy of the mesh at this point so we can try to counteract the issue
+
+          // copy the mesh to a new file
+          string meshPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name + "/temp_items/" + skinnedMeshRenderer.name +"_DSU-"+DSUNumber +".asset";
+          AssetDatabase.CreateAsset(Object.Instantiate(mesh), meshPath);
+          CoreLogDebug("Mesh copied to: " + meshPath);
+
+          // ok so now we have a copy of the mesh, we need to set the skinned mesh renderer to use the new mesh
+          skinnedMeshRenderer.sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+
+          // get the new mesh
+          mesh = skinnedMeshRenderer.sharedMesh;
+
+          // now we need to update the new mesh to counteract the vertices displacement/rotation/scale
+
+      //     // temp affectedVertices list so we can write to it (as the original is readonly while iterating)
+      //     List<Vector3> affectedVerticesTemp = new List<Vector3>(affectedVertices);
+
+      //     // get count of affectedVertices
+      //     int affectedVerticesCount = affectedVertices.Count;
+
+      //     // print to console that we are starting to process the affectedVertices
+      //     CoreLog("Processing " + affectedVerticesCount + " affected vertices");
+
+      //     // counter to keep track of how many affectedVertices have been processed
+      //     int affectedVerticesProcessed = 0;
+          
+      //     // if the affectedVerticesCount is 0 then there is nothing to do, log a debug to the console and continue
+      //     // to the next skinned mesh renderer
+      //     if (affectedVerticesCount == 0)
+      //     {
+      //       // log as a debug to the console
+      //       CoreLogDebug("No affected vertices found for skinned mesh renderer");
+      //       continue;
+      //     }
+
+      //     // loop over the affectedVertices and counteract the displacement/rotation/scale
+      //     foreach (Vector3 vertex in affectedVertices)
+      //     {
+      //       #region Counteract displacement/rotation/scale
+      //       // counteract the displacement/rotation/scale
+
+      //       // // console print to say we are processing x of y affected vertices
+      //       // CoreLogDebug("Processing affected vertex " + affectedVerticesProcessed + " of " + affectedVerticesCount);
+            
+      //       // // get the bones linked to the vertex
+      //       // List<Transform> bonesLinkedToVertex = new List<Transform>();
+
+      //       // // get the bone weights of the vertex
+      //       // BoneWeight[] boneWeights = mesh.boneWeights;
+
+      //       // // get the count of boneweights
+      //       // int boneWeightsCount = boneWeights.Length;
+
+      //       // // if the boneWeightsCount is 0 then there is an issue, log an error to the console and continue to the next vertex
+      //       // if (boneWeightsCount == 0 || boneWeights == null)
+      //       // {
+      //       //   // log as a critical error to the console, as this should not happen
+      //       //   CoreLogCritical("No bone weights found for vertex");
+      //       //   continue;
+      //       // }
+
+      //       // // print to console that we are starting to process the bone weights
+      //       // CoreLog("Processing " + boneWeightsCount + " bone weights for vertex");
+
+      //       // // counter to keep track of how many boneweights have been processed
+      //       // int boneWeightsProcessed = 0;
+
+      //       // // loop over the bone weights and find the bones linked to the vertex
+      //       // foreach (BoneWeight boneWeight in boneWeights)
+      //       // {
+      //       //   // check if the bone weight is linked to the vertex
+      //       //   if (vertex == vertices[boneWeight.boneIndex0] ||
+      //       //       vertex == vertices[boneWeight.boneIndex1] ||
+      //       //       vertex == vertices[boneWeight.boneIndex2] ||
+      //       //       vertex == vertices[boneWeight.boneIndex3])
+      //       //   {
+      //       //     // add the bone to the bonesLinkedToVertex list
+      //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex0]);
+      //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex1]);
+      //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex2]);
+      //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex3]);
+      //       //   }
+
+      //       //   // increment the boneWeightsProcessed counter
+      //       //   boneWeightsProcessed++;
+
+      //       //   // print a debug message to the console if the boneWeightsProcessed showing progress
+      //       //   if (boneWeightsProcessed % 1000 == 0)
+      //       //   {
+      //       //     CoreLogDebug("boneWeightsProcessed: " + boneWeightsProcessed + " of " + boneWeightsCount);
+      //       //   }
+      //       // }
+
+      // //       // that will be the current set of bones that are linked to the vertex, ie the ones from the addon armature
+      // //       // that are different to the avatar armature
+
+      // //       // now we need to find the bones in the avatar armature that are linked to the vertex
+            
+      // //       // get the bones in the avatar armature that are linked to the vertex
+      // //       List<Transform> avatarBonesLinkedToVertex = new List<Transform>();
+
+      // //       // loop over the bonesLinkedToVertex and find the bones in the avatar armature that are linked to the vertex
+      // //       foreach (Transform boneLinkedToVertex in bonesLinkedToVertex)
+      // //       {
+      // //         // find the bone in the avatarBones list
+      // //         Transform avatarBoneLinkedToVertex = avatarBones.FirstOrDefault(b => b.name == boneLinkedToVertex.name);
+
+      // //         // if the avatarBoneLinkedToVertex is null then there is an issue, log an error to the console and continue to the next bone
+      // //         if (avatarBoneLinkedToVertex == null)
+      // //         {
+      // //           // log as a critical error to the console, as this should not happen
+      // //           CoreLogCritical("Avatar bone not found for: " + boneLinkedToVertex.name);
+      // //           continue;
+      // //         }
+
+      // //         // add the avatarBoneLinkedToVertex to the avatarBonesLinkedToVertex list
+      // //         avatarBonesLinkedToVertex.Add(avatarBoneLinkedToVertex);
+      // //       }
+
+      // //       // now we have the bones in the avatar armature that are linked to the vertex, we need to counteract the
+      // //       // displacement/rotation/scale issue
+
+      // //       // counteract the displacement/rotation/scale issue
+      // //       // this is done by getting the transform differences between the bones in the addon armature and the bones
+      // //       // in the avatar armature, then applying those differences to the vertex
+
+      // //       // get the transform differences between the bones in the addon armature and the bones in the avatar armature
+      // //       // this is done by getting the position/rotation/scale differences between the bones in the addon armature
+      // //       // and the bones in the avatar armature
+      // //       // then applying those differences to the vertex
+
+      // //       // loop over the avatarBonesLinkedToVertex and find the transform differences between the bones in the addon
+      // //       // armature and the bones in the avatar armature
+      // //       foreach (Transform avatarBoneLinkedToVertex in avatarBonesLinkedToVertex)
+      // //       {
+      // //         // find the bone in the addonBones list
+      // //         Transform boneLinkedToVertex = bonesLinkedToVertex.FirstOrDefault(b => b.name == avatarBoneLinkedToVertex.name);
+
+      // //         // if the boneLinkedToVertex is null then there is an issue, log an error to the console and continue to the next bone
+      // //         if (boneLinkedToVertex == null)
+      // //         {
+      // //           // log as a critical error to the console, as this should not happen
+      // //           CoreLogCritical("Bone not found for: " + avatarBoneLinkedToVertex.name);
+      // //           continue;
+      // //         }
+
+      // //         // get the position/rotation/scale differences between the bones in the addon armature and the bones in the avatar armature
+      // //         Vector3 positionDifference = boneLinkedToVertex.position - avatarBoneLinkedToVertex.position;
+      // //         Quaternion rotationDifference = boneLinkedToVertex.rotation * Quaternion.Inverse(avatarBoneLinkedToVertex.rotation);
+      // //         Vector3 scaleDifference = boneLinkedToVertex.localScale - avatarBoneLinkedToVertex.localScale;
+
+      // //         // duplicate the vertex so we can apply the differences to it (as the original is readonly while iterating)
+      // //         Vector3 vertexCopy = vertex;
+
+      // //         // apply the position/rotation/scale differences to the vertex
+      // //         vertexCopy += positionDifference;
+      // //         vertexCopy = rotationDifference * vertexCopy;
+      // //         vertexCopy += scaleDifference;
+
+      // //         // add the vertex to the affectedVerticesTemp list
+      // //         affectedVerticesTemp.Add(vertexCopy);
+
+      // //       }
+
+      //     // increment the affectedVerticesProcessed counter
+      //     affectedVerticesProcessed++;
+      //     #endregion
+      //     }
+
+
+      //     // now write the affectedVerticesTemp back to the affectedVertices
+      //     affectedVertices = new List<Vector3>(affectedVerticesTemp);
+
+      //     // then we need to update the new mesh with the new vertices
+      //     mesh.vertices = affectedVertices.ToArray();
+      //     mesh.RecalculateNormals();
+      //     mesh.RecalculateBounds();
+      //     mesh.RecalculateTangents();
+
+      //     // now mark the mesh as dirty
+      //     EditorUtility.SetDirty(mesh);
+
+      //     // then refresh and save the asset database
+      //     AssetDatabase.Refresh();
+      //     AssetDatabase.SaveAssets();
+        }
+
+
+
+
+      }
+      #endregion
+
+      
+      #region Bone reparenting
       // loop over the missingBones and reparent them into the avatar's armature, note that they must not be moved or scaled
       // from their current position, just reparented
       foreach (string missingBoneName in missingBones)
@@ -369,43 +682,31 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // debug log to console that the bone has been reparented
         CoreLogDebug("Bone has been reparented to: " + parentBone.name);
       }
-
+      #endregion
       // now all the bones have been added to the avatar's armature, we need to rebind the skinned mesh renderers
       // to the new armature at the boneToLinkTo
-
-      // get all the skinned mesh renderers under the DSUObject
-      SkinnedMeshRenderer[] skinnedMeshRenderers = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-
-      // debug print the skinnedMeshRenderers in one block
-      StringBuilder skinnedMeshRenderersStringBuilder = new StringBuilder();
-      foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
-      {
-        skinnedMeshRenderersStringBuilder.Append(skinnedMeshRenderer.name + "\n");
-      }
-      CoreLogDebug("skinnedMeshRenderers:\n" + skinnedMeshRenderersStringBuilder.ToString());
-      
-      // TODO: figure out why no skinned mesh renderers are being found 
-
-      // // loop over the skinned mesh renderers and rebind them to the new armature
-      // foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
+  
+      #region Skinned mesh renderer rebind
+      // loop over the skinned mesh renderers and rebind them to the new armature
+      // foreach (SkinnedMeshRenderer skinnedMeshRendererToRebind in skinnedMeshRenderers)
       // {
       //   // get the bones of the skinned mesh renderer
-      //   Transform[] bones = skinnedMeshRenderer.bones;
+      //   Transform[] bonesToRebind = skinnedMeshRendererToRebind.bones;
 
       //   // create a new list of bones to store the new bones
       //   List<Transform> newBones = new List<Transform>();
 
       //   // loop over the bones and find the new bone in the avatar's armature
-      //   foreach (Transform bone in bones)
+      //   foreach (Transform boneToRebind in bonesToRebind)
       //   {
       //     // find the new bone in the avatar's armature
-      //     Transform newBone = avatarBones.FirstOrDefault(b => b.name == bone.name);
+      //     Transform newBone = avatarBones.FirstOrDefault(b => b.name == boneToRebind.name);
 
       //     // if the newBone is null then there is an issue, log an error to the console and continue to the next bone
       //     if (newBone == null)
       //     {
       //       // log as a critical error to the console, as this should not happen
-      //       CoreLogCritical("New bone not found for: " + bone.name);
+      //       CoreLogCritical("New bone not found for: " + boneToRebind.name);
       //       continue;
       //     }
 
@@ -414,29 +715,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       //   }
 
       //   // rebind the skinned mesh renderer to the new armature
-      //   skinnedMeshRenderer.bones = newBones.ToArray();
-      //   skinnedMeshRenderer.rootBone = boneToLinkToGameObject.transform;
+      //   skinnedMeshRendererToRebind.bones = newBones.ToArray();
+      //   skinnedMeshRendererToRebind.rootBone = boneToLinkToGameObject.transform;
+
+      //   // TODO: sort out the Anchor Override (if needed)        
 
       //   // debug log to console that the skinned mesh renderer has been rebound
       //   CoreLogDebug("Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
       // }
 
-
+      #endregion
     }
-
-    // struct to store bone data (name and parent name)
-    public struct BoneData
-    {
-      public string name;
-      public string parentName;
-    }
-
-
-    private void performReparentRoot(CVRAvatar avatar, GameObject DSUObject, armatureLink armatureLinkModule)
+    
+    private void performReparentRoot(CVRAvatar avatar, GameObject DSUObject, int DSUNumber, armatureLink armatureLinkModule)
     {
       // Implementation for performReparentRoot
       // console print to say this function is being called
       CoreLog("performReparentRoot() called");
+
+      // call function to add the CVRFuryGameObjectInfoTag to the DSUObject + children
+      AddCVRFuryGameObjectInfoTagToAddon(DSUObject, DSUNumber);      
 
       // get the path to the avatar
       string avatarPath = GetGameObjectPath(avatar.gameObject);
@@ -496,6 +794,66 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       UpdateAnimationClips(avatar.name, addonObjectToLinkPath, newAddonObjectToLinkPath);
     }
 
+
+    #region Helper Functions/structs
+    public void AddCVRFuryGameObjectInfoTagToAddon(GameObject DSUObject, int DSUNumber)
+    {
+      // check if the DSUObject has a CVRFuryDataStorageUnit component, if it does not then return
+      if (DSUObject.GetComponent<CVRFuryDataStorageUnit>() == null)
+      {
+        CoreLogError("DSUObject does not have a CVRFuryDataStorageUnit component, cannot add CVRFuryGameObjectInfoTag");
+        return;
+      }
+
+      // get the prefabName from the DSU component of the DSUObject
+      string prefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
+
+      // check if the prefabName is null or empty, if it is then return
+      if (string.IsNullOrEmpty(prefabName))
+      {
+        CoreLogError("prefabName is null or empty, cannot add CVRFuryGameObjectInfoTag");
+        return;
+      }
+
+      // debug log to console the prefabName
+      CoreLogDebug("prefabName: " + prefabName);
+
+      // get the list of all children of the DSUObject
+      List<GameObject> children = DSUObject.GetAllChildGameObjects();
+      
+      // loop over the children of the DSUObject and add the CVRFuryGameObjectInfoTag component to each child
+      foreach (GameObject child in children)
+      {
+        // check if the child has a CVRFuryGameObjectInfoTag component, if it does not then add it
+        if (child.GetComponent<CVRFuryGameObjectInfoTag>() == null)
+        {
+          child.AddComponent<CVRFuryGameObjectInfoTag>();
+        }
+
+        // get the CVRFuryGameObjectInfoTag component from the child
+        CVRFuryGameObjectInfoTag CVRFuryGameObjectInfoTag = child.GetComponent<CVRFuryGameObjectInfoTag>();
+
+        // set the sourcePrefabName on the CVRFuryGameObjectInfoTag component
+        CVRFuryGameObjectInfoTag.sourcePrefabName = prefabName;
+
+        // set the DSUNumber on the CVRFuryGameObjectInfoTag component
+        CVRFuryGameObjectInfoTag.sourceDSUNumber = DSUNumber;
+      }
+
+      // add the CVRFuryGameObjectInfoTag component to the DSUObject
+      if (DSUObject.GetComponent<CVRFuryGameObjectInfoTag>() == null)
+      {
+        DSUObject.AddComponent<CVRFuryGameObjectInfoTag>();
+      }
+      // set the sourcePrefabName on the CVRFuryGameObjectInfoTag component
+      DSUObject.GetComponent<CVRFuryGameObjectInfoTag>().sourcePrefabName = prefabName;
+
+      // set the DSUNumber on the CVRFuryGameObjectInfoTag component
+      DSUObject.GetComponent<CVRFuryGameObjectInfoTag>().sourceDSUNumber = DSUNumber;
+
+
+    }
+
     public void UpdateAnimationClips(string avatarName, string addonObjectToLinkPath, string newAddonObjectToLinkPath)
     {
       string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items";
@@ -551,6 +909,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         AssetDatabase.Refresh();
       }
     }
+
+        // struct to store bone data (name and parent name)
+    public struct BoneData
+    {
+      public string name;
+      public string parentName;
+    }
+    #endregion
+
   }
 }
 // #endif
