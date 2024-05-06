@@ -1,4 +1,4 @@
-// { "version": "0.0.100" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.131" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -263,8 +263,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         }
 
         //update the animation clips
-        UpdateAnimationClips(avatar.name, currentPath, newPath);
+        UpdateAnimationClips(avatar.name, currentPath, newPath, DSUNumber);
       }
+      // refresh the asset database
+      AssetDatabase.Refresh();
+
       // that should take care of the animations, for all the mesh items sitting next to the armature
       // now we need to merge the armatures together and rebind the meshes to the new armature
 
@@ -810,6 +813,106 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // so we can loop over the addonBoneNamesList and find the corresponding bone in the avatarBones list
       // then we can update the animation clips to match the new bone structure
 
+      // get the number of addonBoneNamesList entries
+      int addonBoneNamesListCount = addonBoneNamesList.Count;
+
+      // debug print the addonBoneNamesListCount
+      CoreLogDebug("addonBoneNamesListCount: " + addonBoneNamesListCount);
+
+      // get the current avatar bone set (now we have added the missing bones)
+      Transform[] updatedAvatarBones = boneToLinkToGameObject.GetComponentsInChildren<Transform>();
+
+      // list of tuples to store the path of the bone in the addon's armature and the path of the bone in the avatar's armature
+      List<ObjectPathPair> addonBonePaths = new List<ObjectPathPair>();
+
+      // loop over the addonBoneNamesList
+      foreach (string addonBoneName in addonBoneNamesList)
+      {
+        // debug print the name of the bone
+        CoreLogDebug("addonBoneName: " + addonBoneName);
+
+        // get the path of the bone in the avatar's armature
+        string avatarBonePathBase = GetBonePath(updatedAvatarBones, addonBoneName);
+
+        //  remove the avatarPath from the start of the avatarBonePath
+        string avatarBonePath = avatarBonePathBase.Replace(avatarPath, "");
+
+        // remove the starting `/` from the avatarBonePath if it exists
+        if (avatarBonePath.StartsWith("/"))
+        {
+          avatarBonePath = avatarBonePath.Substring(1);
+        }
+
+        // TODO: remove this debug print
+        // // debug print the path of the bone in the avatar's armature
+        // CoreLogDebug("avatarBonePath: " + avatarBonePath);
+
+        
+        // get the base path of the addon GameObject
+        string addonBasePath = addonObjectToLinkPath;
+
+        // remove the leaf from the addonBasePath
+        int lastSlashIndex = addonBasePath.LastIndexOf("/");
+        addonBasePath = addonBasePath.Substring(0, lastSlashIndex);
+
+        // remove the animatorObjectPath from the start of the addonBasePath
+        addonBasePath = addonBasePath.Replace(animatorObjectPath, "");
+
+        // remove the starting `/` from the addonBasePath if it exists
+        if (addonBasePath.StartsWith("/"))
+        {
+          addonBasePath = addonBasePath.Substring(1);
+        }
+
+        // TODO: remove this debug print
+        // // Debug print the boneToLinkToGameObject.name
+        // CoreLogDebug("boneToLinkToGameObject.name: " + boneToLinkToGameObject.name);
+
+        // Append the name of boneToLinkToGameObject to the addonBasePath
+        string addonBonePath = addonBasePath + "/" + boneToLinkToGameObject.name;
+
+        //
+        int index = avatarBonePath.IndexOf(boneToLinkToGameObject.name);
+
+        if (index != -1)
+        {
+          addonBonePath = addonBonePath + avatarBonePath.Substring(index + boneToLinkToGameObject.name.Length);
+        }
+        else
+        {
+          // log as a critical error to the console, as this should not happen
+          CoreLogCritical("Bone not found in avatar armature: " + boneToLinkToGameObject.name);
+          // continue to the next bone
+          continue;
+        }
+
+        // TODO: remove this debug print
+        // // debug print the base addon path 
+        // CoreLogDebug("addonBonePath: " + addonBonePath);
+        
+
+        // add the addonBonePath and avatarBonePath to the addonBonePaths list
+        addonBonePaths.Add(new ObjectPathPair { addonObjectToLinkPath = addonBonePath, newAddonObjectToLinkPath = avatarBonePath });
+      }
+
+      // get the number of addonBonePaths entries
+      int addonBonePathsCount = addonBonePaths.Count;
+      // debug print the addonBonePathsCount
+      CoreLogDebug("addonBonePathsCount: " + addonBonePathsCount);
+
+      // loop over the addonBonePaths and update the animation clips
+      foreach (ObjectPathPair objectPathPair in addonBonePaths)
+      {
+        // debug print the addonPath and avatarPath
+        CoreLogDebug("addonPath: " + objectPathPair.addonObjectToLinkPath);
+        CoreLogDebug("avatarPath: " + objectPathPair.newAddonObjectToLinkPath);
+
+        // update the animation clips
+        UpdateAnimationClips(avatar.name, objectPathPair.addonObjectToLinkPath, objectPathPair.newAddonObjectToLinkPath, DSUNumber);
+      }
+      // only need to do the asset db refresh once, at the end of the loop
+      AssetDatabase.Refresh();
+
      
       #endregion
     
@@ -852,11 +955,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the GameObject of the boneToLinkTo
       GameObject boneToLinkToGameObject = animator.GetBoneTransform(boneToLinkTo).gameObject;
 
-      // perform the reparenting
+      // perform the re-parenting
       armatureLinkModule.addonObjectToLink.transform.SetParent(boneToLinkToGameObject.transform, true);
 
-      // debug log to console that the object has been reparented
-      CoreLogDebug("Object has been reparented to: " + boneToLinkToGameObject.name);
+      // debug log to console that the object has been re-parented
+      CoreLogDebug("Object has been re-parented to: " + boneToLinkToGameObject.name);
 
       // get the new path of the addonObjectToLink and store it
       string newAddonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
@@ -879,11 +982,39 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
       //update the animation clips
-      UpdateAnimationClips(avatar.name, addonObjectToLinkPath, newAddonObjectToLinkPath);
+      UpdateAnimationClips(avatar.name, addonObjectToLinkPath, newAddonObjectToLinkPath, DSUNumber);
+    
+      // update the asset database
+      AssetDatabase.Refresh();
     }
 
-
+    // -----------------------------------------------------------------------------------------------------------------
     #region Helper Functions/structs
+
+    public string GetBonePath(Transform[] avatarBones, string boneName)
+    {
+      // Implementation for GetBonePath
+      // console print to say this function is being called
+      CoreLog("GetBonePath() called");
+
+      // get the bone from the avatarBones array
+      Transform bone = avatarBones.FirstOrDefault(b => b.name == boneName);
+
+      // if the bone is null then there is an issue, log an error to the console and return an empty string
+      if (bone == null)
+      {
+        // log as an error to the console
+        CoreLogError("Bone not found: " + boneName);
+        return "";
+      }
+
+      // get the path of the bone
+      string path = GetGameObjectPath(bone.gameObject);
+
+      // return the path of the bone
+      return path;
+    }
+
     public void AddCVRFuryGameObjectInfoTagToAddon(GameObject DSUObject, int DSUNumber)
     {
       // check if the DSUObject has a CVRFuryDataStorageUnit component, if it does not then return
@@ -942,15 +1073,37 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     }
 
-    public void UpdateAnimationClips(string avatarName, string addonObjectToLinkPath, string newAddonObjectToLinkPath)
+    public void UpdateAnimationClips(string avatarName, string addonObjectToLinkPath, string newAddonObjectToLinkPath, int DSUNumber)
     {
-      string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items";
+      string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items/DSU-" + DSUNumber;
 
       if (!Directory.Exists(animationClipsFolder))
       {
         CoreLogError("Animation clips folder does not exist: " + animationClipsFolder);
         return;
       }
+
+      // if the addonObjectToLinkPath and newAddonObjectToLinkPath are the same then return
+      if (addonObjectToLinkPath == newAddonObjectToLinkPath)
+      {
+        CoreLogDebug("No animation rebind needed as Object has not moved");
+        return;
+      }
+
+      // if addonObjectToLinkPath is null or empty then return
+      if (string.IsNullOrEmpty(addonObjectToLinkPath))
+      {
+        CoreLogError("addonObjectToLinkPath is null or empty");
+        return;
+      }
+
+      // if newAddonObjectToLinkPath is null or empty then return
+      if (string.IsNullOrEmpty(newAddonObjectToLinkPath))
+      {
+        CoreLogError("newAddonObjectToLinkPath is null or empty");
+        return;
+      }
+      
 
       CoreLogDebug("Animation clips folder: " + animationClipsFolder);
 
@@ -964,6 +1117,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         if (!animationClipPath.EndsWith(".anim"))
         {
+          // don't process non animation files
+          continue;
+        }
+
+        if (animationClipPath.Contains("_clip_gen_pre_"))
+        {
+          // don't process 'pre' files
           continue;
         }
 
@@ -994,16 +1154,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         AssetDatabase.SaveAssets();
         EditorUtility.SetDirty(clip);
-        AssetDatabase.Refresh();
       }
     }
 
-        // struct to store bone data (name and parent name)
+    // struct to store bone data (name and parent name)
     public struct BoneData
     {
       public string name;
       public string parentName;
     }
+
+    // struct to store object path pairs
+    public struct ObjectPathPair
+    {
+      public string addonObjectToLinkPath;
+      public string newAddonObjectToLinkPath;
+    }
+
+
     #endregion
 
   }
