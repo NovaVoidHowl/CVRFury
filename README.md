@@ -72,6 +72,13 @@
 Currently this software is only compatible with versions of VRC Fury older than 1.744, as that version introduced
 a breaking change in the components and this will need new stubs creating for them before they can be supported
 
+### ⏳ Long Running Tasks
+
+If you have animations with large numbers of armature bones being animated in them, then expect long run times on the
+ArmatureLink module as it will have to re-write them all (and that currently involves multiple runs through the file).
+TLDR if its still showing as processing and you can see disk activity, then it is not hung as it may appear to be,
+ just let it run, and come back to it in a few minutes  
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ABOUT THE PROJECT -->
