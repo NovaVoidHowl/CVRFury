@@ -1,4 +1,4 @@
-// { "version": "0.3.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.3.6" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -503,7 +503,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                           // save the temp clip
                           AssetDatabase.SaveAssets();
-                          AssetDatabase.Refresh();
 
                           state.motion = tempClip;
                         }
@@ -517,9 +516,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     // save the temp source controller
                     AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
+                    
                   }
                 }
+                // refresh the asset database after all the clips have been processed
+                AssetDatabase.Refresh();
               }
               #endregion
 
@@ -633,7 +634,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                           // save the temp clip
                           AssetDatabase.SaveAssets();
-                          AssetDatabase.Refresh();
                         }
 
                         state.motion = tempClip;
@@ -648,8 +648,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                   // save the temp source controller
                   AssetDatabase.SaveAssets();
-                  AssetDatabase.Refresh();
                 }
+
+                // refresh the asset database after all the clips have been processed
+                AssetDatabase.Refresh();
               }
 
               #endregion
@@ -977,7 +979,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     
           // save the temp clip
           AssetDatabase.SaveAssets();
-          AssetDatabase.Refresh();
     
           child.motion = tempClip;
         }
