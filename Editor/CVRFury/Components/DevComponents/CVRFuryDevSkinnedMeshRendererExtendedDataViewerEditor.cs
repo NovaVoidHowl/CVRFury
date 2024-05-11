@@ -1,4 +1,6 @@
-//#if UNITY_EDITOR
+//this whole file is editor only
+#if UNITY_EDITOR
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -309,4 +311,4 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
     }
   }
 }
-//#endif
+#endif
