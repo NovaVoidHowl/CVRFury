@@ -1,4 +1,4 @@
-// { "version": "0.0.131" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.132" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -759,12 +759,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               continue;
             }
 
-            // rebind the bone to the newBone
-            bonesToUpdate[i] = newBone;
+            // find the bone in skinnedMeshRendererToRebind.bones via the name
+            Transform oldBone = bonesToRebind.FirstOrDefault(b => b.name == bonesToUpdate[i].name);
+
+            // replace the old bone in skinnedMeshRendererToRebind.bones with the new bone
+            skinnedMeshRendererToRebind.bones = skinnedMeshRendererToRebind.bones.Select(b => b == oldBone ? newBone : b).ToArray();
 
             // debug log to console that the bone has been rebound
             CoreLogDebug("Bone has been rebound to: " + newBone.name);
           }
+
 
 
         
@@ -804,8 +808,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
       #endregion
-    
-      // TODO: add in a section that takes care of updating the animations to match the new bone structure
+
       #region Animation rebind
       // from the addonBoneNamesList we can get the bones that are in the addon's armature
       // given that we can use that as half the information we need to rebind the animations
