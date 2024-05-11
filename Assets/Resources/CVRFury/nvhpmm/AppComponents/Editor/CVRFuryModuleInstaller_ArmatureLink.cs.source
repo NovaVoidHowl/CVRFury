@@ -769,7 +769,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             CoreLogDebug("Bone has been rebound to: " + newBone.name);
           }
 
+          // only do this on the last past of the loop
+          if (skinnedMeshRendererToRebind == skinnedMeshRenderers[skinnedMeshRenderers.Length - 1])
+          {
+            // now all common bones have been rebound on all skinnedMeshRenderers, in this set we need to get rid of
+            // the old armature gameobject for optimisation purposes
 
+            // get the parent of the armatureRoot
+            Transform parent = armatureRoot.transform.parent;
+
+            // destroy the armatureRoot
+            GameObject.DestroyImmediate(armatureRoot);
+
+            // debug log to console that the armatureRoot has been destroyed
+            CoreLogDebug("[Clean up] Addon Armature root has been destroyed");
+          }
 
         
         }
