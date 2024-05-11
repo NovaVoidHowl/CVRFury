@@ -1,4 +1,4 @@
-// { "version": "0.0.133" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.135" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -122,6 +122,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private void performMeshRebind(CVRAvatar avatar, GameObject DSUObject, int DSUNumber, armatureLink armatureLinkModule)
     {
+      
+
       // Implementation for performMeshRebind
       // console print to say this function is being called
       CoreLog("performMeshRebind() called");
@@ -147,9 +149,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CoreLogError("No Animator component found on DSUObject or any of its children, cannot perform mesh rebind");
         return;
       }
-
-      // TODO: need to figure out how to handle the case of multiple animator components on the DSUObject or its children
-      // for now just get the first one from only the DSUObject
 
       // check if there is not an animator component on the DSUObject and if so abort
       if (DSUObject.GetComponent<Animator>() == null)
@@ -332,13 +331,29 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       //(this is so we can check for differentials in the rotation/position/scale of the bones)
       List<string> commonBones = addonBoneNamesList.Intersect(avatarBoneNames).ToList();
 
+      // print addonBoneNames to console in one block
+      StringBuilder addonBoneNamesStringBuilder = new StringBuilder();
+      foreach (BoneData boneData in addonBoneNames)
+      {
+        addonBoneNamesStringBuilder.Append("name: " + boneData.name + ", parentName: " + boneData.parentName + "\n");
+      }
+      CoreLogDebug("[ArmatureLink][lookups] addonBoneNames:\n" + addonBoneNamesStringBuilder.ToString());
+
+      // print commonBones to console in one block
+      StringBuilder commonBonesStringBuilder = new StringBuilder();
+      foreach (string commonBone in commonBones)
+      {
+        commonBonesStringBuilder.Append(commonBone + "\n");
+      }
+      CoreLogDebug("[ArmatureLink][lookups] commonBones:\n" + commonBonesStringBuilder.ToString());
+
       // print missingBones to console in one block
       StringBuilder missingBonesStringBuilder = new StringBuilder();
       foreach (string missingBone in missingBones)
       {
         missingBonesStringBuilder.Append(missingBone + "\n");
       }
-      CoreLogDebug("missingBones:\n" + missingBonesStringBuilder.ToString());
+      CoreLogDebug("[ArmatureLink][lookups] missingBones:\n" + missingBonesStringBuilder.ToString());
 
       // list of bones that have been added to the avatar's armature
       List<string> addedBones = new List<string>();
@@ -392,7 +407,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         skinnedMeshRenderersStringBuilder.Append(skinnedMeshRenderer.name + "\n");
       }
-      CoreLogDebug("skinnedMeshRenderers:\n" + skinnedMeshRenderersStringBuilder.ToString());
+      CoreLogDebug("[ArmatureLink] skinnedMeshRenderers:\n" + skinnedMeshRenderersStringBuilder.ToString());
 
       // TODO: still need to finish implementing this section
       #region Mesh re-processing
@@ -450,8 +465,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         if (affectedVertices.Count > 0)
         {
           CoreLogError("The following vertices are affected by the bones that have different rotation/position/scale "
-                       + " in the addon's armature compared to the avatar's armature, these vertices will not"
-                       + " move as expected: " + affectedVertices.Count);
+                      + " in the addon's armature compared to the avatar's armature, these vertices will not"
+                      + " move as expected: " + affectedVertices.Count);
           
           // ok so this is bad news. for some reason or the bones don't match up, and are going to impact the vertices
           // need to make a copy of the mesh at this point so we can try to counteract the issue
@@ -649,9 +664,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       #endregion
 
       
-      #region Bone reparenting
+      // gameObject list for the added bones
+      List<GameObject> addedBonesGameObjects = new List<GameObject>();
+
+      #region Bone re-parenting
       // loop over the missingBones and reparent them into the avatar's armature, note that they must not be moved or scaled
-      // from their current position, just reparented
+      // from their current position, just re-parented
+
+      // print the missingBones to the console in one block
+      StringBuilder missingBonesStringBuilder2 = new StringBuilder();
+      foreach (string missingBone in missingBones)
+      {
+        missingBonesStringBuilder2.Append(missingBone + "\n");
+      }
+      CoreLogDebug("[ArmatureLink][Bone re-parenting] missingBones:\n" + missingBonesStringBuilder2.ToString());
+
+
       foreach (string missingBoneName in missingBones)
       {
         // find the bone in the addonBones list
@@ -660,9 +688,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // check if the current missing bone's parent is in the addedBones list, if it is then skip this bone
         if (addedBones.Contains(missingBone.parentName))
         {
-          // skipping this bone as the parent is the top of an addon leaf bone tree
+          // skipping this bone as the parent is the top of an addon leaf bone tree (or a child of one)
           // but we need to put it on the addedBones list so that the next bones down the tree can be handled
           addedBones.Add(missingBoneName);
+
+          // find the bone in the addonBones list
+          Transform boneTransform = addonBones.FirstOrDefault(b => b.name == missingBoneName);
+
+          // add the bone to the addedBonesGameObjects list
+          addedBonesGameObjects.Add(boneTransform.gameObject);
+
           // now continue to the next bone
           continue;
         }
@@ -688,13 +723,56 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // add the bone name to the addedBones list
         addedBones.Add(missingBoneName);
 
-        // debug log to console that the bone has been reparented
-        CoreLogDebug("Bone has been reparented to: " + parentBone.name);
+        // add the bone to the addedBonesGameObjects list
+        addedBonesGameObjects.Add(bone.gameObject);
+
+        // debug log to console that the bone has been re-parented
+        CoreLogDebug("[ArmatureLink][Bone re-parenting] Bone has been re-parented to: " + parentBone.name);
       }
       #endregion
+
+      #region Added Bone rename
+      // now all the addon bones have been re-parented to the avatar's armature, we need to rename them so duplicates
+      // copies of the addon get their own copy of the bones
+
+      // print the paths of all the addedBonesGameObjects to the console in one block
+      StringBuilder addedBonesGameObjectsStringBuilder = new StringBuilder();
+      foreach (GameObject addedBoneGameObject in addedBonesGameObjects)
+      {
+        addedBonesGameObjectsStringBuilder.Append(addedBoneGameObject.name + "\n");
+      }
+      CoreLogDebug("[ArmatureLink][Bone Rename] addedBonesGameObjects:\n" + addedBonesGameObjectsStringBuilder.ToString());
+
+      // loop over the addedBonesGameObjects and rename them
+      foreach (GameObject addedBoneGameObject in addedBonesGameObjects)
+      {
+        // get the bone name
+        string boneName = addedBoneGameObject.name;
+      
+        // prefix the bone name with the DSUNumber
+        addedBoneGameObject.name = "[CVRF_D" + DSUNumber + "]_" + boneName;
+
+        // debug log to console that the bone has been renamed
+        CoreLogDebug("Bone has been renamed to: " + addedBoneGameObject.name);
+
+        // find the index of bone name in the addedBones list (List<string>)
+        int index = addedBones.FindIndex(b => b == boneName);
+
+        // replace the bone name in the addedBones list with the new bone name
+        addedBones[index] = addedBoneGameObject.name;
+
+        
+      }
+
+
+
+      #endregion
+
+
       // now all the bones have been added to the avatar's armature, we need to rebind the skinned mesh renderers
       // to the new armature at the boneToLinkTo
   
+
       #region Skinned mesh renderer rebind
       //  loop over the skinned mesh renderers and rebind them to the new armature
       foreach (SkinnedMeshRenderer skinnedMeshRendererToRebind in skinnedMeshRenderers)
@@ -703,12 +781,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         if (skinnedMeshRendererToRebind.bones == null)
         {
           // log as a critical error to the console, as this should not happen
-          CoreLogCritical("Bones not found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name);
+          CoreLogCritical("[ArmatureLink][mesh rebind] Bones not found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name);
         }
         else
         {
           // log as a debug to the console
-          CoreLogDebug("Bones found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name);
+          CoreLogDebug("[ArmatureLink][mesh rebind] Bones found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name);
 
           // get the bones of the skinned mesh renderer
           Transform[] bonesToRebind = skinnedMeshRendererToRebind.bones;
@@ -719,7 +797,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             bonesToRebindStringBuilder.Append(boneToRebind.name + "\n");
           }
-          CoreLogDebug("bonesToRebind:\n" + bonesToRebindStringBuilder.ToString());
+          CoreLogDebug("[ArmatureLink][mesh rebind] bonesToRebind:\n" + bonesToRebindStringBuilder.ToString());
 
           // now we need only rebind bones that are common to the avatar and the addon (all the others
           // are already bound to the mesh so no point in messing with them) thus the 'commonBones' list
@@ -746,7 +824,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             bonesToUpdateStringBuilder.Append(boneToUpdate.name + "\n");
           }
-          CoreLogDebug("bonesToUpdate:\n" + bonesToUpdateStringBuilder.ToString());
+          CoreLogDebug("[ArmatureLink][mesh rebind] bonesToUpdate:\n" + bonesToUpdateStringBuilder.ToString());
 
           // now we have the bones that need to be rebound, we need to rebind them to the new armature
 
@@ -760,7 +838,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             if (newBone == null)
             {
               // log as a critical error to the console, as this should not happen
-              CoreLogCritical("New bone not found for: " + bonesToUpdate[i].name);
+              CoreLogCritical("[ArmatureLink][mesh rebind] New bone not found for: " + bonesToUpdate[i].name);
               continue;
             }
 
@@ -771,7 +849,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             skinnedMeshRendererToRebind.bones = skinnedMeshRendererToRebind.bones.Select(b => b == oldBone ? newBone : b).ToArray();
 
             // debug log to console that the bone has been rebound
-            CoreLogDebug("Bone has been rebound to: " + newBone.name);
+            CoreLogDebug("[ArmatureLink][mesh rebind] Bone has been rebound to: " + newBone.name);
           }
 
           // only do this on the last past of the loop
@@ -787,7 +865,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             GameObject.DestroyImmediate(armatureRoot);
 
             // debug log to console that the armatureRoot has been destroyed
-            CoreLogDebug("[Clean up] Addon Armature root has been destroyed");
+            CoreLogDebug("[ArmatureLink][mesh rebind][Clean up] Addon Armature root has been destroyed");
           }
 
         
@@ -806,7 +884,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           if (anchorOverride == null)
           {
             // log as a critical error to the console, as this should not happen
-            CoreLogCritical("Anchor Override target not found for: " + skinnedMeshRendererToRebind.probeAnchor.name);
+            CoreLogCritical("[ArmatureLink][mesh rebind] Anchor Override target not found for: " + skinnedMeshRendererToRebind.probeAnchor.name);
             continue;
           }
 
@@ -814,16 +892,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           skinnedMeshRendererToRebind.probeAnchor = anchorOverride;
 
           // debug log to console that the skinned mesh renderer has been rebound
-          CoreLogDebug("Skinned mesh renderer has been rebound to: " + anchorOverride.name);
+          CoreLogDebug("[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + anchorOverride.name);
         }
         else
         {
           // debug log to console that the skinned mesh renderer has been rebound
-          CoreLogDebug("Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
+          CoreLogDebug("[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
         }    
 
         // debug log to console that the skinned mesh renderer has been rebound
-        CoreLogDebug("Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
+        CoreLogDebug("[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
       }
 
       #endregion
@@ -839,7 +917,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       int addonBoneNamesListCount = addonBoneNamesList.Count;
 
       // debug print the addonBoneNamesListCount
-      CoreLogDebug("addonBoneNamesListCount: " + addonBoneNamesListCount);
+      CoreLogDebug("[ArmatureLink][animation rebind] addonBoneNamesListCount: " + addonBoneNamesListCount);
+
+      // print addonBoneNamesList to console in one block
+      StringBuilder addonBoneNamesListStringBuilder = new StringBuilder();
+      foreach (string addonBoneName in addonBoneNamesList)
+      {
+        addonBoneNamesListStringBuilder.Append(addonBoneName + "\n");
+      }
+      CoreLogDebug("[ArmatureLink][animation rebind] addonBoneNamesList:\n" + addonBoneNamesListStringBuilder.ToString());
 
       // get the current avatar bone set (now we have added the missing bones)
       Transform[] updatedAvatarBones = boneToLinkToGameObject.GetComponentsInChildren<Transform>();
@@ -848,11 +934,27 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       List<ObjectPathPair> addonBonePaths = new List<ObjectPathPair>();
 
       // loop over the addonBoneNamesList
-      foreach (string addonBoneName in addonBoneNamesList)
+      foreach (string addonBoneNameInput in addonBoneNamesList)
       {
+        // get the addonBoneName (needs to be a separate variable as some times need to modify it later on)
+        string addonBoneName = addonBoneNameInput;
         // debug print the name of the bone
-        CoreLogDebug("addonBoneName: " + addonBoneName);
+        CoreLogDebug("[ArmatureLink][animation rebind] addonBoneName: " + addonBoneName);
 
+        // check if the bone name is in the commonBones list
+        if (!commonBones.Contains(addonBoneName))
+        {
+          // not a common bone, so need to apply the rename
+          // add the prefix to the addonBoneName
+          addonBoneName = "[CVRF_D" + DSUNumber + "]_" + addonBoneName;
+        }
+        else
+        {
+          // common bone, so no need to apply the rename
+          // debug print that the bone is a common bone
+          CoreLogDebug("[ArmatureLink][animation rebind] Common bone: " + addonBoneName);
+        }
+        
         // get the path of the bone in the avatar's armature
         string avatarBonePathBase = GetBonePath(updatedAvatarBones, addonBoneName);
 
@@ -867,7 +969,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // TODO: remove this debug print
         // // debug print the path of the bone in the avatar's armature
-        // CoreLogDebug("avatarBonePath: " + avatarBonePath);
+        // CoreLogDebug("[ArmatureLink][animation rebind] avatarBonePath: " + avatarBonePath);
 
         
         // get the base path of the addon GameObject
@@ -888,7 +990,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // TODO: remove this debug print
         // // Debug print the boneToLinkToGameObject.name
-        // CoreLogDebug("boneToLinkToGameObject.name: " + boneToLinkToGameObject.name);
+        // CoreLogDebug("[ArmatureLink][animation rebind] boneToLinkToGameObject.name: " + boneToLinkToGameObject.name);
 
         // Append the name of boneToLinkToGameObject to the addonBasePath
         string addonBonePath = addonBasePath + "/" + boneToLinkToGameObject.name;
@@ -903,7 +1005,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         else
         {
           // log as a critical error to the console, as this should not happen
-          CoreLogCritical("Bone not found in avatar armature: " + boneToLinkToGameObject.name);
+          CoreLogCritical("[ArmatureLink][animation rebind] Bone not found in avatar armature: " + boneToLinkToGameObject.name);
           // continue to the next bone
           continue;
         }
@@ -911,6 +1013,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // TODO: remove this debug print
         // // debug print the base addon path 
         // CoreLogDebug("addonBonePath: " + addonBonePath);
+
+        // remove all instances of the prefix from the addonBonePath (as we need the original path for the
+        // animation rebind)
+        addonBonePath = addonBonePath.Replace("[CVRF_D" + DSUNumber + "]_", "");
         
 
         // add the addonBonePath and avatarBonePath to the addonBonePaths list
@@ -920,7 +1026,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the number of addonBonePaths entries
       int addonBonePathsCount = addonBonePaths.Count;
       // debug print the addonBonePathsCount
-      CoreLogDebug("addonBonePathsCount: " + addonBonePathsCount);
+      CoreLogDebug("[ArmatureLink][animation rebind] addonBonePathsCount: " + addonBonePathsCount);
 
       // print all the addonBonePaths to console in one block
       StringBuilder addonBonePathsStringBuilder = new StringBuilder();
@@ -928,7 +1034,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         addonBonePathsStringBuilder.Append("addonPath: " + objectPathPair.addonObjectToLinkPath + ", avatarPath: " + objectPathPair.newAddonObjectToLinkPath + "\n");
       }
-      CoreLogDebug("addonBonePaths:\n" + addonBonePathsStringBuilder.ToString());
+      CoreLogDebug("[ArmatureLink][animation rebind] addonBonePaths:\n" + addonBonePathsStringBuilder.ToString());
 
       // create a list of tuples to store the addonBoneObjectPath and the newAddonBoneObjectPath
       List<System.Tuple<string, string>> addonBonePathsTuple = addonBonePaths
@@ -942,7 +1048,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // only need to do the asset db refresh once, at the end of the loop
       AssetDatabase.Refresh();
 
-     
+    
       #endregion
     
     }
@@ -951,7 +1057,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Implementation for performReparentRoot
       // console print to say this function is being called
-      CoreLog("performReparentRoot() called");
+      CoreLog("[ArmatureLink] performReparentRoot() called");
 
       // call function to add the CVRFuryGameObjectInfoTag to the DSUObject + children
       AddCVRFuryGameObjectInfoTagToAddon(DSUObject, DSUNumber);      
@@ -988,10 +1094,29 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       armatureLinkModule.addonObjectToLink.transform.SetParent(boneToLinkToGameObject.transform, true);
 
       // debug log to console that the object has been re-parented
-      CoreLogDebug("Object has been re-parented to: " + boneToLinkToGameObject.name);
+      CoreLogDebug("[ArmatureLink] Object has been re-parented to: " + boneToLinkToGameObject.name);
+
+      // ok now to take care of any duplicates (people may want more than one of the same object), we need to
+      // add a tag to the start of the object name to make it unique
+
+      // get the name of the addonObjectToLink
+      string addonObjectToLinkName = armatureLinkModule.addonObjectToLink.name;
+
+      // new name of the addonObjectToLink
+      string newAddonObjectToLinkName = "[CVRF_D" + DSUNumber + "]_" + addonObjectToLinkName;
+
+      // prefix the name of the addonObjectToLink with the DSUNumber
+      armatureLinkModule.addonObjectToLink.name = newAddonObjectToLinkName;
+
+      // console print to say renaming is done
+      CoreLog("[ArmatureLink] Renaming from "+addonObjectToLinkName+" to "+newAddonObjectToLinkName+" done");
+
 
       // get the new path of the addonObjectToLink and store it
       string newAddonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
+
+      // debug log to console the new path of the addonObjectToLink
+      CoreLogDebug("[ArmatureLink] newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
 
       // remove the avatarPath from the start of the newAddonObjectToLinkPath
       newAddonObjectToLinkPath = newAddonObjectToLinkPath.Replace(avatarPath, "");
@@ -1006,7 +1131,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (addonObjectToLinkPath == newAddonObjectToLinkPath)
       {
         // log to console that the object has not moved
-        CoreLogDebug("No animation rebind needed as Object has not moved");
+        CoreLogDebug("[ArmatureLink] No animation rebind needed as Object has not moved");
         return;
       }
 
