@@ -1,4 +1,4 @@
-// { "version": "0.0.132" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.133" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -249,7 +249,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CoreLogDebug("pathRewrite:\n" + pathRewriteDebug.ToString());
 
       // now we need to go through all the animations and update the paths
-      // loop over the dictionary
+      // create a list of path pairs from the dictionary
+      List<System.Tuple<string, string>> pathPairs = new List<System.Tuple<string, string>>();
       foreach (KeyValuePair<string, string> entry in pathRewrite)
       {
         // get the current path and the new path
@@ -262,9 +263,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           continue;
         }
 
-        //update the animation clips
-        UpdateAnimationClips(avatar.name, currentPath, newPath, DSUNumber);
+        // add the path pair to the list
+        pathPairs.Add(new System.Tuple<string, string>(currentPath, newPath));
       }
+
+      // update the animation clips
+      UpdateAnimationClips(avatar.name, pathPairs, DSUNumber);
+
       // refresh the asset database
       AssetDatabase.Refresh();
 
@@ -917,16 +922,23 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // debug print the addonBonePathsCount
       CoreLogDebug("addonBonePathsCount: " + addonBonePathsCount);
 
-      // loop over the addonBonePaths and update the animation clips
+      // print all the addonBonePaths to console in one block
+      StringBuilder addonBonePathsStringBuilder = new StringBuilder();
       foreach (ObjectPathPair objectPathPair in addonBonePaths)
       {
-        // debug print the addonPath and avatarPath
-        CoreLogDebug("addonPath: " + objectPathPair.addonObjectToLinkPath);
-        CoreLogDebug("avatarPath: " + objectPathPair.newAddonObjectToLinkPath);
-
-        // update the animation clips
-        UpdateAnimationClips(avatar.name, objectPathPair.addonObjectToLinkPath, objectPathPair.newAddonObjectToLinkPath, DSUNumber);
+        addonBonePathsStringBuilder.Append("addonPath: " + objectPathPair.addonObjectToLinkPath + ", avatarPath: " + objectPathPair.newAddonObjectToLinkPath + "\n");
       }
+      CoreLogDebug("addonBonePaths:\n" + addonBonePathsStringBuilder.ToString());
+
+      // create a list of tuples to store the addonBoneObjectPath and the newAddonBoneObjectPath
+      List<System.Tuple<string, string>> addonBonePathsTuple = addonBonePaths
+        .Select(pair => new System.Tuple<string, string>(pair.addonObjectToLinkPath, pair.newAddonObjectToLinkPath))
+        .ToList();
+
+      // mass update the animation clips (multi path per save)
+      UpdateAnimationClips(avatar.name, addonBonePathsTuple, DSUNumber);
+
+      
       // only need to do the asset db refresh once, at the end of the loop
       AssetDatabase.Refresh();
 
@@ -1088,6 +1100,76 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       DSUObject.GetComponent<CVRFuryGameObjectInfoTag>().sourceDSUNumber = DSUNumber;
 
 
+    }
+
+
+    public void UpdateAnimationClips(string avatarName, List<System.Tuple<string, string>> pathPairs, int DSUNumber)
+    {
+        string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items/DSU-" + DSUNumber;
+
+        if (!Directory.Exists(animationClipsFolder))
+        {
+            CoreLogError("Animation clips folder does not exist: " + animationClipsFolder);
+            return;
+        }
+
+        foreach (var pathPair in pathPairs)
+        {
+            if (string.IsNullOrEmpty(pathPair.Item1) || string.IsNullOrEmpty(pathPair.Item2))
+            {
+                CoreLogError("One of the paths in the pair is null or empty");
+                return;
+            }
+        }
+
+        CoreLogDebug("Animation clips folder: " + animationClipsFolder);
+
+        foreach (string animationClipPath in Directory.GetFiles(animationClipsFolder))
+        {
+            if (!File.Exists(animationClipPath))
+            {
+                CoreLogCritical("File does not exist: " + animationClipPath);
+                continue;
+            }
+
+            if (!animationClipPath.EndsWith(".anim"))
+            {
+                // don't process non animation files
+                continue;
+            }
+
+            if (animationClipPath.Contains("_clip_gen_pre_"))
+            {
+                // don't process 'pre' files
+                continue;
+            }
+
+            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationClipPath);
+            EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
+
+            foreach (EditorCurveBinding curveBinding in curveBindings)
+            {
+                foreach (var pathPair in pathPairs)
+                {
+                    if (curveBinding.path == pathPair.Item1)
+                    {
+                        EditorCurveBinding newCurveBinding = new EditorCurveBinding
+                        {
+                            path = pathPair.Item2,
+                            type = curveBinding.type,
+                            propertyName = curveBinding.propertyName
+                        };
+
+                        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, curveBinding);
+                        AnimationUtility.SetEditorCurve(clip, curveBinding, null);
+                        AnimationUtility.SetEditorCurve(clip, newCurveBinding, curve);
+                    }
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            EditorUtility.SetDirty(clip);
+        }
     }
 
     public void UpdateAnimationClips(string avatarName, string addonObjectToLinkPath, string newAddonObjectToLinkPath, int DSUNumber)
