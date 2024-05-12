@@ -1,4 +1,4 @@
-// { "version": "0.0.135" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.143" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -120,10 +120,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-    private void performMeshRebind(CVRAvatar avatar, GameObject DSUObject, int DSUNumber, armatureLink armatureLinkModule)
+    private void performMeshRebind(
+      CVRAvatar avatar,
+      GameObject DSUObject,
+      int DSUNumber,
+      armatureLink armatureLinkModule
+    )
     {
-      
-
       // Implementation for performMeshRebind
       // console print to say this function is being called
       CoreLog("performMeshRebind() called");
@@ -199,7 +202,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the current path of the object that the animator is on under the avatar
       string animatorObjectPath = GetGameObjectPath(DSUObject);
-      
 
       // now we need to make a rewrite dictionary to store the old paths and the new paths
       Dictionary<string, string> pathRewrite = new Dictionary<string, string>();
@@ -232,7 +234,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // store the currentPath and the new path in the pathRewrite
         pathRewrite[currentPath] = objectPath;
-
       }
 
       // debug print all the pathRewrite entries in one go
@@ -327,7 +328,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // create a list of the bones that are in the addon's armature but not in the avatar's armature
       List<string> missingBones = addonBoneNamesList.Except(avatarBoneNames).ToList();
 
-      // create a List of bones that are on both the avatar and the addon 
+      // create a List of bones that are on both the avatar and the addon
       //(this is so we can check for differentials in the rotation/position/scale of the bones)
       List<string> commonBones = addonBoneNamesList.Intersect(avatarBoneNames).ToList();
 
@@ -374,7 +375,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         Transform addonBone = addonBones.FirstOrDefault(b => b.name == commonBoneName);
 
         // check if the rotation/position/scale of the bones are different
-        if (avatarBone.rotation != addonBone.rotation || avatarBone.position != addonBone.position || avatarBone.localScale != addonBone.localScale)
+        if (
+          avatarBone.rotation != addonBone.rotation
+          || avatarBone.position != addonBone.position
+          || avatarBone.localScale != addonBone.localScale
+        )
         {
           // add the bone name to the differentBones list
           differentBones.Add(commonBoneName);
@@ -390,7 +395,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         {
           differentBonesStringBuilder.Append(differentBone + "\n");
         }
-        CoreLogError("The following bones have different rotation/position/scale in the addon's armature compared to the avatar's armature:\n" + differentBonesStringBuilder.ToString());
+        CoreLogError(
+          "The following bones have different rotation/position/scale in the addon's armature compared to the avatar's armature:\n"
+            + differentBonesStringBuilder.ToString()
+        );
       }
 
       // get a list of vertices that are affected by the bones that are different
@@ -450,10 +458,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           foreach (BoneWeight boneWeight in boneWeights)
           {
             // check if the bone weight is affected by the bones that are different
-            if (differentBonesTransforms.Contains(bones[boneWeight.boneIndex0]) ||
-                differentBonesTransforms.Contains(bones[boneWeight.boneIndex1]) ||
-                differentBonesTransforms.Contains(bones[boneWeight.boneIndex2]) ||
-                differentBonesTransforms.Contains(bones[boneWeight.boneIndex3]))
+            if (
+              differentBonesTransforms.Contains(bones[boneWeight.boneIndex0])
+              || differentBonesTransforms.Contains(bones[boneWeight.boneIndex1])
+              || differentBonesTransforms.Contains(bones[boneWeight.boneIndex2])
+              || differentBonesTransforms.Contains(bones[boneWeight.boneIndex3])
+            )
             {
               // add the vertex to the affectedVertices list
               affectedVertices.Add(vertex);
@@ -464,15 +474,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // if there are any affectedVertices then log a warning to the console (including the number of vertices)
         if (affectedVertices.Count > 0)
         {
-          CoreLogError("The following vertices are affected by the bones that have different rotation/position/scale "
-                      + " in the addon's armature compared to the avatar's armature, these vertices will not"
-                      + " move as expected: " + affectedVertices.Count);
-          
+          CoreLogError(
+            "The following vertices are affected by the bones that have different rotation/position/scale "
+              + " in the addon's armature compared to the avatar's armature, these vertices will not"
+              + " move as expected: "
+              + affectedVertices.Count
+          );
+
           // ok so this is bad news. for some reason or the bones don't match up, and are going to impact the vertices
           // need to make a copy of the mesh at this point so we can try to counteract the issue
 
           // copy the mesh to a new file
-          string meshPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name + "/temp_items/" + skinnedMeshRenderer.name +"_DSU-"+DSUNumber +".asset";
+          string meshPath =
+            Constants.ASSETS_MANAGED_FOLDER_GENERATED
+            + avatar.name
+            + "/temp_items/"
+            + skinnedMeshRenderer.name
+            + "_DSU-"
+            + DSUNumber
+            + ".asset";
           AssetDatabase.CreateAsset(Object.Instantiate(mesh), meshPath);
           CoreLogDebug("Mesh copied to: " + meshPath);
 
@@ -484,186 +504,182 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // now we need to update the new mesh to counteract the vertices displacement/rotation/scale
 
-      //     // temp affectedVertices list so we can write to it (as the original is readonly while iterating)
-      //     List<Vector3> affectedVerticesTemp = new List<Vector3>(affectedVertices);
+          //     // temp affectedVertices list so we can write to it (as the original is readonly while iterating)
+          //     List<Vector3> affectedVerticesTemp = new List<Vector3>(affectedVertices);
 
-      //     // get count of affectedVertices
-      //     int affectedVerticesCount = affectedVertices.Count;
+          //     // get count of affectedVertices
+          //     int affectedVerticesCount = affectedVertices.Count;
 
-      //     // print to console that we are starting to process the affectedVertices
-      //     CoreLog("Processing " + affectedVerticesCount + " affected vertices");
+          //     // print to console that we are starting to process the affectedVertices
+          //     CoreLog("Processing " + affectedVerticesCount + " affected vertices");
 
-      //     // counter to keep track of how many affectedVertices have been processed
-      //     int affectedVerticesProcessed = 0;
-          
-      //     // if the affectedVerticesCount is 0 then there is nothing to do, log a debug to the console and continue
-      //     // to the next skinned mesh renderer
-      //     if (affectedVerticesCount == 0)
-      //     {
-      //       // log as a debug to the console
-      //       CoreLogDebug("No affected vertices found for skinned mesh renderer");
-      //       continue;
-      //     }
+          //     // counter to keep track of how many affectedVertices have been processed
+          //     int affectedVerticesProcessed = 0;
 
-      //     // loop over the affectedVertices and counteract the displacement/rotation/scale
-      //     foreach (Vector3 vertex in affectedVertices)
-      //     {
-      //       #region Counteract displacement/rotation/scale
-      //       // counteract the displacement/rotation/scale
+          //     // if the affectedVerticesCount is 0 then there is nothing to do, log a debug to the console and continue
+          //     // to the next skinned mesh renderer
+          //     if (affectedVerticesCount == 0)
+          //     {
+          //       // log as a debug to the console
+          //       CoreLogDebug("No affected vertices found for skinned mesh renderer");
+          //       continue;
+          //     }
 
-      //       // // console print to say we are processing x of y affected vertices
-      //       // CoreLogDebug("Processing affected vertex " + affectedVerticesProcessed + " of " + affectedVerticesCount);
-            
-      //       // // get the bones linked to the vertex
-      //       // List<Transform> bonesLinkedToVertex = new List<Transform>();
+          //     // loop over the affectedVertices and counteract the displacement/rotation/scale
+          //     foreach (Vector3 vertex in affectedVertices)
+          //     {
+          //       #region Counteract displacement/rotation/scale
+          //       // counteract the displacement/rotation/scale
 
-      //       // // get the bone weights of the vertex
-      //       // BoneWeight[] boneWeights = mesh.boneWeights;
+          //       // // console print to say we are processing x of y affected vertices
+          //       // CoreLogDebug("Processing affected vertex " + affectedVerticesProcessed + " of " + affectedVerticesCount);
 
-      //       // // get the count of boneweights
-      //       // int boneWeightsCount = boneWeights.Length;
+          //       // // get the bones linked to the vertex
+          //       // List<Transform> bonesLinkedToVertex = new List<Transform>();
 
-      //       // // if the boneWeightsCount is 0 then there is an issue, log an error to the console and continue to the next vertex
-      //       // if (boneWeightsCount == 0 || boneWeights == null)
-      //       // {
-      //       //   // log as a critical error to the console, as this should not happen
-      //       //   CoreLogCritical("No bone weights found for vertex");
-      //       //   continue;
-      //       // }
+          //       // // get the bone weights of the vertex
+          //       // BoneWeight[] boneWeights = mesh.boneWeights;
 
-      //       // // print to console that we are starting to process the bone weights
-      //       // CoreLog("Processing " + boneWeightsCount + " bone weights for vertex");
+          //       // // get the count of boneweights
+          //       // int boneWeightsCount = boneWeights.Length;
 
-      //       // // counter to keep track of how many boneweights have been processed
-      //       // int boneWeightsProcessed = 0;
+          //       // // if the boneWeightsCount is 0 then there is an issue, log an error to the console and continue to the next vertex
+          //       // if (boneWeightsCount == 0 || boneWeights == null)
+          //       // {
+          //       //   // log as a critical error to the console, as this should not happen
+          //       //   CoreLogCritical("No bone weights found for vertex");
+          //       //   continue;
+          //       // }
 
-      //       // // loop over the bone weights and find the bones linked to the vertex
-      //       // foreach (BoneWeight boneWeight in boneWeights)
-      //       // {
-      //       //   // check if the bone weight is linked to the vertex
-      //       //   if (vertex == vertices[boneWeight.boneIndex0] ||
-      //       //       vertex == vertices[boneWeight.boneIndex1] ||
-      //       //       vertex == vertices[boneWeight.boneIndex2] ||
-      //       //       vertex == vertices[boneWeight.boneIndex3])
-      //       //   {
-      //       //     // add the bone to the bonesLinkedToVertex list
-      //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex0]);
-      //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex1]);
-      //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex2]);
-      //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex3]);
-      //       //   }
+          //       // // print to console that we are starting to process the bone weights
+          //       // CoreLog("Processing " + boneWeightsCount + " bone weights for vertex");
 
-      //       //   // increment the boneWeightsProcessed counter
-      //       //   boneWeightsProcessed++;
+          //       // // counter to keep track of how many boneweights have been processed
+          //       // int boneWeightsProcessed = 0;
 
-      //       //   // print a debug message to the console if the boneWeightsProcessed showing progress
-      //       //   if (boneWeightsProcessed % 1000 == 0)
-      //       //   {
-      //       //     CoreLogDebug("boneWeightsProcessed: " + boneWeightsProcessed + " of " + boneWeightsCount);
-      //       //   }
-      //       // }
+          //       // // loop over the bone weights and find the bones linked to the vertex
+          //       // foreach (BoneWeight boneWeight in boneWeights)
+          //       // {
+          //       //   // check if the bone weight is linked to the vertex
+          //       //   if (vertex == vertices[boneWeight.boneIndex0] ||
+          //       //       vertex == vertices[boneWeight.boneIndex1] ||
+          //       //       vertex == vertices[boneWeight.boneIndex2] ||
+          //       //       vertex == vertices[boneWeight.boneIndex3])
+          //       //   {
+          //       //     // add the bone to the bonesLinkedToVertex list
+          //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex0]);
+          //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex1]);
+          //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex2]);
+          //       //     bonesLinkedToVertex.Add(bones[boneWeight.boneIndex3]);
+          //       //   }
 
-      // //       // that will be the current set of bones that are linked to the vertex, ie the ones from the addon armature
-      // //       // that are different to the avatar armature
+          //       //   // increment the boneWeightsProcessed counter
+          //       //   boneWeightsProcessed++;
 
-      // //       // now we need to find the bones in the avatar armature that are linked to the vertex
-            
-      // //       // get the bones in the avatar armature that are linked to the vertex
-      // //       List<Transform> avatarBonesLinkedToVertex = new List<Transform>();
+          //       //   // print a debug message to the console if the boneWeightsProcessed showing progress
+          //       //   if (boneWeightsProcessed % 1000 == 0)
+          //       //   {
+          //       //     CoreLogDebug("boneWeightsProcessed: " + boneWeightsProcessed + " of " + boneWeightsCount);
+          //       //   }
+          //       // }
 
-      // //       // loop over the bonesLinkedToVertex and find the bones in the avatar armature that are linked to the vertex
-      // //       foreach (Transform boneLinkedToVertex in bonesLinkedToVertex)
-      // //       {
-      // //         // find the bone in the avatarBones list
-      // //         Transform avatarBoneLinkedToVertex = avatarBones.FirstOrDefault(b => b.name == boneLinkedToVertex.name);
+          // //       // that will be the current set of bones that are linked to the vertex, ie the ones from the addon armature
+          // //       // that are different to the avatar armature
 
-      // //         // if the avatarBoneLinkedToVertex is null then there is an issue, log an error to the console and continue to the next bone
-      // //         if (avatarBoneLinkedToVertex == null)
-      // //         {
-      // //           // log as a critical error to the console, as this should not happen
-      // //           CoreLogCritical("Avatar bone not found for: " + boneLinkedToVertex.name);
-      // //           continue;
-      // //         }
+          // //       // now we need to find the bones in the avatar armature that are linked to the vertex
 
-      // //         // add the avatarBoneLinkedToVertex to the avatarBonesLinkedToVertex list
-      // //         avatarBonesLinkedToVertex.Add(avatarBoneLinkedToVertex);
-      // //       }
+          // //       // get the bones in the avatar armature that are linked to the vertex
+          // //       List<Transform> avatarBonesLinkedToVertex = new List<Transform>();
 
-      // //       // now we have the bones in the avatar armature that are linked to the vertex, we need to counteract the
-      // //       // displacement/rotation/scale issue
+          // //       // loop over the bonesLinkedToVertex and find the bones in the avatar armature that are linked to the vertex
+          // //       foreach (Transform boneLinkedToVertex in bonesLinkedToVertex)
+          // //       {
+          // //         // find the bone in the avatarBones list
+          // //         Transform avatarBoneLinkedToVertex = avatarBones.FirstOrDefault(b => b.name == boneLinkedToVertex.name);
 
-      // //       // counteract the displacement/rotation/scale issue
-      // //       // this is done by getting the transform differences between the bones in the addon armature and the bones
-      // //       // in the avatar armature, then applying those differences to the vertex
+          // //         // if the avatarBoneLinkedToVertex is null then there is an issue, log an error to the console and continue to the next bone
+          // //         if (avatarBoneLinkedToVertex == null)
+          // //         {
+          // //           // log as a critical error to the console, as this should not happen
+          // //           CoreLogCritical("Avatar bone not found for: " + boneLinkedToVertex.name);
+          // //           continue;
+          // //         }
 
-      // //       // get the transform differences between the bones in the addon armature and the bones in the avatar armature
-      // //       // this is done by getting the position/rotation/scale differences between the bones in the addon armature
-      // //       // and the bones in the avatar armature
-      // //       // then applying those differences to the vertex
+          // //         // add the avatarBoneLinkedToVertex to the avatarBonesLinkedToVertex list
+          // //         avatarBonesLinkedToVertex.Add(avatarBoneLinkedToVertex);
+          // //       }
 
-      // //       // loop over the avatarBonesLinkedToVertex and find the transform differences between the bones in the addon
-      // //       // armature and the bones in the avatar armature
-      // //       foreach (Transform avatarBoneLinkedToVertex in avatarBonesLinkedToVertex)
-      // //       {
-      // //         // find the bone in the addonBones list
-      // //         Transform boneLinkedToVertex = bonesLinkedToVertex.FirstOrDefault(b => b.name == avatarBoneLinkedToVertex.name);
+          // //       // now we have the bones in the avatar armature that are linked to the vertex, we need to counteract the
+          // //       // displacement/rotation/scale issue
 
-      // //         // if the boneLinkedToVertex is null then there is an issue, log an error to the console and continue to the next bone
-      // //         if (boneLinkedToVertex == null)
-      // //         {
-      // //           // log as a critical error to the console, as this should not happen
-      // //           CoreLogCritical("Bone not found for: " + avatarBoneLinkedToVertex.name);
-      // //           continue;
-      // //         }
+          // //       // counteract the displacement/rotation/scale issue
+          // //       // this is done by getting the transform differences between the bones in the addon armature and the bones
+          // //       // in the avatar armature, then applying those differences to the vertex
 
-      // //         // get the position/rotation/scale differences between the bones in the addon armature and the bones in the avatar armature
-      // //         Vector3 positionDifference = boneLinkedToVertex.position - avatarBoneLinkedToVertex.position;
-      // //         Quaternion rotationDifference = boneLinkedToVertex.rotation * Quaternion.Inverse(avatarBoneLinkedToVertex.rotation);
-      // //         Vector3 scaleDifference = boneLinkedToVertex.localScale - avatarBoneLinkedToVertex.localScale;
+          // //       // get the transform differences between the bones in the addon armature and the bones in the avatar armature
+          // //       // this is done by getting the position/rotation/scale differences between the bones in the addon armature
+          // //       // and the bones in the avatar armature
+          // //       // then applying those differences to the vertex
 
-      // //         // duplicate the vertex so we can apply the differences to it (as the original is readonly while iterating)
-      // //         Vector3 vertexCopy = vertex;
+          // //       // loop over the avatarBonesLinkedToVertex and find the transform differences between the bones in the addon
+          // //       // armature and the bones in the avatar armature
+          // //       foreach (Transform avatarBoneLinkedToVertex in avatarBonesLinkedToVertex)
+          // //       {
+          // //         // find the bone in the addonBones list
+          // //         Transform boneLinkedToVertex = bonesLinkedToVertex.FirstOrDefault(b => b.name == avatarBoneLinkedToVertex.name);
 
-      // //         // apply the position/rotation/scale differences to the vertex
-      // //         vertexCopy += positionDifference;
-      // //         vertexCopy = rotationDifference * vertexCopy;
-      // //         vertexCopy += scaleDifference;
+          // //         // if the boneLinkedToVertex is null then there is an issue, log an error to the console and continue to the next bone
+          // //         if (boneLinkedToVertex == null)
+          // //         {
+          // //           // log as a critical error to the console, as this should not happen
+          // //           CoreLogCritical("Bone not found for: " + avatarBoneLinkedToVertex.name);
+          // //           continue;
+          // //         }
 
-      // //         // add the vertex to the affectedVerticesTemp list
-      // //         affectedVerticesTemp.Add(vertexCopy);
+          // //         // get the position/rotation/scale differences between the bones in the addon armature and the bones in the avatar armature
+          // //         Vector3 positionDifference = boneLinkedToVertex.position - avatarBoneLinkedToVertex.position;
+          // //         Quaternion rotationDifference = boneLinkedToVertex.rotation * Quaternion.Inverse(avatarBoneLinkedToVertex.rotation);
+          // //         Vector3 scaleDifference = boneLinkedToVertex.localScale - avatarBoneLinkedToVertex.localScale;
 
-      // //       }
+          // //         // duplicate the vertex so we can apply the differences to it (as the original is readonly while iterating)
+          // //         Vector3 vertexCopy = vertex;
 
-      //     // increment the affectedVerticesProcessed counter
-      //     affectedVerticesProcessed++;
-      //     #endregion
-      //     }
+          // //         // apply the position/rotation/scale differences to the vertex
+          // //         vertexCopy += positionDifference;
+          // //         vertexCopy = rotationDifference * vertexCopy;
+          // //         vertexCopy += scaleDifference;
+
+          // //         // add the vertex to the affectedVerticesTemp list
+          // //         affectedVerticesTemp.Add(vertexCopy);
+
+          // //       }
+
+          //     // increment the affectedVerticesProcessed counter
+          //     affectedVerticesProcessed++;
+          //     #endregion
+          //     }
 
 
-      //     // now write the affectedVerticesTemp back to the affectedVertices
-      //     affectedVertices = new List<Vector3>(affectedVerticesTemp);
+          //     // now write the affectedVerticesTemp back to the affectedVertices
+          //     affectedVertices = new List<Vector3>(affectedVerticesTemp);
 
-      //     // then we need to update the new mesh with the new vertices
-      //     mesh.vertices = affectedVertices.ToArray();
-      //     mesh.RecalculateNormals();
-      //     mesh.RecalculateBounds();
-      //     mesh.RecalculateTangents();
+          //     // then we need to update the new mesh with the new vertices
+          //     mesh.vertices = affectedVertices.ToArray();
+          //     mesh.RecalculateNormals();
+          //     mesh.RecalculateBounds();
+          //     mesh.RecalculateTangents();
 
-      //     // now mark the mesh as dirty
-      //     EditorUtility.SetDirty(mesh);
+          //     // now mark the mesh as dirty
+          //     EditorUtility.SetDirty(mesh);
 
-      //     // then refresh and save the asset database
-      //     AssetDatabase.Refresh();
-      //     AssetDatabase.SaveAssets();
+          //     // then refresh and save the asset database
+          //     AssetDatabase.Refresh();
+          //     AssetDatabase.SaveAssets();
         }
-
-
-
-
       }
       #endregion
 
-      
+
       // gameObject list for the added bones
       List<GameObject> addedBonesGameObjects = new List<GameObject>();
 
@@ -678,7 +694,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         missingBonesStringBuilder2.Append(missingBone + "\n");
       }
       CoreLogDebug("[ArmatureLink][Bone re-parenting] missingBones:\n" + missingBonesStringBuilder2.ToString());
-
 
       foreach (string missingBoneName in missingBones)
       {
@@ -741,14 +756,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         addedBonesGameObjectsStringBuilder.Append(addedBoneGameObject.name + "\n");
       }
-      CoreLogDebug("[ArmatureLink][Bone Rename] addedBonesGameObjects:\n" + addedBonesGameObjectsStringBuilder.ToString());
+      CoreLogDebug(
+        "[ArmatureLink][Bone Rename] addedBonesGameObjects:\n" + addedBonesGameObjectsStringBuilder.ToString()
+      );
 
       // loop over the addedBonesGameObjects and rename them
       foreach (GameObject addedBoneGameObject in addedBonesGameObjects)
       {
         // get the bone name
         string boneName = addedBoneGameObject.name;
-      
+
         // prefix the bone name with the DSUNumber
         addedBoneGameObject.name = "[CVRF_D" + DSUNumber + "]_" + boneName;
 
@@ -760,18 +777,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // replace the bone name in the addedBones list with the new bone name
         addedBones[index] = addedBoneGameObject.name;
-
-        
       }
-
-
 
       #endregion
 
 
       // now all the bones have been added to the avatar's armature, we need to rebind the skinned mesh renderers
       // to the new armature at the boneToLinkTo
-  
+
 
       #region Skinned mesh renderer rebind
       //  loop over the skinned mesh renderers and rebind them to the new armature
@@ -781,12 +794,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         if (skinnedMeshRendererToRebind.bones == null)
         {
           // log as a critical error to the console, as this should not happen
-          CoreLogCritical("[ArmatureLink][mesh rebind] Bones not found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name);
+          CoreLogCritical(
+            "[ArmatureLink][mesh rebind] Bones not found for skinned mesh renderer : "
+              + skinnedMeshRendererToRebind.name
+          );
         }
         else
         {
           // log as a debug to the console
-          CoreLogDebug("[ArmatureLink][mesh rebind] Bones found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name);
+          CoreLogDebug(
+            "[ArmatureLink][mesh rebind] Bones found for skinned mesh renderer : " + skinnedMeshRendererToRebind.name
+          );
 
           // get the bones of the skinned mesh renderer
           Transform[] bonesToRebind = skinnedMeshRendererToRebind.bones;
@@ -846,7 +864,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             Transform oldBone = bonesToRebind.FirstOrDefault(b => b.name == bonesToUpdate[i].name);
 
             // replace the old bone in skinnedMeshRendererToRebind.bones with the new bone
-            skinnedMeshRendererToRebind.bones = skinnedMeshRendererToRebind.bones.Select(b => b == oldBone ? newBone : b).ToArray();
+            skinnedMeshRendererToRebind.bones = skinnedMeshRendererToRebind.bones
+              .Select(b => b == oldBone ? newBone : b)
+              .ToArray();
 
             // debug log to console that the bone has been rebound
             CoreLogDebug("[ArmatureLink][mesh rebind] Bone has been rebound to: " + newBone.name);
@@ -867,8 +887,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // debug log to console that the armatureRoot has been destroyed
             CoreLogDebug("[ArmatureLink][mesh rebind][Clean up] Addon Armature root has been destroyed");
           }
-
-        
         }
 
         // even if no bones were found, we still need to rebind the root bone (and that is always there)
@@ -878,13 +896,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         if (skinnedMeshRendererToRebind.probeAnchor != null)
         {
           // find the bone in the avatarBones list
-          Transform anchorOverride = avatarBones.FirstOrDefault(b => b.name == skinnedMeshRendererToRebind.probeAnchor.name);
+          Transform anchorOverride = avatarBones.FirstOrDefault(
+            b => b.name == skinnedMeshRendererToRebind.probeAnchor.name
+          );
 
           // if the anchorOverride target is null then there is an issue, log an error to the console and continue to the next skinned mesh renderer
           if (anchorOverride == null)
           {
             // log as a critical error to the console, as this should not happen
-            CoreLogCritical("[ArmatureLink][mesh rebind] Anchor Override target not found for: " + skinnedMeshRendererToRebind.probeAnchor.name);
+            CoreLogCritical(
+              "[ArmatureLink][mesh rebind] Anchor Override target not found for: "
+                + skinnedMeshRendererToRebind.probeAnchor.name
+            );
             continue;
           }
 
@@ -897,11 +920,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         else
         {
           // debug log to console that the skinned mesh renderer has been rebound
-          CoreLogDebug("[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
-        }    
+          CoreLogDebug(
+            "[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name
+          );
+        }
 
         // debug log to console that the skinned mesh renderer has been rebound
-        CoreLogDebug("[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name);
+        CoreLogDebug(
+          "[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name
+        );
       }
 
       #endregion
@@ -925,7 +952,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         addonBoneNamesListStringBuilder.Append(addonBoneName + "\n");
       }
-      CoreLogDebug("[ArmatureLink][animation rebind] addonBoneNamesList:\n" + addonBoneNamesListStringBuilder.ToString());
+      CoreLogDebug(
+        "[ArmatureLink][animation rebind] addonBoneNamesList:\n" + addonBoneNamesListStringBuilder.ToString()
+      );
 
       // get the current avatar bone set (now we have added the missing bones)
       Transform[] updatedAvatarBones = boneToLinkToGameObject.GetComponentsInChildren<Transform>();
@@ -954,7 +983,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // debug print that the bone is a common bone
           CoreLogDebug("[ArmatureLink][animation rebind] Common bone: " + addonBoneName);
         }
-        
+
         // get the path of the bone in the avatar's armature
         string avatarBonePathBase = GetBonePath(updatedAvatarBones, addonBoneName);
 
@@ -971,7 +1000,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // // debug print the path of the bone in the avatar's armature
         // CoreLogDebug("[ArmatureLink][animation rebind] avatarBonePath: " + avatarBonePath);
 
-        
+
         // get the base path of the addon GameObject
         string addonBasePath = addonObjectToLinkPath;
 
@@ -1005,22 +1034,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         else
         {
           // log as a critical error to the console, as this should not happen
-          CoreLogCritical("[ArmatureLink][animation rebind] Bone not found in avatar armature: " + boneToLinkToGameObject.name);
+          CoreLogCritical(
+            "[ArmatureLink][animation rebind] Bone not found in avatar armature: " + boneToLinkToGameObject.name
+          );
           // continue to the next bone
           continue;
         }
 
         // TODO: remove this debug print
-        // // debug print the base addon path 
+        // // debug print the base addon path
         // CoreLogDebug("addonBonePath: " + addonBonePath);
 
         // remove all instances of the prefix from the addonBonePath (as we need the original path for the
         // animation rebind)
         addonBonePath = addonBonePath.Replace("[CVRF_D" + DSUNumber + "]_", "");
-        
 
         // add the addonBonePath and avatarBonePath to the addonBonePaths list
-        addonBonePaths.Add(new ObjectPathPair { addonObjectToLinkPath = addonBonePath, newAddonObjectToLinkPath = avatarBonePath });
+        addonBonePaths.Add(
+          new ObjectPathPair { addonObjectToLinkPath = addonBonePath, newAddonObjectToLinkPath = avatarBonePath }
+        );
       }
 
       // get the number of addonBonePaths entries
@@ -1032,7 +1064,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       StringBuilder addonBonePathsStringBuilder = new StringBuilder();
       foreach (ObjectPathPair objectPathPair in addonBonePaths)
       {
-        addonBonePathsStringBuilder.Append("addonPath: " + objectPathPair.addonObjectToLinkPath + ", avatarPath: " + objectPathPair.newAddonObjectToLinkPath + "\n");
+        addonBonePathsStringBuilder.Append(
+          "addonPath: "
+            + objectPathPair.addonObjectToLinkPath
+            + ", avatarPath: "
+            + objectPathPair.newAddonObjectToLinkPath
+            + "\n"
+        );
       }
       CoreLogDebug("[ArmatureLink][animation rebind] addonBonePaths:\n" + addonBonePathsStringBuilder.ToString());
 
@@ -1044,23 +1082,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // mass update the animation clips (multi path per save)
       UpdateAnimationClips(avatar.name, addonBonePathsTuple, DSUNumber);
 
-      
       // only need to do the asset db refresh once, at the end of the loop
       AssetDatabase.Refresh();
 
-    
       #endregion
-    
     }
-    
-    private void performReparentRoot(CVRAvatar avatar, GameObject DSUObject, int DSUNumber, armatureLink armatureLinkModule)
+
+    private void performReparentRoot(
+      CVRAvatar avatar,
+      GameObject DSUObject,
+      int DSUNumber,
+      armatureLink armatureLinkModule
+    )
     {
       // Implementation for performReparentRoot
       // console print to say this function is being called
       CoreLog("[ArmatureLink] performReparentRoot() called");
 
       // call function to add the CVRFuryGameObjectInfoTag to the DSUObject + children
-      AddCVRFuryGameObjectInfoTagToAddon(DSUObject, DSUNumber);      
+      AddCVRFuryGameObjectInfoTagToAddon(DSUObject, DSUNumber);
 
       // get the path to the avatar
       string avatarPath = GetGameObjectPath(avatar.gameObject);
@@ -1109,14 +1149,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       armatureLinkModule.addonObjectToLink.name = newAddonObjectToLinkName;
 
       // console print to say renaming is done
-      CoreLog("[ArmatureLink] Renaming from "+addonObjectToLinkName+" to "+newAddonObjectToLinkName+" done");
-
+      CoreLog("[ArmatureLink] Renaming from " + addonObjectToLinkName + " to " + newAddonObjectToLinkName + " done");
 
       // get the new path of the addonObjectToLink and store it
       string newAddonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
-
-      // debug log to console the new path of the addonObjectToLink
-      CoreLogDebug("[ArmatureLink] newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
 
       // remove the avatarPath from the start of the newAddonObjectToLinkPath
       newAddonObjectToLinkPath = newAddonObjectToLinkPath.Replace(avatarPath, "");
@@ -1127,19 +1163,175 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         newAddonObjectToLinkPath = newAddonObjectToLinkPath.Substring(1);
       }
 
-      // check if the path of the addonObjectToLink has changed if it has not then stop here
-      if (addonObjectToLinkPath == newAddonObjectToLinkPath)
-      {
-        // log to console that the object has not moved
-        CoreLogDebug("[ArmatureLink] No animation rebind needed as Object has not moved");
-        return;
-      }
+      // debug log to console the new path of the addonObjectToLink
+      CoreLogDebug("[ArmatureLink] newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
 
-      //update the animation clips
-      UpdateAnimationClips(avatar.name, addonObjectToLinkPath, newAddonObjectToLinkPath, DSUNumber);
-    
-      // update the asset database
-      AssetDatabase.Refresh();
+      // ok, so now we have the new path of the addonObjectToLink, that is the base for re-writing the animation clips
+      // note the animations packaged with the addon will be expected to start from that as a root
+
+      // get the DSU component from the DSUObject
+      CVRFuryDataStorageUnit DSUComponent = DSUObject.GetComponent<CVRFuryDataStorageUnit>();
+
+      // check if the modules of the DSUComponent  and see if there is a fullControllerModule type module present
+      if (DSUComponent.modules.modules.Any(m => m.ModuleType == "fullControllerModule"))
+      {
+        // of so there is a fullControllerModule type module present,
+
+        // get the fullControllerModule from the DSUComponent
+        fullControllerModule controllerModule =
+          DSUComponent.modules.modules.FirstOrDefault(m => m.ModuleType == "fullControllerModule")
+          as fullControllerModule;
+
+        // check if the fullControllerModule is null, if it is then there is an issue, log an error to the console and return
+        if (controllerModule == null)
+        {
+          CoreLogError("fullControllerModule is null, cannot rebind animations");
+          return;
+        }
+
+        // get the controllers from the fullControllerModule
+        List<RuntimeAnimatorController> controllers = controllerModule.controllers;
+
+        // check if the controllers is null or empty, if it is then looks like there are no animations to rebind,
+        // log a warning to the console and return
+        if (controllers == null || controllers.Count == 0)
+        {
+          // log as a warning to the console
+          CoreLog("[Warning] controllers is null or empty, no animations to rebind");
+          return;
+        }
+
+        // at this point there is at least one controller in the controllers list, so there should be animations to
+        // rebind. so w need to check if there is a folder for the animations, if there is not then there is an issue,
+        // log an error to the console and return
+
+        // the folder path for the animations
+        string animationsFolderPath =
+          Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name + "/temp_items/DSU-" + DSUNumber + "/";
+
+        // debug print the animationsFolderPath
+        CoreLogDebug("[ArmatureLink] animationsFolderPath: " + animationsFolderPath);
+
+        // get a list of all files in the animationsFolderPath
+        string[] animationFiles = Directory.GetFiles(animationsFolderPath);
+
+        // remove all files that are not animation animationFiles from the animationFiles list
+        animationFiles = animationFiles.Where(f => f.EndsWith(".anim")).ToArray();
+
+        // remove all animationFiles that have '_clip_gen_pre_' in the name from the animationFiles list
+        animationFiles = animationFiles.Where(f => !f.Contains("_clip_gen_pre_")).ToArray();
+
+        // check if the animationFiles is null or empty, if it is then there is an issue, log an error to the console and return
+        if (animationFiles == null || animationFiles.Length == 0)
+        {
+          // log as an error to the console
+          CoreLogError("animationFiles is null or empty, no animations to rebind");
+          return;
+        }
+
+        // debug print the list of animationFiles to console in one block
+        StringBuilder animationFilesStringBuilder = new StringBuilder();
+        foreach (string animationFile in animationFiles)
+        {
+          animationFilesStringBuilder.Append(animationFile + "\n");
+        }
+        CoreLogDebug("[ArmatureLink] animationFiles:\n" + animationFilesStringBuilder.ToString());
+
+        // at this point there is at least one animation file in the animationFiles array, so there should be animations
+        // to rebind. so we need to loop over them and re-write the paths
+
+        // ObjectPathPair list to store the addonObjectToLinkPath and the newAddonObjectToLinkPath
+        List<ObjectPathPair> objectPathPairs = new List<ObjectPathPair>();
+
+        // loop over the animationFiles and rebind the paths
+        foreach (string animationFile in animationFiles)
+        {
+          // load the animation clip from the animationFile
+          AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationFile);
+
+
+          // get all the paths in the clip
+          EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
+          EditorCurveBinding[] objectReferenceCurveBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
+          
+          // merge curveBindings and objectReferenceCurveBindings
+          EditorCurveBinding[] allCurveBindings = curveBindings.Concat(objectReferenceCurveBindings).ToArray();
+          
+          // overwrite the curveBindings with the allCurveBindings (so we can use the same loop for both)
+          curveBindings = allCurveBindings;
+
+          // exclude any curveBindings that don't have the DSU component 'prefabName' in the path
+          // (this is because we only want to impact the animations that are related to the DSUObject
+          // and not paths that the addon maker intended to impact the core armature)
+          curveBindings = curveBindings.Where(cb => cb.path.Contains(DSUComponent.prefabName)).ToArray();
+
+          // prefix the path of the curveBindings with the newAddonObjectToLinkPath
+          foreach (EditorCurveBinding curveBinding in curveBindings)
+          {
+            // get the path of the curveBinding
+            string path = curveBinding.path;
+
+            // get the trailing part of the path (if it exists) after the prefabName
+            string trailingPath = path.Substring(
+              path.IndexOf(DSUComponent.prefabName) + DSUComponent.prefabName.Length
+            );
+
+            // ensure the trailingPath starts with a `/`
+            if (!trailingPath.StartsWith("/"))
+            {
+              trailingPath = "/" + trailingPath;
+            }
+
+            objectPathPairs.Add(
+              new ObjectPathPair
+              {
+                addonObjectToLinkPath = path,
+                newAddonObjectToLinkPath = newAddonObjectToLinkPath + trailingPath
+              }
+            );
+          }
+
+          
+
+          // debug log to console that the animation file has been re-written
+          CoreLog("[ArmatureLink] Animation paths updates from  '" + animationFile + "' stored");
+        }
+
+        // deduplicate the objectPathPairs list
+        objectPathPairs = objectPathPairs.Distinct().ToList();
+
+        // print all the objectPathPairs to console in one block
+        StringBuilder objectPathPairsStringBuilder = new StringBuilder();
+        foreach (ObjectPathPair objectPathPair in objectPathPairs)
+        {
+          objectPathPairsStringBuilder.Append(
+            "addonPath: "
+              + objectPathPair.addonObjectToLinkPath
+              + ",\n avatarPath: "
+              + objectPathPair.newAddonObjectToLinkPath
+              + "\n\n"
+          );
+        }
+        CoreLogDebug("[ArmatureLink] objectPathPairs:\n" + objectPathPairsStringBuilder.ToString());
+
+        // create a list of tuples to store the addonObjectToLinkPath and the newAddonObjectToLinkPath
+        List<System.Tuple<string, string>> objectPathPairsTuple = objectPathPairs
+          .Select(pair => new System.Tuple<string, string>(pair.addonObjectToLinkPath, pair.newAddonObjectToLinkPath))
+          .ToList();
+
+        // mass update the animation clips (multi path per save)
+        UpdateAnimationClips(avatar.name, objectPathPairsTuple, DSUNumber);
+
+        // log that the animation clips have been updated
+        CoreLog("[ArmatureLink] Animation clips updated");
+
+        // at this point all the animation files have been re-written, so we need to save/refresh the asset database
+
+        // save the asset database
+        AssetDatabase.SaveAssets();
+        // update the asset database
+        AssetDatabase.Refresh();
+      }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -1193,7 +1385,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the list of all children of the DSUObject
       List<GameObject> children = DSUObject.GetAllChildGameObjects();
-      
+
       // loop over the children of the DSUObject and add the CVRFuryGameObjectInfoTag component to each child
       foreach (GameObject child in children)
       {
@@ -1223,83 +1415,118 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // set the DSUNumber on the CVRFuryGameObjectInfoTag component
       DSUObject.GetComponent<CVRFuryGameObjectInfoTag>().sourceDSUNumber = DSUNumber;
-
-
     }
-
 
     public void UpdateAnimationClips(string avatarName, List<System.Tuple<string, string>> pathPairs, int DSUNumber)
     {
-        string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items/DSU-" + DSUNumber;
+      string animationClipsFolder =
+        Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items/DSU-" + DSUNumber + "/";
 
-        if (!Directory.Exists(animationClipsFolder))
+      if (!Directory.Exists(animationClipsFolder))
+      {
+        CoreLogError("Animation clips folder does not exist: " + animationClipsFolder);
+        return;
+      }
+
+      foreach (var pathPair in pathPairs)
+      {
+        if (string.IsNullOrEmpty(pathPair.Item1) || string.IsNullOrEmpty(pathPair.Item2))
         {
-            CoreLogError("Animation clips folder does not exist: " + animationClipsFolder);
-            return;
+          CoreLogError("One of the paths in the pair is null or empty");
+          return;
+        }
+      }
+
+      CoreLogDebug("Animation clips folder: " + animationClipsFolder);
+
+      foreach (string animationClipPath in Directory.GetFiles(animationClipsFolder))
+      {
+        if (!File.Exists(animationClipPath))
+        {
+          CoreLogCritical("File does not exist: " + animationClipPath);
+          continue;
         }
 
-        foreach (var pathPair in pathPairs)
+        if (!animationClipPath.EndsWith(".anim"))
         {
-            if (string.IsNullOrEmpty(pathPair.Item1) || string.IsNullOrEmpty(pathPair.Item2))
-            {
-                CoreLogError("One of the paths in the pair is null or empty");
-                return;
-            }
+          // don't process non animation files
+          continue;
         }
 
-        CoreLogDebug("Animation clips folder: " + animationClipsFolder);
-
-        foreach (string animationClipPath in Directory.GetFiles(animationClipsFolder))
+        if (animationClipPath.Contains("_clip_gen_pre_"))
         {
-            if (!File.Exists(animationClipPath))
-            {
-                CoreLogCritical("File does not exist: " + animationClipPath);
-                continue;
-            }
-
-            if (!animationClipPath.EndsWith(".anim"))
-            {
-                // don't process non animation files
-                continue;
-            }
-
-            if (animationClipPath.Contains("_clip_gen_pre_"))
-            {
-                // don't process 'pre' files
-                continue;
-            }
-
-            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationClipPath);
-            EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
-
-            foreach (EditorCurveBinding curveBinding in curveBindings)
-            {
-                foreach (var pathPair in pathPairs)
-                {
-                    if (curveBinding.path == pathPair.Item1)
-                    {
-                        EditorCurveBinding newCurveBinding = new EditorCurveBinding
-                        {
-                            path = pathPair.Item2,
-                            type = curveBinding.type,
-                            propertyName = curveBinding.propertyName
-                        };
-
-                        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, curveBinding);
-                        AnimationUtility.SetEditorCurve(clip, curveBinding, null);
-                        AnimationUtility.SetEditorCurve(clip, newCurveBinding, curve);
-                    }
-                }
-            }
-
-            AssetDatabase.SaveAssets();
-            EditorUtility.SetDirty(clip);
+          // don't process 'pre' files
+          continue;
         }
+
+        AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationClipPath);
+        EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
+
+        foreach (EditorCurveBinding curveBinding in curveBindings)
+        {
+          foreach (var pathPair in pathPairs)
+          {
+            if (curveBinding.path == pathPair.Item1)
+            {
+              EditorCurveBinding newCurveBinding = new EditorCurveBinding
+              {
+                path = pathPair.Item2,
+                type = curveBinding.type,
+                propertyName = curveBinding.propertyName
+              };
+
+              AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, curveBinding);
+              AnimationUtility.SetEditorCurve(clip, curveBinding, null);
+              AnimationUtility.SetEditorCurve(clip, newCurveBinding, curve);
+            }
+          }
+        }
+        // debug log to console that the animation file has been re-written for the curveBindings
+        CoreLogDebug("[ArmatureLink] Animation paths updates from  '" + animationClipPath + "' re-written for the curveBindings");
+
+        // Code for handling 'PPtrCurves'
+        EditorCurveBinding[] objectReferenceCurveBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
+
+        foreach (EditorCurveBinding objectReferenceCurveBinding in objectReferenceCurveBindings)
+        {
+          foreach (var pathPair in pathPairs)
+          {
+            if (objectReferenceCurveBinding.path == pathPair.Item1)
+            {
+              EditorCurveBinding newObjectReferenceCurveBinding = new EditorCurveBinding
+              {
+                path = pathPair.Item2,
+                type = objectReferenceCurveBinding.type,
+                propertyName = objectReferenceCurveBinding.propertyName
+              };
+
+              ObjectReferenceKeyframe[] curve = AnimationUtility.GetObjectReferenceCurve(
+                clip,
+                objectReferenceCurveBinding
+              );
+              AnimationUtility.SetObjectReferenceCurve(clip, objectReferenceCurveBinding, null);
+              AnimationUtility.SetObjectReferenceCurve(clip, newObjectReferenceCurveBinding, curve);
+            }
+          }
+        }
+
+        // debug log to console that the animation file has been re-written for the objectReferenceCurveBindings
+        CoreLogDebug("[ArmatureLink] Animation paths updates from  '" + animationClipPath + "' re-written for the objectReferenceCurveBindings");
+
+        AssetDatabase.SaveAssets();
+        EditorUtility.SetDirty(clip);
+      }
     }
 
-    public void UpdateAnimationClips(string avatarName, string addonObjectToLinkPath, string newAddonObjectToLinkPath, int DSUNumber)
+    public void UpdateAnimationClips(
+      string avatarName,
+      string addonObjectToLinkPath,
+      string newAddonObjectToLinkPath,
+      int DSUNumber
+    )
     {
-      string animationClipsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items/DSU-" + DSUNumber;
+      string animationClipsFolder =
+        Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatarName + "/temp_items/DSU-" + DSUNumber + "/";
 
       if (!Directory.Exists(animationClipsFolder))
       {
@@ -1327,7 +1554,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CoreLogError("newAddonObjectToLinkPath is null or empty");
         return;
       }
-      
 
       CoreLogDebug("Animation clips folder: " + animationClipsFolder);
 
@@ -1376,6 +1602,31 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           }
         }
 
+        // Code for handling 'PPtrCurves'
+        EditorCurveBinding[] objectReferenceCurveBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
+
+        foreach (EditorCurveBinding objectReferenceCurveBinding in objectReferenceCurveBindings)
+        {
+          CoreLogDebug("Current objectReferenceCurveBinding.path: " + objectReferenceCurveBinding.path);
+
+          if (objectReferenceCurveBinding.path == addonObjectToLinkPath)
+          {
+            EditorCurveBinding newObjectReferenceCurveBinding = new EditorCurveBinding
+            {
+              path = newAddonObjectToLinkPath,
+              type = objectReferenceCurveBinding.type,
+              propertyName = objectReferenceCurveBinding.propertyName
+            };
+
+            ObjectReferenceKeyframe[] curve = AnimationUtility.GetObjectReferenceCurve(
+              clip,
+              objectReferenceCurveBinding
+            );
+            AnimationUtility.SetObjectReferenceCurve(clip, objectReferenceCurveBinding, null);
+            AnimationUtility.SetObjectReferenceCurve(clip, newObjectReferenceCurveBinding, curve);
+          }
+        }
+
         AssetDatabase.SaveAssets();
         EditorUtility.SetDirty(clip);
       }
@@ -1395,9 +1646,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       public string newAddonObjectToLinkPath;
     }
 
-
     #endregion
-
   }
 }
 // #endif
