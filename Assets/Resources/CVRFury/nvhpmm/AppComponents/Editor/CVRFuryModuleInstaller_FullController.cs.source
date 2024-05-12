@@ -1,4 +1,4 @@
-// { "version": "0.3.6" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.3.7" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -404,15 +404,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // debug print to say we are rebinding animation clips
               CoreLog("Rebinding animation clips - Manual");
 
+              // counter for the number of rewrites done
+              int rewritesDone = 0;
               // check and see if the module has any binding rewrites
               if ((module as fullControllerModule).rewriteBindings.Count > 0)
               {
+                
                 // loop through the binding rewrites in the module
                 foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
                 {
                   // log the binding rewrite's name to the console
                   CoreLog(
-                    "rewrite.from: "
+                    "rewrite count ID: "
+                      + rewritesDone
+                      + "\nrewrite.from: "
                       + rewrite.from
                       + "\n rewrite.to: "
                       + rewrite.to
@@ -463,9 +468,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     // generate a guid for the temp clip
                     System.Guid tempClipGUID = System.Guid.NewGuid();
 
+                    // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
+                    if (clipFileName.Contains("_clip_gen_pre_"))
+                    {
+                      clipFileName = clipFileName.Substring(0, clipFileName.IndexOf("_clip_gen_pre_"));
+                    }
+
                     // generate a temp clip path
                     string tempClipPath =
-                      tempItemsPath + "/" + clipFileName + "_clip_gen_pre_" + tempClipGUID + ".anim";
+                      tempItemsPath + "/" + clipFileName + "_clip_gen_pre_mrw_"+rewritesDone+"_" + tempClipGUID + ".anim";
 
                     // copy the clip to the temp clip
                     AssetDatabase.CopyAsset(clipPath, tempClipPath);
@@ -518,9 +529,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     AssetDatabase.SaveAssets();
                     
                   }
+                  // update the rewritesDone counter
+                  rewritesDone++;
+
                 }
                 // refresh the asset database after all the clips have been processed
                 AssetDatabase.Refresh();
+          
               }
               #endregion
 
