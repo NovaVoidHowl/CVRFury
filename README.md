@@ -75,8 +75,8 @@ a breaking change in the components and this will need new stubs creating for th
 ### ⏳ Long Running Tasks
 
 If you have animations with large numbers of armature bones being animated in them, then expect long run times on the
-ArmatureLink module as it will have to re-write them all (and that currently involves multiple runs through the file).
-TLDR if its still showing as processing and you can see disk activity, then it is not hung as it may appear to be,
+ArmatureLink module as it will have to re-write them all.
+TLDR: If its still showing as processing and you can see disk activity, then it is not hung as it may appear to be,
  just let it run, and come back to it in a few minutes  
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -87,7 +87,7 @@ TLDR if its still showing as processing and you can see disk activity, then it i
 
 The aim of this project is to create a tool kit that can process VRCFury supported content for use in ChilloutVR.
 
-Note this project is in a pre-alpha state and not ready for any use yet.
+Note this project is in a alpha state and not ready for any use yet (though functions listed as such should work now).
 
 ______________________________________________________________________
 
@@ -135,7 +135,7 @@ Icon Key:
 🚫 = Feature will not be supported.
 ```
 
-The following table gives a breakdown of what features from VRCFury are supported for import/install.\
+The following table gives a breakdown of what features are supported for import/install.\
 Note at this time there is no native config UI for CVRFury modules (save the dev debug interface)
 
 |        Feature         | Data Import Supported | Install Supported | Notes                                                                           |
@@ -143,7 +143,6 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |   ObjectToggleAction   |         ✔️          |       ✔️        |                                                                                 |
 |     MaterialAction     |         ✔️          |       ✔️        |                                                                                 |
 |    BlendShapeAction    |         ✔️          |        ❌         |                                                                                 |
-|      SpsOnAction       |          🚫          |        🚫        |                                                                                 |
 |     FxFloatAction      |         ✔️          |       ❌🔽       |                                                                                 |
 |  AnimationClipAction   |         ❔🔽         |       ❔🔽       |                                                                                 |
 | ShaderInventoryAction  |         ❔🔽         |       ❔🔽       |                                                                                 |
@@ -152,7 +151,6 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |      ScaleAction       |         ✔️          |        ❌         |                                                                                 |
 |  BlockBlinkingAction   |         ✔️          |       ✔️        |                                                                                 |
 |   BlockVisemesAction   |         ✔️          |       ✔️        |                                                                                 |
-|  ResetPhysboneAction   |          🚫          |        🚫        | No Physbones in CVR, hence not needed                                           |
 | FlipBookBuilderAction  |          ❔           |        ❔         |                                                                                 |
 |                        |                       |                   |                                                                                 |
 |        Blinking        |          ❔           |        ❔         |                                                                                 |
@@ -161,16 +159,13 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |         Toggle         |         ❌🔽         |       ❌🔽       |                                                                                 |
 |         Puppet         |          ❔           |        ❔         |                                                                                 |
 |      SecurityLock      |         ❌🔽         |       ❌🔽       |                                                                                 |
-|   SenkyGestureDriver   |          🚫          |        🚫        |                                                                                 |
 |        Talking         |         ❌🔽         |       ❌🔽       |                                                                                 |
 |      Toes Puppet       |         ❌🔽         |       ❌🔽       |                                                                                 |
 |    Advanced Visemes    |          ❔           |        ❔         |                                                                                 |
-|      ArmatureLink      |         ✔️          |       ⚙️        |                                                                                 |
+|      ArmatureLink      |         ✔️          |       ✔️        | Note: There is currently no support for mesh vertex rewrite                                    |
 |     BoundingBoxFix     |         ❔🔽         |       ❔🔽       |                                                                                 |
-|     BoneConstraint     |          🚫          |        🚫        | Not in VRCFury UI, likely superseded by ArmatureLink                            |
 |    FixWriteDefaults    |         ❔🔽         |       ❔🔽       |                                                                                 |
 |   RemoveHandGestures   |         ❌🔽         |       ❌🔽       |                                                                                 |
-|      CrossEyeFix       |          🚫          |        🚫        |                                                                                 |
 |   AnchorOverrideFix    |         ❔🔽         |       ❔🔽       |                                                                                 |
 |      MoveMenuItem      |         ❔🔽         |       ❔🔽       |                                                                                 |
 |     GestureDriver      |         ❔🔽         |       ❔🔽       |                                                                                 |
@@ -183,7 +178,6 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |        Slot4Fix        |          ❔           |        ❔         |                                                                                 |
 |  DirectTreeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                 |
 |   ShowInFirstPerson    |         ✔️          |       ✔️        |                                                                                 |
-|       SpsOptions       |          🚫          |        🚫        |                                                                                 |
 |    MmdCompatibility    |         ❔🔽         |       ❔🔽       |                                                                                 |
 |    Parameter Stream    |          🚫          |       ✔️        | VRC does not have Parameter stream equivalent                                   |
 
