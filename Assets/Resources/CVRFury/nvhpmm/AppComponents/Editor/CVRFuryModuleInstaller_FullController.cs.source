@@ -1,4 +1,4 @@
-// { "version": "0.3.7" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.3.8" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -406,13 +406,34 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // counter for the number of rewrites done
               int rewritesDone = 0;
+
+              // print the binding rewrites to the console in one go
+              StringBuilder bindingRewritesDebug = new StringBuilder();
+              foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
+              {
+                bindingRewritesDebug.Append(
+                  "rewrite.from: "
+                    + rewrite.from
+                    + "\n rewrite.to: "
+                    + rewrite.to
+                    + "\n rewrite.delete: "
+                    + rewrite.delete
+                    + "\n\n"
+                );
+              }
+              CoreLogDebug("[FullController][manual rewrites] bindingRewrites: \n" + bindingRewritesDebug.ToString());
+
               // check and see if the module has any binding rewrites
               if ((module as fullControllerModule).rewriteBindings.Count > 0)
               {
-                
                 // loop through the binding rewrites in the module
-                foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
+                foreach (
+                  fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings
+                )
                 {
+                  // generate a guid for the temp clips
+                  System.Guid tempClipGUID = System.Guid.NewGuid();
+
                   // log the binding rewrite's name to the console
                   CoreLog(
                     "rewrite count ID: "
@@ -465,8 +486,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     //get the filename of the clip, excluding the path and extension
                     string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
 
-                    // generate a guid for the temp clip
-                    System.Guid tempClipGUID = System.Guid.NewGuid();
+                    
 
                     // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
                     if (clipFileName.Contains("_clip_gen_pre_"))
@@ -476,13 +496,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     // generate a temp clip path
                     string tempClipPath =
-                      tempItemsPath + "/" + clipFileName + "_clip_gen_pre_mrw_"+rewritesDone+"_" + tempClipGUID + ".anim";
+                      tempItemsPath
+                      + "/"
+                      + clipFileName
+                      + "_clip_gen_pre_mrw_"
+                      + rewritesDone
+                      + "_"
+                      + tempClipGUID
+                      + ".anim";
 
-                    // copy the clip to the temp clip
-                    AssetDatabase.CopyAsset(clipPath, tempClipPath);
-
-                    // load the temp clip
+                    // check if a temp clip already exists
                     AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+                    if (tempClip == null)
+                    {
+                      // copy the clip to the temp clip
+                      AssetDatabase.CopyAsset(clipPath, tempClipPath);
+                      // load the temp clip
+                      tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+                    }
 
                     // loop through the layers
                     for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
@@ -527,16 +558,28 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     // save the temp source controller
                     AssetDatabase.SaveAssets();
-                    
                   }
                   // update the rewritesDone counter
                   rewritesDone++;
-
                 }
                 // refresh the asset database after all the clips have been processed
                 AssetDatabase.Refresh();
-          
               }
+
+              // loop over all files in the tempItemsPath and debug print their paths in one go
+              string[] tempItemsFiles = Directory.GetFiles(tempItemsPath+"/");
+              // order the files by Alphabetical order
+              System.Array.Sort(tempItemsFiles);
+
+              
+              // debug print to say we are checking the files in the tempItemsPath
+              StringBuilder tempItemsFilesDebug = new StringBuilder();
+              foreach (string file in tempItemsFiles)
+              {
+                tempItemsFilesDebug.Append(file + "\n");
+              }
+              CoreLogDebug("[FullController][manual rewrites] Files in tempItemsPath: \n" + tempItemsFilesDebug.ToString());
+
               #endregion
 
 
@@ -556,8 +599,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 // if it is, log an error to the console
                 CoreLogCritical(
                   "PrefabName is null or empty, please ensure the DSUObject at "
-                  + DSUObjectPath
-                  + " has a valid prefabName"
+                    + DSUObjectPath
+                    + " has a valid prefabName"
                 );
                 ReportAddErrorLine(buildReportPath, "[CRITICAL]: FuryPrefabName is null or empty");
               }
@@ -656,7 +699,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                       // if the state's motion is a blend tree, check its children
                       else if (state.motion is BlendTree blendTree)
                       {
-                        ReplaceClipInBlendTree(blendTree, clip, tempClip, tempClipPath, new fullControllerModule.BindingRewrite { from = FuryPrefabName, to = DSUObjectPath });
+                        ReplaceClipInBlendTree(
+                          blendTree,
+                          clip,
+                          tempClip,
+                          tempClipPath,
+                          new fullControllerModule.BindingRewrite { from = FuryPrefabName, to = DSUObjectPath }
+                        );
                       }
                     }
                   }
@@ -970,11 +1019,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // Create a new array to hold the modified ChildMotion objects
       ChildMotion[] newChildren = new ChildMotion[blendTree.children.Length];
-    
+
       for (int i = 0; i < blendTree.children.Length; i++)
       {
         var child = blendTree.children[i];
-    
+
         // if the child's motion is the original clip, replace it with the temp clip
         if (child.motion == clip)
         {
@@ -982,19 +1031,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             rewrite.to = "";
           }
-    
+
           // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
           tempClip = rewriteAnimationClipCurvePaths(tempClip, rewrite.from, rewrite.to);
-    
+
           // mark the tempClip as dirty
           EditorUtility.SetDirty(tempClip);
-    
+
           // set the file path as dirty
           AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
-    
+
           // save the temp clip
           AssetDatabase.SaveAssets();
-    
+
           child.motion = tempClip;
         }
         // if the child's motion is another blendTree, call this function recursively
@@ -1002,11 +1051,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         {
           ReplaceClipInBlendTree(childBlendTree, clip, tempClip, tempClipPath, rewrite);
         }
-    
+
         // Add the modified ChildMotion object to the new array
         newChildren[i] = child;
       }
-    
+
       // Set the children property of the BlendTree to the new array
       blendTree.children = newChildren;
     }
