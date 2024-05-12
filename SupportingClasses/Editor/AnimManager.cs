@@ -31,6 +31,13 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
       // loop through the curve bindings
       foreach (EditorCurveBinding curveBinding in curveBindings)
       {
+        // Debug console print the curve binding's path
+        CoreLogDebug("current curveBinding path: " + curveBinding.path);
+        // Debug print the old path string
+        CoreLogDebug("oldPathString: " + oldPathString);
+        // Debug print the new path string
+        CoreLogDebug("newPathString: " + newPathString);
+
         // check if the curve binding's path contains the old path string
         if (curveBinding.path.Contains(oldPathString))
         {
@@ -59,6 +66,39 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
           curveBindingsPairs.Add(new System.Tuple<EditorCurveBinding, EditorCurveBinding>(curveBinding, curveBinding));
         }
       }
+
+      // get the object reference curve bindings from the clip
+      EditorCurveBinding[] objectReferenceCurveBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
+      
+      // loop through the object reference curve bindings
+      foreach (EditorCurveBinding objectReferenceCurveBinding in objectReferenceCurveBindings)
+      {
+        // check if the object reference curve binding's path contains the old path string
+        if (objectReferenceCurveBinding.path.Contains(oldPathString))
+        {
+          // generate a new path string by replacing the old path string with the new path string
+          // in the object reference curve binding's path
+          string replacementFullPath = objectReferenceCurveBinding.path.Replace(oldPathString, newPathString);
+      
+          // create a new object reference curve binding with the replaced path
+          EditorCurveBinding newObjectReferenceCurveBinding = new EditorCurveBinding
+          {
+            path = replacementFullPath,
+            type = objectReferenceCurveBinding.type,
+            propertyName = objectReferenceCurveBinding.propertyName
+          };
+      
+          // get the object reference curve from the clip
+          ObjectReferenceKeyframe[] curve = AnimationUtility.GetObjectReferenceCurve(clip, objectReferenceCurveBinding);
+      
+          // remove the old object reference curve binding
+          AnimationUtility.SetObjectReferenceCurve(clip, objectReferenceCurveBinding, null);
+      
+          // set the curve to the clip with the new object reference curve binding
+          AnimationUtility.SetObjectReferenceCurve(clip, newObjectReferenceCurveBinding, curve);
+        }
+      }
+
     
       //console print that we are setting the new curve bindings to the clip
       CoreLog("Setting the new curve bindings to the clip: "  + clip.name);
