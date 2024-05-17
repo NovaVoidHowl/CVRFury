@@ -1,4 +1,4 @@
-// { "version": "0.0.143" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.144" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1276,10 +1276,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               path.IndexOf(DSUComponent.prefabName) + DSUComponent.prefabName.Length
             );
 
-            // ensure the trailingPath starts with a `/`
-            if (!trailingPath.StartsWith("/"))
+            // if the trailing path is '.CVRFury' then we have a root addon object, so can ignore that bit
+            // remove the '.CVRFury' from the trailingPath if it exists
+            if (trailingPath.StartsWith(".CVRFury"))
             {
-              trailingPath = "/" + trailingPath;
+              trailingPath = trailingPath.Substring(".CVRFury".Length);
+            }
+
+            // check for empty trailingPath
+            if (!string.IsNullOrEmpty(trailingPath))
+            {
+              // not null or empty, so we need to prefix the trailingPath with the newAddonObjectToLinkPath
+              // ensure the trailingPath starts with a `/`
+              if (!trailingPath.StartsWith("/"))
+              {
+                trailingPath = "/" + trailingPath;
+              }
             }
 
             objectPathPairs.Add(
