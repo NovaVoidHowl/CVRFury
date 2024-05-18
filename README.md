@@ -69,6 +69,8 @@
 
 ## ⚠️ Warnings ⚠️
 
+Due to a breaking change in CCK 3.10 only that or later versions of the CCK are now compatible with this software.
+
 Currently this software is only compatible with versions of VRC Fury older than 1.744, as that version introduced
 a breaking change in the components and this will need new stubs creating for them before they can be supported
 
