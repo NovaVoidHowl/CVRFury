@@ -1,4 +1,4 @@
-// { "version": "0.2.10" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
+// { "version": "0.2.12" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -361,9 +361,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       var versionParts = version.Split('.');
       var major = int.Parse(versionParts[0]);
       var minor = int.Parse(versionParts[1]);
-      var patch = int.Parse(versionParts[2]);
+      var sectionThree = versionParts[2];
+      // split off any metadata (after the + or - sign)
+      var metadataSplit = sectionThree.Split(new char[] { '+', '-' });
+      var patch = int.Parse(metadataSplit[0]);
+      var metadata = metadataSplit.Length > 1 ? metadataSplit[1] : "";
 
-      return new CVRFurySemVer { major = major, minor = minor, patch = patch, metadata = "" };
+      return new CVRFurySemVer { major = major, minor = minor, patch = patch, metadata = metadata };
     }
 
     private CVRFurySemVer ParseUnityVersion(string unityVersion)
