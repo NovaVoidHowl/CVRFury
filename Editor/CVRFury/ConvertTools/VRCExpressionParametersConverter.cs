@@ -483,7 +483,14 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                 newCVRFuryParametersStore.parameters[i] = new CVRFuryParametersStore.Parameter
                 {
                   name = parametersFileData.parameters[i].name,
-                  valueType = CVRFuryParametersStore.ValueType.Float,
+                  // set the type of the parameter to match the type of the parameter in the VRCExpressionParameters file
+                  valueType = parametersFileData.parameters[i].valueType switch
+                  {
+                    VRCExpressionParameters.ValueType.Bool => CVRFuryParametersStore.ValueType.Bool,
+                    VRCExpressionParameters.ValueType.Float => CVRFuryParametersStore.ValueType.Float,
+                    VRCExpressionParameters.ValueType.Int => CVRFuryParametersStore.ValueType.Int,
+                    _ => CVRFuryParametersStore.ValueType.Float
+                  },
                   defaultValue = parametersFileData.parameters[i].defaultValue
                 };
 
