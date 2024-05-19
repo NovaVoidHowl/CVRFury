@@ -57,7 +57,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public toggleParameter()
       : base("toggleParameter") { }
 
-    public bool defaultState;
+    public float defaultState;
 
     public GenerateType generateType = GenerateType.Bool; // default to bool as it is the most efficient for a toggle
 
@@ -76,11 +76,11 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public dropdownParameter()
       : base("dropdownParameter") { }
 
-    public int defaultIndex;
+    public float defaultIndex;
     public GenerateType generateType = GenerateType.Int;
 
-    // list of strings for the dropdown list
-    public List<string> dropdownList = new List<string>();
+    [SerializeField]
+    public List<DropdownParameterPair> dropdownList = new List<DropdownParameterPair>();
   }
 
   public class sliderParameter : menuParameter
@@ -140,4 +140,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   //   InputSingle -- not added as its not clear what this would be used for
   //   InputVector2 -- not added as its not clear what this would be used for
   //   InputVector3 -- not added as its not clear what this would be used for
+
+  // Supporting classes -------------------------------------------------------------------------------------------------
+
 }

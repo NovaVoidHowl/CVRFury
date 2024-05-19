@@ -33,29 +33,32 @@ public partial class CVRFuryMenuStoreEditor : Editor
 
       // Find the 'name' property
       SerializedProperty nameProperty = element.FindPropertyRelative("name");
+      // find the 'MachineName' property
+      SerializedProperty machineNameProperty = element.FindPropertyRelative("MachineName");
 
       // find the 'forceMachineName' property
       SerializedProperty forceMachineNameProperty = element.FindPropertyRelative("forceMachineName");
 
-      // Create a string that contains the information to display
-      string info = " " + TranslateMenuNameToParameterName(nameProperty.stringValue, forceMachineNameProperty.boolValue);
+      // if the  machineNameProperty is empty, then use the TranslateMenuNameToParameterName function to generate a machine name
+      if (string.IsNullOrEmpty(machineNameProperty.stringValue))
+      {
+        machineNameProperty.stringValue = TranslateMenuNameToParameterName(nameProperty.stringValue, forceMachineNameProperty.boolValue);
+      }
 
-      // Display the 'Parameter:' label using EditorGUI.PrefixLabel
-      EditorGUI.PrefixLabel(
-        new Rect(rect.x, rect.y + 2 * EditorGUIUtility.singleLineHeight, rect.width, EditorGUIUtility.singleLineHeight),
-        new GUIContent("Parameter:")
-      );
-
-      // Display the info string using EditorGUI.LabelField
-      EditorGUI.LabelField(
-        new Rect(
-          rect.x + EditorGUIUtility.labelWidth,
-          rect.y + 2.1f * EditorGUIUtility.singleLineHeight,
-          rect.width - EditorGUIUtility.labelWidth,
-          EditorGUIUtility.singleLineHeight
-        ),
-        info
-      );
+      // Draw field for the MachineName
+      if (machineNameProperty != null)
+          {
+            // Draw field for the menuParameter
+            EditorGUI.PropertyField(
+              new Rect(
+                rect.x,
+                rect.y + EditorGUIUtility.singleLineHeight * 2,
+                rect.width,
+                EditorGUIUtility.singleLineHeight
+              ),
+              machineNameProperty
+            );
+          }
 
       if (defaultStateProperty != null && generateTypeProperty != null)
       {
