@@ -1,4 +1,4 @@
-// { "version": "0.0.34" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
+// { "version": "0.0.35" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -350,8 +350,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           }
 
-          // clean out any null entries in the menus list
-          fullControllerModule.menus = fullControllerModule.menus.Where(x => x.menu != null).ToList();
+          // check if there are any menus (and if there are any null entries in the list get rid of them)
+          if(fullControllerModule.menus != null)
+          {
+            // clean out any null entries in the menus list
+            fullControllerModule.menus = fullControllerModule.menus.Where(x => x.menu != null).ToList();
+          }
 
           // check if there are any parameters
           if (parameters.Count > 0)
