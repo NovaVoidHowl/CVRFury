@@ -1,4 +1,4 @@
-// { "version": "0.3.8" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.3.9" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -978,6 +978,27 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         )
         .ToList();
 
+      //// --------------------------------- extra projects that add global parameters ---------------------------------
+      
+      //// VRCFT - face tracking software
+
+      // this has both v4 and v5 global parameters (v4 no longer under active development)
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_VRCFT_V4 to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRCFT_V4).ToList();
+
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_VRCFT_V5 to the global parameters list, but prefix each of them with "cascade_cvrf_enable/
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRCFT_V5.Select(param => "cascade_cvrf_enable/" + param)).ToList();
+      // note v5 is special in that the list provided is just the postfix of the parameter as it can 
+      // drive that at any path ie. ExamplePrefix/v2/JawOpen, v2/JawOpen, myPrefab/v2/JawOpen are all the same to it 
+      // so the cascade_cvrf_enable/ prefix is added to allow other modules to know that it is a cascade parameter 
+      // ref https://docs.vrcft.io/docs/tutorial-avatars/tutorial-avatars-extras/parameters
+
+      //// BFiVRC - BCI flow to OSC
+
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_BFIVRC to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_BFIVRC).ToList();
+
+      //// ----------------------------- end of extra projects that add global parameters ------------------------------
       // de-dupe the global parameters list
       globalParams = globalParams.Distinct().ToList();
 
