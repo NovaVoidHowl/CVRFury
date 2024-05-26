@@ -1,4 +1,4 @@
-// { "version": "0.0.144" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.146" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1130,8 +1130,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the GameObject of the boneToLinkTo
       GameObject boneToLinkToGameObject = animator.GetBoneTransform(boneToLinkTo).gameObject;
 
-      // perform the re-parenting
+      // add a empty GameObject to the boneToLinkToGameObject, this is for insulation purposes
+      GameObject addonParent = new GameObject("CVRF_Addon_" + DSUNumber);
+
+      // put the addonParent as a child of the boneToLinkToGameObject
+      addonParent.transform.SetParent(boneToLinkToGameObject.transform, true);
+
+      // put the addonObjectToLink as a child of the boneToLinkToGameObject
       armatureLinkModule.addonObjectToLink.transform.SetParent(boneToLinkToGameObject.transform, true);
+
+      // copy the position/rotation/scale of the addonObjectToLink to the addonParent
+      addonParent.transform.position = armatureLinkModule.addonObjectToLink.transform.position;
+      addonParent.transform.rotation = armatureLinkModule.addonObjectToLink.transform.rotation;
+      addonParent.transform.localScale = armatureLinkModule.addonObjectToLink.transform.localScale;
+
+      // reparent the addonObjectToLink to the addonParent
+      armatureLinkModule.addonObjectToLink.transform.SetParent(addonParent.transform, true);
 
       // debug log to console that the object has been re-parented
       CoreLogDebug("[ArmatureLink] Object has been re-parented to: " + boneToLinkToGameObject.name);
@@ -1246,24 +1260,45 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // loop over the animationFiles and rebind the paths
         foreach (string animationFile in animationFiles)
         {
+          // print to console that the animation file is being processed
+          CoreLog("[ArmatureLink] Processing animation file: " + animationFile);
+
           // load the animation clip from the animationFile
           AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationFile);
-
 
           // get all the paths in the clip
           EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
           EditorCurveBinding[] objectReferenceCurveBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
-          
+
           // merge curveBindings and objectReferenceCurveBindings
           EditorCurveBinding[] allCurveBindings = curveBindings.Concat(objectReferenceCurveBindings).ToArray();
-          
+
           // overwrite the curveBindings with the allCurveBindings (so we can use the same loop for both)
           curveBindings = allCurveBindings;
+
+          // debug print all the curveBindings to console in one block
+          StringBuilder curveBindingsStringBuilder = new StringBuilder();
+          foreach (EditorCurveBinding curveBinding in curveBindings)
+          {
+            curveBindingsStringBuilder.Append(
+              "path: "
+                + curveBinding.path
+                + ", propertyName: "
+                + curveBinding.propertyName
+                + ", type: "
+                + curveBinding.type
+                + "\n\n"
+            );
+          }
+          CoreLogDebug("[ArmatureLink] curveBindings:\n\n" + curveBindingsStringBuilder.ToString());
 
           // exclude any curveBindings that don't have the DSU component 'prefabName' in the path
           // (this is because we only want to impact the animations that are related to the DSUObject
           // and not paths that the addon maker intended to impact the core armature)
-          curveBindings = curveBindings.Where(cb => cb.path.Contains(DSUComponent.prefabName)).ToArray();
+          curveBindings = curveBindings.Where(cb => cb.path.Contains(addonObjectToLinkName)).ToArray();
+
+          // debug print the count of the curveBindings
+          CoreLogDebug("[ArmatureLink] curveBindings count: " + curveBindings.Length);
 
           // prefix the path of the curveBindings with the newAddonObjectToLinkPath
           foreach (EditorCurveBinding curveBinding in curveBindings)
@@ -1271,16 +1306,38 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get the path of the curveBinding
             string path = curveBinding.path;
 
-            // get the trailing part of the path (if it exists) after the prefabName
-            string trailingPath = path.Substring(
-              path.IndexOf(DSUComponent.prefabName) + DSUComponent.prefabName.Length
+            CoreLogDebug("[ArmatureLink] path: " + path);
+
+            // get the trailing part of the path (if it exists) after the prefabName as currently processed
+            // remove the addonObjectToLinkName from the stat of the path
+            string trailingPath = path.Substring(path.IndexOf(addonObjectToLinkName) + addonObjectToLinkName.Length);
+
+            // string trailingPath = path.Substring(
+            //   path.IndexOf(DSUComponent.prefabName) + DSUComponent.prefabName.Length
+            // );
+
+            CoreLogDebug(
+              "[ArmatureLink] addon object name : "
+                + addonObjectToLinkName
+                + "\n trailingPath stage 1: "
+                + trailingPath
+                + "\n, DSUComponent.prefabName: "
+                + DSUComponent.prefabName
+                + "\n, DSUComponent.prefabName.Length: "
+                + DSUComponent.prefabName.Length
             );
 
-            // if the trailing path is '.CVRFury' then we have a root addon object, so can ignore that bit
-            // remove the '.CVRFury' from the trailingPath if it exists
-            if (trailingPath.StartsWith(".CVRFury"))
+            // only do this bit if we have an imported module
+            // (the converter adds the suffix .CVRFury by default to differentiate it from the original prefab)
+            if (controllerModule.importedFromVRCFury)
             {
-              trailingPath = trailingPath.Substring(".CVRFury".Length);
+              // if the trailing path is '.CVRFury' then we have a root addon object, so can ignore that bit
+              // remove the '.CVRFury' from the trailingPath if it exists
+              if (trailingPath.StartsWith(".CVRFury"))
+              {
+                trailingPath = trailingPath.Substring(".CVRFury".Length);
+              }
+              CoreLogDebug("[ArmatureLink] trailingPath stage 2 (import cleanup): " + trailingPath);
             }
 
             // check for empty trailingPath
@@ -1294,6 +1351,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               }
             }
 
+            //debug print the paths of the curveBinding
+            CoreLogDebug(
+              "[ArmatureLink] addonPath: "
+                + addonObjectToLinkPath
+                + "\n, targetPath: "
+                + newAddonObjectToLinkPath
+                + "\n, trailingPath stage 3 (final): "
+                + trailingPath
+            );
+
             objectPathPairs.Add(
               new ObjectPathPair
               {
@@ -1302,8 +1369,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               }
             );
           }
-
-          
 
           // debug log to console that the animation file has been re-written
           CoreLog("[ArmatureLink] Animation paths updates from  '" + animationFile + "' stored");
@@ -1494,7 +1559,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           }
         }
         // debug log to console that the animation file has been re-written for the curveBindings
-        CoreLogDebug("[ArmatureLink] Animation paths updates from  '" + animationClipPath + "' re-written for the curveBindings");
+        CoreLogDebug(
+          "[ArmatureLink] Animation paths updates from  '" + animationClipPath + "' re-written for the curveBindings"
+        );
 
         // Code for handling 'PPtrCurves'
         EditorCurveBinding[] objectReferenceCurveBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
@@ -1523,7 +1590,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         }
 
         // debug log to console that the animation file has been re-written for the objectReferenceCurveBindings
-        CoreLogDebug("[ArmatureLink] Animation paths updates from  '" + animationClipPath + "' re-written for the objectReferenceCurveBindings");
+        CoreLogDebug(
+          "[ArmatureLink] Animation paths updates from  '"
+            + animationClipPath
+            + "' re-written for the objectReferenceCurveBindings"
+        );
 
         AssetDatabase.SaveAssets();
         EditorUtility.SetDirty(clip);
