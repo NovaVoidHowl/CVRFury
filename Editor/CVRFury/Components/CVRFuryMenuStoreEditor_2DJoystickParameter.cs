@@ -9,6 +9,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 using uk.novavoidhowl.dev.cvrfury.runtime;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 public partial class CVRFuryMenuStoreEditor : Editor
 {
@@ -18,7 +19,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
   {
     float height = 0;
 
-    height += 8.3f * EditorGUIUtility.singleLineHeight;
+    height += 9.3f * EditorGUIUtility.singleLineHeight;
 
     return height;
   }
@@ -40,21 +41,50 @@ public partial class CVRFuryMenuStoreEditor : Editor
       SerializedProperty yValuePostfixProperty = element.FindPropertyRelative("yValuePostfix");
       SerializedProperty nameProperty = element.FindPropertyRelative("name");
 
+      // find the 'forceMachineName' property
+      SerializedProperty forceMachineNameProperty = element.FindPropertyRelative("forceMachineName");
+
+      // find the 'MachineName' property
+      SerializedProperty machineNameProperty = element.FindPropertyRelative("MachineName");
+
+      // find the 'nameLinkedToMachineName' property
+      SerializedProperty nameLinkedToMachineNameProperty = element.FindPropertyRelative("nameLinkedToMachineName");
+
+      // Legacy content fixer: auto generate the machine name based on the name property
+      legacyMachineNameFieldUpdate(nameProperty, machineNameProperty);
+
+      // if the 'forceMachineName' property is true, then set the 'nameLinkedToMachineName' property to false
+      if (forceMachineNameProperty.boolValue)
+      {
+        nameLinkedToMachineNameProperty.boolValue = false;
+      }
+
+      // if the nameLinkedToMachineNameProperty value is true, then use the TranslateMenuNameToParameterName function to generate a machine name
+      if (nameLinkedToMachineNameProperty.boolValue)
+      {
+        machineNameProperty.stringValue = TranslateMenuNameToParameterName(
+          nameProperty.stringValue,
+          forceMachineNameProperty.boolValue
+        );
+      }
+
+      renderMachineNameField(nameLinkedToMachineNameProperty, machineNameProperty, forceMachineNameProperty, rect);
+
       // Create a string that contains the information you want to display
       string info =
         $" {nameProperty.stringValue}{xValuePostfixProperty.stringValue}, {nameProperty.stringValue}{yValuePostfixProperty.stringValue}";
 
       // Display the 'Parameters:' label using EditorGUI.PrefixLabel
       EditorGUI.PrefixLabel(
-        new Rect(rect.x, rect.y + 2 * EditorGUIUtility.singleLineHeight, rect.width, EditorGUIUtility.singleLineHeight),
-        new GUIContent("Parameters:")
+        new Rect(rect.x, rect.y + 3 * EditorGUIUtility.singleLineHeight, rect.width, EditorGUIUtility.singleLineHeight),
+        new GUIContent("Axis Parameters:")
       );
 
       // Display the info string using EditorGUI.LabelField
       EditorGUI.LabelField(
         new Rect(
           rect.x + EditorGUIUtility.labelWidth,
-          rect.y + 2 * EditorGUIUtility.singleLineHeight,
+          rect.y + 3 * EditorGUIUtility.singleLineHeight,
           rect.width - EditorGUIUtility.labelWidth,
           EditorGUIUtility.singleLineHeight
         ),
@@ -64,7 +94,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
       EditorGUI.PropertyField(
         new Rect(
           rect.x,
-          rect.y + 3.1f * EditorGUIUtility.singleLineHeight,
+          rect.y + 4.1f * EditorGUIUtility.singleLineHeight,
           rect.width,
           EditorGUIUtility.singleLineHeight
         ),
@@ -73,7 +103,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
       EditorGUI.PropertyField(
         new Rect(
           rect.x,
-          rect.y + 4.1f * EditorGUIUtility.singleLineHeight,
+          rect.y + 5.1f * EditorGUIUtility.singleLineHeight,
           rect.width,
           EditorGUIUtility.singleLineHeight
         ),
@@ -83,7 +113,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
       EditorGUI.PropertyField(
         new Rect(
           rect.x,
-          rect.y + 5.1f * EditorGUIUtility.singleLineHeight,
+          rect.y + 6.1f * EditorGUIUtility.singleLineHeight,
           rect.width,
           EditorGUIUtility.singleLineHeight
         ),
@@ -92,7 +122,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
       EditorGUI.PropertyField(
         new Rect(
           rect.x,
-          rect.y + 6.1f * EditorGUIUtility.singleLineHeight,
+          rect.y + 7.1f * EditorGUIUtility.singleLineHeight,
           rect.width,
           EditorGUIUtility.singleLineHeight
         ),
@@ -104,7 +134,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
         defaultXValueProperty.floatValue = EditorGUI.Slider(
           new Rect(
             rect.x,
-            rect.y + 7.1f * EditorGUIUtility.singleLineHeight,
+            rect.y + 8.1f * EditorGUIUtility.singleLineHeight,
             rect.width,
             EditorGUIUtility.singleLineHeight
           ),
@@ -119,7 +149,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
         defaultYValueProperty.floatValue = EditorGUI.Slider(
           new Rect(
             rect.x,
-            rect.y + 8.1f * EditorGUIUtility.singleLineHeight,
+            rect.y +9.1f * EditorGUIUtility.singleLineHeight,
             rect.width,
             EditorGUIUtility.singleLineHeight
           ),

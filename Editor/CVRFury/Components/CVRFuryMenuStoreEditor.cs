@@ -194,5 +194,122 @@ public partial class CVRFuryMenuStoreEditor : Editor
     }
     return derivedTypes;
   }
+
+  private void renderMachineNameField(
+    SerializedProperty nameLinkedToMachineNameProperty,
+    SerializedProperty machineNameProperty,
+    SerializedProperty forceMachineNameProperty,
+    Rect rect
+  )
+  {
+    // Icon for the link/unlink button
+    Texture2D autoIcon =
+      (
+        nameLinkedToMachineNameProperty.boolValue
+          ? EditorGUIUtility.Load("d_Linked")
+          : EditorGUIUtility.Load("d_Unlinked")
+      ) as Texture2D;
+
+    // create the content for the button
+    GUIContent autoButtonContent;
+
+    // if forceMachineNameProperty set to true then say option disabled
+    if (forceMachineNameProperty.boolValue)
+    {
+      autoButtonContent = new(autoIcon, "Name Link option disabled as this is an imported Menu entry");
+    }
+    else
+    {
+      autoButtonContent = new(autoIcon, "Unlink/Link Name to Machine");
+    }
+    
+    
+
+    // Create a GUIStyle to set the size of the image
+    GUIStyle buttonStyle = new GUIStyle();
+    buttonStyle.fixedWidth = 40; // Set the width of the image
+    buttonStyle.fixedHeight = 40; // Set the height of the image
+
+    // Draw a button to set the 'nameLinkedToMachineName' property to true/false
+    if (nameLinkedToMachineNameProperty != null)
+    {
+      // check if the 'forceMachineName' property is true, and if it is, then disable this button
+      EditorGUI.BeginDisabledGroup(forceMachineNameProperty.boolValue);
+
+      // Draw the button
+      if (
+        GUI.Button(
+          new Rect(150, rect.y + EditorGUIUtility.singleLineHeight * 2, 20, 20),
+          autoButtonContent,
+          buttonStyle // Use the GUIStyle here
+        )
+      )
+      {
+        // if this change would make the 'nameLinkedToMachineName' property true, then warn the user that the
+        // custom name will be overwritten
+        if (nameLinkedToMachineNameProperty.boolValue)
+        {
+          // currently true going to false, no data loss
+          nameLinkedToMachineNameProperty.boolValue = false;
+        }
+        else
+        {
+          // currently false going to true, data loss possible
+          if (
+            EditorUtility.DisplayDialog(
+              "Warning",
+              "This will overwrite the custom Machine Name. Do you want to continue?",
+              "Yes",
+              "No"
+            )
+          )
+          {
+            nameLinkedToMachineNameProperty.boolValue = true;
+          }
+          else
+          {
+            nameLinkedToMachineNameProperty.boolValue = false;
+          }
+        }
+
+        serializedObject.ApplyModifiedProperties(); // Apply the changes
+      }
+
+      // End the disabled group
+      EditorGUI.EndDisabledGroup();
+    }
+
+    // Draw field for the MachineName
+    if (machineNameProperty != null)
+    {
+      // check if the 'nameLinkedToMachineName' property is true, and if it is, then disable the 'MachineName' field
+      EditorGUI.BeginDisabledGroup(nameLinkedToMachineNameProperty.boolValue);
+
+      // Draw field for the menuParameter
+      EditorGUI.PropertyField(
+        new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight * 2, rect.width, EditorGUIUtility.singleLineHeight),
+        machineNameProperty,
+        new GUIContent("Parameter")
+      );
+
+      // End the disabled group
+      EditorGUI.EndDisabledGroup();
+    }
+  }
+
+    private void legacyMachineNameFieldUpdate(
+    SerializedProperty nameProperty,
+    SerializedProperty machineNameProperty
+    )
+    {
+      // if the value of machineNameProperty is empty, then set the value of machineNameProperty to the value of nameProperty
+      if (machineNameProperty.stringValue == "")
+      {
+        machineNameProperty.stringValue = nameProperty.stringValue;
+      }
+
+      // save the changes
+      serializedObject.ApplyModifiedProperties();
+    }
 }
 #endif

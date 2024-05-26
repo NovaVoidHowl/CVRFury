@@ -27,7 +27,11 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     // as of CCK3.10 the machine name is exposed in the inspector, this is to allow the user to set it
     // so no more need to force set it
     public string MachineName;
-    
+
+    // echo of what you get in the CCK menu items, if true then name and machine name are kept in sync
+    // intrinsically set to false if forceMachineName is true
+    public bool nameLinkedToMachineName = true;
+
 
     [SerializeField]
     private string menuParameterType;
