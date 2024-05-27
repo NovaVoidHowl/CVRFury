@@ -1,4 +1,4 @@
-// { "version": "0.21.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.27.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -472,6 +472,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // purge old temp files
       PurgeTempFiles(uploadedObject);
 
+      // avatar armature path setter
+      AvatarInfoArmaturePathSetter(uploadedObject);
+
       // prefab unpacker
       PrefabUnpacker(uploadedObject);
 
@@ -480,12 +483,114 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
 
     /// <summary>
+    /// this function reads all the armature paths in the uploadedObject and adds them to the CVRFuryAvatarInfoUnit
+    /// avatarArmaturePaths variable
+    /// </summary>
+    public static void AvatarInfoArmaturePathSetter(GameObject uploadedObject)
+    {
+      // debug log that the avatar armature path setter is running
+      CoreLogDebug("[Avatar armature path setter] running");
+    
+      // get the CVRFuryAvatarInfoUnit component
+      var avatarInfoUnit = uploadedObject.GetComponent<CVRFuryAvatarInfoUnit>();
+    
+      // if the CVRFuryAvatarInfoUnit component is not present, add it
+      if (avatarInfoUnit == null)
+      {
+        avatarInfoUnit = uploadedObject.AddComponent<CVRFuryAvatarInfoUnit>();
+      }
+
+      // check if there is a CVRAvatar component on the uploadedObject
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // if there is no Animator component or CVRAvatar component on the uploadedObject, then return
+      if (avatarComponent == null)
+      {
+        // set the dataLoadFailed flag to true
+        avatarInfoUnit.dataLoadFailed = true;
+
+        // console print to say that the armature paths have not been set
+        CoreLogCritical("No CVRAvatar component found, armature paths not set");
+        // debug log that the avatar armature path setter has finished
+        CoreLogDebug("[Avatar armature path setter] finished");
+        return;
+      }
+      
+      // get the bodyMesh object from the CVRAvatar component
+      var bodyMesh = avatarComponent.bodyMesh;
+
+      // if the bodyMesh object is null, then return
+      if (bodyMesh == null)
+      {
+        // set the dataLoadFailed flag to true
+        avatarInfoUnit.dataLoadFailed = true;
+
+        // console print to say that the armature paths have not been set
+        CoreLogCritical("No bodyMesh found, armature paths not set");
+        // debug log that the avatar armature path setter has finished
+        CoreLogDebug("[Avatar armature path setter] finished");
+        return;
+      }
+
+      // get the rootbone object from the bodyMesh
+      var rootBone = bodyMesh.rootBone;
+
+      // if the rootBone object is null, then return
+      if (rootBone == null)
+      {
+        // set the dataLoadFailed flag to true
+        avatarInfoUnit.dataLoadFailed = true;
+
+        // console print to say that the armature paths have not been set
+        CoreLogCritical("No rootBone found, armature paths not set");
+        // debug log that the avatar armature path setter has finished
+        CoreLogDebug("[Avatar armature path setter] finished");
+        return;
+      }
+
+
+    
+      // get the armature paths
+      var armaturePaths = rootBone.GetComponentsInChildren<Transform>()
+                        .Select(x => GetFullTransformPath(x))
+                        .ToList();
+    
+      // get the path to the uploadedObject
+      string uploadedObjectPath = GetGameObjectPath(uploadedObject);
+
+      // remove the '/' at the start of the uploadedObject path if it exists
+      if (uploadedObjectPath.StartsWith("/"))
+      {
+        uploadedObjectPath = uploadedObjectPath.Substring(1);
+      }
+
+      // debug print the uploadedObject path
+      CoreLogDebug("[Avatar armature path setter] Uploaded object path: " + uploadedObjectPath);
+
+      // loop over the armature paths and remove the uploadedObject path from them
+      for (int i = 0; i < armaturePaths.Count; i++)
+      {
+        armaturePaths[i] = armaturePaths[i].Replace(uploadedObjectPath + "/", "");
+      }
+
+
+      // set the armature paths in the CVRFuryAvatarInfoUnit component
+      avatarInfoUnit.avatarArmaturePaths = armaturePaths;
+    
+      // console print to say that the armature paths have been set
+      CoreLog("Armature paths set");
+      // debug log that the avatar armature path setter has finished
+      CoreLogDebug("[Avatar armature path setter] finished");
+    }
+
+    /// <summary>
     /// function to walk the whole uploadedObject hierarchy and fully unpack any prefabs it finds
+    /// also if it finds a prefab with a DSU component, it will tag in the name
     /// </summary>
     public static void PrefabUnpacker(GameObject uploadedObject)
     {
       // debug log that the prefab unpacker is running
-      CoreLogDebug("Prefab unpacker running");
+      CoreLogDebug("[Prefab unpacker] running");
 
       // get the root game object of the uploadedObject
       var root = uploadedObject.transform.root;
@@ -493,19 +598,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the children of the root game object
       var children = root.GetComponentsInChildren<Transform>();
 
+      // counter for the number of prefabs found
+      int numPrefabs = 0;
+
       // loop through the children
       foreach (var child in children)
       {
         // if the child is a prefab
         if (PrefabUtility.IsPartOfAnyPrefab(child.gameObject))
         {
+          // debug log that prefab is being unpacked
+          CoreLogDebug("[Prefab unpacker] unpacking prefab: " + child.gameObject.name);
           // unpack the prefab
           PrefabUtility.UnpackPrefabInstance(child.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+          // increment the number of prefabs found
+          numPrefabs++;
         }
       }
 
       // debug log that the prefab unpacker has finished
-      CoreLogDebug("Prefab unpacker finished");
+      CoreLogDebug("[Prefab unpacker] finished, unpacked " + numPrefabs + " prefabs");
     }
 
     /// <summary>
@@ -513,6 +625,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// </summary>
     public static void PurgeTempFiles(GameObject uploadedObject)
     {
+      // console print to say that the temp files are being purged
+      CoreLogDebug("[Purge temp files] running");
       // get the temp folder path for the current avatar controller creation
       string tempFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
 
@@ -565,6 +679,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       
       //update asset database
       AssetDatabase.Refresh();
+      // console print to say that the temp files have been purged
+      CoreLogDebug("[Purge temp files] finished");
     }
 
 
