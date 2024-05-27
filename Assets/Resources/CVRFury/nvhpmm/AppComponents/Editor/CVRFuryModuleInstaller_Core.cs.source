@@ -1,4 +1,4 @@
-// { "version": "0.27.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.28.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -188,8 +188,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // get the modules
         var modules = dataStorageUnit.modules.modules;
 
+        // check if modules is null
+        if (modules == null)
+        {
+          // console print to say that the modules are null
+          CoreLogCritical("Modules are null");
+          return;
+        }
+
         // get a count of the modules
         int numModules = modules.Count;
+
+        // check if numModules is 0
+        if (numModules == 0)
+        {
+          // console print to say that the number of modules is 0
+          CoreLogError("No modules found in the data storage unit");
+          return;
+        }
 
         // divide the progress bar into equal parts for each module
         float progressPerModuleOnUnityProgressBar = 1f / numModules;
@@ -394,8 +410,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // get the modules
         var modules = dataStorageUnit.modules.modules;
 
+        // check if modules is null
+        if (modules == null)
+        {
+          // console print to say that the modules are null
+          CoreLogCritical("Modules are null");
+          ModalWindow.UpdateSubProgressBar(i, 100);
+          return;
+        }
+
         // get a count of the modules
         int numModules = modules.Count;
+
+        // check if numModules is 0
+        if (numModules == 0)
+        {
+          // console print to say that the number of modules is 0
+          CoreLogError("No modules found in the data storage unit");
+          ModalWindow.UpdateSubProgressBar(i, 100);
+          return;
+        }
 
         // divide the progress bar into equal parts for each module
         float progressPerModule = 100f / numModules;
