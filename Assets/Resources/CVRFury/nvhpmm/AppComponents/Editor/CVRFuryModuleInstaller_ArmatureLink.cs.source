@@ -1,4 +1,4 @@
-// { "version": "0.0.147" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.148" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -43,6 +43,115 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // log the module's moduleType to the console
       CoreLog("module.ModuleType: " + module.ModuleType);
 
+      // cast the module to a armatureLinkModule
+      armatureLink armatureLinkModule = (armatureLink)module;
+
+
+
+      // get the modules from the DSU on the DSUObject
+      List<CVRFuryModule> modules = DSUObject.GetComponent<CVRFuryDataStorageUnit>().modules.modules;
+
+      // debug print the number of modules on the DSUObject
+      CoreLogDebug("[Armature Link] modules.Count: " + modules.Count);
+
+      // int to store the number of armatureLink modules on the DSUObject
+      int armatureLinkModuleCount = 0;
+
+      // loop over the modules and count the number of armatureLink modules
+      foreach (CVRFuryModule m in modules)
+      {
+        //debug print the moduleType of the module
+        CoreLogDebug("[Armature Link] m.ModuleType: " + m.ModuleType);
+        if (m.ModuleType == "ArmatureLink")
+        {
+          armatureLinkModuleCount++;
+        }
+      }
+
+
+      // print the armatureLinkModuleCount
+      CoreLog("[Armature Link] armatureLinkModuleCount: " + armatureLinkModuleCount);
+
+      // if there is more than one armatureLink module on the DSUObject
+      if (armatureLinkModuleCount > 1)
+      {
+        // log a error to the console
+        CoreLogError("More than one armatureLink module found on DSUObject, this may cause issues, attempting automatic resolution");
+
+        // loop over the modules and get the ones that are armatureLink modules
+        List<armatureLink> armatureLinkModules = new List<armatureLink>();
+        foreach (CVRFuryModule m in modules)
+        {
+          if (m.ModuleType == "ArmatureLink")
+          {
+            armatureLinkModules.Add((armatureLink)m);
+          }
+        }
+
+        // debug print the number of armatureLink modules
+        CoreLogDebug("[Armature Link] armatureLinkModules.Count: " + armatureLinkModules.Count);
+
+        // loop over the armatureLink modules and check if any of them have the addonObjectToLink set, if they do then
+        // add the gameObject to a list
+        List<GameObject> addonObjectsToLink = new List<GameObject>();
+        foreach (armatureLink armatureLinkModule2 in armatureLinkModules)
+        {
+          if (armatureLinkModule2.addonObjectToLink != null)
+          {
+            addonObjectsToLink.Add(armatureLinkModule2.addonObjectToLink);
+          }
+        }
+
+        // debug print the number of addonObjectsToLink
+        CoreLogDebug("[Armature Link] addonObjectsToLink.Count: " + addonObjectsToLink.Count);
+
+        // debug print the current addonObjectToLink
+        CoreLogDebug("[Armature Link] armatureLinkModule.addonObjectToLink: " + armatureLinkModule.addonObjectToLink.name);
+
+        // remove the current addonObjectToLink from the addonObjectsToLink list (no point in checking against itself)
+        addonObjectsToLink.Remove(armatureLinkModule.addonObjectToLink);
+
+        // debug print all the addonObjectsToLink in one block
+        StringBuilder addonObjectsToLinkStringBuilder = new StringBuilder();
+        foreach (GameObject o in addonObjectsToLink)
+        {
+          addonObjectsToLinkStringBuilder.Append(o.name + "\n");
+        }
+        CoreLogDebug("[Armature Link] other addonObjectsToLink:\n" + addonObjectsToLinkStringBuilder.ToString());
+
+        // check if the addonObjectsToLink from the module we are currently processing is a child of any of the other,
+        // in the addonObjectsToLink in the list, if so stop processing this 
+        foreach (GameObject o in addonObjectsToLink)
+        {
+          if (armatureLinkModule.addonObjectToLink.transform.IsChildOf(o.transform))
+          {
+            // log a Error to the console
+            CoreLogError("addonObjectToLink '"+ armatureLinkModule.addonObjectToLink.name + "' is a child of another addonObjectToLink '"+ o.name +"', this wil cause issues, skipping this module");
+            return;
+          }
+        }
+
+      }
+
+
+      // check if armatureLinkModule.addonObjectToLink is null, if it is then return, as this a required field
+      if (armatureLinkModule.addonObjectToLink == null)
+      {
+        if (armatureLinkModuleCount == 1)
+        {
+          // only bother logging a critical error if there is only one armatureLink module, as if there are more than
+          // one then the other modules may be able to handle the linking (cascaded linking)
+          // log a critical error to the console
+          CoreLogError("addonObjectToLink is null, this is a required field");
+        }
+        return;
+      }
+      else
+      {
+        // log the addonObjectToLink to the console
+        CoreLog("addonObjectToLink: " + armatureLinkModule.addonObjectToLink.name);
+      }
+
       // access the CVRAvatar component on the targetAvatar
       CVRAvatar avatar = targetAvatar.GetComponent<CVRAvatar>();
 
@@ -54,15 +163,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // bool to say if we have need mesh rebind mode
         bool needsMeshRebind = true;
 
-        // check if there are any animator components on the DSUObject or any of its children
-        if (DSUObject.GetComponent<Animator>() == null && DSUObject.GetComponentsInChildren<Animator>().Length == 0)
+
+        // check if there are any skinned mesh renderers on the DSUObject or any of its children
+        if (DSUObject.GetComponent<SkinnedMeshRenderer>() == null && DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>().Length == 0)
         {
-          // if there are no animator components on the DSUObject or any of its children, then we don't need mesh rebind
+          // if there are no skinned mesh renderers on the DSUObject or any of its children, then we don't need mesh rebind
           needsMeshRebind = false;
         }
 
-        // cast the module to a armatureLinkModule
-        armatureLink armatureLinkModule = (armatureLink)module;
+        // list of all the skinned mesh renderers under the DSUObject
+        SkinnedMeshRenderer[] skinnedMeshRenderers = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
+        // debug print the skinnedMeshRenderers in one block
+        StringBuilder skinnedMeshRenderersStringBuilder = new StringBuilder();
+        foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
+        {
+          skinnedMeshRenderersStringBuilder.Append(skinnedMeshRenderer.name + "\n");
+        }
+        CoreLogDebug("[ArmatureLink] skinnedMeshRenderers:\n" + skinnedMeshRenderersStringBuilder.ToString());
 
         switch (armatureLinkModule.addonLinkMode)
         {
@@ -138,35 +256,64 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the path to the avatar
       string avatarPath = GetGameObjectPath(avatar.gameObject);
 
+      // debug print the avatarPath
+      CoreLogDebug("[ArmatureLink][MeshRebind] avatarPath: " + avatarPath);
+
       // get the current path of the addonObjectToLink and store it
       string addonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
+
+      // debug print the addonObjectToLinkPath
+      CoreLogDebug("[ArmatureLink][MeshRebind] addonObjectToLinkPath: " + addonObjectToLinkPath);
 
       // get the new path of the addonObjectToLink and store it
       string newAddonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
 
+      // debug print the newAddonObjectToLinkPath
+      CoreLogDebug("[ArmatureLink][MeshRebind] newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
+
       // ok this is mesh rebind mode, so first we need to figure out what sub object is the root of the addon armature
-      // so check if there are any animator components on the DSUObject or any of its children
-      if (DSUObject.GetComponent<Animator>() == null && DSUObject.GetComponentsInChildren<Animator>().Length == 0)
-      {
-        // if there are no animator components on the DSUObject or any of its children, then we can't do mesh rebind
-        // log an error to the console and return
-        CoreLogError("No Animator component found on DSUObject or any of its children, cannot perform mesh rebind");
-        return;
-      }
+      // so check if there are any skinned mesh renderers components on the DSUObject or any of its children
+      // if there are then we need to merge the armatures together
 
-      // check if there is not an animator component on the DSUObject and if so abort
-      if (DSUObject.GetComponent<Animator>() == null)
-      {
-        // log an error to the console and return
-        CoreLogError("No Animator component found on DSUObject, cannot perform mesh rebind");
-        return;
-      }
+      // list of all the skinned mesh renderers under the DSUObject
+      SkinnedMeshRenderer[] skinnedMeshRenderersPerDSU;
 
-      // at this point we know there is an animator component on the DSUObject, so check if it has a avatar assigned
-      if (DSUObject.GetComponent<Animator>().avatar == null)
+      // list of game objects that the skinned mesh renderers are on
+      List<GameObject> skinnedMeshRendererGameObjects = new List<GameObject>();
+
+      // check if there are any skinned mesh renderers on the DSUObject or any of its children
+      if (DSUObject.GetComponent<SkinnedMeshRenderer>() != null || DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>().Length > 0)
       {
-        // log an error to the console and return
-        CoreLogError("No Avatar assigned to Animator component on DSUObject, cannot perform mesh rebind");
+        // get all the skinned mesh renderers under the DSUObject
+        skinnedMeshRenderersPerDSU = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
+        // debug print the skinnedMeshRenderersPerDSU in one block
+        StringBuilder skinnedMeshRenderersPerDSUStringBuilder = new StringBuilder();
+        foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderersPerDSU)
+        {
+          skinnedMeshRenderersPerDSUStringBuilder.Append(skinnedMeshRenderer.name + "\n");
+        }
+        CoreLogDebug("[ArmatureLink] skinnedMeshRenderersPerDSU:\n" + skinnedMeshRenderersPerDSUStringBuilder.ToString());
+
+        // get the gameobjects that the skinned mesh renderers are on
+        
+        foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderersPerDSU)
+        {
+          skinnedMeshRendererGameObjects.Add(skinnedMeshRenderer.gameObject);
+        }
+
+        // debug print the skinnedMeshRendererGameObjects in one block
+        StringBuilder skinnedMeshRendererGameObjectsStringBuilder = new StringBuilder();
+        foreach (GameObject skinnedMeshRendererGameObject in skinnedMeshRendererGameObjects)
+        {
+          skinnedMeshRendererGameObjectsStringBuilder.Append(skinnedMeshRendererGameObject.name + "\n");
+        }
+        CoreLogDebug("[ArmatureLink] skinnedMeshRendererGameObjects:\n" + skinnedMeshRendererGameObjectsStringBuilder.ToString());
+      }
+      else
+      {
+        // if there are no skinned mesh renderers on the DSUObject or any of its children, then we don't need mesh rebind
+        CoreLogCritical("No skinned mesh renderers found on DSUObject or any of its children, mesh rebind not possible");
         return;
       }
 
@@ -1391,10 +1538,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               CoreLogError("[ArmatureLink] Path is empty for curveBinding: " + curveBinding.propertyName);
               continue;
             }
-            // remove the first part of the path up to the first '/'
-            int firstSlashIndex = path.IndexOf("/");
-            string trailingPath = path.Substring(firstSlashIndex); 
-            
+
+            string trailingPath;
+
+            // check if there is a '/' in the path
+            if (!path.Contains("/"))
+            {
+              // no slash in the path, thus no trailing path
+              trailingPath = "";
+            }
+            else
+            {
+              // remove the first part of the path up to the first '/'
+              int firstSlashIndex = path.IndexOf("/");
+              trailingPath = path.Substring(firstSlashIndex); 
+            }
+
             // debug print the path, newAddonObjectToLinkPath and trailingPath
             CoreLogDebug("[ArmatureLink] path: " + path
                          + "\n newAddonObjectToLinkPath: " + newAddonObjectToLinkPath
@@ -1531,6 +1690,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // set the DSUNumber on the CVRFuryGameObjectInfoTag component
       DSUObject.GetComponent<CVRFuryGameObjectInfoTag>().sourceDSUNumber = DSUNumber;
+
+      // debug log that all the CVRFuryGameObjectInfoTag components have been added
+      CoreLogDebug("All CVRFuryGameObjectInfoTag components added");
     }
 
     public void UpdateAnimationClips(string avatarName, List<System.Tuple<string, string>> pathPairs, int DSUNumber)
