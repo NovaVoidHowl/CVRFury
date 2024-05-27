@@ -1,4 +1,4 @@
-// { "version": "0.3.11" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
+// { "version": "0.4.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -655,23 +655,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // debug print to say we are re-binding animation clips
               CoreLog("Rebinding animation clips - Prefab Instance");
 
-              // Try to get the PrefabName from the CVRFuryDataStorageUnit component on the DSUObject
-              string FuryPrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
 
-              // not needed anymore as we are now using the DSUObject to work out what the prefab name is
-              // // check if the FuryPrefabName is null or empty
-              // if (string.IsNullOrEmpty(FuryPrefabName))
-              // {
-              //   // if it is, log an error to the console
-              //   CoreLogCritical(
-              //     "PrefabName is null or empty, please ensure the DSUObject at "
-              //       + DSUObjectPath
-              //       + " has a valid prefabName"
-              //   );
-              //   ReportAddErrorLine(buildReportPath, "[CRITICAL]: FuryPrefabName is null or empty");
-              // }
-              // else
-              // {
               // get the animation clips from the source controller
               AnimationClip[] pfSourceClips = tempSourceAnimatorController.animationClips;
 
@@ -777,7 +761,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                       {
                         // no armatureLink module present, so we need to use the DSUObjectPath + animationBaseBindName
 
-                        // check if the FuryPrefabName and the DSUObjectPath match (if they do, we don't need to rewrite the paths)
+                        // check if the animationBaseBindName and the DSUObjectPath match (if they do, we don't need to rewrite the paths)
                         if (animationBaseBindName != DSUObjectPath)
                         {
                           // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
@@ -804,7 +788,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                         clip,
                         tempClip,
                         tempClipPath,
-                        new fullControllerModule.BindingRewrite { from = FuryPrefabName, to = DSUObjectPath }
+                        new fullControllerModule.BindingRewrite { from = animationBaseBindName, to = DSUObjectPath }
                       );
                     }
                   }
@@ -816,9 +800,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // refresh the asset database after all the clips have been processed
               AssetDatabase.Refresh();
-              // }
-
-
 
               #endregion
 

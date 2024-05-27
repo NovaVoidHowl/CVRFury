@@ -1,4 +1,4 @@
-// { "version": "0.0.146" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.147" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -74,25 +74,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // note this needs to start at the bone specified in the armatureBoneToLinkTo (this being a unity standard
             // bone name) and put the two armatures together from there
 
-            performMeshRebind(avatar, DSUObject, DSUNumber, armatureLinkModule);
+            performMeshRebind(avatar, targetAvatar, DSUObject, DSUNumber, armatureLinkModule);
             break;
           case CVRFuryModuleLinker.linkMode.MergeAsChildren:
             // Deprecated, but kept for redirecting to MeshRebind
             // Handle MergeAsChildren case
             // redirect to the same as MeshRebind
-            performMeshRebind(avatar, DSUObject, DSUNumber, armatureLinkModule);
+            performMeshRebind(avatar, targetAvatar, DSUObject, DSUNumber, armatureLinkModule);
             break;
           case CVRFuryModuleLinker.linkMode.ParentConstraint:
             // Deprecated, but kept for redirecting to MeshRebind
             // Handle ParentConstraint case
             // redirect to the same as MeshRebind
-            performMeshRebind(avatar, DSUObject, DSUNumber, armatureLinkModule);
+            performMeshRebind(avatar, targetAvatar, DSUObject, DSUNumber, armatureLinkModule);
             break;
           case CVRFuryModuleLinker.linkMode.ReparentRoot:
             // Handle ReparentRoot case
             // this needs to move the addonObjectToLink to be a child of the armatureBoneToLinkTo while keeping the
             // object's position and rotation relative to the bone
-            performReparentRoot(avatar, DSUObject, DSUNumber, armatureLinkModule);
+            performReparentRoot(avatar, targetAvatar, DSUObject, DSUNumber, armatureLinkModule);
             break;
           case CVRFuryModuleLinker.linkMode.Auto:
             // Handle Auto case
@@ -100,11 +100,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // MeshRebind, if it doesn't then it should use ReparentRoot
             if (needsMeshRebind)
             {
-              performMeshRebind(avatar, DSUObject, DSUNumber, armatureLinkModule);
+              performMeshRebind(avatar, targetAvatar, DSUObject, DSUNumber, armatureLinkModule);
             }
             else
             {
-              performReparentRoot(avatar, DSUObject, DSUNumber, armatureLinkModule);
+              performReparentRoot(avatar, targetAvatar, DSUObject, DSUNumber, armatureLinkModule);
             }
             break;
           default:
@@ -122,6 +122,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private void performMeshRebind(
       CVRAvatar avatar,
+      GameObject targetAvatar,
       GameObject DSUObject,
       int DSUNumber,
       armatureLink armatureLinkModule
@@ -1090,6 +1091,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private void performReparentRoot(
       CVRAvatar avatar,
+      GameObject targetAvatar,
       GameObject DSUObject,
       int DSUNumber,
       armatureLink armatureLinkModule
@@ -1292,10 +1294,86 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           }
           CoreLogDebug("[ArmatureLink] curveBindings:\n\n" + curveBindingsStringBuilder.ToString());
 
-          // exclude any curveBindings that don't have the DSU component 'prefabName' in the path
-          // (this is because we only want to impact the animations that are related to the DSUObject
-          // and not paths that the addon maker intended to impact the core armature)
-          curveBindings = curveBindings.Where(cb => cb.path.Contains(addonObjectToLinkName)).ToArray();
+          // var for the addonObjectToLinkNameForPathRewrites, as needs to be modified
+          string addonObjectToLinkNameForPathRewrites = addonObjectToLinkName;
+
+          // only do this bit if we have an imported module
+          // (the converter adds the suffix .CVRFury by default to differentiate it from the original prefab)
+          if (controllerModule.importedFromVRCFury)
+          {
+            // remove the '.CVRFury' from the addonObjectToLinkNameForPathRewrites if it exists
+            if (addonObjectToLinkNameForPathRewrites.EndsWith(".CVRFury"))
+            {
+              CoreLogDebug("[ArmatureLink] addonObjectToLinkNameForPathRewrites pre-cleanup: " + addonObjectToLinkNameForPathRewrites);
+              // remove the '.CVRFury' from the end of addonObjectToLinkNameForPathRewrites
+              addonObjectToLinkNameForPathRewrites = addonObjectToLinkNameForPathRewrites.Substring(0, addonObjectToLinkNameForPathRewrites.Length - ".CVRFury".Length);
+              CoreLogDebug("[ArmatureLink] addonObjectToLinkNameForPathRewrites post-cleanup: " + addonObjectToLinkNameForPathRewrites);
+            }
+          }
+          
+          // get the CVRFuryAvatarInfoUnit component from the targetAvatar GameObject (it will always be there as it is
+          // it is added by the pre-run tasks)
+          CVRFuryAvatarInfoUnit avatarInfoUnit = targetAvatar.GetComponent<CVRFuryAvatarInfoUnit>();
+
+          // get the avatarArmaturePaths list from the CVRFuryAvatarInfoUnit
+          List<string> avatarArmaturePaths = avatarInfoUnit.avatarArmaturePaths;
+
+          // check how many entries are in the avatarArmaturePaths list
+          int avatarArmaturePathsCount = avatarArmaturePaths.Count;
+
+          // if there are one or more we need to remove them from the curveBindings
+          // this is so that we don't impact animations the prefab maker intended to impact the core armature
+          if (avatarArmaturePathsCount > 0)
+          {
+            // debug print the avatarArmaturePathsCount
+            CoreLogDebug("[ArmatureLink] avatarArmaturePathsCount: " + avatarArmaturePathsCount);
+
+            // debug print the avatarArmaturePaths to console in one block
+            StringBuilder avatarArmaturePathsStringBuilder = new StringBuilder();
+            foreach (string avatarArmaturePath in avatarArmaturePaths)
+            {
+              avatarArmaturePathsStringBuilder.Append(avatarArmaturePath + "\n");
+            }
+            CoreLogDebug("[ArmatureLink] avatarArmaturePaths:\n" + avatarArmaturePathsStringBuilder.ToString());
+
+            // debug print the curveBindings to the console in one block
+            StringBuilder curveBindingsStringBuilder2 = new StringBuilder();
+            foreach (EditorCurveBinding curveBinding in curveBindings)
+            {
+              curveBindingsStringBuilder2.Append(
+                "path: "
+                  + curveBinding.path
+                  + ", propertyName: "
+                  + curveBinding.propertyName
+                  + ", type: "
+                  + curveBinding.type
+                  + "\n\n"
+              );
+            }
+            CoreLogDebug("[ArmatureLink] curveBindings pre-filtering:\n\n" + curveBindingsStringBuilder2.ToString());
+
+
+            // remove any curveBindings that have the avatarArmaturePaths in the path
+            curveBindings = curveBindings.Where(cb => !avatarArmaturePaths.Contains(cb.path)).ToArray();
+          
+            // debug print the curveBindings to the console in one block
+            StringBuilder curveBindingsStringBuilder3 = new StringBuilder();
+            foreach (EditorCurveBinding curveBinding in curveBindings)
+            {
+              curveBindingsStringBuilder3.Append(
+                "path: "
+                  + curveBinding.path
+                  + ", propertyName: "
+                  + curveBinding.propertyName
+                  + ", type: "
+                  + curveBinding.type
+                  + "\n\n"
+              );
+            }
+            CoreLogDebug("[ArmatureLink] curveBindings post-filtering:\n\n" + curveBindingsStringBuilder3.ToString());
+
+          
+          }
 
           // debug print the count of the curveBindings
           CoreLogDebug("[ArmatureLink] curveBindings count: " + curveBindings.Length);
@@ -1306,60 +1384,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get the path of the curveBinding
             string path = curveBinding.path;
 
-            CoreLogDebug("[ArmatureLink] path: " + path);
-
-            // get the trailing part of the path (if it exists) after the prefabName as currently processed
-            // remove the addonObjectToLinkName from the stat of the path
-            string trailingPath = path.Substring(path.IndexOf(addonObjectToLinkName) + addonObjectToLinkName.Length);
-
-            // string trailingPath = path.Substring(
-            //   path.IndexOf(DSUComponent.prefabName) + DSUComponent.prefabName.Length
-            // );
-
-            CoreLogDebug(
-              "[ArmatureLink] addon object name : "
-                + addonObjectToLinkName
-                + "\n trailingPath stage 1: "
-                + trailingPath
-                + "\n, DSUComponent.prefabName: "
-                + DSUComponent.prefabName
-                + "\n, DSUComponent.prefabName.Length: "
-                + DSUComponent.prefabName.Length
-            );
-
-            // only do this bit if we have an imported module
-            // (the converter adds the suffix .CVRFury by default to differentiate it from the original prefab)
-            if (controllerModule.importedFromVRCFury)
+            // if path is empty then there is an issue, log an error to the console and continue to the next curveBinding
+            if (string.IsNullOrEmpty(path))
             {
-              // if the trailing path is '.CVRFury' then we have a root addon object, so can ignore that bit
-              // remove the '.CVRFury' from the trailingPath if it exists
-              if (trailingPath.StartsWith(".CVRFury"))
-              {
-                trailingPath = trailingPath.Substring(".CVRFury".Length);
-              }
-              CoreLogDebug("[ArmatureLink] trailingPath stage 2 (import cleanup): " + trailingPath);
+              // log as an error to the console
+              CoreLogError("[ArmatureLink] Path is empty for curveBinding: " + curveBinding.propertyName);
+              continue;
             }
-
-            // check for empty trailingPath
-            if (!string.IsNullOrEmpty(trailingPath))
-            {
-              // not null or empty, so we need to prefix the trailingPath with the newAddonObjectToLinkPath
-              // ensure the trailingPath starts with a `/`
-              if (!trailingPath.StartsWith("/"))
-              {
-                trailingPath = "/" + trailingPath;
-              }
-            }
-
-            //debug print the paths of the curveBinding
-            CoreLogDebug(
-              "[ArmatureLink] addonPath: "
-                + addonObjectToLinkPath
-                + "\n, targetPath: "
-                + newAddonObjectToLinkPath
-                + "\n, trailingPath stage 3 (final): "
-                + trailingPath
-            );
+            // remove the first part of the path up to the first '/'
+            int firstSlashIndex = path.IndexOf("/");
+            string trailingPath = path.Substring(firstSlashIndex); 
+            
+            // debug print the path, newAddonObjectToLinkPath and trailingPath
+            CoreLogDebug("[ArmatureLink] path: " + path
+                         + "\n newAddonObjectToLinkPath: " + newAddonObjectToLinkPath
+                         + "\n trailingPath: " + trailingPath);
 
             objectPathPairs.Add(
               new ObjectPathPair
