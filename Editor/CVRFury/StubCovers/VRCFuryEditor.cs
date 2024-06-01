@@ -82,6 +82,38 @@ namespace uk.novavoidhowl.dev.cvrfury
       // Apply the StyleSheet
       rootVisualElement.styleSheets.Add(stylesheet);
 
+      // get the version value from the VRCFury component
+      int version = serializedObject.FindProperty("version").intValue;
+
+      // check if its higher than the max version
+      if (version > Constants.MAX_VRCFURY_VERSION)
+      {
+        // create a new visual element of the error type
+        var errorVisualElement = new VisualElement();
+
+        // set the name of the errorVisualElement to allow styling
+        errorVisualElement.name = "errorVisualElement";
+
+        // add the errorVisualElement to the rootVisualElement
+        rootVisualElement.Add(errorVisualElement);
+
+        // if it is, add a warning to the rootVisualElement
+        var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Version");
+        warningTitleLabel.AddToClassList("warning-title");
+        errorVisualElement.Add(warningTitleLabel);
+        errorVisualElement.Add(new Label("This VRCFury component is not compatible with" + " the currently installed version of CVRFury."));
+        errorVisualElement.Add(new Label("Please check that it was not made with a version later than " + Constants.MAX_VRCFURY_VERSION_USER_VERSION));
+        errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+        // add button to open the documentation
+        var openDocumentationButton = new Button(() =>
+        {
+          Application.OpenURL(Constants.DOCS_URL);
+        });
+        openDocumentationButton.text = "Open Documentation";
+        errorVisualElement.Add(openDocumentationButton);
+
+      }
+
       // subscribe to the CVRFuryDevModeEnabler component
       devModeSubscribe();
       // Call UpdateUI after creating the UI
