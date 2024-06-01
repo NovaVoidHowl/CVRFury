@@ -1,4 +1,4 @@
-// { "version": "0.28.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.29.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -30,75 +30,82 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
   public partial class CVRFuryModuleInstaller
   {
-
     //// Standard functions --------------------------------------------------------------------------------------------
-    private static string InstallModeString (int mode) {
+    private static string InstallModeString(int mode)
+    {
       string baseString = "CVRFury Module Installer - ";
-      if (mode == 0) return baseString + "Play Mode";
-      else if (mode == 1) return baseString + "Build Mode";
-      else return baseString + "Unknown Mode";
+      if (mode == 0)
+        return baseString + "Play Mode";
+      else if (mode == 1)
+        return baseString + "Build Mode";
+      else
+        return baseString + "Unknown Mode";
     }
 
-
-    public static void HandleModule(CVRFuryModule module, GameObject uploadedObject, int DSUNumber, GameObject DSUObject)
+    public static void HandleModule(
+      CVRFuryModule module,
+      GameObject uploadedObject,
+      int DSUNumber,
+      GameObject DSUObject
+    )
     {
-        IModuleProcessor processor = null;
-        // case statement to process the module based on its type
-        switch (module)
-        {
-            #if NVH_CVRFURY_EXISTS_MI_AOU
-            case objectStateSetter:
-                processor = new objectStateSetterProcessor();
-                break;
-            case objectDefaultMaterialSetter:
-                processor = new objectDefaultMaterialSetterProcessor();
-                break;
+      IModuleProcessor processor = null;
+      // case statement to process the module based on its type
+      switch (module)
+      {
+#if NVH_CVRFURY_EXISTS_MI_AOU
+        case objectStateSetter:
+          processor = new objectStateSetterProcessor();
+          break;
+        case objectDefaultMaterialSetter:
+          processor = new objectDefaultMaterialSetterProcessor();
+          break;
 
-            case blockBlinkSetter:
-                processor = new blockBlinkSetterProcessor();
-                break;
+        case blockBlinkSetter:
+          processor = new blockBlinkSetterProcessor();
+          break;
 
-            case blockVisemesSetter:
-                processor = new blockVisemesSetterProcessor();
-                break;
+        case blockVisemesSetter:
+          processor = new blockVisemesSetterProcessor();
+          break;
 
-            case deleteOnUpload:
-                processor = new deleteOnUploadProcessor();
-                break;
+        case deleteOnUpload:
+          processor = new deleteOnUploadProcessor();
+          break;
 
-            case showInFirstPerson:
-                processor = new showInFirstPersonProcessor();
-                break;
-            #endif
-            #if NVH_CVRFURY_EXISTS_MI_FC
-            case fullControllerModule:
-                processor = new fullControllerModuleProcessor();
-                break;
-            #endif
-            #if NVH_CVRFURY_EXISTS_MI_PARAM_STREAM
-            case parameterStreamLink:
-                processor = new parameterStreamLinkModuleProcessor();
-                break;
-            #endif
-            #if NVH_CVRFURY_EXISTS_MI_AL
-            case armatureLink:
-                processor = new armatureLinkModuleProcessor();
-                break;
-            #endif
+        case showInFirstPerson:
+          processor = new showInFirstPersonProcessor();
+          break;
+#endif
+#if NVH_CVRFURY_EXISTS_MI_FC
+        case fullControllerModule:
+          processor = new fullControllerModuleProcessor();
+          break;
+#endif
+#if NVH_CVRFURY_EXISTS_MI_PARAM_STREAM
+        case parameterStreamLink:
+          processor = new parameterStreamLinkModuleProcessor();
+          break;
+#endif
+#if NVH_CVRFURY_EXISTS_MI_AL
+        case armatureLink:
+          processor = new armatureLinkModuleProcessor();
+          break;
+#endif
 
-            default:
-                // console print to say that the module type is not recognised
-                CoreLog("Module type not recognised");
-                break;
-        }
+        default:
+          // console print to say that the module type is not recognised
+          CoreLog("Module type not recognised");
+          break;
+      }
 
-        if (processor != null)
-        {
-            processor.ProcessModule(module, uploadedObject, DSUNumber, DSUObject);
-        }
+      if (processor != null)
+      {
+        processor.ProcessModule(module, uploadedObject, DSUNumber, DSUObject);
+      }
 
-        // console print to say that the module has been processed
-        CoreLog("Module " + module.name + " processed");
+      // console print to say that the module has been processed
+      CoreLog("Module " + module.name + " processed");
     }
 
     /// <summary>
@@ -133,11 +140,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Implementation
       string path = GetGameObjectPath(uploadedObject);
       progress = 0.4f;
-      DisplayProgressBarAndSleep("CVRFury Module Installation", "Target for CVRFury Modules is \n\n" + path, progress, 2000);
-
+      DisplayProgressBarAndSleep(
+        "CVRFury Module Installation",
+        "Target for CVRFury Modules is \n\n" + path,
+        progress,
+        2000
+      );
 
       progress = 0.6f;
-      DisplayProgressBarAndSleep("CVRFury Module Installation", "Getting CVRFuryDataStorageUnit components", progress, 500);
+      DisplayProgressBarAndSleep(
+        "CVRFury Module Installation",
+        "Getting CVRFuryDataStorageUnit components",
+        progress,
+        500
+      );
 
       // get the CVRFuryDataStorageUnit components
       var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
@@ -164,7 +180,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
         progress = 1;
-        DisplayProgressBarAndSleep("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress, 2000);
+        DisplayProgressBarAndSleep(
+          "CVRFury Module Installation",
+          "No CVRFuryDataStorageUnit components found",
+          progress,
+          2000
+        );
         // close the progress bar
         EditorUtility.ClearProgressBar();
       }
@@ -212,24 +233,37 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // initialize the unity progress bar
         float progressOnUnityProgressBar = 0;
-        DisplayProgressBarAndSleep("CVRFury Module Installation", "Processing modules started", progressOnUnityProgressBar, 500);
+        DisplayProgressBarAndSleep(
+          "CVRFury Module Installation",
+          "Processing modules started",
+          progressOnUnityProgressBar,
+          500
+        );
 
         // get the object the DSU is attached to
         var DSUObject = dataStorageUnit.gameObject;
 
         // re-order the modules such that all the modules that are of ModuleType="armatureLink" are processed last
-        modules.Sort((x, y) =>
-        {
-          if (string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase) && !string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase))
+        modules.Sort(
+          (x, y) =>
           {
-            return 1; // x is "greater", i.e., it should come later
+            if (
+              string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+              && !string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+            )
+            {
+              return 1; // x is "greater", i.e., it should come later
+            }
+            if (
+              !string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+              && string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+            )
+            {
+              return -1; // x is "less", i.e., it should come earlier
+            }
+            return 0; // x and y are "equal" in terms of sorting
           }
-          if (!string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase) && string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase))
-          {
-            return -1; // x is "less", i.e., it should come earlier
-          }
-          return 0; // x and y are "equal" in terms of sorting
-        });
+        );
 
         // for each module in modules
         for (int j = 0; j < numModules; j++)
@@ -248,11 +282,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
 
           // Update the unity progress bar
-          DisplayProgressBarAndSleep("CVRFury Module Installation",
-                                     "Processing modules",
-                                     progressOnUnityProgressBar,
-                                     0
-                                    );
+          DisplayProgressBarAndSleep(
+            "CVRFury Module Installation",
+            "Processing modules",
+            progressOnUnityProgressBar,
+            0
+          );
         }
         // module done
         // close current unity progress bar
@@ -261,22 +296,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // all modules done
     }
 
-
-
     //// Async functions -----------------------------------------------------------------------------------------------
     public static async Task SelectAnimationClipsAsync(string tempItemsFolderPath)
     {
       // Get all animation clip files in the tempItemsFolderPath
       string[] animationClipFiles = Directory.GetFiles(tempItemsFolderPath, "*.anim", SearchOption.AllDirectories);
-      
+
       // core log that the animation clip files paths have been loaded
       CoreLog("Animation clip files paths loaded");
       // log the number of animation clip files
       CoreLog("Number of animation clip files: " + animationClipFiles.Length);
 
       // Convert the file paths to asset paths
-      string[] animationClipAssets = animationClipFiles.Select(x => x.Replace(Application.dataPath, "").Replace('\\', '/')).ToArray();
-      
+      string[] animationClipAssets = animationClipFiles
+        .Select(x => x.Replace(Application.dataPath, "").Replace('\\', '/'))
+        .ToArray();
+
       // core log that the animation clip assets paths have been loaded
       CoreLog("Animation clip assets paths loaded");
       // log the number of animation clip assets
@@ -298,14 +333,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // Delay the selection of the animation clip until the next Editor update
         EditorApplication.delayCall += () =>
         {
-            // Ping the animation clip in the Project window
-            EditorGUIUtility.PingObject(animationClip);
+          // Ping the animation clip in the Project window
+          EditorGUIUtility.PingObject(animationClip);
 
-            // Select the animation clip in the Unity Editor
-            Selection.activeObject = animationClip;
+          // Select the animation clip in the Unity Editor
+          Selection.activeObject = animationClip;
 
-            // log that the animation clip has been selected
-            CoreLog("Animation clip selected: " + animationClip.name);
+          // log that the animation clip has been selected
+          CoreLog("Animation clip selected: " + animationClip.name);
         };
 
         // Wait for a short time to allow the Unity Editor to update
@@ -315,7 +350,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // deselect all objects in the Unity Editor
       Selection.activeObject = null;
     }
-
 
     /// <summary>
     /// Install CVRFury Modules on a given GameObject, Async for play mode
@@ -349,11 +383,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Implementation
       string path = GetGameObjectPath(uploadedObject);
       progress = 0.4f;
-      await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Target for CVRFury Modules is \n\n" + path, progress, 2000);
-
+      await DisplayProgressBarAndSleepAsync(
+        "CVRFury Module Installation",
+        "Target for CVRFury Modules is \n\n" + path,
+        progress,
+        2000
+      );
 
       progress = 0.6f;
-      await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Getting CVRFuryDataStorageUnit components", progress, 500);
+      await DisplayProgressBarAndSleepAsync(
+        "CVRFury Module Installation",
+        "Getting CVRFuryDataStorageUnit components",
+        progress,
+        500
+      );
 
       // get the CVRFuryDataStorageUnit components
       var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
@@ -366,12 +409,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (numDataStorageUnits > 0)
       {
         progress = 0.8f;
-        await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Starting module processing", progress, 500);
+        await DisplayProgressBarAndSleepAsync(
+          "CVRFury Module Installation",
+          "Starting module processing",
+          progress,
+          500
+        );
         // show modal progress window
         ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
 
         progress = 1;
-        await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules started", progress, 2000);
+        await DisplayProgressBarAndSleepAsync(
+          "CVRFury Module Installation",
+          "Processing modules started",
+          progress,
+          2000
+        );
         // close the progress bar
         EditorUtility.ClearProgressBar();
         // Start processing the modules asynchronously
@@ -381,7 +434,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
         progress = 1;
-        await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "No CVRFuryDataStorageUnit components found", progress, 2000);
+        await DisplayProgressBarAndSleepAsync(
+          "CVRFury Module Installation",
+          "No CVRFuryDataStorageUnit components found",
+          progress,
+          2000
+        );
         // close the progress bar
         EditorUtility.ClearProgressBar();
       }
@@ -437,7 +495,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // initialize the unity progress bar
         float progressOnUnityProgressBar = 0;
-        await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules started", progressOnUnityProgressBar, 500);
+        await DisplayProgressBarAndSleepAsync(
+          "CVRFury Module Installation",
+          "Processing modules started",
+          progressOnUnityProgressBar,
+          500
+        );
 
         // initialize the sub-progress bar
         float progress = 0;
@@ -446,22 +509,34 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // get the object the DSU is attached to
         var DSUObject = dataStorageUnit.gameObject;
 
-        // console print to say that the module order is being re-ordered (TODO: remove this line in production)
-        CoreLogDebug("Re-ordering modules");
-
-        // re-order the modules such that all the modules that are of ModuleType="armatureLink" are processed last
-        modules.Sort((x, y) =>
+        // check how many modules are there
+        if (numModules > 1)
         {
-          if (string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase) && !string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase))
-          {
-            return 1; // x is "greater", i.e., it should come later
-          }
-          if (!string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase) && string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase))
-          {
-            return -1; // x is "less", i.e., it should come earlier
-          }
-          return 0; // x and y are "equal" in terms of sorting
-        });
+          // console print to say that the module order is being re-ordered
+          CoreLogDebug("Re-ordering modules");
+
+          // re-order the modules such that all the modules that are of ModuleType="armatureLink" are processed last
+          modules.Sort(
+            (x, y) =>
+            {
+              if (
+                string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+              )
+              {
+                return 1; // x is "greater", i.e., it should come later
+              }
+              if (
+                !string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+              )
+              {
+                return -1; // x is "less", i.e., it should come earlier
+              }
+              return 0; // x and y are "equal" in terms of sorting
+            }
+          );
+        }
 
         // for each module in modules
         for (int j = 0; j < numModules; j++)
@@ -481,11 +556,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
 
           // Update the unity progress bar
-          await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Processing modules", progressOnUnityProgressBar, 0);
+          await DisplayProgressBarAndSleepAsync(
+            "CVRFury Module Installation",
+            "Processing modules",
+            progressOnUnityProgressBar,
+            0
+          );
 
           // Update the sub-progress bar
           ModalWindow.UpdateSubProgressBar(i, progress);
         }
+
         // module done
         // close current unity progress bar
         EditorUtility.ClearProgressBar();
@@ -524,10 +605,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // debug log that the avatar armature path setter is running
       CoreLogDebug("[Avatar armature path setter] running");
-    
+
       // get the CVRFuryAvatarInfoUnit component
       var avatarInfoUnit = uploadedObject.GetComponent<CVRFuryAvatarInfoUnit>();
-    
+
       // if the CVRFuryAvatarInfoUnit component is not present, add it
       if (avatarInfoUnit == null)
       {
@@ -549,7 +630,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CoreLogDebug("[Avatar armature path setter] finished");
         return;
       }
-      
+
       // get the bodyMesh object from the CVRAvatar component
       var bodyMesh = avatarComponent.bodyMesh;
 
@@ -582,13 +663,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         return;
       }
 
-
-    
       // get the armature paths
-      var armaturePaths = rootBone.GetComponentsInChildren<Transform>()
-                        .Select(x => GetFullTransformPath(x))
-                        .ToList();
-    
+      var armaturePaths = rootBone.GetComponentsInChildren<Transform>().Select(x => GetFullTransformPath(x)).ToList();
+
       // get the path to the uploadedObject
       string uploadedObjectPath = GetGameObjectPath(uploadedObject);
 
@@ -607,10 +684,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         armaturePaths[i] = armaturePaths[i].Replace(uploadedObjectPath + "/", "");
       }
 
-
       // set the armature paths in the CVRFuryAvatarInfoUnit component
       avatarInfoUnit.avatarArmaturePaths = armaturePaths;
-    
+
       // console print to say that the armature paths have been set
       CoreLog("Armature paths set");
       // debug log that the avatar armature path setter has finished
@@ -644,7 +720,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // debug log that prefab is being unpacked
           CoreLogDebug("[Prefab unpacker] unpacking prefab: " + child.gameObject.name);
           // unpack the prefab
-          PrefabUtility.UnpackPrefabInstance(child.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+          PrefabUtility.UnpackPrefabInstance(
+            child.gameObject,
+            PrefabUnpackMode.Completely,
+            InteractionMode.AutomatedAction
+          );
           // increment the number of prefabs found
           numPrefabs++;
         }
@@ -710,13 +790,37 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           }
         }
       }
-      
+
       //update asset database
       AssetDatabase.Refresh();
       // console print to say that the temp files have been purged
       CoreLogDebug("[Purge temp files] finished");
     }
 
+    /// <summary>
+    /// This function is called to destroy any gameObjects tagged with active nuke components
+    /// </summary>
+    public static void CleanupNuke(GameObject uploadedObject)
+    {
+      // get all components of type CVRFuryNukeGameObject from all children of the uploadedObject
+      var nukeComponents = uploadedObject.GetComponentsInChildren<CVRFuryNukeGameObject>();
+
+      // loop through the nuke components
+      foreach (var nukeComponent in nukeComponents)
+      {
+        // get the gameObject from the nuke component
+        var gameObject = nukeComponent.gameObject;
+
+        //check if nukeEnabled is true
+        if (nukeComponent.nukeEnabled)
+        {
+          // console print to say that the gameObject is being destroyed
+          CoreLogDebug("Destroying gameObject: " + gameObject.name);
+          // destroy the gameObject
+          UnityEngine.Object.DestroyImmediate(gameObject);
+        }
+      }
+    }
 
     /// <summary>
     /// This function is called to finalise the module installation and do trigger any final cleanup code
@@ -725,18 +829,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       // console print to say that the module installation is being finalised
       CoreLog("Module installation finalising");
+
+      CoreLogDebug("Animator controller cleaned started");
       // animator controller cleanup
       AnimatorControllerCleanup(uploadedObject);
       //core log that the animator controller has been cleaned up
       CoreLogDebug("Animator controller cleaned up");
-
 
       // trigger lock file cleanup
       LockfileCleanup(uploadedObject);
       //core log that the lock file has been cleaned up
       CoreLogDebug("Lock files cleaned up");
 
-      // wait for 1 seconds
+      // wait for .5 seconds
+      System.Threading.Thread.Sleep(500);
+
+      // run cleanup nuke
+      CleanupNuke(uploadedObject);
+
+      // wait for .5 seconds
       System.Threading.Thread.Sleep(500);
 
       // get the path to the temp items folder
@@ -747,7 +858,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // log that the assets have been reimported
       CoreLogDebug("Assets reimported");
-
 
       // force refresh the asset database
       AssetDatabase.SaveAssets();
@@ -760,8 +870,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // wait for 1 seconds
       System.Threading.Thread.Sleep(500);
 
-
-
       // finalise the module installation
       CoreLog("Module installation finalised");
     }
@@ -772,16 +880,36 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public static void AnimatorControllerCleanup(GameObject avatar)
     {
       // only do this if the full controller module is present
-      #if NVH_CVRFURY_EXISTS_MI_FC
+#if NVH_CVRFURY_EXISTS_MI_FC
       // get the avatar component
       var avatarComponent = avatar.GetComponent<CVRAvatar>();
+
+      // if the avatar component is null, return
+      if (avatarComponent == null)
+      {
+        return;
+      }
 
       // get the overrides from the avatar component
       AnimatorOverrideController overrides = avatarComponent.overrides;
 
+      // if the overrides are null, return
+      if (overrides == null)
+      {
+        return;
+      }
+
       // get the animator controller from the AnimatorOverrideController
       AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
-      
+
+      // if the animator controller is null, return
+      if (animatorController == null)
+      {
+        return;
+      }
+
+      // debug print how many layers are in the animator controller
+      CoreLogDebug("Number of layers in the animator controller: " + animatorController.layers.Length);
 
       // loop through the layers in the animator controller
       for (int i = animatorController.layers.Length - 1; i >= 0; i--)
@@ -801,12 +929,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // remove the layer from the animator controller
           animatorController.RemoveLayer(i);
         }
+        // debug print that layer is being checked
+        CoreLogDebug("Checked layer: " + layer.name);
       }
 
       // save the animator controller
       EditorUtility.SetDirty(animatorController);
       AssetDatabase.SaveAssets();
-      #endif
+#endif
     }
 
     /// <summary>
@@ -815,7 +945,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public static void LockfileCleanup(GameObject avatar)
     {
       // only do this if the full controller module is present
-      #if NVH_CVRFURY_EXISTS_MI_FC
+#if NVH_CVRFURY_EXISTS_MI_FC
       // get the lock file path for the current avatar controller creation and delete it if it exists
       string lockFilePath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name + "/processing.lock";
       if (File.Exists(lockFilePath))
@@ -829,10 +959,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         File.Delete(lockFilePathMeta);
       }
 
-      #endif
-
+#endif
     }
   }
+
   public class ReportBuilderSupport
   {
     public static void ReportInit(string buildReportPath, CVRAvatar avatar, CVRFuryModule module)
@@ -855,7 +985,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // add a separator to the build report file
       File.AppendAllText(buildReportPath, "----------------------------------------\n\n");
     }
-    
+
     public static void ReportAddBlankLine(string buildReportPath)
     {
       // add a blank line to the build report file
@@ -879,9 +1009,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // add a separator to the build report file
       File.AppendAllText(buildReportPath, "\n----------------------------------------\n\n");
     }
-
   }
-
 }
 
 // #endif
