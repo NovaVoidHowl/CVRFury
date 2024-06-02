@@ -6,6 +6,15 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
   public static partial class Constants
   {
+    public static readonly ReadOnlyCollection<string> VRCSTUB_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
+      new List<string>
+      {
+        "uk.novavoidhowl.dev.vrcstub.VRCAvatarParameterDriver",
+        "uk.novavoidhowl.dev.vrcstub.VRCAvatarDescriptor",
+        "uk.novavoidhowl.dev.vrcstub.VRCPhysBone"
+      }
+    );
+
     public static readonly ReadOnlyCollection<string> ALWAYS_GLOBAL_PARAMETERS_FROM_VRC =
       new ReadOnlyCollection<string>(
         new List<string>
@@ -212,7 +221,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           Supported = true
         }
       },
-      { 
+      {
         "Expression1",
         new VRCParameterTranslation
         {
@@ -225,7 +234,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           // that covers all the expressions
         }
       },
-      { 
+      {
         "Expression2",
         new VRCParameterTranslation
         {
@@ -238,7 +247,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           // that covers all the expressions
         }
       },
-      { 
+      {
         "Expression3",
         new VRCParameterTranslation
         {
@@ -251,7 +260,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           // that covers all the expressions
         }
       },
-      { 
+      {
         "Expression4",
         new VRCParameterTranslation
         {
@@ -264,7 +273,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           // that covers all the expressions
         }
       },
-      { 
+      {
         "Expression5",
         new VRCParameterTranslation
         {
@@ -277,7 +286,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           // that covers all the expressions
         }
       },
-      { 
+      {
         "Expression6",
         new VRCParameterTranslation
         {
@@ -290,7 +299,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           // that covers all the expressions
         }
       },
-      { 
+      {
         "Expression7",
         new VRCParameterTranslation
         {
@@ -303,7 +312,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           // that covers all the expressions
         }
       },
-      { 
+      {
         "Expression8",
         new VRCParameterTranslation
         {
@@ -420,7 +429,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           // that covers all the expressions
         }
       },
-      { 
+      {
         "TrackingType",
         new VRCParameterTranslation
         {

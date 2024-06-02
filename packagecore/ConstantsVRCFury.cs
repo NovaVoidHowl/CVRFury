@@ -7,7 +7,22 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
   public static partial class Constants
   {
     public const string VRCFURY_VERSION_COMPATIBILITY = "1.659.0";
-    
+
+    public static readonly ReadOnlyCollection<string> VRCFURY_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
+      new List<string>
+      {
+        "VF.Component.VRCFuryGlobalCollider",
+        "VF.Component.VRCFuryHapticPlug",
+        "VF.Component.VRCFuryHapticSocket",
+        "VF.Component.VRCFuryHapticTouchReceiver",
+        "VF.Component.VRCFuryHapticTouchSender",
+        "VF.Component.VRCFuryPlayComponent",
+        "VF.Component.VRCFurySocketGizmo",
+        "VF.Component.VRCFuryNoUpdateWhenOffscreen",
+        "VF.Model.VRCFury"
+      }
+    );
+
     public static readonly ReadOnlyCollection<string> COMPATIBLE_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
       new List<string>
       {

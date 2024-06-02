@@ -1,4 +1,4 @@
-// { "version": "0.29.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.32.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -8,6 +8,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.UIElements;
@@ -20,6 +21,7 @@ using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.packagecore;
+using uk.novavoidhowl.dev.vrcstub;
 
 namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
@@ -823,6 +825,83 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     }
 
     /// <summary>
+    /// This function is called to remove any components defined in the provided remove list from the uploadedObject
+    /// </summary>
+    public static void ComponentsCleanup(
+      GameObject uploadedObject,
+      System.Collections.ObjectModel.ReadOnlyCollection<string> typesToRemove,
+      string assemblyToLoadFrom
+    )
+    {
+      // loop over the list of types to remove
+      foreach (var typeName in typesToRemove)
+      {
+        //console print to say the component type is being removed
+        CoreLog("[Components Cleanup] Removing components of type: " + typeName + " from " + uploadedObject.name);
+
+        // Get the assembly that contains the type
+        var assembly = Assembly.Load(assemblyToLoadFrom);
+
+        // Get the type from the assembly
+        var type = assembly.GetType(typeName);
+        if (type == null)
+        {
+          CoreLogDebug("Type " + typeName + " not found.");
+          continue;
+        }
+
+        UnityEngine.Component[] components;
+
+        // try to get all components of type type from all children of the uploadedObject
+        try
+        {
+          components = uploadedObject.GetComponentsInChildren(type, true);
+          // console print to say that the components loaded
+          CoreLogDebug("[Components Cleanup] Components loaded: " + components.Length);
+        }
+        catch (Exception e)
+        {
+          CoreLog(
+            "[Components Cleanup] Error loading components of type: " + typeName + " from " + uploadedObject.name
+          );
+          CoreLogDebug("[Components Cleanup] Error: " + e.Message);
+          continue;
+        }
+        // console print to say that the components loaded
+        CoreLogDebug("[Components Cleanup] Components loaded: " + components.Length);
+
+        // if there are components is null, continue
+        if (components == null)
+        {
+          //console print to say that there are no components of type type
+          CoreLog("[Components Cleanup] No components of type: " + typeName + " found in " + uploadedObject.name);
+          continue;
+        }
+
+        // if there are no components of type type, continue
+        if (components.Length == 0)
+        {
+          // console print to say that there are no components of type type
+          CoreLog("[Components Cleanup] No components of type: " + typeName + " found in " + uploadedObject.name);
+          continue;
+        }
+
+        // loop through the components
+        foreach (var component in components)
+        {
+          // get the gameObject from the component
+          var gameObject = component.gameObject;
+
+          // console print to say that the component is being destroyed
+          CoreLogDebug("Destroying component type '" + typeName + "' on : " + gameObject.name);
+
+          // destroy the component
+          UnityEngine.Object.DestroyImmediate(component);
+        }
+      }
+    }
+
+    /// <summary>
     /// This function is called to finalise the module installation and do trigger any final cleanup code
     /// </summary>
     public static void ModulesInstallationFinalise(GameObject uploadedObject)
@@ -841,11 +920,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       //core log that the lock file has been cleaned up
       CoreLogDebug("Lock files cleaned up");
 
-      // wait for .5 seconds
-      System.Threading.Thread.Sleep(500);
-
       // run cleanup nuke
       CleanupNuke(uploadedObject);
+      CoreLogDebug("Nuke cleanup done");
+
+      // run Components Cleanup for VRCStub
+      ComponentsCleanup(uploadedObject, Constants.VRCSTUB_COMPONENTS_TO_REMOVE, "uk.novavoidhowl.dev.vrcstub");
+      CoreLogDebug("VRCStub cleanup done");
+
+      // run Components Cleanup for VRCFury
+      ComponentsCleanup(uploadedObject, Constants.VRCFURY_COMPONENTS_TO_REMOVE, "VRCFury");
+      CoreLogDebug("VRCFuryStub cleanup done");
+
+      // run Components Cleanup for CVRFury
+      ComponentsCleanup(uploadedObject, Constants.CVRFURY_COMPONENTS_TO_REMOVE, "uk.novavoidhowl.dev.cvrfury.runtime");
 
       // wait for .5 seconds
       System.Threading.Thread.Sleep(500);

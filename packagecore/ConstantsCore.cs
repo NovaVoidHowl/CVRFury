@@ -12,7 +12,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public const string APP_COLOUR_CRIT = "#FF0000";
     public const string APP_COLOUR_DBG = "#B7FF00";
     public const string DEBUG_PRINT_EDITOR_PREF = "CVRFURY_DEBUG";
-  
+
     public const string SCRIPTING_DEFINE_SYMBOL = "NVH_CVRFURY_EXISTS";
     public const string PACKAGE_NAME = "uk.novavoidhowl.dev.cvrfury";
     public const string ASSETS_MANAGED_FOLDER = "Assets/_CVRFury";
@@ -38,5 +38,16 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public static readonly int MAX_VRCFURY_VERSION = 2;
     public static readonly string MAX_VRCFURY_VERSION_USER_VERSION = "1.744";
 
+    public static readonly ReadOnlyCollection<string> CVRFURY_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
+      new List<string>
+      {
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDevModeEnabler",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDevSkinnedMeshRendererExtendedDataViewer",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDataStorageUnit",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryGameObjectInfoTag",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryNukeGameObject",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryAvatarInfoUnit"
+      }
+    );
   }
 }
