@@ -1,6 +1,5 @@
 ///
-/// this is an empty stub file for VRCFuryHapticTouchSender.cs
-/// it's used to prevent class missing errors
+/// Retained for Data Loss Prevention
 ///
 
 using UnityEngine;
@@ -8,5 +7,8 @@ using UnityEngine;
 namespace VF.Component
 {
   [AddComponentMenu("")] // hide from unity components menu
-  public class VRCFuryHapticTouchSender : VRCFuryComponent { }
+  public class VRCFuryHapticTouchSender : VRCFuryComponent
+  {
+    public float radius = 0.1f;
+  }
 }

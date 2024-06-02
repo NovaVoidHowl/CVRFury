@@ -64,23 +64,49 @@ VRCFury.asmdef :
 
 #### Component
 
-- remove 'VRCFuryComponentNew.cs'
+VRCFuryComponentNew.cs:
 
-- remove 'VRCFuryComponentNew.cs.meta'
+- remove whole file
 
-- empty stub 'VRCFuryPlayComponent.cs'
+VRCFuryGlobalCollider.cs:
 
-- empty stub 'VRCFuryGlobalCollider.cs'
+- remove component menu link
 
-- empty stub 'VRCFuryHapticPlug.cs'
+- add DLP notice
 
-- empty stub 'VRCFuryHapticSocket.cs'
+VRCFuryHapticPlug.cs:
 
-- empty stub 'VRCFuryHapticTouchReceiver.cs'
+- remove ref `using VF.Model.StateAction;`
 
-- empty stub 'VRCFuryHapticTouchSender.cs'
+- remove component menu link
 
-- empty stub 'VRCFuryPlayComponent.cs'
+- remove `[DoNotApplyRestingState]`
+
+- remove Upgrade function
+
+- add DLP notice
+
+VRCFuryHapticSocket.cs:
+
+- remove component menu link
+
+- add DLP notice
+
+VRCFuryHapticTouchReceiver.cs:
+
+- remove component menu link
+
+- add DLP notice
+
+VRCFuryHapticTouchSender.cs:
+
+- remove component menu link
+
+- add DLP notice
+
+VRCFuryPlayComponent.cs:
+
+- add DLP notice
 
 #### Model
 
