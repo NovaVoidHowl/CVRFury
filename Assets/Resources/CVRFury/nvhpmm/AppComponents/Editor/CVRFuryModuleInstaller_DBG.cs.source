@@ -1,4 +1,4 @@
-// { "version": "0.0.6" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_DBG", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
+// { "version": "0.0.8" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_DBG", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
 #if UNITY_EDITOR
 
 using Math = System.Math;
@@ -20,22 +20,24 @@ using uk.novavoidhowl.dev.cvrfury.packagecore;
 
 namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
-
   //for debug purposes only - to check/set the ModuleInstallOnBuild state
 
   public class CVRFuryModuleInstaller_Core_DBG
   {
-    [MenuItem("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build")]
+    private const string MENU_PATH =
+      "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Development/Module Install On Build";
+
+    [MenuItem(MENU_PATH)]
     private static void ToggleModuleInstallOnBuild()
     {
       ModuleInstallerState.IsModuleInstallOnBuildCalled = !ModuleInstallerState.IsModuleInstallOnBuildCalled;
       UpdateMenu();
     }
 
-    [MenuItem("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", true)]
+    [MenuItem(MENU_PATH, true)]
     private static bool ToggleModuleInstallOnBuildValidation()
     {
-      Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", ModuleInstallerState.IsModuleInstallOnBuildCalled);
+      Menu.SetChecked(MENU_PATH, ModuleInstallerState.IsModuleInstallOnBuildCalled);
       return true;
     }
 
@@ -44,15 +46,36 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       if (ModuleInstallerState.IsModuleInstallOnBuildCalled)
       {
-        Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", true);
+        Menu.SetChecked(MENU_PATH, true);
       }
       else
       {
-        Menu.SetChecked("NVH/"+Constants.PROGRAM_DISPLAY_NAME+"/Debug/Module Install On Build", false);
+        Menu.SetChecked(MENU_PATH, false);
       }
     }
   }
 
+  public class CleanupDisablePrintMenu
+  {
+    private const string MENU_PATH = "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Development/Cleanup Disable";
+    private const string EDITOR_PREFS_KEY = Constants.CLEANUP_DISABLE_PREF;
+
+    [MenuItem(MENU_PATH)]
+    private static void ToggleConsoleDebugPrint()
+    {
+      // Toggle the value
+      bool currentValue = EditorPrefs.GetBool(EDITOR_PREFS_KEY, false);
+      EditorPrefs.SetBool(EDITOR_PREFS_KEY, !currentValue);
+    }
+
+    [MenuItem(MENU_PATH, true)]
+    private static bool ToggleConsoleDebugPrintValidation()
+    {
+      // Toggle the checked state
+      Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, false));
+      return true;
+    }
+  }
 }
 
 #endif

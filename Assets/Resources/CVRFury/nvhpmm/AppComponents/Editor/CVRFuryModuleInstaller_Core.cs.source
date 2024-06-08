@@ -1,4 +1,4 @@
-// { "version": "0.32.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
+// { "version": "0.33.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"]}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -909,31 +909,38 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // console print to say that the module installation is being finalised
       CoreLog("Module installation finalising");
 
-      CoreLogDebug("Animator controller cleaned started");
-      // animator controller cleanup
-      AnimatorControllerCleanup(uploadedObject);
-      //core log that the animator controller has been cleaned up
-      CoreLogDebug("Animator controller cleaned up");
+      if (EditorPrefs.GetBool(Constants.CLEANUP_DISABLE_PREF, false))
+      {
+        CoreLog("Cleanup disabled, skipping cleanup");
+      }
+      else
+      {
+        CoreLogDebug("Animator controller cleaned started");
+        // animator controller cleanup
+        AnimatorControllerCleanup(uploadedObject);
+        //core log that the animator controller has been cleaned up
+        CoreLogDebug("Animator controller cleaned up");
 
-      // trigger lock file cleanup
-      LockfileCleanup(uploadedObject);
-      //core log that the lock file has been cleaned up
-      CoreLogDebug("Lock files cleaned up");
+        // trigger lock file cleanup
+        LockfileCleanup(uploadedObject);
+        //core log that the lock file has been cleaned up
+        CoreLogDebug("Lock files cleaned up");
 
-      // run cleanup nuke
-      CleanupNuke(uploadedObject);
-      CoreLogDebug("Nuke cleanup done");
+        // run cleanup nuke
+        CleanupNuke(uploadedObject);
+        CoreLogDebug("Nuke cleanup done");
 
-      // run Components Cleanup for VRCStub
-      ComponentsCleanup(uploadedObject, Constants.VRCSTUB_COMPONENTS_TO_REMOVE, "uk.novavoidhowl.dev.vrcstub");
-      CoreLogDebug("VRCStub cleanup done");
+        // run Components Cleanup for VRCStub
+        ComponentsCleanup(uploadedObject, Constants.VRCSTUB_COMPONENTS_TO_REMOVE, "uk.novavoidhowl.dev.vrcstub");
+        CoreLogDebug("VRCStub cleanup done");
 
-      // run Components Cleanup for VRCFury
-      ComponentsCleanup(uploadedObject, Constants.VRCFURY_COMPONENTS_TO_REMOVE, "VRCFury");
-      CoreLogDebug("VRCFuryStub cleanup done");
+        // run Components Cleanup for VRCFury
+        ComponentsCleanup(uploadedObject, Constants.VRCFURY_COMPONENTS_TO_REMOVE, "VRCFury");
+        CoreLogDebug("VRCFuryStub cleanup done");
 
-      // run Components Cleanup for CVRFury
-      ComponentsCleanup(uploadedObject, Constants.CVRFURY_COMPONENTS_TO_REMOVE, "uk.novavoidhowl.dev.cvrfury.runtime");
+        // run Components Cleanup for CVRFury
+        ComponentsCleanup(uploadedObject, Constants.CVRFURY_COMPONENTS_TO_REMOVE, "uk.novavoidhowl.dev.cvrfury.runtime");
+      }
 
       // wait for .5 seconds
       System.Threading.Thread.Sleep(500);

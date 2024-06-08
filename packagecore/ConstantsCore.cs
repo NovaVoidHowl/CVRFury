@@ -12,6 +12,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public const string APP_COLOUR_CRIT = "#FF0000";
     public const string APP_COLOUR_DBG = "#B7FF00";
     public const string DEBUG_PRINT_EDITOR_PREF = "CVRFURY_DEBUG";
+    public const string CLEANUP_DISABLE_PREF = "CVRFURY_CLEANUP_DISABLE";
 
     public const string SCRIPTING_DEFINE_SYMBOL = "NVH_CVRFURY_EXISTS";
     public const string PACKAGE_NAME = "uk.novavoidhowl.dev.cvrfury";
