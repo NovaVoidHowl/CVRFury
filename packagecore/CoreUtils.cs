@@ -137,6 +137,23 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       path.Reverse();
       return string.Join("/", path);
     }
+
+    public static bool CheckIfChildrenHaveSkinnedMeshRenderers(GameObject parentGameObject)
+    {
+      SkinnedMeshRenderer[] skinnedMeshRenderers = parentGameObject.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+      if (skinnedMeshRenderers.Length > 0)
+      {
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+
+
+
+
 #endif
   }
 

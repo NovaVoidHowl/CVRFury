@@ -1,4 +1,4 @@
-// { "version": "0.0.170" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
+// { "version": "0.0.175" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: []}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -165,21 +165,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // we have the avatar, and it is valid,
 
-        // bool to say if we have need mesh rebind mode
-        bool needsMeshRebind = true;
-
-        // check if there are any skinned mesh renderers on the DSUObject or any of its children
-        if (
-          DSUObject.GetComponent<SkinnedMeshRenderer>() == null
-          && DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>().Length == 0
-        )
-        {
-          // if there are no skinned mesh renderers on the DSUObject or any of its children, then we don't need mesh rebind
-          needsMeshRebind = false;
-        }
-
         // list of all the skinned mesh renderers under the DSUObject
         SkinnedMeshRenderer[] skinnedMeshRenderers = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+
+        // if we get one or more skinned mesh renderers then we need mesh rebind mode if in auto mode
+        bool autoFlowModeMeshRebind = CheckIfChildrenHaveSkinnedMeshRenderers(DSUObject);
 
         // debug print the skinnedMeshRenderers in one block
         StringBuilder skinnedMeshRenderersStringBuilder = new StringBuilder();
@@ -223,7 +213,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // Handle Auto case
             // this needs to check if the DSUObject has any skinned mesh renderers, if it does then it should use
             // MeshRebind, if it doesn't then it should use ReparentRoot
-            if (needsMeshRebind)
+            CoreLog("[ArmatureLink] Auto mode active, detected flow: " + (autoFlowModeMeshRebind ? "MeshRebind" : "ReparentRoot"));
+            CoreLogDebug("[ArmatureLink] number of skinned mesh renderers: " + skinnedMeshRenderers.Length);
+     
+            if (autoFlowModeMeshRebind)
             {
               performMeshRebind(avatar, targetAvatar, DSUObject, DSUNumber, armatureLinkModule);
             }
@@ -279,7 +272,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CoreLogDebug("[ArmatureLink][MeshRebind] newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
 
       // ok this is mesh rebind mode, so first we need to figure out what sub object is the root of the addon armature
-      // so check if there are any skinned mesh renderers components on the DSUObject or any of its children
+      // so check if there are any skinned mesh renderers components on the DSUObject's children
       // if there are then we need to merge the armatures together
 
       // list of all the skinned mesh renderers under the DSUObject
@@ -288,11 +281,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // list of game objects that the skinned mesh renderers are on
       List<GameObject> skinnedMeshRendererGameObjects = new List<GameObject>();
 
-      // check if there are any skinned mesh renderers on the DSUObject or any of its children
-      if (
-        DSUObject.GetComponent<SkinnedMeshRenderer>() != null
-        || DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>().Length > 0
-      )
+      // check if there are any skinned mesh renderers on the DSUObject's children
+      if (CheckIfChildrenHaveSkinnedMeshRenderers(DSUObject))
       {
         // get all the skinned mesh renderers under the DSUObject
         skinnedMeshRenderersPerDSU = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>(true);
@@ -307,7 +297,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           "[ArmatureLink] skinnedMeshRenderersPerDSU:\n" + skinnedMeshRenderersPerDSUStringBuilder.ToString()
         );
 
-        // get the gameobjects that the skinned mesh renderers are on
+        // get the gameObjects that the skinned mesh renderers are on
 
         foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderersPerDSU)
         {
@@ -326,9 +316,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
       else
       {
-        // if there are no skinned mesh renderers on the DSUObject or any of its children, then we don't need mesh rebind
+        // if there are no skinned mesh renderers on the DSUObject's children, then we don't need mesh rebind
         CoreLogCritical(
-          "No skinned mesh renderers found on DSUObject or any of its children, mesh rebind not possible"
+          "No skinned mesh renderers found on DSUObject's children, mesh rebind not possible"
         );
         return;
       }
