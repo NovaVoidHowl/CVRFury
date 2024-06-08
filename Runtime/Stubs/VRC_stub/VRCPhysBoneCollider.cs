@@ -9,10 +9,9 @@ using uk.novavoidhowl.dev.cvrfury.packagecore;
 namespace uk.novavoidhowl.dev.vrcstub
 {
   [AddComponentMenu("")] // hide from add component menu
-  public class VRCPhysBone : VRCPhysBoneBase
+  public class VRCPhysBoneCollider : VRCPhysBoneColliderBase
   {
   }
-
 }
 
 #endif
