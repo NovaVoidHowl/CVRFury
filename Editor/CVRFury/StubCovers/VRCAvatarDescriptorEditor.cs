@@ -10,7 +10,7 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury
 {
-  [CustomEditor(typeof(VRCPhysBone))]
-  public class VRCPhysBoneEditor : VRCGeneralStubEditor { }
+  [CustomEditor(typeof(VRCAvatarDescriptor))]
+  public class VRCAvatarDescriptorEditor : VRCGeneralStubEditor { }
 }
 #endif

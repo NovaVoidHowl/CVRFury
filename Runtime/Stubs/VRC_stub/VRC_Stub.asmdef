@@ -1,7 +1,8 @@
 {
     "name": "uk.novavoidhowl.dev.vrcstub",
     "references": [
-      "UnityEngine"
+      "UnityEngine",
+      "uk.novavoidhowl.dev.cvrfury.packagecore"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

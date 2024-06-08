@@ -1,0 +1,38 @@
+#VRCGeneralStubBase{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+}
+#Banner{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#VRCGeneralStubCoverTitle{
+  font-size: 16px;
+  margin: 10px;
+}
+
+#VRCGeneralStubCoverContent1,
+#VRCGeneralStubCoverContent2,
+#VRCGeneralStubCoverContent3{
+  font-size: 13px;
+  margin: 10px;
+  white-space: normal;
+  -unity-text-align:  middle-center;
+}
+
+.cvr-fury-inspector{
+  height: 100%;
+  background-color: #444444;
+  margin-left: -15px;
+  margin-right: -10px;
+}
