@@ -1,4 +1,4 @@
-// { "version": "0.0.175" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.180" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -753,9 +753,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // now we are safe to rebind the skinned mesh renderer to the new armature
 
 
-        // firstBone's transform
-        Transform firstBone = null;
-
         // get the scale of the avatar's armature (using the target bone's scale, as that is where we start the merge)
         float avatarArmatureScale = Math.Abs(boneToLinkToGameObject.transform.lossyScale.x);
 
@@ -790,28 +787,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // are already bound to the mesh so no point in messing with them) thus the 'commonBones' list
           // will be of help to filter the bones that need to be rebound (note that its just a list of names,
           // not actual bone refs)
-
-          // get the first bone in the bonesToRebind list
-          firstBone = bonesToRebind[0];
-
-          // get the addon primary bone's scale
-          float addonPrimaryBoneScale = Math.Abs(firstBone.lossyScale.x);
-          float scalingFactor = armatureLinkModule.meshRewriteScalingFactor;
-         
-          // get update the scaling factor if it is less than or equal to 0 (ie. not set by the user)
-          if (scalingFactor <= 0) {
-            scalingFactor = addonPrimaryBoneScale / avatarArmatureScale;
-            if (armatureLinkModule.scalingFactorPowersOf10Only) {
-                var log = Math.Log10(scalingFactor);
-                double Mod(double a, double n) => (a % n + n) % n;
-                log = (Mod(log, 1) > 0.75) ? Math.Ceiling(log) : Math.Floor(log);
-                scalingFactor = (float)Math.Pow(10, log);
-            }
-          }
-
-          // remove the first bone from the bonesToRebind list, need to treat it differently
-          bonesToRebind = bonesToRebind.Skip(1).ToArray();
-
+      
           // create a list of bones to update from the bonesToRebind list that are in the commonBones list
           List<Transform> bonesToUpdate = new List<Transform>();
 
@@ -877,35 +853,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         }
 
-        // create an empty gameobject as a child of the boneToLinkToGameObject
-        GameObject originGameObject = new GameObject();
-        originGameObject.name = "CVRF_D" + DSUNumber + "_RootBone";
-        // set the parent of the originGameObject to the boneToLinkToGameObject
-        originGameObject.transform.SetParent(boneToLinkToGameObject.transform, true);
-        // set the size of originGameObject to 1
-        originGameObject.transform.localScale = new Vector3(1, 1, 1);
-        // set the position of originGameObject to 0
-        originGameObject.transform.localPosition = new Vector3(0, 0, 0);
-        // set the rotation of originGameObject to 0
-        originGameObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
-
-        // reparent the 'firstBone' to the originGameObject
-        firstBone.SetParent(originGameObject.transform, true);
-
-        // check if the firstBone has any children, if it does then put the 'CVRFuryNukeGameObject' component on the first level children
-        if (firstBone.childCount > 0)
-        {
-          // loop over the children of the firstBone
-          foreach (Transform child in firstBone)
-          {
-            // add the CVRFuryNukeGameObject component to the child
-            CVRFuryNukeGameObject nukeComponent = child.gameObject.AddComponent<CVRFuryNukeGameObject>();
-            // set the DSUNumber on the CVRFuryNukeGameObject component
-            nukeComponent.DSUNumber = DSUNumber;
-            // set the nukeEnabled bool to true
-            nukeComponent.nukeEnabled = true;
-          }
-        }
 
         // check if the Anchor Override is set on the skinned mesh renderer, if it is then set it to the matching bone in the avatar's armature
         if (skinnedMeshRendererToRebind.probeAnchor != null)
