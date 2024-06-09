@@ -1,4 +1,4 @@
-// { "version": "0.39.5" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.39.6" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -999,8 +999,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // loop through the nuke components
       foreach (var nukeComponent in nukeComponents)
       {
+        // check if nukeComponent is null, is so skip it
+        if (nukeComponent == null)
+        {
+          continue;
+        }
+
         // get the gameObject from the nuke component
         var gameObject = nukeComponent.gameObject;
+
+        // check if gameObject is null, is so skip it
+        if (gameObject == null)
+        {
+          continue;
+        }
 
         //check if nukeEnabled is true
         if (nukeComponent.nukeEnabled)
