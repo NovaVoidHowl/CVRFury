@@ -1,4 +1,4 @@
-// { "version": "0.0.180" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.181" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -213,9 +213,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // Handle Auto case
             // this needs to check if the DSUObject has any skinned mesh renderers, if it does then it should use
             // MeshRebind, if it doesn't then it should use ReparentRoot
-            CoreLog("[ArmatureLink] Auto mode active, detected flow: " + (autoFlowModeMeshRebind ? "MeshRebind" : "ReparentRoot"));
+            CoreLog(
+              "[ArmatureLink] Auto mode active, detected flow: "
+                + (autoFlowModeMeshRebind ? "MeshRebind" : "ReparentRoot")
+            );
             CoreLogDebug("[ArmatureLink] number of skinned mesh renderers: " + skinnedMeshRenderers.Length);
-     
+
             if (autoFlowModeMeshRebind)
             {
               performMeshRebind(avatar, targetAvatar, DSUObject, DSUNumber, armatureLinkModule);
@@ -317,9 +320,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       else
       {
         // if there are no skinned mesh renderers on the DSUObject's children, then we don't need mesh rebind
-        CoreLogCritical(
-          "No skinned mesh renderers found on DSUObject's children, mesh rebind not possible"
-        );
+        CoreLogCritical("No skinned mesh renderers found on DSUObject's children, mesh rebind not possible");
         return;
       }
 
@@ -373,7 +374,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           }
         }
       }
-
 
       // now all animations will have been made assuming the base is the same object that has the Animator component
       // but now we are adding it to an avatar, so we need to adjust the paths of the animations to match the new
@@ -441,7 +441,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // only do this if there are any animations to rebind
       if (animationFilesFound)
       {
-
         // now we need to go through all the animations and update the paths
         // create a list of path pairs from the dictionary
         List<System.Tuple<string, string>> pathPairs = new List<System.Tuple<string, string>>();
@@ -575,7 +574,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // reparent the bone to it avatar counterpart
         addonBone.SetParent(avatarBone, true);
 
-
         // check if the rotation/position/scale of the bones are different
         if (
           avatarBone.rotation != addonBone.rotation
@@ -589,7 +587,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // put the addon bone back to its original parent
         addonBone.SetParent(addonBoneParent, true);
-
       }
 
       // if there are any differentBones then log a warning to the console (including the bone names)
@@ -617,8 +614,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         skinnedMeshRenderersStringBuilder.Append(skinnedMeshRenderer.name + "\n");
       }
       CoreLogDebug("[ArmatureLink] skinnedMeshRenderers:\n" + skinnedMeshRenderersStringBuilder.ToString());
-
-
 
       // gameObject list for the added bones
       List<GameObject> addedBonesGameObjects = new List<GameObject>();
@@ -787,7 +782,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // are already bound to the mesh so no point in messing with them) thus the 'commonBones' list
           // will be of help to filter the bones that need to be rebound (note that its just a list of names,
           // not actual bone refs)
-      
+
           // create a list of bones to update from the bonesToRebind list that are in the commonBones list
           List<Transform> bonesToUpdate = new List<Transform>();
 
@@ -831,14 +826,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             Transform oldBone = bonesToRebind.FirstOrDefault(b => b.name == bonesToUpdate[i].name);
 
             // sort out the bindposes
-            mesh.bindposes = Enumerable.Zip(skinnedMeshRendererToRebind.bones, mesh.bindposes, (a,b) => (a,b))
-                            .Select(boneAndBindPose => {
-                                var bone = boneAndBindPose.a;
-                                var bindPose = boneAndBindPose.b;
-                                if (bone != oldBone) return bindPose;
-                                return newBone.worldToLocalMatrix * oldBone.localToWorldMatrix * bindPose;
-                            }) 
-                            .ToArray();
+            mesh.bindposes = Enumerable
+              .Zip(skinnedMeshRendererToRebind.bones, mesh.bindposes, (a, b) => (a, b))
+              .Select(boneAndBindPose =>
+              {
+                var bone = boneAndBindPose.a;
+                var bindPose = boneAndBindPose.b;
+                if (bone != oldBone)
+                  return bindPose;
+                return newBone.worldToLocalMatrix * oldBone.localToWorldMatrix * bindPose;
+              })
+              .ToArray();
 
             // replace the old bone in skinnedMeshRendererToRebind.bones with the new bone
             skinnedMeshRendererToRebind.bones = skinnedMeshRendererToRebind.bones
@@ -850,9 +848,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // debug log to console that the bone has been rebound
             CoreLogDebug("[ArmatureLink][mesh rebind] Bone has been rebound to: " + newBone.name);
           }
-
         }
-
 
         // check if the Anchor Override is set on the skinned mesh renderer, if it is then set it to the matching bone in the avatar's armature
         if (skinnedMeshRendererToRebind.probeAnchor != null)
@@ -1475,7 +1471,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the new mesh
       return skinnedMeshRenderer.sharedMesh;
-
     }
 
     public string GetBonePath(Transform[] avatarBones, string boneName)
