@@ -1,0 +1,110 @@
+// { "version": "0.0.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_MC2C_EDITOR", dependencies: ["_COMP_MC2C"], type: "Editor"}
+#if UNITY_EDITOR && NVH_CVRFURY_EXISTS_COMP_MC2C
+using System;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  [CustomEditor(typeof(CVRFuryMagicaCloth2Config))]
+  public class CVRFuryMagicaCloth2ConfigEditor : Editor
+  {
+    private VisualElement rootVisualElement;
+
+    public override VisualElement CreateInspectorGUI()
+    {
+      // Create the root VisualElement
+      rootVisualElement = new VisualElement();
+
+      // set the name of the root element to allow styling
+      rootVisualElement.name = "CVRFuryMagicaCloth2ConfigEditor";
+
+      // Load and apply the stylesheet
+      var stylesheet = Resources.Load<StyleSheet>(
+        Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryComponents/UnityStyleSheets/CVRFuryMagicaCloth2ConfigEditor"
+      );
+
+      // Check if the StyleSheet was loaded
+      if (stylesheet == null)
+      {
+        CoreLogError(
+          "Failed to load StyleSheet at 'UnityStyleSheets/CVRFuryMagicaCloth2ConfigEditor'. Please ensure the file exists at the specified path."
+        );
+        // If the StyleSheet was not loaded add a new label to the root.
+        rootVisualElement.Add(new Label("CRITICAL ERROR : StyleSheet could not be loaded."));
+        return rootVisualElement;
+      }
+
+      // apply stylesheet
+      rootVisualElement.styleSheets.Add(stylesheet);
+
+      // add element to hold an icon and the info box
+      var iconAndInfoBox = new VisualElement();
+      // add class to the element to allow styling
+      iconAndInfoBox.AddToClassList("icon-and-info-box");
+      // add the element to the root element
+      rootVisualElement.Add(iconAndInfoBox);
+
+      // add the info icon to the messageContainer
+      var icon = new VisualElement();
+      // add the icon class to the icon
+      icon.AddToClassList("icon");
+      // set the width and height of the icon to 40px
+      icon.style.width = new Length(30, LengthUnit.Pixel);
+      icon.style.height = new Length(30, LengthUnit.Pixel);
+      // load the VectorImage from the Resources folder
+      VectorImage infoIcon = Resources.Load<VectorImage>(
+        Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryComponents/IconsAndImages/info"
+      );
+      // create a StyleBackground from the VectorImage
+      StyleBackground infoBackground = new StyleBackground(infoIcon);
+      // set the StyleBackground as the background image for the 'icon' UI element
+      icon.style.backgroundImage = infoBackground;
+      // add margin to the icon
+      icon.style.marginBottom = new StyleLength(20f);
+
+      // add the icon to the iconAndInfoBox
+      iconAndInfoBox.Add(icon);
+
+      // add info box to say that this component is used to store info about Magica Cloth 2 Components that have been added to the base avatar via CVRFury
+      var infoBox = new Label(
+        "This component is used to store info about Magica Cloth 2 Components that are part of a CVRFury addon"
+      );
+      // add the info box to the root element
+      iconAndInfoBox.Add(infoBox);
+      // add class to the info box to allow styling
+      infoBox.AddToClassList("info-box");
+
+      // add info box to display sourcePrefabName
+      var sourcePrefabNameField = new TextField("Source Prefab Name");
+      sourcePrefabNameField.value = (target as CVRFuryMagicaCloth2Config).sourcePrefabName;
+      // make the field read only
+      sourcePrefabNameField.SetEnabled(false);
+      rootVisualElement.Add(sourcePrefabNameField);
+
+      // add info box to display relatedMagicaCloth2InstanceID
+      var relatedMagicaCloth2InstanceIDField = new IntegerField("Related Magica Cloth 2 Instance ID");
+      relatedMagicaCloth2InstanceIDField.value = (target as CVRFuryMagicaCloth2Config).relatedMagicaCloth2InstanceID;
+      // make the field read only
+      relatedMagicaCloth2InstanceIDField.SetEnabled(false);
+      rootVisualElement.Add(relatedMagicaCloth2InstanceIDField);
+
+      // add info box to display magicaCloth2WasEnabled
+      var magicaCloth2WasEnabledField = new Toggle("Magica Cloth 2 Was Enabled");
+      magicaCloth2WasEnabledField.value = (target as CVRFuryMagicaCloth2Config).magicaCloth2WasEnabled;
+      // make the field read only
+      magicaCloth2WasEnabledField.SetEnabled(false);
+      rootVisualElement.Add(magicaCloth2WasEnabledField);
+
+      // return the root element
+      return rootVisualElement;
+    }
+  }
+
+}
+#endif

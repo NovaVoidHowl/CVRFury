@@ -1,0 +1,34 @@
+// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_MC2C", dependencies: ["MAGICACLOTH2"], type: "Runtime" }
+#if MAGICACLOTH2
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime;
+using MagicaCloth2;
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  [AddComponentMenu("CVRFury/System/Magica Cloth 2 Config")]
+  public class CVRFuryMagicaCloth2Config : MonoBehaviour
+  {
+    public string sourcePrefabName;
+    public int sourceDSUNumber;
+
+    public bool magicaCloth2WasEnabled = false;
+    public int relatedMagicaCloth2InstanceID = 0;
+
+    [SerializeField]
+    public ClothSerializeData magicaCloth2SerializeData = new ClothSerializeData();
+
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Gizmo display specification when editing.
+        /// </summary>
+        [SerializeField]
+        public GizmoSerializeData magicaCloth2GizmoSerializeData = new GizmoSerializeData();
+#endif // UNITY_EDITOR
+  }
+}
+#endif // MAGICACLOTH2
