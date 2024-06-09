@@ -1,4 +1,4 @@
-// { "version": "0.0.181" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.183" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -542,6 +542,49 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
       CoreLogDebug("[ArmatureLink][lookups] commonBones:\n" + commonBonesStringBuilder.ToString());
 
+      // bool to allow for case insensitive comparison
+      bool caseInsensitiveComparisonTriggered = false;
+
+      if (commonBones.Count == 0)
+      {
+        CoreLogError(
+          "No common bones found between the addon's armature and the avatar's armature"
+            + "\n Reattempting case insensitive comparison"
+        );
+
+        // re try the comparison with case insensitive comparison
+        commonBones = addonBoneNamesList.Intersect(avatarBoneNames, System.StringComparer.OrdinalIgnoreCase).ToList();
+        // same for missing bones
+        missingBones = addonBoneNamesList.Except(avatarBoneNames, System.StringComparer.OrdinalIgnoreCase).ToList();
+
+        // print commonBones to console in one block
+        StringBuilder commonBonesStringBuilder2 = new StringBuilder();
+        foreach (string commonBone in commonBones)
+        {
+          commonBonesStringBuilder2.Append(commonBone + "\n");
+        }
+        CoreLogDebug(
+          "[ArmatureLink][lookups] commonBones post case insensitive comparison:\n"
+            + commonBonesStringBuilder2.ToString()
+        );
+
+        caseInsensitiveComparisonTriggered = true;
+      }
+
+      // if there are no commonBones then log a error to the console
+      if (commonBones.Count == 0)
+      {
+        CoreLogCritical("No common bones found between the addon's armature and the avatar's armature");
+
+        // show popup to user
+        EditorUtility.DisplayDialog(
+          "Armature Link Error",
+          "No common bones found between the addon's armature and the avatar's armature",
+          "OK"
+        );
+        return;
+      }
+
       // print missingBones to console in one block
       StringBuilder missingBonesStringBuilder = new StringBuilder();
       foreach (string missingBone in missingBones)
@@ -562,14 +605,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // find the bone in the addonBones list
         BoneData commonBone = addonBoneNames.Find(b => b.name == commonBoneName);
 
+        // depending on the caseInsensitiveComparisonTriggered bool,
         // find the bone in the avatarBones list
-        Transform avatarBone = avatarBones.FirstOrDefault(b => b.name == commonBoneName);
+        Transform avatarBone = caseInsensitiveComparisonTriggered
+          ? avatarBones.FirstOrDefault(b => b.name.Equals(commonBoneName, System.StringComparison.OrdinalIgnoreCase))
+          : avatarBones.FirstOrDefault(b => b.name == commonBoneName);
 
         // find the bone in the addonBones list
         Transform addonBone = addonBones.FirstOrDefault(b => b.name == commonBoneName);
 
         // get the addon bone's parent
         Transform addonBoneParent = addonBones.FirstOrDefault(b => b.name == commonBone.parentName);
+
+        // add the CVRFuryNukeGameObject component to the commonBone, if it doesn't already have one
+        // this is to trigger clean up surplus gameObjects that are not needed
+        if (addonBone.GetComponent<CVRFuryNukeGameObject>() == null)
+        {
+          addonBone.gameObject.AddComponent<CVRFuryNukeGameObject>();
+          // set CVRFuryNukeGameObject component nukeEnabled to true
+          addonBone.GetComponent<CVRFuryNukeGameObject>().nukeEnabled = true;
+        }
 
         // reparent the bone to it avatar counterpart
         addonBone.SetParent(avatarBone, true);
@@ -652,8 +707,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           continue;
         }
 
-        // find the parent bone in the avatarBones list
-        Transform parentBone = avatarBones.FirstOrDefault(b => b.name == missingBone.parentName);
+        // find the parent bone in the avatarBones list, depending on the caseInsensitiveComparisonTriggered bool
+        Transform parentBone = caseInsensitiveComparisonTriggered
+          ? avatarBones.FirstOrDefault(
+            b => b.name.Equals(missingBone.parentName, System.StringComparison.OrdinalIgnoreCase)
+          )
+          : avatarBones.FirstOrDefault(b => b.name == missingBone.parentName);
 
         // if the parentBone is null then there is an issue, log an error to the console and continue to the next bone
         if (parentBone == null)
@@ -1046,6 +1105,94 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // only need to do the asset db refresh once, at the end of the loop
         AssetDatabase.Refresh();
       }
+      #endregion
+
+      #region DSU cleanup
+      // now we have merged the armatures and rebound the skinned mesh renderers, we can clean up any surplus
+      // gameObjects under the DSU object that are not needed
+
+      // debug print the DSUObject is being cleaned up
+      CoreLogDebug("[ArmatureLink][DSU Cleanup] Cleaning up DSUObject");
+
+      GameObject[] DSUChildGameObjects = null;
+      // try to get all the gameObjects under the DSUObject
+      try
+      {
+        DSUChildGameObjects = DSUObject.GetComponentsInChildren<Transform>().Select(t => t.gameObject).ToArray();
+      }
+      catch (System.Exception e)
+      {
+        // log as a debug to the console
+        CoreLogDebug("[ArmatureLink][DSU Cleanup] Load error");
+        CoreLogDebug(e);
+        return;
+      }
+      // debug print the that the DSUChildGameObjects have been loaded
+      CoreLogDebug("[ArmatureLink][DSU Cleanup] DSUChildGameObjects loaded");
+
+      // remove all gameObjects from the list that have the CVRFuryNukeGameObject component attached
+      DSUChildGameObjects = DSUChildGameObjects
+        .Where(gameObject => gameObject.GetComponent<CVRFuryNukeGameObject>() == null)
+        .ToArray();
+
+      // debug print the number of DSUChildGameObjects
+      CoreLogDebug("[ArmatureLink][DSU Cleanup] DSUChildGameObjects count: " + DSUChildGameObjects.Length);
+
+      // debug print the gameObjects in one block
+      StringBuilder gameObjectsStringBuilder = new StringBuilder();
+      foreach (GameObject gameObject in DSUChildGameObjects)
+      {
+        gameObjectsStringBuilder.Append(gameObject.name + "\n");
+      }
+      CoreLogDebug("[ArmatureLink][DSU Cleanup] gameObjects:\n" + gameObjectsStringBuilder.ToString());
+
+      // loop over the DSUChildGameObjects and check if they have any components on them
+      foreach (GameObject gameObject in DSUChildGameObjects)
+      {
+        // get the components on the gameObject
+        Component[] components = gameObject.GetComponents<Component>();
+
+        // remove all components from the list that are of type 'UnityEngine.Transform'
+        components = components.Where(component => component.GetType() != typeof(Transform)).ToArray();
+
+        // remove all components from that list that are in the Constants.CVRFURY_COMPONENTS_TO_REMOVE list
+        components = components
+          .Where(component => !Constants.CVRFURY_COMPONENTS_TO_REMOVE.Contains(component.GetType().ToString()))
+          .ToArray();
+
+        // remove all components from that list that are in the Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE list
+        components = components
+          .Where(component => !Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE.Contains(component.GetType().ToString()))
+          .ToArray();
+
+        // list the component types on the gameObject in one block, if there are any
+        StringBuilder componentsStringBuilder = new StringBuilder();
+        foreach (Component component in components)
+        {
+          componentsStringBuilder.Append(component.GetType().ToString() + "\n");
+        }
+        CoreLogDebug(
+          "[ArmatureLink][DSU Cleanup] components in " + gameObject.name + ":\n" + componentsStringBuilder.ToString()
+        );
+
+        // if there are no components on the gameObject then destroy the gameObject
+        if (components.Length == 0)
+        {
+          // add the CVRFuryNukeGameObject component to the commonBone, if it doesn't already have one
+          // this is to trigger clean up surplus gameObjects that are not needed
+          if (gameObject.GetComponent<CVRFuryNukeGameObject>() == null)
+          {
+            gameObject.AddComponent<CVRFuryNukeGameObject>();
+            // set CVRFuryNukeGameObject component nukeEnabled to true
+            gameObject.GetComponent<CVRFuryNukeGameObject>().nukeEnabled = true;
+          }
+          // print that the gameObject has set for removal
+          CoreLog(
+            "[ArmatureLink][DSU Cleanup] " + gameObject.name + " has tagged for removal as it has no useful components"
+          );
+        }
+      }
+
       #endregion
     }
 
