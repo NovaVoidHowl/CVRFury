@@ -1,4 +1,4 @@
-// { "version": "1.0.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_A3M", dependencies: []}
+// { "version": "1.0.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_A3M", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 // Special Licensing applies to this file 

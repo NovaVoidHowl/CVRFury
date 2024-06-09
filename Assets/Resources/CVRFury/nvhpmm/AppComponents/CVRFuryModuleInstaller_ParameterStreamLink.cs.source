@@ -1,4 +1,4 @@
-// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_PARAM_STREAM", dependencies: []}
+// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_PARAM_STREAM", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using System.Collections;

@@ -1,4 +1,4 @@
-// { "version": "0.0.35" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: []}
+// { "version": "0.0.35" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;

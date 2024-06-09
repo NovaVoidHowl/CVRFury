@@ -1,4 +1,4 @@
-// { "version": "0.0.9" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_DBG", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
+// { "version": "0.0.9" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_DBG", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"], type: "Editor"}
 #if UNITY_EDITOR && NVH_CVRFURY_DEV_ENABLED
 
 using Math = System.Math;

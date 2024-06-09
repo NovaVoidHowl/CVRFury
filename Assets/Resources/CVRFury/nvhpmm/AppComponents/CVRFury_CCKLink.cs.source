@@ -1,4 +1,4 @@
-// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_CCK_LINK", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"]}
+// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_CCK_LINK", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"], type: "Editor"}
 #if UNITY_EDITOR
 
 using Math = System.Math;

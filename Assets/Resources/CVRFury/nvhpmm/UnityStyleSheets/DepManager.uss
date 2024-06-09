@@ -38,6 +38,7 @@ TemplateContainer {
 #appComponentsContainer #appComponentContainer #appComponentInfoAndTools{
   width: 100%;
   padding-right: 30px;
+  padding-left: 30px;
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
@@ -52,6 +53,34 @@ TemplateContainer {
   right: 0;
   background-color: #222222;
 }
+#appComponentsContainer #appComponentContainer #typePip {
+  position: absolute;
+  width: 20px;
+  height: 39px;
+  border-radius: 10px 0px 0px 10px;
+  left: 0;
+  background-color: #222222;
+  -unity-text-align:  middle-center;
+  font-size: 16px;
+  -unity-font-style: bold;
+}
+
+#appComponentsContainer #appComponentContainer #typePip #typePipLabel{
+  padding-top: 9px;
+}
+
+#appComponentsContainer #appComponentContainer #typePip.runtimeType{
+  background-color: #ffffff;
+  color: #000000;
+}
+#appComponentsContainer #appComponentContainer #typePip.editorType{
+  background-color: #00e0ff;
+  color: #000000;
+}
+#appComponentsContainer #appComponentContainer #typePip.unknownType{
+  background-color: #ff00ff;
+}
+
 
 .appComponentActionButton{
   width: 100px;

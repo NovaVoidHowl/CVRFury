@@ -1,4 +1,4 @@
-// { "version": "0.0.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: []}
+// { "version": "0.0.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;

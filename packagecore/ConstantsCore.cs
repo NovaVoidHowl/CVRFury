@@ -16,6 +16,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     public const string SCRIPTING_DEFINE_SYMBOL = "NVH_CVRFURY_EXISTS";
     public const string PACKAGE_NAME = "uk.novavoidhowl.dev.cvrfury";
+
+    public const string COMPONENTS_SOURCE_FOLDER = "/nvhpmm/AppComponents/";
     public const string ASSETS_MANAGED_FOLDER = "Assets/_CVRFury";
     public const string ASSETS_TEMP_FOLDER = "Assets/_CVRFury/TempFiles";
     public const string ASSETS_MANAGED_FOLDER_GENERATED = ASSETS_MANAGED_FOLDER + "/Generated/";
@@ -47,7 +49,9 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDataStorageUnit",
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryGameObjectInfoTag",
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryNukeGameObject",
-        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryAvatarInfoUnit"
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryAvatarInfoUnit",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDynamicBoneConfig",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryMagicaCloth2Config"
       }
     );
   }

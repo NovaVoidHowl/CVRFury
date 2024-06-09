@@ -1,4 +1,4 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: []}
+// { "version": "0.0.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
