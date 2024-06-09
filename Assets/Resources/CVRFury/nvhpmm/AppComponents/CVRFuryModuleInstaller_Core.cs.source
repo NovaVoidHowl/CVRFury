@@ -1,4 +1,4 @@
-// { "version": "0.39.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.39.5" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -600,11 +600,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Dynamic Bone Disabler (if dynamic bone is present on addon and active when applied it can cause issues)
       DynamicBoneDisabler(uploadedObject);
 
-      #if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
-      // only if magica cloth 2 is installed
       // Magica Cloth 2 Disabler (if magica cloth 2 is present on addon and active when applied it can cause issues)
       MagicaCloth2Disabler(uploadedObject);
-      #endif
 
       // prefab unpacker
       PrefabUnpacker(uploadedObject);
@@ -613,7 +610,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CoreLog("Pre-tasks run");
     }
 
-    #if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
     public static void MagicaCloth2Disabler(GameObject uploadedObject)
     {
       // debug log that the magica cloth 2 disabler is running
@@ -623,12 +619,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // components on them then get the magica cloth 2 components on those children of the DSU objects and disable them
 
       // get all the game objects with DSU components on them
-      var DSUObjects = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>().Select(x => x.gameObject).ToList();
-      
+      var DSUObjects = uploadedObject
+        .GetComponentsInChildren<CVRFuryDataStorageUnit>()
+        .Select(x => x.gameObject)
+        .ToList();
+
       // debug print that DSU objects are loaded
       CoreLogDebug("[Magica Cloth 2 disabler] DSU objects loaded");
-
-
 
       // check if there are any DSU objects
       if (DSUObjects.Count == 0)
@@ -650,6 +647,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // debug print the DSU number
         CoreLogDebug("[Magica Cloth 2 disabler] Processing DSU number: " + DSUObjectCount);
 
+#if MAGICACLOTH2
         // get the magica cloth 2 components on the DSU object
         var magicaCloth2Components = DSUObject.GetComponentsInChildren<MagicaCloth2.MagicaCloth>().ToList();
 
@@ -667,6 +665,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // loop through the magica cloth 2 components
         foreach (var magicaCloth2Component in magicaCloth2Components)
         {
+#if NVH_CVRFURY_EXISTS_COMP_MC2C
           // now we need to tag it for restore at the end of the module installation process
           // add the CVRFuryMagicaCloth2Config component to the magica cloth 2 component
           var magicaCloth2Config = magicaCloth2Component.gameObject.AddComponent<CVRFuryMagicaCloth2Config>();
@@ -678,13 +677,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           magicaCloth2Config.sourcePrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
 
           //debug print that the sourcePrefabName has been set
-          CoreLogDebug("[Magica Cloth 2 disabler] sourcePrefabName set to: "+ magicaCloth2Config.sourcePrefabName);
+          CoreLogDebug("[Magica Cloth 2 disabler] sourcePrefabName set to: " + magicaCloth2Config.sourcePrefabName);
 
           // set the enabled flag (magicaCloth2WasEnabled) to the current state of the magica cloth 2 component
           magicaCloth2Config.magicaCloth2WasEnabled = magicaCloth2Component.enabled;
 
           // console print to say that the magica cloth 2 component state has been stored
-          CoreLogDebug("[Magica Cloth 2 disabler] Magica Cloth 2 component state stored: " + magicaCloth2Config.magicaCloth2WasEnabled);
+          CoreLogDebug(
+            "[Magica Cloth 2 disabler] Magica Cloth 2 component state stored: "
+              + magicaCloth2Config.magicaCloth2WasEnabled
+          );
 
           // set the relatedMagicaCloth2InstanceID to the instanceID of the magica cloth 2 component
           magicaCloth2Config.relatedMagicaCloth2InstanceID = magicaCloth2Component.GetInstanceID();
@@ -695,20 +697,41 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // store the gizmoSerializeData of the magica cloth 2 component
           magicaCloth2Config.magicaCloth2GizmoSerializeData = magicaCloth2Component.GizmoSerializeData;
 
-
           // console print to say that the magica cloth 2 component instanceID has been stored
-          CoreLogDebug("[Magica Cloth 2 disabler] Magica Cloth 2 component instanceID stored: " + magicaCloth2Config.relatedMagicaCloth2InstanceID);
+          CoreLogDebug(
+            "[Magica Cloth 2 disabler] Magica Cloth 2 component instanceID stored: "
+              + magicaCloth2Config.relatedMagicaCloth2InstanceID
+          );
+
+#endif // NVH_CVRFURY_EXISTS_COMP_MC2C
+
+#if !NVH_CVRFURY_EXISTS_COMP_MC2C
+          // log that the CVRFuryMagicaCloth2Config component is not present and should be installed
+          CoreLogCritical(
+            "CVRFuryMagicaCloth2Config component not found. Please install via Tool Setup"
+              + "Without this component, the Magica Cloth 2 will not work on addons."
+          );
+
+          // show a dialog box to the user to inform them that the CVRFuryMagicaCloth2Config component is not present
+          EditorUtility.DisplayDialog(
+            "CVRFuryMagicaCloth2Config component not found",
+            "Please install the CVRFuryMagicaCloth2Config component via the Tool Setup window."
+              + "\n\nWithout this component, the Magica Cloth 2 will not work on addons.",
+            "OK"
+          );
+#endif // !NVH_CVRFURY_EXISTS_COMP_MC2C
 
           // disable the magica cloth 2 component
           magicaCloth2Component.enabled = false;
 
           // remove the magica cloth 2 component from the game object
           UnityEngine.Object.DestroyImmediate(magicaCloth2Component);
-
+#if NVH_CVRFURY_EXISTS_COMP_MC2C
           // console print to say that the magica cloth 2 component has been disabled
           CoreLogDebug("Magica Cloth 2 component disabled on: " + magicaCloth2Config.relatedMagicaCloth2InstanceID);
+#endif // NVH_CVRFURY_EXISTS_COMP_MC2C
         }
-
+#endif // MAGICACLOTH2
         // increment the DSU object count
         DSUObjectCount++;
       }
@@ -716,8 +739,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // debug log that the magica cloth 2 disabler has finished
       CoreLogDebug("[Magica Cloth 2 disabler] finished");
     }
-    #endif
-
 
     public static void DynamicBoneDisabler(GameObject uploadedObject)
     {
@@ -726,9 +747,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // now we only want to disable dynamic bones on the addons so we need to get all the game objects with DSU
       // components on them then get the dynamic bone components on those children of the DSU objects and disable them
-      
+
       // get all the game objects with DSU components on them
-      var DSUObjects = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>().Select(x => x.gameObject).ToList();
+      var DSUObjects = uploadedObject
+        .GetComponentsInChildren<CVRFuryDataStorageUnit>()
+        .Select(x => x.gameObject)
+        .ToList();
 
       // loop through the DSU objects
       foreach (var DSUObject in DSUObjects)
@@ -745,7 +769,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // set the sourcePrefabName to the prefabName from the DSU component
           dynamicBoneConfig.sourcePrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
-
 
           // set the enabled flag (dynamicBoneWasEnabled) to the current state of the dynamic bone component
           dynamicBoneConfig.dynamicBoneWasEnabled = dynamicBoneComponent.enabled;
@@ -764,7 +787,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // debug log that the dynamic bone disabler has finished
       CoreLogDebug("[Dynamic bone disabler] finished");
     }
-
 
     /// <summary>
     /// this function reads all the armature paths in the uploadedObject and adds them to the CVRFuryAvatarInfoUnit
@@ -1008,7 +1030,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         Assembly assembly;
         // try to Get the assembly that contains the type
-        try {
+        try
+        {
           assembly = Assembly.Load(assemblyToLoadFrom);
         }
         catch (Exception e)
@@ -1017,7 +1040,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLogDebug("[Components Cleanup] Error: " + e.Message);
           continue;
         }
-        
+
         // Get the type from the assembly
         var type = assembly.GetType(typeName);
         if (type == null)
@@ -1077,7 +1100,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-    #if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
+#if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
     public static void MagicaCloth2ReEnabler(GameObject uploadedObject)
     {
       // debug log that the magica cloth 2 re-enabler is running
@@ -1094,22 +1117,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // add a new magica cloth 2 component to the related game object
         var newMagicaCloth2Component = m2GameObject.AddComponent<MagicaCloth2.MagicaCloth>();
-        
+
         // get the type of the new component
         var type = newMagicaCloth2Component.GetType();
-        
+
         // get the private field
         var field = type.GetField("serializeData", BindingFlags.NonPublic | BindingFlags.Instance);
-        
+
         // set the value of the private field
         field.SetValue(newMagicaCloth2Component, magicaCloth2Config.magicaCloth2SerializeData);
-        
+
         // get the private field for GizmoSerializeData
         var gizmoField = type.GetField("gizmoSerializeData", BindingFlags.NonPublic | BindingFlags.Instance);
-        
+
         // set the value of the private field for GizmoSerializeData
         gizmoField.SetValue(newMagicaCloth2Component, magicaCloth2Config.magicaCloth2GizmoSerializeData);
-        
+
         // enable the new component
         newMagicaCloth2Component.enabled = true;
 
@@ -1117,12 +1140,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CoreLogDebug("Magica Cloth 2 component re-enabled on: " + m2GameObject.name);
       }
 
-
       // debug log that the magica cloth 2 re-enabler has finished
       CoreLogDebug("[Magica Cloth 2 re-enabler] finished");
     }
-    #endif
-
+#endif
 
     /// <summary>
     /// This function is called to finalise the module installation and do trigger any final cleanup code
@@ -1133,14 +1154,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CoreLog("Module installation finalising");
 
       // run Magica Cloth 2 re-enabler
-      #if MAGICACLOTH2
+#if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
       // only if magica cloth 2 is installed
       // Magica Cloth 2 Re-enabler (if magica cloth 2 was present on addon and disabled during the module installation process)
       MagicaCloth2ReEnabler(uploadedObject);
-      #endif
-
-
-
+#endif
 
       if (EditorPrefs.GetBool(Constants.CLEANUP_DISABLE_PREF, false))
       {
@@ -1172,7 +1190,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CoreLogDebug("VRCFuryStub cleanup done");
 
         // run Components Cleanup for CVRFury
-        ComponentsCleanup(uploadedObject, Constants.CVRFURY_COMPONENTS_TO_REMOVE, "uk.novavoidhowl.dev.cvrfury.runtime");
+        ComponentsCleanup(
+          uploadedObject,
+          Constants.CVRFURY_COMPONENTS_TO_REMOVE,
+          "uk.novavoidhowl.dev.cvrfury.runtime"
+        );
 
         // run Components Cleanup (Deployable) for CVRFury
         ComponentsCleanup(uploadedObject, Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE, "Assembly-CSharp");
