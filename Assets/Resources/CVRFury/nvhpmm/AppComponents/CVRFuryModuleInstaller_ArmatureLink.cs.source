@@ -1,4 +1,4 @@
-// { "version": "0.0.187" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.193" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -799,11 +799,29 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLogDebug(e);
           continue;
         }
+        // get name of the game object that the skinned mesh renderer is on
+        string skinnedMeshRendererGameObjectName = skinnedMeshRendererToRebind.gameObject.name;
+
         // debug print the mesh loaded
-        CoreLogDebug("[ArmatureLink] mesh loaded");
+        CoreLogDebug("[ArmatureLink] mesh loaded for: " + skinnedMeshRendererGameObjectName);
 
         // create a new mesh
         mesh = GenerateNewMesh(mesh, DSUNumber, avatar, skinnedMeshRendererToRebind);
+
+        // -------------------------------------------------------------------------------------------------------------
+        // this is a workaround to get the mesh to properly update/relink
+        // without this the mesh will sometimes not update properly, its random and not always the case
+        // the random nature of this issue makes it hard to debug, and this is the best solution found so far
+        
+        // mark the game object as dirty
+        EditorUtility.SetDirty(skinnedMeshRendererToRebind.gameObject);
+
+        // wait for the editor to update
+        AssetDatabase.SaveAssets();
+        //--------------------------------------------------------------------------------------------------------------
+
+        // debug print the new mesh
+        CoreLogDebug("[ArmatureLink] new mesh created for: " + skinnedMeshRendererGameObjectName);
 
         // now we are safe to rebind the skinned mesh renderer to the new armature
 
@@ -931,8 +949,58 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             // mark the mesh as dirty
             EditorUtility.SetDirty(mesh);
+
+            // get full paths of the old and new bones
+            string oldBonePath = GetGameObjectPath(oldBone.gameObject);
+            string newBonePath = GetGameObjectPath(newBone.gameObject);
+
             // debug log to console that the bone has been rebound
-            CoreLogDebug("[ArmatureLink][mesh rebind] Bone has been rebound to: " + newBone.name);
+            CoreLogDebug("[ArmatureLink][mesh rebind] Bone has been rebound to: " + newBone.name + " for " + mesh.name
+                        + "\n Old bone path: " + oldBonePath + "\n New bone path: " + newBonePath);
+          }
+        }
+
+
+        // get the current Root Bone of the skinned mesh renderer
+        Transform rootBone = skinnedMeshRendererToRebind.rootBone;
+
+        // if its null then there is an issue, log an error to the console
+        if (rootBone == null)
+        {
+          // log as a critical error to the console, as this should not happen
+          CoreLogCritical("[ArmatureLink][mesh rebind] Root Bone not found for: " + skinnedMeshRendererToRebind.name);
+        }
+        else
+        {
+          // find the bone in the avatarBones list
+          Transform newRootBone = avatarBones.FirstOrDefault(b => b.name == rootBone.name);
+
+          // if the newRootBone is null then check with case insensitive comparison
+          if (newRootBone == null)
+          {
+            // log as a debug to the console
+            CoreLogDebug(
+              "[ArmatureLink][mesh rebind] Root Bone not found for: "
+                + rootBone.name
+                + ", reattempting with case insensitive comparison"
+            );
+
+            // reattempt to find the newRootBone in the avatarBones list with case insensitive comparison
+            newRootBone = avatarBones.FirstOrDefault(
+              b => b.name.Equals(rootBone.name, System.StringComparison.OrdinalIgnoreCase)
+            );
+          }
+
+          // if the newRootBone is still null then there is an issue, log an error to the console and continue to the next skinned mesh renderer
+          if (newRootBone == null)
+          {
+            // log as a critical error to the console, as this should not happen
+            CoreLogCritical("[ArmatureLink][mesh rebind] Root Bone not found for: " + rootBone.name);
+          }
+          else
+          {
+            // set the newRootBone to the rootBone
+            skinnedMeshRendererToRebind.rootBone = newRootBone;
           }
         }
 
@@ -980,16 +1048,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         }
         else
         {
+          // bind the skinnedMeshRendererToRebind.probeAnchor to the skinnedMeshRendererToRebind.rootBone
+          skinnedMeshRendererToRebind.probeAnchor = skinnedMeshRendererToRebind.rootBone.transform;
+
           // debug log to console that the skinned mesh renderer has been rebound
           CoreLogDebug(
-            "[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name
+            "[ArmatureLink][mesh rebind] Skinned mesh renderer probeAnchor not set and has been auto rebound to default: " + skinnedMeshRendererToRebind.rootBone.name
           );
         }
 
-        // debug log to console that the skinned mesh renderer has been rebound
-        CoreLogDebug(
-          "[ArmatureLink][mesh rebind] Skinned mesh renderer has been rebound to: " + boneToLinkToGameObject.name
-        );
       }
 
       #endregion
@@ -1687,6 +1754,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         + ".asset";
       AssetDatabase.CreateAsset(Object.Instantiate(mesh), meshPath);
       CoreLogDebug("[ArmatureLink] Mesh copied to: " + meshPath);
+
+      // // Force Unity to import the asset immediately, ensuring it's ready for use
+      // AssetDatabase.ImportAsset(meshPath, ImportAssetOptions.ForceUpdate);
 
       // ok so now we have a copy of the mesh, we need to set the skinned mesh renderer to use the new mesh
       skinnedMeshRenderer.sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
