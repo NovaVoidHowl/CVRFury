@@ -1,4 +1,4 @@
-// { "version": "0.39.6" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.39.7" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -763,18 +763,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // loop through the dynamic bone components
         foreach (var dynamicBoneComponent in dynamicBoneComponents)
         {
-          // now we need to tag it for restore at the end of the module installation process
-          // add the CVRFuryDynamicBoneConfig component to the dynamic bone component
-          var dynamicBoneConfig = dynamicBoneComponent.gameObject.AddComponent<CVRFuryDynamicBoneConfig>();
 
-          // set the sourcePrefabName to the prefabName from the DSU component
-          dynamicBoneConfig.sourcePrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
+          //// TODO: restore this section when the dynamic bone config component is ready
 
-          // set the enabled flag (dynamicBoneWasEnabled) to the current state of the dynamic bone component
-          dynamicBoneConfig.dynamicBoneWasEnabled = dynamicBoneComponent.enabled;
+          // // now we need to tag it for restore at the end of the module installation process
+          // // add the CVRFuryDynamicBoneConfig component to the dynamic bone component
+          // var dynamicBoneConfig = dynamicBoneComponent.gameObject.AddComponent<CVRFuryDynamicBoneConfig>();
 
-          // set the relatedDynamicBoneInstanceID to the instanceID of the dynamic bone component
-          dynamicBoneConfig.relatedDynamicBoneInstanceID = dynamicBoneComponent.GetInstanceID();
+          // // set the sourcePrefabName to the prefabName from the DSU component
+          // dynamicBoneConfig.sourcePrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
+
+          // // set the enabled flag (dynamicBoneWasEnabled) to the current state of the dynamic bone component
+          // dynamicBoneConfig.dynamicBoneWasEnabled = dynamicBoneComponent.enabled;
+
+          // // set the relatedDynamicBoneInstanceID to the instanceID of the dynamic bone component
+          // dynamicBoneConfig.relatedDynamicBoneInstanceID = dynamicBoneComponent.GetInstanceID();
 
           // disable the dynamic bone component
           dynamicBoneComponent.enabled = false;
