@@ -1,4 +1,4 @@
-// { "version": "0.0.185" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.187" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.UIElements;
@@ -1025,6 +1026,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // list of tuples to store the path of the bone in the addon's armature and the path of the bone in the avatar's armature
         List<ObjectPathPair> addonBonePaths = new List<ObjectPathPair>();
 
+        // list to store bone names that need to be a different case on the addon armature
+        List<string> addonBoneNamesDifferentCase = new List<string>();
+
         // loop over the addonBoneNamesList
         foreach (string addonBoneNameInput in addonBoneNamesList)
         {
@@ -1081,8 +1085,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           }
 
           // TODO: remove this debug print
-          // // Debug print the boneToLinkToGameObject.name
-          // CoreLogDebug("[ArmatureLink][animation rebind] boneToLinkToGameObject.name: " + boneToLinkToGameObject.name);
+          // Debug print the boneToLinkToGameObject.name
+          CoreLogDebug("[ArmatureLink][animation rebind] boneToLinkToGameObject.name: " + boneToLinkToGameObject.name);
 
           // Append the name of boneToLinkToGameObject to the addonBasePath
           string addonBonePath = addonBasePath + "/" + boneToLinkToGameObject.name;
@@ -1092,16 +1096,44 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           if (index != -1)
           {
+            // append the addonBonePath and the avatarBonePath to the addonBonePaths list
             addonBonePath = addonBonePath + avatarBonePath.Substring(index + boneToLinkToGameObject.name.Length);
+
+            // path to compare after replacment
+            string addonBonePathToCompareAfterReplace = addonBonePath;
+            // Perform a case-insensitive replacement (in case the addon bone name has a
+            // different case to the avatar bone name)
+            addonBonePath = RewritePathCaseInsensitive(addonBonePath, addonBoneNameInput);
+
+            // if addonBoneNamesDifferentCase contains any elements, then we need to do a replacement for each of them
+            // in turn
+            foreach (string addonBoneNameDifferentCase in addonBoneNamesDifferentCase)
+            {
+              // Perform a case-insensitive replacement (in case the addon bone name has a
+              // different case to the avatar bone name)
+              addonBonePath = RewritePathCaseInsensitive(addonBonePath, addonBoneNameDifferentCase);
+            }
+
+            // if the addonBonePath has been changed by the case insensitive replacement, add the bone name to the
+            // addonBoneNamesDifferentCase list
+            if (addonBonePath != addonBonePathToCompareAfterReplace)
+            {
+              addonBoneNamesDifferentCase.Add(addonBoneNameInput);
+            }
+
+            // debug print the addonBonePath
+            CoreLogDebug("[ArmatureLink][animation rebind] addonBonePath case rewrite: " + addonBonePath);
           }
           else
           {
-            // log as a critical error to the console, as this should not happen
+            // really no match, this should never happen
+            // log as a critical error to the console
             CoreLogCritical(
               "[ArmatureLink][animation rebind] Bone not found in avatar armature: " + boneToLinkToGameObject.name
             );
             // continue to the next bone
             continue;
+            
           }
 
           // TODO: remove this debug print
@@ -1663,6 +1695,28 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       return skinnedMeshRenderer.sharedMesh;
     }
 
+    public string RewritePathCaseInsensitive( string inputPath, string inputToReplace)
+    {
+      // Split the path into segments
+      string[] segments = inputPath.Split('/');
+
+      // Iterate through the segments and replace the matching segment
+      for (int i = 0; i < segments.Length; i++)
+      {
+          // Check if the current segment matches inputToReplace case-insensitively
+          if (string.Equals(segments[i], inputToReplace, System.StringComparison.OrdinalIgnoreCase))
+          {
+              // Replace the segment
+              segments[i] = inputToReplace;
+          }
+      }
+
+      // Reconstruct the path
+      return string.Join("/", segments);
+
+    }
+
+
     public string GetBonePath(Transform[] avatarBones, string boneName)
     {
       // Implementation for GetBonePath
@@ -1672,7 +1726,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the bone from the avatarBones array
       Transform bone = avatarBones.FirstOrDefault(b => b.name == boneName);
 
-      // if the bone is null then there is an issue, log an error to the console and return an empty string
+      // if the bone is null then there we need to do a case insensitive search
+      if (bone == null)
+      {
+        // get the bone from the avatarBones array using a case insensitive search
+        bone = avatarBones.FirstOrDefault(b => b.name.Equals(boneName, System.StringComparison.OrdinalIgnoreCase));
+      }
+
+      // if the bone is still null then there is an issue, log an error to the console and return an empty string
       if (bone == null)
       {
         // log as an error to the console
