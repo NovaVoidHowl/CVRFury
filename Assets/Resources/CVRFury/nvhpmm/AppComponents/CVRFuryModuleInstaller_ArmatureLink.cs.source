@@ -1,4 +1,4 @@
-// { "version": "0.0.184" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.185" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -943,7 +943,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             b => b.name == skinnedMeshRendererToRebind.probeAnchor.name
           );
 
-          // if the anchorOverride target is null then there is an issue, log an error to the console and continue to the next skinned mesh renderer
+          // if the anchorOverride target is null then we need to do a case insensitive comparison
+          if (anchorOverride == null)
+          {
+            // log as a debug to the console
+            CoreLogDebug(
+              "[ArmatureLink][mesh rebind] Anchor Override target not found for: "
+                + skinnedMeshRendererToRebind.probeAnchor.name
+                + ", reattempting with case insensitive comparison"
+            );
+
+            // reattempt to find the anchorOverride target in the avatarBones list with case insensitive comparison
+            anchorOverride = avatarBones.FirstOrDefault(
+              b => b.name.Equals(skinnedMeshRendererToRebind.probeAnchor.name, System.StringComparison.OrdinalIgnoreCase)
+            );
+          }
+
+
+          // if the anchorOverride target is still null then there is an issue, log an error to the console and continue to the next skinned mesh renderer
           if (anchorOverride == null)
           {
             // log as a critical error to the console, as this should not happen
