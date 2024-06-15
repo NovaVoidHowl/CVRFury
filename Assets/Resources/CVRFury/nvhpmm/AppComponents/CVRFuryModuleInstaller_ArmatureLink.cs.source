@@ -1,4 +1,4 @@
-// { "version": "0.0.183" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.184" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -870,14 +870,40 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // loop over the bonesToUpdate and rebind them to the avatar's armature
           for (int i = 0; i < bonesToUpdate.Count; i++)
           {
-            // find the bone in the avatarBones list
-            Transform newBone = avatarBones.FirstOrDefault(b => b.name == bonesToUpdate[i].name);
+            // new target bone
+            Transform newBone;
 
-            // if the newBone is null then there is an issue, log an error to the console and continue to the next bone
+            // find the bone in the avatarBones list
+            newBone = avatarBones.FirstOrDefault(b => b.name == bonesToUpdate[i].name);
+
+            // check if the newBone is null, if it is then we need to do a case insensitive comparison
+            if (newBone == null)
+            {
+              // log as a debug to the console
+              CoreLogDebug(
+                "[ArmatureLink][mesh rebind] Bone not found for: "
+                  + bonesToUpdate[i].name
+                  + ", reattempting with case insensitive comparison"
+              );
+
+              // reattempt to find the bone in the avatarBones list with case insensitive comparison
+              newBone = avatarBones.FirstOrDefault(
+                b => b.name.Equals(bonesToUpdate[i].name, System.StringComparison.OrdinalIgnoreCase)
+              );
+            }
+
+            // if the newBone is still null then there is an issue, log an error to the console and continue to the next bone
             if (newBone == null)
             {
               // log as a critical error to the console, as this should not happen
               CoreLogCritical("[ArmatureLink][mesh rebind] New bone not found for: " + bonesToUpdate[i].name);
+              // show popup to user, to inform them of the issue
+              EditorUtility.DisplayDialog(
+                "Armature Link Error",
+                "New bone not found for: " + bonesToUpdate[i].name,
+                "OK"
+              );
+
               continue;
             }
 
