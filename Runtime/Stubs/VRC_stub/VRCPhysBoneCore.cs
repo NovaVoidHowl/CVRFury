@@ -269,6 +269,20 @@ namespace uk.novavoidhowl.dev.vrcstub
 
     #endregion
 
+    #region Private Methods
+
+    private void OnEnable()
+    {
+      // added to force unity to add the enabled/disabled checkbox and thus the Enabled/m_Enabled attribute
+    }
+
+    private void OnDisable()
+    {
+      // added to force unity to add the enabled/disabled checkbox and thus the Enabled/m_Enabled attribute
+    }
+
+    #endregion // Private Methods
+
   }
 
 
