@@ -15,13 +15,8 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
 {
   public class VRCPhysBoneStubberPrefabConverter : EditorWindow
   {
-    // Constants
-    private static readonly List<string> VRCPHYSBONE_M_SCRIPT_IDS = new List<string>
-    {
-      "{fileID: 1661641543, guid: 2a2c05204084d904aa4945ccff20d8e5, type: 3}"
-    };
-    private const string CVRFURY_M_SCRIPT_ID = "{fileID: 11500000, guid: 475333861f76b9b43af5db2ad0c0c67d, type: 3}";
-
+  
+    
     // Declare textField as a member variable
     private TextField textField;
 
@@ -341,7 +336,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
           // if the file has a line starting with 'm_Script:'
           // check if the m_Script line ends with the value in 'VRCPHYSBONE_M_SCRIPT_IDS'
 
-          (bool IDmatch, string IDString) = checkScriptIDs(prefabFile, VRCPHYSBONE_M_SCRIPT_IDS);
+          (bool IDmatch, string IDString) = checkScriptIDs(prefabFile, Constants.VRCPHYSBONE_M_SCRIPT_IDS);
           if (IDmatch)
           {
             // found the file we are looking for file, (it has PhysBones in it)
@@ -419,7 +414,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
               progressBar.value = 30;
 
               // replace the line in the file
-              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_M_SCRIPT_ID);
+              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + Constants.CVRFURY_M_SCRIPT_ID);
 
               // set the text of the progressLabel to "80% -- Rebinding Script"
               progressLabel.text = "80% -- Rebinding Script";

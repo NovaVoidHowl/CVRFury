@@ -67,5 +67,12 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "uk.novavoidhowl.dev.cvrfury.deployable.CVRFuryMagicaCloth2Config"
       }
     );
+
+    public static readonly List<string> VRCPHYSBONE_M_SCRIPT_IDS = new List<string>
+    {
+      "{fileID: 1661641543, guid: 2a2c05204084d904aa4945ccff20d8e5, type: 3}"
+    };
+    public const string CVRFURY_M_SCRIPT_ID = "{fileID: 11500000, guid: 475333861f76b9b43af5db2ad0c0c67d, type: 3}";
+
   }
 }
