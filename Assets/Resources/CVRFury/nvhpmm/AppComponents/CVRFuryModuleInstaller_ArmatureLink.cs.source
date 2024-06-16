@@ -1313,24 +1313,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // debug print the addonBoneNamesListCount
         CoreLogDebug("[ArmatureLink][animation rebind] addonBoneNamesListCount: " + addonBoneNamesListCount);
 
-        // // print addonBoneNamesList to console in one block
-        // StringBuilder addonBoneNamesListStringBuilder = new StringBuilder();
-        // foreach (string addonBoneName in addonBoneNamesList)
-        // {
-        //   addonBoneNamesListStringBuilder.Append(addonBoneName + "\n");
-        // }
-        // CoreLogDebug(
-        //   "[ArmatureLink][animation rebind] addonBoneNamesList:\n" + addonBoneNamesListStringBuilder.ToString()
-        // );
-
-        // // print the commonBones to console in one block
-        // StringBuilder commonBonesStringBuilderRebind = new StringBuilder();
-        // foreach (string commonBone in commonBones)
-        // {
-        //   commonBonesStringBuilderRebind.Append(commonBone + "\n");
-        // }
-        // CoreLogDebug("[ArmatureLink][animation rebind] commonBones:\n" + commonBonesStringBuilderRebind.ToString());
-
         // list of addon only bones
         List<string> addonOnlyBones = addonBoneNamesList.Except(commonBones).ToList();
 
@@ -2035,6 +2017,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // debug print the animationsFolderPath
       CoreLogDebug("[ArmatureLink] animationsFolderPath: " + animationsFolderPath);
+
+      // check if the animationsFolderPath exists, if it does not then there is an issue, log an error to the console
+      // and return an empty string array
+      if (!Directory.Exists(animationsFolderPath))
+      {
+        // log as an error to the console
+        CoreLogError("[ArmatureLink] Directory does not exist: " + animationsFolderPath);
+        return new string[] { };
+      }
+
 
       // get a list of all files in the animationsFolderPath
       string[] animationFiles = Directory.GetFiles(animationsFolderPath);
