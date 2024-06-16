@@ -24,5 +24,8 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     // list of paths in the avatar armature
     public List<string> avatarArmaturePaths = new List<string>();
+
+    // list of other paths in the avatar (ie mesh, etc)
+    public List<string> avatarOtherPaths = new List<string>();
   }
 }
