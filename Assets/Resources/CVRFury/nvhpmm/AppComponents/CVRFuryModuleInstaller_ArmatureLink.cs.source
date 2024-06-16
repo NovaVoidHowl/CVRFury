@@ -1,4 +1,4 @@
-// { "version": "0.0.193" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.194" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -812,7 +812,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // this is a workaround to get the mesh to properly update/relink
         // without this the mesh will sometimes not update properly, its random and not always the case
         // the random nature of this issue makes it hard to debug, and this is the best solution found so far
-        
+
         // mark the game object as dirty
         EditorUtility.SetDirty(skinnedMeshRendererToRebind.gameObject);
 
@@ -1280,6 +1280,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // debug print the number of DSUChildGameObjects
       CoreLogDebug("[ArmatureLink][DSU Cleanup] DSUChildGameObjects count: " + DSUChildGameObjects.Length);
 
+      // Sorting DSUChildGameObjects from leaf objects up to the root
+      DSUChildGameObjects = DSUChildGameObjects
+          .OrderByDescending(gameObject => GetGameObjectDepth(gameObject))
+          .ToArray();
+
       // debug print the gameObjects in one block
       StringBuilder gameObjectsStringBuilder = new StringBuilder();
       foreach (GameObject gameObject in DSUChildGameObjects)
@@ -1291,34 +1296,64 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // loop over the DSUChildGameObjects and check if they have any components on them
       foreach (GameObject gameObject in DSUChildGameObjects)
       {
+        // safe to nuke boolean
+        bool safeToNuke = true;
+
         // get the components on the gameObject
         Component[] components = gameObject.GetComponents<Component>();
 
         // remove all components from the list that are of type 'UnityEngine.Transform'
         components = components.Where(component => component.GetType() != typeof(Transform)).ToArray();
 
+        // debug print the components in one block
+        StringBuilder componentsStringBuilderPre = new StringBuilder();
+        foreach (Component component in components)
+        {
+          componentsStringBuilderPre.Append(component.GetType().ToString() + "\n");
+        }
+        CoreLogDebug("[ArmatureLink][DSU Cleanup] components in " + gameObject.name + " pre-filter:\n" + componentsStringBuilderPre.ToString());
+
+
         // remove all components from that list that are in the Constants.CVRFURY_COMPONENTS_TO_REMOVE list
         components = components
           .Where(component => !Constants.CVRFURY_COMPONENTS_TO_REMOVE.Contains(component.GetType().ToString()))
           .ToArray();
 
-        // remove all components from that list that are in the Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE list
+        // make a new list that contains all the components from Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE that are not in the Constants.CVRFURY_NUKE_FILTER list
+        List<string> cvrfury_dep_components_to_remove_filtered = Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE
+          .Where(component => !Constants.CVRFURY_NUKE_FILTER.Contains(component))
+          .ToList();
+
+        // remove all components from that list that are in the cvrfury_dep_components_to_remove_filtered list
         components = components
-          .Where(component => !Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE.Contains(component.GetType().ToString()))
+          .Where(component => !cvrfury_dep_components_to_remove_filtered.Contains(component.GetType().ToString()))
           .ToArray();
 
+        
+
         // list the component types on the gameObject in one block, if there are any
-        StringBuilder componentsStringBuilder = new StringBuilder();
+        StringBuilder componentsStringBuilderPost = new StringBuilder();
         foreach (Component component in components)
         {
-          componentsStringBuilder.Append(component.GetType().ToString() + "\n");
+          componentsStringBuilderPost.Append(component.GetType().ToString() + "\n");
         }
         CoreLogDebug(
-          "[ArmatureLink][DSU Cleanup] components in " + gameObject.name + ":\n" + componentsStringBuilder.ToString()
+          "[ArmatureLink][DSU Cleanup] components in " + gameObject.name + " post-filter:\n" + componentsStringBuilderPost.ToString()
         );
 
+        // check if the gameObject has any children
+        if (gameObject.transform.childCount > 0)
+        {
+          // check if the there are any children that are not tagged for removal
+          if (gameObject.transform.Cast<Transform>().Any(child => child.GetComponent<CVRFuryNukeGameObject>() == null))
+          {
+            // if there are children that are not tagged for removal then skip this gameObject
+            safeToNuke = false;
+          }
+        }
+
         // if there are no components on the gameObject then destroy the gameObject
-        if (components.Length == 0)
+        if (components.Length == 0 && safeToNuke)
         {
           // add the CVRFuryNukeGameObject component to the commonBone, if it doesn't already have one
           // this is to trigger clean up surplus gameObjects that are not needed
@@ -1724,6 +1759,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     // -----------------------------------------------------------------------------------------------------------------
     #region Helper Functions/structs
+
+
+    // Function to calculate the depth of a GameObject in the hierarchy
+    public int GetGameObjectDepth(GameObject gameObject)
+    {
+        int depth = 0;
+        Transform current = gameObject.transform;
+        while (current.parent != null)
+        {
+            depth++;
+            current = current.parent;
+        }
+        return depth;
+    }
 
     public Mesh GenerateNewMesh(Mesh mesh, int DSUNumber, CVRAvatar avatar, SkinnedMeshRenderer skinnedMeshRenderer)
     {

@@ -59,5 +59,13 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "uk.novavoidhowl.dev.cvrfury.deployable.CVRFuryMagicaCloth2Config"
       }
     );
+    // list of components that are not to be considered as a something to be removed from the list of components
+    // preventing the adding of the nuke component
+    public static readonly ReadOnlyCollection<string> CVRFURY_NUKE_FILTER = new ReadOnlyCollection<string>(
+      new List<string>
+      {
+        "uk.novavoidhowl.dev.cvrfury.deployable.CVRFuryMagicaCloth2Config"
+      }
+    );
   }
 }
