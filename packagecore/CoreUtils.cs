@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Text;
 
 // dynamic using statements
 #if UNITY_EDITOR
@@ -40,6 +41,16 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           $"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] <color={Constants.APP_COLOUR_DBG}>[DEBUG]</color> {message.ToString()}"
         );
       }
+    }
+
+    public static void CoreLogDebugPrintList(IEnumerable<string> list, string preMessage)
+    {
+      StringBuilder stringBuilder = new StringBuilder();
+      foreach (string item in list)
+      {
+        stringBuilder.Append(item + "\n");
+      }
+      CoreLogDebug(preMessage + "\n" + stringBuilder.ToString());
     }
 #endif
 
@@ -150,9 +161,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         return false;
       }
     }
-
-
-
 
 #endif
   }
