@@ -9,7 +9,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   ///
   /// </summary>
   [DisallowMultipleComponent]
-  [AddComponentMenu("CVRFury/Avatar Info Unit")]
+  [AddComponentMenu("CVRFury/System/Avatar Info Unit")]
   public class CVRFuryAvatarInfoUnit : MonoBehaviour
   {
     // label to Say that the AIU has not correctly loaded and
