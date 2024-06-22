@@ -52,6 +52,17 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
       CoreLogDebug(preMessage + "\n" + stringBuilder.ToString());
     }
+
+    public static void CoreLogDebugPrintDictionary<TKey, TValue>(Dictionary<TKey, TValue> dictionary, string preMessage)
+    {
+      List<string> entriesList = new List<string>();
+      foreach (var kvp in dictionary)
+      {
+        entriesList.Add($"{kvp.Key}: {kvp.Value}");
+      }
+      CoreLogDebugPrintList(entriesList, preMessage);
+    }
+    
 #endif
 
     public static string GetGameObjectPath(GameObject obj)
