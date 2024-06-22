@@ -1,4 +1,4 @@
-// { "version": "0.0.204" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.0.205" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -759,10 +759,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // now we have the bones that need to be rebound, we need to rebind them to the new armature
 
+          // debug print the number of bones to update
+          CoreLogDebug("[ArmatureLink][mesh rebind] number of bones to update: " + bonesToUpdate.Count);
 
           // loop over the bonesToUpdate and rebind them to the avatar's armature
           for (int i = 0; i < bonesToUpdate.Count; i++)
           {
+            // debug print the name of the bone to update along with the index
+            CoreLogDebug("[ArmatureLink][mesh rebind] Bone to update: " + bonesToUpdate[i].name + " at index: " + i)
+              + " of "
+              + bonesToUpdate.Count;
+
             // new target bone
             Transform newBone;
 
@@ -827,6 +834,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get full paths of the old and new bones
             string oldBonePath = GetGameObjectPath(oldBone.gameObject);
             string newBonePath = GetGameObjectPath(newBone.gameObject);
+
+            // get a count of the DSUPaths in the dsuInfoUnit.DSUPaths list
+            int dsuPathsCount = dsuInfoUnit.DSUPaths.Count;
+
+            // debug print the dsuPathsCount
+            CoreLogDebug("[ArmatureLink][mesh rebind][L_842] dsuPathsCount: " + dsuPathsCount);
 
             // loop over the dsuInfoUnit.DSUPaths list and find the oldBone.gameObject (match to originalObject)
             for (int j = 0; j < dsuInfoUnit.DSUPaths.Count; j++)
@@ -1096,16 +1109,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                 // set the pathPair originalPath to the path
                 // from the animator curve path, the original not the partial we are testing
-                pathPair.addonObjectToLinkPath = curveBindingPath; 
+                pathPair.addonObjectToLinkPath = curveBindingPath;
 
-                // now need to set the rewrittenPath for the dsuInfoUnit.DSUPaths[j].rewrittenPath, 
+                // now need to set the rewrittenPath for the dsuInfoUnit.DSUPaths[j].rewrittenPath,
                 //as its not set at this point
                 // check if the dsuInfoUnit.DSUPaths[j].rewrittenObject is unset
                 if (dsuInfoUnit.DSUPaths[j].rewrittenObject == null)
                 {
                   // is its not set then the path from the dsuInfoUnit.DSUPaths[j].originalObject is what we need, so get it
                   string newPath = GetGameObjectPath(dsuInfoUnit.DSUPaths[j].originalObject);
-                  // now this has to be relative to the avatar as that is where the all processed animation clips have to 
+                  // now this has to be relative to the avatar as that is where the all processed animation clips have to
                   // be relative to, but what we currently have is the full path from the root of the scene, so we need to
                   // strip off the targetAvatar's path from the start of the newPath
                   // get the targetAvatar's path
@@ -1116,13 +1129,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   newPath = newPath.TrimStart('/');
                   // set the dsuInfoUnit.DSUPaths[j].rewrittenPath to the newPath
                   dsuInfoUnit.DSUPaths[j].rewrittenPath = newPath;
-                  
                 }
                 else
                 {
                   // if the dsuInfoUnit.DSUPaths[j].rewrittenObject is set then we can get the path from it
                   string newPath = GetGameObjectPath(dsuInfoUnit.DSUPaths[j].rewrittenObject);
-                  // now this has to be relative to the avatar as that is where the all processed animation clips have to 
+                  // now this has to be relative to the avatar as that is where the all processed animation clips have to
                   // be relative to, but what we currently have is the full path from the root of the scene, so we need to
                   // strip off the targetAvatar's path from the start of the newPath
                   // get the targetAvatar's path
@@ -1134,8 +1146,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // set the dsuInfoUnit.DSUPaths[j].rewrittenPath to the newPath
                   dsuInfoUnit.DSUPaths[j].rewrittenPath = newPath;
                 }
-
-
 
                 // set the pathPair rewrittenPath to the dsuInfoUnit.DSUPaths[j].rewrittenPath
                 pathPair.newAddonObjectToLinkPath = dsuInfoUnit.DSUPaths[j].rewrittenPath;
@@ -1166,7 +1176,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           );
         }
         CoreLogDebug("[ArmatureLink][animation rebind] pathPairs:\n" + pathPairsStringBuilder.ToString());
-        
+
         #endregion // Animation rebind - process all curves
 
         #region Animation rebind - rebind all curves
@@ -1189,9 +1199,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         AssetDatabase.Refresh();
 
         #endregion // Animation rebind - rebind all curves
-      
       }
-
 
       #endregion // Animation rebind
 
