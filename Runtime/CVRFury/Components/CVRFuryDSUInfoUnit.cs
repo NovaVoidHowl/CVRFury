@@ -31,12 +31,21 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   public class DSUPath
   {
     public string originalPath;
+    public GameObject originalObject;
+
     public string rewrittenPath;
+
+    public GameObject rewrittenObject;
     public pathType type;
+
+    public bool isPartOfHumanoidArmature;
+
+    public HumanBodyBones humanBodyBone;
 
     public enum pathType
     {
       ArmaturePath,
+      ArmatureEndBonePath,
       ArmatureRootPath,
       ObjectPath
     }
