@@ -1,4 +1,4 @@
-// { "version": "0.41.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.41.5" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -779,7 +779,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // get the list of paths of all objects under the DSU object
         List<String> addonObjectPaths = DSUObject
-          .GetComponentsInChildren<Transform>()
+          .GetComponentsInChildren<Transform>(true)
           .Select(x => GetFullTransformPath(x))
           .ToList();
 
