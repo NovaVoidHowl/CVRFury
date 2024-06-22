@@ -1,4 +1,4 @@
-// { "version": "0.41.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.41.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -628,6 +628,68 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // get the object the DSU is attached to
         var DSUObject = dataStorageUnits[0].gameObject;
 
+        // NOTE: Keeping this for future reference, may yet be useful if we find addons with proper full humanoid
+        // armatures/rigs
+        //
+        // // check if the DSUObject has an animator component
+        // if (DSUObject.GetComponent<Animator>() == null)
+        // {
+        //   // console print to say that the DSUObject does not have an animator component
+        //   CoreLogDebug("[StoreDSUInfo] DSUObject does not have an animator component");
+        // }
+        // else
+        // {
+        //   // console print to say that the DSUObject has an animator component
+        //   CoreLog("[StoreDSUInfo] DSUObject has an animator component processing...");
+
+        //   // check if the animator component has an avatar
+        //   if (DSUObject.GetComponent<Animator>().avatar == null)
+        //   {
+        //     // console print to say that the animator component does not have an avatar
+        //     CoreLogDebug("[StoreDSUInfo] Animator component does not have an avatar");
+        //   }
+        //   else
+        //   {
+        //     // console print to say that the animator component has an avatar
+        //     CoreLog("[StoreDSUInfo] Animator component has an avatar processing...");
+
+        //     // get the avatar from the animator component
+        //     var avatar = DSUObject.GetComponent<Animator>().avatar;
+
+        //     // get the animator from the animator component
+        //     var animator = DSUObject.GetComponent<Animator>();
+
+        //     // Dictionary to store the HumanBodyBones to Transform mappings
+        //     Dictionary<Transform, HumanBodyBones> boneMap = new Dictionary<Transform, HumanBodyBones>();
+
+        //     foreach (HumanBodyBones bone in System.Enum.GetValues(typeof(HumanBodyBones)))
+        //     {
+        //       // debug print the bone
+        //       CoreLogDebug("[StoreDSUInfo] Bone: " + bone);
+
+        //       if (bone != HumanBodyBones.LastBone) // LastBone is not an actual bone
+        //       {
+        //         Transform boneTransform = animator.GetBoneTransform(bone);
+        //         if (boneTransform != null)
+        //         {
+        //           boneMap[boneTransform] = bone;
+        //           // debug print the bone and the boneTransform
+        //           CoreLogDebug("[StoreDSUInfo] Bone: " + bone + " BoneTransform: " + boneTransform);
+        //         }
+        //         else
+        //         {
+        //           // debug print that the boneTransform is null
+        //           CoreLogDebug("[StoreDSUInfo] BoneTransform is null");
+        //         }
+        //       }
+        //     }
+
+        //     // debug print the boneMap
+        //     CoreLogDebugPrintDictionary(boneMap, "[StoreDSUInfo] BoneMap: ");
+        //   }
+        // }
+        //
+
         // get the path of the DSU object
         string DSUObjectPath = GetGameObjectPath(DSUObject);
 
@@ -675,7 +737,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             originalPath = bonePath,
             rewrittenPath = "",
-            type = DSUPath.pathType.ArmaturePath
+            type = DSUPath.pathType.ArmaturePath,
+            isPartOfHumanoidArmature = false, // locked to false for now see note above re HumanBodyBones
+            humanBodyBone = HumanBodyBones.LastBone, // locked to LastBone for now see note above re HumanBodyBones
+            originalObject = bone.gameObject
           };
 
           // add the DSUBonePath to the DSUInfoUnit
@@ -713,27 +778,82 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CoreLogDebugPrintList(armaturePaths, "[StoreDSUInfo] ArmaturePaths:");
 
         // get the list of paths of all objects under the DSU object
-        var allPaths = DSUObject.GetComponentsInChildren<Transform>().Select(x => GetFullTransformPath(x)).ToList();
+        List<String> addonObjectPaths = DSUObject
+          .GetComponentsInChildren<Transform>()
+          .Select(x => GetFullTransformPath(x))
+          .ToList();
 
         // remove the DSUObjectPath from the start of all the paths
-        allPaths = allPaths.Select(x => x.Replace(DSUObjectPath + "/", "")).ToList();
+        addonObjectPaths = addonObjectPaths.Select(x => x.Replace(DSUObjectPath + "/", "")).ToList();
 
-        // remove the armaturePaths (if there are any) from the allPaths list
-        allPaths = allPaths.Except(armaturePaths).ToList();
+        // remove the armaturePaths (if there are any) from the  list
+        addonObjectPaths = addonObjectPaths.Except(armaturePaths).ToList();
 
-        // for each path in the allPaths list
-        foreach (var path in allPaths)
+        // remove the armatureRootPaths (if there are any) from the list
+        addonObjectPaths = addonObjectPaths.Except(armatureRootPaths).ToList();
+
+        // debug print the addonObjectPaths
+        CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths:");
+
+        // for each path in the list
+        foreach (var path in addonObjectPaths)
         {
-          // make a new DSUPath
-          DSUPath DSUBonePathInstance = new DSUPath
+          // if the path exactly matches the DSUObjectPath then skip it
+          if (path == DSUObjectPath)
           {
-            originalPath = path,
-            rewrittenPath = "",
-            type = DSUPath.pathType.ObjectPath
-          };
+            continue;
+          }
 
-          // add the DSUPath to the DSUInfoUnit
-          DSUInfoUnit.DSUPaths.Add(DSUBonePathInstance);
+          // need to trap '_end' type GameObjects here and set them to ArmatureEndBonePath
+          // check if the path starts with one of the armatureRootPaths
+          if (armatureRootPaths.Any(x => path.StartsWith(x)))
+          {
+            // check if the path ends with _end (case insensitive match)
+            if (path.EndsWith("_end", StringComparison.OrdinalIgnoreCase))
+            {
+              try
+              {
+                // make a new DSUPath
+                DSUPath DSUBonePathInstanceEnd = new DSUPath
+                {
+                  originalPath = path,
+                  rewrittenPath = "",
+                  type = DSUPath.pathType.ArmatureEndBonePath,
+                  originalObject = DSUObject.transform.Find(path).gameObject
+                };
+
+                // add the DSUPath to the DSUInfoUnit
+                DSUInfoUnit.DSUPaths.Add(DSUBonePathInstanceEnd);
+              }
+              catch (Exception e)
+              {
+                CoreLogCritical("[StoreDSUInfo] Error for path " + path + " : " + e.Message);
+                continue;
+              }
+              continue;
+            }
+          }
+
+          // all the other paths are ObjectPaths
+          // make a new DSUPath
+          try
+          {
+            DSUPath DSUBonePathInstanceObject = new DSUPath
+            {
+              originalPath = path,
+              rewrittenPath = "",
+              type = DSUPath.pathType.ObjectPath,
+              originalObject = DSUObject.transform.Find(path).gameObject
+            };
+
+            // add the DSUPath to the DSUInfoUnit
+            DSUInfoUnit.DSUPaths.Add(DSUBonePathInstanceObject);
+          }
+          catch (Exception e)
+          {
+            CoreLogCritical("[StoreDSUInfo] Error" + path + "  " + e.Message);
+            continue;
+          }
         }
 
         // list to hold the DSUPaths that need to be removed
@@ -1065,7 +1185,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         return;
       }
 
-      // get the rootbone object from the bodyMesh
+      // get the root bone object from the bodyMesh
       var rootBone = bodyMesh.rootBone;
 
       // if the rootBone object is null, then return
