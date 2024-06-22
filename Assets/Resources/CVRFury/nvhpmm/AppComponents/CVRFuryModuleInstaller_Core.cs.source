@@ -1,4 +1,4 @@
-// { "version": "0.41.5" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.41.7" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -625,333 +625,339 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // then run the module installer
       if (numDataStorageUnits > 0)
       {
-        // get the object the DSU is attached to
-        var DSUObject = dataStorageUnits[0].gameObject;
-
-        // NOTE: Keeping this for future reference, may yet be useful if we find addons with proper full humanoid
-        // armatures/rigs
-        //
-        // // check if the DSUObject has an animator component
-        // if (DSUObject.GetComponent<Animator>() == null)
-        // {
-        //   // console print to say that the DSUObject does not have an animator component
-        //   CoreLogDebug("[StoreDSUInfo] DSUObject does not have an animator component");
-        // }
-        // else
-        // {
-        //   // console print to say that the DSUObject has an animator component
-        //   CoreLog("[StoreDSUInfo] DSUObject has an animator component processing...");
-
-        //   // check if the animator component has an avatar
-        //   if (DSUObject.GetComponent<Animator>().avatar == null)
-        //   {
-        //     // console print to say that the animator component does not have an avatar
-        //     CoreLogDebug("[StoreDSUInfo] Animator component does not have an avatar");
-        //   }
-        //   else
-        //   {
-        //     // console print to say that the animator component has an avatar
-        //     CoreLog("[StoreDSUInfo] Animator component has an avatar processing...");
-
-        //     // get the avatar from the animator component
-        //     var avatar = DSUObject.GetComponent<Animator>().avatar;
-
-        //     // get the animator from the animator component
-        //     var animator = DSUObject.GetComponent<Animator>();
-
-        //     // Dictionary to store the HumanBodyBones to Transform mappings
-        //     Dictionary<Transform, HumanBodyBones> boneMap = new Dictionary<Transform, HumanBodyBones>();
-
-        //     foreach (HumanBodyBones bone in System.Enum.GetValues(typeof(HumanBodyBones)))
-        //     {
-        //       // debug print the bone
-        //       CoreLogDebug("[StoreDSUInfo] Bone: " + bone);
-
-        //       if (bone != HumanBodyBones.LastBone) // LastBone is not an actual bone
-        //       {
-        //         Transform boneTransform = animator.GetBoneTransform(bone);
-        //         if (boneTransform != null)
-        //         {
-        //           boneMap[boneTransform] = bone;
-        //           // debug print the bone and the boneTransform
-        //           CoreLogDebug("[StoreDSUInfo] Bone: " + bone + " BoneTransform: " + boneTransform);
-        //         }
-        //         else
-        //         {
-        //           // debug print that the boneTransform is null
-        //           CoreLogDebug("[StoreDSUInfo] BoneTransform is null");
-        //         }
-        //       }
-        //     }
-
-        //     // debug print the boneMap
-        //     CoreLogDebugPrintDictionary(boneMap, "[StoreDSUInfo] BoneMap: ");
-        //   }
-        // }
-        //
-
-        // get the path of the DSU object
-        string DSUObjectPath = GetGameObjectPath(DSUObject);
-
-        // remove the leading / if it is present
-        if (DSUObjectPath.StartsWith("/"))
+        foreach (var dataStorageUnit in dataStorageUnits)
         {
-          DSUObjectPath = DSUObjectPath.Substring(1);
-        }
+          #region Per-DSU-Object-Processing
+          // get the object the DSU is attached to
+          var DSUObject = dataStorageUnit.gameObject;
 
-        // print the DSUObjectPath
-        CoreLog("[StoreDSUInfo] DSUObjectPath: " + DSUObjectPath);
+          // NOTE: Keeping this for future reference, may yet be useful if we find addons with proper full humanoid
+          // armatures/rigs
+          //
+          // // check if the DSUObject has an animator component
+          // if (DSUObject.GetComponent<Animator>() == null)
+          // {
+          //   // console print to say that the DSUObject does not have an animator component
+          //   CoreLogDebug("[StoreDSUInfo] DSUObject does not have an animator component");
+          // }
+          // else
+          // {
+          //   // console print to say that the DSUObject has an animator component
+          //   CoreLog("[StoreDSUInfo] DSUObject has an animator component processing...");
 
-        // add a CVRFuryDSUInfoUnit component to the DSUObject
-        var DSUInfoUnit = DSUObject.AddComponent<CVRFuryDSUInfoUnit>();
+          //   // check if the animator component has an avatar
+          //   if (DSUObject.GetComponent<Animator>().avatar == null)
+          //   {
+          //     // console print to say that the animator component does not have an avatar
+          //     CoreLogDebug("[StoreDSUInfo] Animator component does not have an avatar");
+          //   }
+          //   else
+          //   {
+          //     // console print to say that the animator component has an avatar
+          //     CoreLog("[StoreDSUInfo] Animator component has an avatar processing...");
 
-        // check and see if there are any skinned mesh renderers on any of the children of the DSU object
-        var skinnedMeshRenderers = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+          //     // get the avatar from the animator component
+          //     var avatar = DSUObject.GetComponent<Animator>().avatar;
 
-        var meshRenderBones = new List<Transform>();
+          //     // get the animator from the animator component
+          //     var animator = DSUObject.GetComponent<Animator>();
 
-        // if there are any skinned mesh renderers get the bones from them
-        if (skinnedMeshRenderers.Length > 0)
-        {
-          // get the bones from the skinned mesh renderers
-          meshRenderBones = skinnedMeshRenderers.SelectMany(x => x.bones).Distinct().ToList();
-        }
+          //     // Dictionary to store the HumanBodyBones to Transform mappings
+          //     Dictionary<Transform, HumanBodyBones> boneMap = new Dictionary<Transform, HumanBodyBones>();
 
-        // list to store armature paths
-        List<string> armaturePaths = new List<string>();
+          //     foreach (HumanBodyBones bone in System.Enum.GetValues(typeof(HumanBodyBones)))
+          //     {
+          //       // debug print the bone
+          //       CoreLogDebug("[StoreDSUInfo] Bone: " + bone);
 
-        // list to store armature root paths
-        List<string> armatureRootPaths = new List<string>();
+          //       if (bone != HumanBodyBones.LastBone) // LastBone is not an actual bone
+          //       {
+          //         Transform boneTransform = animator.GetBoneTransform(bone);
+          //         if (boneTransform != null)
+          //         {
+          //           boneMap[boneTransform] = bone;
+          //           // debug print the bone and the boneTransform
+          //           CoreLogDebug("[StoreDSUInfo] Bone: " + bone + " BoneTransform: " + boneTransform);
+          //         }
+          //         else
+          //         {
+          //           // debug print that the boneTransform is null
+          //           CoreLogDebug("[StoreDSUInfo] BoneTransform is null");
+          //         }
+          //       }
+          //     }
 
-        // for each bone in the meshRenderBones list
-        foreach (var bone in meshRenderBones)
-        {
-          // get the path to the bone
-          string bonePath = GetFullTransformPath(bone);
+          //     // debug print the boneMap
+          //     CoreLogDebugPrintDictionary(boneMap, "[StoreDSUInfo] BoneMap: ");
+          //   }
+          // }
+          //
 
-          // remove the DSUObjectPath from the start of the bonePath (make it relative to the DSUObjectPath)
-          bonePath = bonePath.Replace(DSUObjectPath + "/", "");
+          // get the path of the DSU object
+          string DSUObjectPath = GetGameObjectPath(DSUObject);
 
-          // make a new DSUPath
-          DSUPath DSUBonePathInstance = new DSUPath
+          // remove the leading / if it is present
+          if (DSUObjectPath.StartsWith("/"))
           {
-            originalPath = bonePath,
-            rewrittenPath = "",
-            type = DSUPath.pathType.ArmaturePath,
-            isPartOfHumanoidArmature = false, // locked to false for now see note above re HumanBodyBones
-            humanBodyBone = HumanBodyBones.LastBone, // locked to LastBone for now see note above re HumanBodyBones
-            originalObject = bone.gameObject
-          };
-
-          // add the DSUBonePath to the DSUInfoUnit
-          DSUInfoUnit.DSUPaths.Add(DSUBonePathInstance);
-
-          // add the bonePath to the armaturePaths list
-          armaturePaths.Add(bonePath);
-        }
-
-        // for each mesh renderer in the skinnedMeshRenderers list
-        foreach (var meshRenderer in skinnedMeshRenderers)
-        {
-          // get the bones from the mesh renderer
-          var bones = meshRenderer.bones;
-
-          // get the path to the bone
-          string bonePath = GetFullTransformPath(bones[0]);
-
-          // remove the DSUObjectPath from the start of the bonePath (make it relative to the DSUObjectPath)
-          bonePath = bonePath.Replace(DSUObjectPath + "/", "");
-
-          // get the part of the path before the first /
-          string armatureRootPath = bonePath.Split('/')[0];
-
-          // add the armatureRootPath to the armatureRootPaths list
-          armatureRootPaths.Add(armatureRootPath);
-        }
-
-        // deduplicate the armatureRootPaths list
-        armatureRootPaths = armatureRootPaths.Distinct().ToList();
-
-        // debug print the armatureRootPaths
-        CoreLogDebugPrintList(armatureRootPaths, "[StoreDSUInfo] ArmatureRootPaths:");
-        // debug print the armaturePaths
-        CoreLogDebugPrintList(armaturePaths, "[StoreDSUInfo] ArmaturePaths:");
-
-        // get the list of paths of all objects under the DSU object
-        List<String> addonObjectPaths = DSUObject
-          .GetComponentsInChildren<Transform>(true)
-          .Select(x => GetFullTransformPath(x))
-          .ToList();
-
-        // remove the DSUObjectPath from the start of all the paths
-        addonObjectPaths = addonObjectPaths.Select(x => x.Replace(DSUObjectPath + "/", "")).ToList();
-
-        // remove the armaturePaths (if there are any) from the  list
-        addonObjectPaths = addonObjectPaths.Except(armaturePaths).ToList();
-
-        // remove the armatureRootPaths (if there are any) from the list
-        addonObjectPaths = addonObjectPaths.Except(armatureRootPaths).ToList();
-
-        // debug print the addonObjectPaths
-        CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths:");
-
-        // for each path in the list
-        foreach (var path in addonObjectPaths)
-        {
-          // if the path exactly matches the DSUObjectPath then skip it
-          if (path == DSUObjectPath)
-          {
-            continue;
+            DSUObjectPath = DSUObjectPath.Substring(1);
           }
 
-          // need to trap '_end' type GameObjects here and set them to ArmatureEndBonePath
-          // check if the path starts with one of the armatureRootPaths
-          if (armatureRootPaths.Any(x => path.StartsWith(x)))
-          {
-            // check if the path ends with _end (case insensitive match)
-            if (path.EndsWith("_end", StringComparison.OrdinalIgnoreCase))
-            {
-              try
-              {
-                // make a new DSUPath
-                DSUPath DSUBonePathInstanceEnd = new DSUPath
-                {
-                  originalPath = path,
-                  rewrittenPath = "",
-                  type = DSUPath.pathType.ArmatureEndBonePath,
-                  originalObject = DSUObject.transform.Find(path).gameObject
-                };
+          // print the DSUObjectPath
+          CoreLog("[StoreDSUInfo] DSUObjectPath: " + DSUObjectPath);
 
-                // add the DSUPath to the DSUInfoUnit
-                DSUInfoUnit.DSUPaths.Add(DSUBonePathInstanceEnd);
-              }
-              catch (Exception e)
+          // add a CVRFuryDSUInfoUnit component to the DSUObject
+          var DSUInfoUnit = DSUObject.AddComponent<CVRFuryDSUInfoUnit>();
+
+          // check and see if there are any skinned mesh renderers on any of the children of the DSU object
+          var skinnedMeshRenderers = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+          var meshRenderBones = new List<Transform>();
+
+          // if there are any skinned mesh renderers get the bones from them
+          if (skinnedMeshRenderers.Length > 0)
+          {
+            // get the bones from the skinned mesh renderers
+            meshRenderBones = skinnedMeshRenderers.SelectMany(x => x.bones).Distinct().ToList();
+          }
+
+          // list to store armature paths
+          List<string> armaturePaths = new List<string>();
+
+          // list to store armature root paths
+          List<string> armatureRootPaths = new List<string>();
+
+          // for each bone in the meshRenderBones list
+          foreach (var bone in meshRenderBones)
+          {
+            // get the path to the bone
+            string bonePath = GetFullTransformPath(bone);
+
+            // remove the DSUObjectPath from the start of the bonePath (make it relative to the DSUObjectPath)
+            bonePath = bonePath.Replace(DSUObjectPath + "/", "");
+
+            // make a new DSUPath
+            DSUPath DSUBonePathInstance = new DSUPath
+            {
+              originalPath = bonePath,
+              rewrittenPath = "",
+              type = DSUPath.pathType.ArmaturePath,
+              isPartOfHumanoidArmature = false, // locked to false for now see note above re HumanBodyBones
+              humanBodyBone = HumanBodyBones.LastBone, // locked to LastBone for now see note above re HumanBodyBones
+              originalObject = bone.gameObject
+            };
+
+            // add the DSUBonePath to the DSUInfoUnit
+            DSUInfoUnit.DSUPaths.Add(DSUBonePathInstance);
+
+            // add the bonePath to the armaturePaths list
+            armaturePaths.Add(bonePath);
+          }
+
+          // for each mesh renderer in the skinnedMeshRenderers list
+          foreach (var meshRenderer in skinnedMeshRenderers)
+          {
+            // get the bones from the mesh renderer
+            var bones = meshRenderer.bones;
+
+            // get the path to the bone
+            string bonePath = GetFullTransformPath(bones[0]);
+
+            // remove the DSUObjectPath from the start of the bonePath (make it relative to the DSUObjectPath)
+            bonePath = bonePath.Replace(DSUObjectPath + "/", "");
+
+            // get the part of the path before the first /
+            string armatureRootPath = bonePath.Split('/')[0];
+
+            // add the armatureRootPath to the armatureRootPaths list
+            armatureRootPaths.Add(armatureRootPath);
+          }
+
+          // deduplicate the armatureRootPaths list
+          armatureRootPaths = armatureRootPaths.Distinct().ToList();
+
+          // debug print the armatureRootPaths
+          CoreLogDebugPrintList(armatureRootPaths, "[StoreDSUInfo] ArmatureRootPaths:");
+          // debug print the armaturePaths
+          CoreLogDebugPrintList(armaturePaths, "[StoreDSUInfo] ArmaturePaths:");
+
+          // get the list of paths of all objects under the DSU object
+          List<String> addonObjectPaths = DSUObject
+            .GetComponentsInChildren<Transform>(true)
+            .Select(x => GetFullTransformPath(x))
+            .ToList();
+
+          // remove the DSUObjectPath from the start of all the paths
+          addonObjectPaths = addonObjectPaths.Select(x => x.Replace(DSUObjectPath + "/", "")).ToList();
+
+          // remove the armaturePaths (if there are any) from the  list
+          addonObjectPaths = addonObjectPaths.Except(armaturePaths).ToList();
+
+          // remove the armatureRootPaths (if there are any) from the list
+          addonObjectPaths = addonObjectPaths.Except(armatureRootPaths).ToList();
+
+          // debug print the addonObjectPaths
+          CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths:");
+
+          // for each path in the list
+          foreach (var path in addonObjectPaths)
+          {
+            // if the path exactly matches the DSUObjectPath then skip it
+            if (path == DSUObjectPath)
+            {
+              continue;
+            }
+
+            // need to trap '_end' type GameObjects here and set them to ArmatureEndBonePath
+            // check if the path starts with one of the armatureRootPaths
+            if (armatureRootPaths.Any(x => path.StartsWith(x)))
+            {
+              // check if the path ends with _end (case insensitive match)
+              if (path.EndsWith("_end", StringComparison.OrdinalIgnoreCase))
               {
-                CoreLogCritical("[StoreDSUInfo] Error for path " + path + " : " + e.Message);
+                try
+                {
+                  // make a new DSUPath
+                  DSUPath DSUBonePathInstanceEnd = new DSUPath
+                  {
+                    originalPath = path,
+                    rewrittenPath = "",
+                    type = DSUPath.pathType.ArmatureEndBonePath,
+                    originalObject = DSUObject.transform.Find(path).gameObject
+                  };
+
+                  // add the DSUPath to the DSUInfoUnit
+                  DSUInfoUnit.DSUPaths.Add(DSUBonePathInstanceEnd);
+                }
+                catch (Exception e)
+                {
+                  CoreLogCritical("[StoreDSUInfo] Error for path " + path + " : " + e.Message);
+                  continue;
+                }
                 continue;
               }
+            }
+
+            // all the other paths are ObjectPaths
+            // make a new DSUPath
+            try
+            {
+              DSUPath DSUBonePathInstanceObject = new DSUPath
+              {
+                originalPath = path,
+                rewrittenPath = "",
+                type = DSUPath.pathType.ObjectPath,
+                originalObject = DSUObject.transform.Find(path).gameObject
+              };
+
+              // add the DSUPath to the DSUInfoUnit
+              DSUInfoUnit.DSUPaths.Add(DSUBonePathInstanceObject);
+            }
+            catch (Exception e)
+            {
+              CoreLogCritical("[StoreDSUInfo] Error" + path + "  " + e.Message);
               continue;
             }
           }
 
-          // all the other paths are ObjectPaths
-          // make a new DSUPath
-          try
+          // list to hold the DSUPaths that need to be removed
+          List<DSUPath> DSUPathsToRemove = new List<DSUPath>();
+
+          // ist to hold the DSUPaths that need to be set to ArmatureRootPath
+          List<DSUPath> DSUPathsToSetArmatureRootPaths = new List<DSUPath>();
+
+          // print the count of DSUPaths
+          CoreLogDebug("[StoreDSUInfo] DSUInfoUnit.DSUPaths count: " + DSUInfoUnit.DSUPaths.Count);
+
+          // loop through the DSUPaths in the DSUInfoUnit
+          foreach (var DSUPath in DSUInfoUnit.DSUPaths)
           {
-            DSUPath DSUBonePathInstanceObject = new DSUPath
+            // debug print the DSUPath originalPath
+            CoreLogDebug("[StoreDSUInfo] DSUPath originalPath: " + DSUPath.originalPath);
+
+            // if the path matches the DSUObjectPath exactly, then remove it
+            if (DSUPath.originalPath == DSUObjectPath)
             {
-              originalPath = path,
-              rewrittenPath = "",
-              type = DSUPath.pathType.ObjectPath,
-              originalObject = DSUObject.transform.Find(path).gameObject
-            };
+              // add the DSUPath to the DSUPathsToRemove list
+              DSUPathsToRemove.Add(DSUPath);
+              continue;
+            }
 
-            // add the DSUPath to the DSUInfoUnit
-            DSUInfoUnit.DSUPaths.Add(DSUBonePathInstanceObject);
-          }
-          catch (Exception e)
-          {
-            CoreLogCritical("[StoreDSUInfo] Error" + path + "  " + e.Message);
-            continue;
-          }
-        }
-
-        // list to hold the DSUPaths that need to be removed
-        List<DSUPath> DSUPathsToRemove = new List<DSUPath>();
-
-        // ist to hold the DSUPaths that need to be set to ArmatureRootPath
-        List<DSUPath> DSUPathsToSetArmatureRootPaths = new List<DSUPath>();
-
-        // print the count of DSUPaths
-        CoreLogDebug("[StoreDSUInfo] DSUInfoUnit.DSUPaths count: " + DSUInfoUnit.DSUPaths.Count);
-
-        // loop through the DSUPaths in the DSUInfoUnit
-        foreach (var DSUPath in DSUInfoUnit.DSUPaths)
-        {
-          // debug print the DSUPath originalPath
-          CoreLogDebug("[StoreDSUInfo] DSUPath originalPath: " + DSUPath.originalPath);
-
-          // if the path matches the DSUObjectPath exactly, then remove it
-          if (DSUPath.originalPath == DSUObjectPath)
-          {
-            // add the DSUPath to the DSUPathsToRemove list
-            DSUPathsToRemove.Add(DSUPath);
-            continue;
-          }
-
-          // counter to keep track of the index of the DSUPath
-          int armatureRootPathsIndex = 0;
-          // check if there are any armatureRootPaths
-          if (armatureRootPaths.Count > 0)
-          {
-            // increment the armatureRootPathsIndex
-            armatureRootPathsIndex++;
-            // debug print the that there are armatureRootPaths
-            CoreLogDebug(
-              "[StoreDSUInfo] ArmatureRootPaths present, processing..."
-                + armatureRootPathsIndex
-                + " of "
-                + armatureRootPaths.Count
-            );
-
-            // if the path matches a path in the armatureRootPaths list, exactly then set its type to ArmatureRootPath
-            // loop over each armatureRootPath in the armatureRootPaths list
-            foreach (string armatureRootPath in armatureRootPaths)
+            // counter to keep track of the index of the DSUPath
+            int armatureRootPathsIndex = 0;
+            // check if there are any armatureRootPaths
+            if (armatureRootPaths.Count > 0)
             {
-              // debug print the armatureRootPath
-              CoreLogDebug("[StoreDSUInfo] ArmatureRootPath: " + armatureRootPath);
+              // increment the armatureRootPathsIndex
+              armatureRootPathsIndex++;
+              // debug print the that there are armatureRootPaths
+              CoreLogDebug(
+                "[StoreDSUInfo] ArmatureRootPaths present, processing..."
+                  + armatureRootPathsIndex
+                  + " of "
+                  + armatureRootPaths.Count
+              );
 
-              // if the DSUPath matches the armatureRootPath exactly
-              if (DSUPath.originalPath == armatureRootPath)
+              // if the path matches a path in the armatureRootPaths list, exactly then set its type to ArmatureRootPath
+              // loop over each armatureRootPath in the armatureRootPaths list
+              foreach (string armatureRootPath in armatureRootPaths)
               {
-                // add the DSUPath to the DSUPathsToSetArmatureRootPaths list
-                DSUPathsToSetArmatureRootPaths.Add(DSUPath);
-                continue;
+                // debug print the armatureRootPath
+                CoreLogDebug("[StoreDSUInfo] ArmatureRootPath: " + armatureRootPath);
+
+                // if the DSUPath matches the armatureRootPath exactly
+                if (DSUPath.originalPath == armatureRootPath)
+                {
+                  // add the DSUPath to the DSUPathsToSetArmatureRootPaths list
+                  DSUPathsToSetArmatureRootPaths.Add(DSUPath);
+                  continue;
+                }
               }
             }
           }
-        }
 
-        // print the count of DSUPathsToRemove
-        CoreLogDebug("[StoreDSUInfo] DSUPathsToRemove count: " + DSUPathsToRemove.Count);
-        // print the count of DSUPathsToSetArmatureRootPaths
-        CoreLogDebug("[StoreDSUInfo] DSUPathsToSetArmatureRootPaths count: " + DSUPathsToSetArmatureRootPaths.Count);
+          // print the count of DSUPathsToRemove
+          CoreLogDebug("[StoreDSUInfo] DSUPathsToRemove count: " + DSUPathsToRemove.Count);
+          // print the count of DSUPathsToSetArmatureRootPaths
+          CoreLogDebug("[StoreDSUInfo] DSUPathsToSetArmatureRootPaths count: " + DSUPathsToSetArmatureRootPaths.Count);
 
-        // check if there are any DSUPathsToSetArmatureRootPaths and process them
-        foreach (var DSUPathToSetArmatureRootPath in DSUPathsToSetArmatureRootPaths)
-        {
-          // Find the matching DSUPath in DSUInfoUnit.DSUPaths
-          var matchingDSUPath = DSUInfoUnit.DSUPaths.FirstOrDefault(
-            dsuPath => dsuPath.originalPath == DSUPathToSetArmatureRootPath.originalPath
-          );
-
-          if (matchingDSUPath != null)
+          // check if there are any DSUPathsToSetArmatureRootPaths and process them
+          foreach (var DSUPathToSetArmatureRootPath in DSUPathsToSetArmatureRootPaths)
           {
-            // Set the type of the matching DSUPath to ArmatureRootPath
-            matchingDSUPath.type = DSUPath.pathType.ArmatureRootPath;
-            // Debug print that the DSUObjectPath has been set to ArmatureRootPath
-            CoreLogDebug("[StoreDSUInfo] DSUObjectPath " + matchingDSUPath.originalPath + " set to ArmatureRootPath");
-          }
-        }
+            // Find the matching DSUPath in DSUInfoUnit.DSUPaths
+            var matchingDSUPath = DSUInfoUnit.DSUPaths.FirstOrDefault(
+              dsuPath => dsuPath.originalPath == DSUPathToSetArmatureRootPath.originalPath
+            );
 
-        // check if there are any DSUPathsToRemove and process them
-        if (DSUPathsToRemove.Count > 0)
-        {
-          // remove the DSUPathsToRemove from the DSUInfoUnit.DSUPaths
-          foreach (var DSUPathToRemove in DSUPathsToRemove)
+            if (matchingDSUPath != null)
+            {
+              // Set the type of the matching DSUPath to ArmatureRootPath
+              matchingDSUPath.type = DSUPath.pathType.ArmatureRootPath;
+              // Debug print that the DSUObjectPath has been set to ArmatureRootPath
+              CoreLogDebug("[StoreDSUInfo] DSUObjectPath " + matchingDSUPath.originalPath + " set to ArmatureRootPath");
+            }
+          }
+
+          // check if there are any DSUPathsToRemove and process them
+          if (DSUPathsToRemove.Count > 0)
           {
-            // remove the DSUPathToRemove from the DSUInfoUnit.DSUPaths
-            DSUInfoUnit.DSUPaths.Remove(DSUPathToRemove);
-            // debug print that the DSUObjectPath has been removed
-            CoreLogDebug("[StoreDSUInfo] DSUObjectPath " + DSUPathToRemove.originalPath + " removed");
+            // remove the DSUPathsToRemove from the DSUInfoUnit.DSUPaths
+            foreach (var DSUPathToRemove in DSUPathsToRemove)
+            {
+              // remove the DSUPathToRemove from the DSUInfoUnit.DSUPaths
+              DSUInfoUnit.DSUPaths.Remove(DSUPathToRemove);
+              // debug print that the DSUObjectPath has been removed
+              CoreLogDebug("[StoreDSUInfo] DSUObjectPath " + DSUPathToRemove.originalPath + " removed");
+            }
           }
+
+          // set the dataLoadFailed flag to false
+          DSUInfoUnit.dataLoadFailed = false;
+
+          // console print to say that the DSUInfoUnit has been added
+          CoreLog("DSUInfoUnit added to: " + DSUObject.name);
+        #endregion // Per-DSU-Object-Processing
+           
         }
-
-        // set the dataLoadFailed flag to false
-        DSUInfoUnit.dataLoadFailed = false;
-
-        // console print to say that the DSUInfoUnit has been added
-        CoreLog("DSUInfoUnit added to: " + DSUObject.name);
       }
     }
 
@@ -1633,11 +1639,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the path to the temp items folder
       string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
 
-      // reimport all assets in the the temp_items folder
-      AssetDatabase.ImportAsset(tempItemsFolderPath, ImportAssetOptions.ImportRecursive);
+      // check if the temp items folder exists
+      if (Directory.Exists(tempItemsFolderPath))
+      {
+        // reimport all assets in the the temp_items folder
+        AssetDatabase.ImportAsset(tempItemsFolderPath, ImportAssetOptions.ImportRecursive);
 
-      // log that the assets have been reimported
-      CoreLogDebug("Assets reimported");
+        // log that the assets have been reimported
+        CoreLogDebug("Assets reimported");
+
+      }
 
       // force refresh the asset database
       AssetDatabase.SaveAssets();
