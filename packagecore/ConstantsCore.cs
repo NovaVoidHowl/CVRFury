@@ -50,7 +50,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryGameObjectInfoTag",
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryNukeGameObject",
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryAvatarInfoUnit",
-        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDynamicBoneConfig"
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDynamicBoneConfig",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDSUInfoUnit"
       }
     );
     public static readonly ReadOnlyCollection<string> CVRFURY_DEP_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
