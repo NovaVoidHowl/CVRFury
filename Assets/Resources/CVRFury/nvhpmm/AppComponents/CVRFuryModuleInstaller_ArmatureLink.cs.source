@@ -1,4 +1,4 @@
-// { "version": "0.0.205" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
