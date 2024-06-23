@@ -71,12 +71,16 @@
 
 Due to a breaking change in CCK 3.10 only that or later versions of the CCK are now compatible with this software.
 
-### Post VRCFury 1.744.0 support
+### Post VRCFury 1.744.0 / Datastore V3 support
 
-Data store only compatibility added as of CVRFury 0.124.0-experimental
+Datastore V3 compatibility added as of CVRFury 0.124.0-experimental
 
 If you imported a prefab into your scene that was made for a version of VRCFury after 1.744.0, you will need to
 re-convert its VRCFury prefab and re-add it, as if it was there before it's 'content' datastore will be corrupted
+
+> ⓘ \
+Import support of V3 datastore items is currently a work in progress, please see the 'Feature list' section of this
+document for more info.
 
 ### ⏳ Long Running Tasks
 
@@ -129,7 +133,7 @@ The script should then be ready to use.
 
 ## Feature Support
 
-Icon Key:
+### Icon Key
 
 ```text
 ✔️ = Feature active/supported.
@@ -141,34 +145,41 @@ Icon Key:
 🚫 = Feature will not be supported.
 ```
 
+### Data Import supported versions
+
+V2 = VRCFury pre-1.744.0\
+V3 = VRCFury post-1.744.0
+
+### Feature list
+
 The following table gives a breakdown of what features are supported for import/install.\
-Note at this time there is no native config UI for CVRFury modules (save the dev debug interface)
+Note at this time there is no native config UI for CVRFury modules yet (save the dev debug interface)
 
 |        Feature         | Data Import Supported | Install Supported | Notes                                                                           |
 | :--------------------: | :-------------------: | :---------------: | :------------------------------------------------------------------------------ |
-|   ObjectToggleAction   |         ✔️          |       ✔️        |                                                                                 |
-|     MaterialAction     |         ✔️          |       ✔️        |                                                                                 |
-|    BlendShapeAction    |         ✔️          |        ❌         |                                                                                 |
-|     FxFloatAction      |         ✔️          |       ❌🔽       |                                                                                 |
+|   ObjectToggleAction   |        ✔️ V2        |       ✔️        |                                                                                 |
+|     MaterialAction     |        ✔️ V2        |       ✔️        |                                                                                 |
+|    BlendShapeAction    |        ✔️ V2        |        ❌         |                                                                                 |
+|     FxFloatAction      |        ✔️ V2        |       ❌🔽       |                                                                                 |
 |  AnimationClipAction   |         ❔🔽         |       ❔🔽       |                                                                                 |
 | ShaderInventoryAction  |         ❔🔽         |       ❔🔽       |                                                                                 |
 |  PoiyomiUVTileAction   |         ❔🔽         |       ❔🔽       |                                                                                 |
 | MaterialPropertyAction |         ❔🔽         |       ❔🔽       |                                                                                 |
-|      ScaleAction       |         ✔️          |        ❌         |                                                                                 |
-|  BlockBlinkingAction   |         ✔️          |       ✔️        |                                                                                 |
-|   BlockVisemesAction   |         ✔️          |       ✔️        |                                                                                 |
+|      ScaleAction       |        ✔️ V2        |        ❌         |                                                                                 |
+|  BlockBlinkingAction   |        ✔️ V2        |       ✔️        |                                                                                 |
+|   BlockVisemesAction   |        ✔️ V2        |       ✔️        |                                                                                 |
 | FlipBookBuilderAction  |          ❔           |        ❔         |                                                                                 |
 |                        |                       |                   |                                                                                 |
 |        Blinking        |          ❔           |        ❔         |                                                                                 |
 |       Breathing        |          ❔           |        ❔         |                                                                                 |
-|     FullController     |         ✔️          |       ✔️        | Note: no support for menu section triggered toggles (CVR menu is flat not tree) |
+|     FullController     |        ✔️ V2        |       ✔️        | Note: no support for menu section triggered toggles (CVR menu is flat, not a tree) |
 |         Toggle         |         ❌🔽         |       ❌🔽       |                                                                                 |
 |         Puppet         |          ❔           |        ❔         |                                                                                 |
 |      SecurityLock      |         ❌🔽         |       ❌🔽       |                                                                                 |
 |        Talking         |         ❌🔽         |       ❌🔽       |                                                                                 |
 |      Toes Puppet       |         ❌🔽         |       ❌🔽       |                                                                                 |
 |    Advanced Visemes    |          ❔           |        ❔         |                                                                                 |
-|      ArmatureLink      |         ✔️          |       ✔️        | Note: There is currently no support for mesh vertex rewrite                                    |
+|      ArmatureLink      |        ✔️ V2        |       ✔️        |                                                                                 |
 |     BoundingBoxFix     |         ❔🔽         |       ❔🔽       |                                                                                 |
 |    FixWriteDefaults    |         ❔🔽         |       ❔🔽       |                                                                                 |
 |   RemoveHandGestures   |         ❌🔽         |       ❌🔽       |                                                                                 |
@@ -176,14 +187,14 @@ Note at this time there is no native config UI for CVRFury modules (save the dev
 |      MoveMenuItem      |         ❔🔽         |       ❔🔽       |                                                                                 |
 |     GestureDriver      |         ❔🔽         |       ❔🔽       |                                                                                 |
 |         Gizmo          |         ❌🔽         |       ❌🔽       |                                                                                 |
-|   DeleteDuringUpload   |         ✔️          |       ✔️        |                                                                                 |
+|   DeleteDuringUpload   |        ✔️ V2        |       ✔️        |                                                                                 |
 |     BlendShapeLink     |         ❔🔽         |       ❔🔽       |                                                                                 |
 |        SetIcon         |          🚫          |        🚫        | There are no icons on CVR menus                                                 |
 |  OverrideMenuSettings  |          🚫          |        🚫        | Related to VRC menu structure only                                              |
 |  BlendshapeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                 |
 |        Slot4Fix        |          ❔           |        ❔         |                                                                                 |
 |  DirectTreeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                 |
-|   ShowInFirstPerson    |         ✔️          |       ✔️        |                                                                                 |
+|   ShowInFirstPerson    |        ✔️ V2        |       ✔️        |                                                                                 |
 |    MmdCompatibility    |         ❔🔽         |       ❔🔽       |                                                                                 |
 |    Parameter Stream    |          🚫          |       ✔️        | VRC does not have Parameter stream equivalent                                   |
 
@@ -207,11 +218,9 @@ or find a tool that can do them.
 
 - [x] PhysBone Stubber - (just stubs them NOT a converter)
 
-- [x] VRCFury stubs - pre version 1.744
+- [x] VRCFury stubs - Datastore v2 (pre version 1.744)
 
-- [ ] VRCFury stubs - version and on 1.744
-
-- [ ] VRCFury to CVRFury data porter
+- [x] VRCFury stubs - Datastore v3
 
 - [ ] CVRFury VRCStub to VRC Converter (potential)
 
