@@ -1,4 +1,4 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_UI", dependencies: [], type: "Editor"}
+// { "version": "0.1.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_UI", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -10,6 +10,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using ABI.CCK.Components;
 using Newtonsoft.Json.Linq;
@@ -22,15 +23,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
-
     private void renderDataImportUI()
     {
       // get the CVRFuryDataStorageUnitDataImport VisualElement
-      var CVRFuryDataStorageUnitDataImport =
-        rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImport");
+      var CVRFuryDataStorageUnitDataImport = rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImport");
 
       // get the gameObject this component is attached to
-      var DSUgameObject = ((CVRFuryDataStorageUnit) target).gameObject;
+      var DSUgameObject = ((CVRFuryDataStorageUnit)target).gameObject;
 
       // check if that gameObject has VRCFuryComponent on it
       if (DSUgameObject.GetComponent<VRCFuryComponent>() != null)
@@ -54,18 +53,73 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         VRCFury fury = VRCFuryComponent as VRCFury; // cast to VRCFury
 
-        if (fury != null) {
-          // access the config property
-          VRCFuryConfig config = fury.config;
+        // int to store the version of the VRCFuryComponent
+        int version = -1;
 
-          // find the number of VRC Fury features on the VRCFuryComponent
-          totalFeatures = config.features.Count;
+        if (fury != null)
+        {
+          // get the version of the VRCFuryComponent
+          version = fury.Version;
 
-          // iterate through the features, and list the class names
-          foreach (FeatureModel feature in config.features)
+          // debug print the version of the VRCFuryComponent
+          CoreLogDebug("VRCFuryComponent version: " + version);
+
+          switch (version)
           {
-            // add the class name to the featureClassNames list
-            featureClassNames.Add(feature.GetType().Name);
+            case 2:
+              // access the config property
+              VRCFuryConfig config = fury.config;
+
+              // find the number of VRC Fury features on the VRCFuryComponent
+              totalFeatures = config.features.Count;
+
+              // iterate through the features, and list the class names
+              foreach (FeatureModel feature in config.features)
+              {
+                // add the class name to the featureClassNames list
+                featureClassNames.Add(feature.GetType().Name);
+              }
+              break;
+            case 3:
+
+              // check how many VRCFuryComponents are on the gameObject
+              VRCFuryComponent[] furyComponents = DSUgameObject.GetComponents<VRCFuryComponent>();
+
+              // debug print the number of VRCFuryComponents on the gameObject
+              CoreLogDebug("Number of VRCFuryComponents on the gameObject: " + furyComponents.Length);
+              // if there is one or more VRCFuryComponents on the gameObject
+              if (furyComponents.Length > 0)
+              {
+                // iterate through the VRCFuryComponents on the gameObject
+                foreach (VRCFuryComponent furyComponent in furyComponents)
+                {
+                  VRCFury fury_v3 = furyComponent as VRCFury;
+                  // access the content property
+                  FeatureModel content = fury_v3.content;
+
+                  // check if the content is null
+                  if (content == null)
+                  {
+                    continue;
+                  }
+                  else
+                  {
+                    // add the class name to the featureClassNames list, 
+                    // there is only ever one feature in VRCFury Datastore version 3
+                    featureClassNames.Add(content.GetType().Name);
+                    // debug print the content class name
+                    CoreLogDebug("VRCFuryComponent content class name: " + content.GetType().Name);
+                    // increment the totalFeatures
+                    totalFeatures++;
+                  }
+                }
+              }
+              break;
+
+            default:
+              // send a warning to the console
+              CoreLogError("VRCFuryComponent version not recognised");
+              break;
           }
         }
         else
@@ -75,27 +129,38 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           Debug.LogWarning("VRCFuryComponent converted to VRCFury is null");
         }
 
+        // debug print the total number of VRC Fury features
+        CoreLogDebug("Total number of VRC Fury features: " + totalFeatures);
+        // debug print the feature class names
+        CoreLogDebugPrintList(featureClassNames, "Feature class names");
 
         // get the CVRFuryDataStorageUnitDataImportDetails VisualElement
-        var CVRFuryDataStorageUnitDataImportDetails =
-          rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetails");
+        var CVRFuryDataStorageUnitDataImportDetails = rootVisualElement.Q<VisualElement>(
+          "CVRFuryDataStorageUnitDataImportDetails"
+        );
 
         // get the CVRFuryDataStorageUnitDataImportDetailsTotalFeaturesContent Label VisualElement from the CVRFuryDataStorageUnitDataImportDetails VisualElement
         var CVRFuryDataStorageUnitDataImportDetailsTotalFeaturesContent =
-          CVRFuryDataStorageUnitDataImportDetails.Q<Label>("CVRFuryDataStorageUnitDataImportDetailsTotalFeaturesContent");
+          CVRFuryDataStorageUnitDataImportDetails.Q<Label>(
+            "CVRFuryDataStorageUnitDataImportDetailsTotalFeaturesContent"
+          );
 
         // get the CVRFuryDataStorageUnitDataImportDetailsTotalCompatibleFeaturesContent Label VisualElement from the CVRFuryDataStorageUnitDataImportDetails VisualElement
         var CVRFuryDataStorageUnitDataImportDetailsTotalCompatibleFeaturesContent =
-          CVRFuryDataStorageUnitDataImportDetails.Q<Label>("CVRFuryDataStorageUnitDataImportDetailsTotalCompatibleFeaturesContent");
-
+          CVRFuryDataStorageUnitDataImportDetails.Q<Label>(
+            "CVRFuryDataStorageUnitDataImportDetailsTotalCompatibleFeaturesContent"
+          );
 
         // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle Label VisualElement from the CVRFuryDataStorageUnitDataImportDetails VisualElement
-        var CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle =
-          CVRFuryDataStorageUnitDataImportDetails.Q<Label>("CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle");
+        var CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle = CVRFuryDataStorageUnitDataImportDetails.Q<Label>(
+          "CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle"
+        );
 
         // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList VisualElement from the CVRFuryDataStorageUnitDataImportDetails VisualElement
         var CVRFuryDataStorageUnitDataImportDetailsFeaturesList =
-          CVRFuryDataStorageUnitDataImportDetails.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetailsFeaturesList");
+          CVRFuryDataStorageUnitDataImportDetails.Q<VisualElement>(
+            "CVRFuryDataStorageUnitDataImportDetailsFeaturesList"
+          );
 
         // remove all children from the CVRFuryDataStorageUnitDataImportDetailsFeaturesList VisualElement
         CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Clear();
@@ -109,9 +174,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // enable the CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle label
           CVRFuryDataStorageUnitDataImportDetailsFeaturesTitle.style.display = DisplayStyle.Flex;
 
-
           // iterate through the features, and list the class names
-          foreach( string featureClassName in featureClassNames)
+          foreach (string featureClassName in featureClassNames)
           {
             // create a new Label
             var featureClassNameLabel = new Label();
@@ -124,11 +188,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             // set the class of the featureClassNameLabel Label to allow styling
             // if the featureClassName is in the COMPATIBLE_VRCFURY_FEATURES list
-            if (Constants.COMPATIBLE_VRCFURY_FEATURES.Contains(featureClassName))
+            if (Constants.COMPATIBLE_VRCFURY_FEATURES.Any(f => f.Key == featureClassName))
             {
               // increment the compatibleFeatures
               compatibleFeatures++;
-
+            
               // set the class of the featureClassNameLabel Label to allow styling
               featureClassNameLabel.AddToClassList("featureClassNameLabelOK");
             }
@@ -165,7 +229,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // set the totalFeaturesContent Label VisualElement to the totalFeatures
         CVRFuryDataStorageUnitDataImportDetailsTotalFeaturesContent.text = totalFeatures.ToString();
 
-
         // set the compatibleFeaturesContent Label VisualElement to the compatibleFeatures
         CVRFuryDataStorageUnitDataImportDetailsTotalCompatibleFeaturesContent.text = compatibleFeatures.ToString();
 
@@ -193,7 +256,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // // add the noCompatibleFeaturesLabel Label to the CVRFuryDataStorageUnitDataImportButtons VisualElement
           // CVRFuryDataStorageUnitDataImportButtons.Add(noCompatibleFeaturesLabel);
         }
-
       }
       else
       {
@@ -202,8 +264,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CVRFuryDataStorageUnitDataImport.style.display = DisplayStyle.None;
       }
     }
-
-
   }
 }
 #endif

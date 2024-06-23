@@ -1,4 +1,4 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
+// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -21,7 +21,6 @@ using VF.Model;
 using Action = VF.Model.StateAction.Action;
 using VF.Model.StateAction;
 
-
 /// <summary>
 /// ShowInFirstPerson import
 ///
@@ -32,16 +31,34 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
-    private void importShowInFirstPersonFeature(Tuple<string, FeatureModel> featureClassInstance,
-                                            VisualElement rootVisualElement,
-                                            int positionInList
-                                           )
+    private void importShowInFirstPersonFeature(
+      Tuple<string, FeatureModel> featureClassInstance,
+      VisualElement rootVisualElement,
+      int positionInList,
+      int VRCFuryVersion
+    )
     {
+      // if the VRCFuryVersion is not on the list of supported versions, return
+      if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(VRCFuryVersion))
+      {
+        return;
+      }
+
+      // Find the feature version for "ShowInFirstPerson"
+      int showInFirstPersonVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+        .FirstOrDefault(kvp => kvp.Key == "ShowInFirstPerson")
+        .Value;
+
+      // Check if the version is supported for this feature
+      if (showInFirstPersonVersion < VRCFuryVersion)
+      {
+        return;
+      }
 
       // get the featureClassName name from the tuple
       string featureClassName = featureClassInstance.Item1;
 
-      // get the ImportArmatureLink feature from the tuple
+      // get the ShowInFirstPerson feature from the tuple
       FeatureModel importShowInFirstPersonFeature = featureClassInstance.Item2;
 
       // print the featureClassName to the console
@@ -58,11 +75,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         return;
       }
 
-
       // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
-      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList =
-        rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetailsFeaturesList");
-
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList = rootVisualElement.Q<VisualElement>(
+        "CVRFuryDataStorageUnitDataImportDetailsFeaturesList"
+      );
 
       var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
       var labelAtPosition = featuresList[positionInList] as Label;
@@ -72,7 +88,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
 
         // edit the label text to include a suffix of the position in the list
-        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")" ;
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")";
 
         // add a click event to the label
         labelAtPosition.RegisterCallback<ClickEvent>(evt =>
@@ -82,12 +98,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLog("label at position " + positionInList + " has been clicked");
 
           // get the list of modules from this DSU
-          var modules = ((CVRFuryDataStorageUnit) target).modules.modules;
+          var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
 
           // check to see if the DSU already has an armatureLink module
           if (modules.Any(module => module.GetType().Name == "showInFirstPerson"))
           {
-
             List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
             // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -108,7 +123,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             }
           }
 
-
           //importShowInFirstPersonFeature
           // cast the feature to the ShowInFirstPerson type
           ShowInFirstPerson VRCFuryShowInFirstPerson = (ShowInFirstPerson)importShowInFirstPersonFeature;
@@ -122,7 +136,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // set the importedFromVRCFury flag to true
           showInFirstPersonModule.justImported = true;
 
-
           // ---- showInFirstPerson specific properties ----
           // when converting from VRCFury to CVRFury, it should be noted that:
           // - the 'target' property of the CVRFury module is going to be the game object that the VRCFury component is
@@ -134,7 +147,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           showInFirstPersonModule.show = true;
 
           // get the game object that the DSU is attached to ( as it has to be on the same game object as the VCRFury component)
-          GameObject DSUGameObject = ((CVRFuryDataStorageUnit) target).gameObject;
+          GameObject DSUGameObject = ((CVRFuryDataStorageUnit)target).gameObject;
 
           // check if the VRCFury component is attached to the DSU game object
           if (DSUGameObject.GetComponent<VRCFury>() == null)
@@ -147,7 +160,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // get the game object that the VRCFury component is attached to
           showInFirstPersonModule.target = DSUGameObject;
 
-
           // ---- end armatureLink specific properties ----
 
           // add the armatureLinkModule to the DSU
@@ -155,20 +167,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // reload the UI finalise UI
           updateFinaliseUI();
-
         });
-
       }
       else
       {
         // print to console that the label is null
         CoreLog("label at position " + positionInList + " is null");
       }
-
     }
 
-  // class end
+    // class end
   }
-// namespace end
+  // namespace end
 }
 #endif

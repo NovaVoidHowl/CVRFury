@@ -1,4 +1,4 @@
-// { "version": "0.11.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: [], type: "Editor"}
+// { "version": "0.12.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -21,7 +21,6 @@ using VF.Model;
 using Action = VF.Model.StateAction.Action;
 using VF.Model.StateAction;
 
-
 // This is going to be BIG, as there are lot of different types of actions
 // see StateAction.cs in the stubs folder for the full list of actions
 //
@@ -41,11 +40,29 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
-    private void importApplyOnUploadFeature(Tuple<string, FeatureModel> featureClassInstance,
-                                            VisualElement rootVisualElement,
-                                            int positionInList
-                                           )
+    private void importApplyOnUploadFeature(
+      Tuple<string, FeatureModel> featureClassInstance,
+      VisualElement rootVisualElement,
+      int positionInList,
+      int VRCFuryVersion
+    )
     {
+      // if the VRCFuryVersion is not on the list of supported versions, return
+      if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(VRCFuryVersion))
+      {
+        return;
+      }
+
+      // Find the feature version for "ApplyDuringUpload"
+      int applyDuringUploadVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+        .FirstOrDefault(kvp => kvp.Key == "ApplyDuringUpload")
+        .Value;
+
+      // Check if the version is supported for this feature
+      if (applyDuringUploadVersion < VRCFuryVersion)
+      {
+        return;
+      }
 
       // get the ApplyOnUpload name from the tuple
       string featureClassName = featureClassInstance.Item1;
@@ -63,9 +80,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
       // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
-      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList =
-        rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetailsFeaturesList");
-
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList = rootVisualElement.Q<VisualElement>(
+        "CVRFuryDataStorageUnitDataImportDetailsFeaturesList"
+      );
 
       var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
       var labelAtPosition = featuresList[positionInList] as Label;
@@ -75,7 +92,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
 
         // edit the label text to include a suffix of the position in the list
-        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")" ;
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")";
 
         // add a click event to the label
         labelAtPosition.RegisterCallback<ClickEvent>(evt =>
@@ -88,8 +105,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             State state = applyDuringUpload.action as State;
 
             // get the list of modules from this DSU
-            var modules = ((CVRFuryDataStorageUnit) target).modules.modules;
-
+            var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
 
             // iterate through the actions list and print the type of each action to console
             foreach (Action action in state.actions)
@@ -141,34 +157,28 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   Type actionType = action.GetType();
 
                   // pop up a dialog box to inform the user that this action type is not yet supported
-                  EditorUtility.DisplayDialog("Unsupported Action type Detected",
-                                              "The action type " + actionType + " is not yet supported",
-                                              "OK");
+                  EditorUtility.DisplayDialog(
+                    "Unsupported Action type Detected",
+                    "The action type " + actionType + " is not yet supported",
+                    "OK"
+                  );
                   break;
               }
             }
-
           }
 
           // reload the UI finalise UI
           updateFinaliseUI();
-
         });
-
-
-
-
-
       }
       else
       {
         // print to console that the label is null
         CoreLog("label at position " + positionInList + " is null");
       }
-
     }
 
-    private void ImportObjectToggleAction(ObjectToggleAction objectToggleAction, List<CVRFuryModule> modules )
+    private void ImportObjectToggleAction(ObjectToggleAction objectToggleAction, List<CVRFuryModule> modules)
     {
       ////////--------------------------------------------------------------------------------------------
       // function to handle objectToggleAction data import
@@ -184,7 +194,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check to see if the DSU already has an objectStateSetter module
       if (modules.Any(module => module.GetType().Name == "objectStateSetter"))
       {
-
         List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
         // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -223,7 +232,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       newObjectStatePair.objectToSetStateOn = objectToggleAction.obj;
 
       // set the stateToSet property of the new objectStatePair to the mode of the action
-      newObjectStatePair.stateToSet = objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn ? objectStatePair.objectState.enabled : objectStatePair.objectState.disabled;
+      newObjectStatePair.stateToSet =
+        objectToggleAction.mode == ObjectToggleAction.Mode.TurnOn
+          ? objectStatePair.objectState.enabled
+          : objectStatePair.objectState.disabled;
 
       // add the new objectStatePair to the objectStatePairs array in the objectStateSetter module
       objectStateSetter.objectStatePairs = new objectStatePair[] { newObjectStatePair };
@@ -234,7 +246,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the objectStateSetter module to the modules list in the DSU
       modules.Add(objectStateSetter);
-
     }
 
     private void ImportMaterialAction(MaterialAction materialAction, List<CVRFuryModule> modules)
@@ -252,7 +263,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check to see if the DSU already has an objectDefaultMaterialSetter module
       if (modules.Any(module => module.GetType().Name == "objectDefaultMaterialSetter"))
       {
-
         List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
         // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -260,7 +270,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         foreach (var module in modules.Where(module => module.GetType().Name == "objectDefaultMaterialSetter"))
         {
           var objectDefaultMaterialSetterModuleInstance = module as objectDefaultMaterialSetter;
-          if (objectDefaultMaterialSetterModuleInstance.importedFromVRCFury && !objectDefaultMaterialSetterModuleInstance.justImported)
+          if (
+            objectDefaultMaterialSetterModuleInstance.importedFromVRCFury
+            && !objectDefaultMaterialSetterModuleInstance.justImported
+          )
           {
             modulesToRemove.Add(module);
           }
@@ -308,8 +321,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the objectDefaultMaterialSetter module to the modules list in the DSU
       modules.Add(objectDefaultMaterialSetter);
-
-
     }
 
     private void ImportBlendShapeAction(BlendShapeAction blendShapeAction, List<CVRFuryModule> modules)
@@ -328,7 +339,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check to see if the DSU already has an objectDefaultBlendShapeSetter module
       if (modules.Any(module => module.GetType().Name == "objectDefaultBlendShapeSetter"))
       {
-
         List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
         // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -336,7 +346,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         foreach (var module in modules.Where(module => module.GetType().Name == "objectDefaultBlendShapeSetter"))
         {
           var objectDefaultBlendShapeSetterModuleInstance = module as objectDefaultBlendShapeSetter;
-          if (objectDefaultBlendShapeSetterModuleInstance.importedFromVRCFury && !objectDefaultBlendShapeSetterModuleInstance.justImported)
+          if (
+            objectDefaultBlendShapeSetterModuleInstance.importedFromVRCFury
+            && !objectDefaultBlendShapeSetterModuleInstance.justImported
+          )
           {
             modulesToRemove.Add(module);
           }
@@ -392,8 +405,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the objectDefaultBlendShapeSetter module to the modules list in the DSU
       modules.Add(objectDefaultBlendShapeSetter);
-
-
     }
 
     private void ImportFxFloatAction(FxFloatAction fxFloatAction, List<CVRFuryModule> modules)
@@ -409,7 +420,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check to see if the DSU already has an objectFxFloatSetter module
       if (modules.Any(module => module.GetType().Name == "objectFxFloatSetter"))
       {
-
         List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
         // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -455,7 +465,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the objectFxFloatSetter module to the modules list in the DSU
       modules.Add(objectFxFloatSetter);
-
     }
 
     private void ImportScaleAction(ScaleAction scaleAction, List<CVRFuryModule> modules)
@@ -473,7 +482,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check to see if the DSU already has an objectScaleSetter module
       if (modules.Any(module => module.GetType().Name == "objectScaleSetter"))
       {
-
         List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
         // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -518,7 +526,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the objectScaleSetter module to the modules list in the DSU
       modules.Add(objectScaleSetter);
-
     }
 
     private void ImportBlockBlinkingAction(BlockBlinkingAction blockBlinkingAction, List<CVRFuryModule> modules)
@@ -533,7 +540,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check to see if the DSU already has an blockBlinkSetter module
       if (modules.Any(module => module.GetType().Name == "blockBlinkSetter"))
       {
-
         List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
         // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -575,7 +581,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the blockBlinkSetter module to the modules list in the DSU
       modules.Add(blockBlinkSetter);
-
     }
 
     private void ImportBlockVisemesAction(BlockVisemesAction blockVisemesAction, List<CVRFuryModule> modules)
@@ -590,7 +595,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check to see if the DSU already has an blockVisemesSetter module
       if (modules.Any(module => module.GetType().Name == "blockVisemesSetter"))
       {
-
         List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
         // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -632,12 +636,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the blockVisemesSetter module to the modules list in the DSU
       modules.Add(blockVisemesSetter);
-
     }
 
-
-  // class end
+    // class end
   }
-// namespace end
+  // namespace end
 }
 #endif

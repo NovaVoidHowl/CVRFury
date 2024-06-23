@@ -15,6 +15,12 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public static readonly string MAX_VRCFURY_DATA_USER_VERSION = "1.909.0";
     public static readonly string MAX_VRCFURY_IMPORT_USER_VERSION = "1.744";
 
+    // note this is just and enable list, the feature still needs to allow the version to be imported
+    // (see COMPATIBLE_VRCFURY_FEATURES)
+    public static readonly ReadOnlyCollection<int> VRCFURY_IMPORT_SUPPORTED_VERSIONS = new ReadOnlyCollection<int>(
+      new List<int> { 2, 3 }
+    );
+
     public static readonly ReadOnlyCollection<string> VRCFURY_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
       new List<string>
       {
@@ -30,14 +36,15 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
     );
 
-    public static readonly ReadOnlyCollection<string> COMPATIBLE_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
-      new List<string>
+    // the int is the highest version of VRCFury datastore that is supported for data import for that feature
+    public static readonly ReadOnlyCollection<KeyValuePair<string, int>> COMPATIBLE_VRCFURY_FEATURES = new ReadOnlyCollection<KeyValuePair<string, int>>(
+      new List<KeyValuePair<string, int>>
       {
-        "ApplyDuringUpload",
-        "FullController",
-        "ArmatureLink",
-        "ShowInFirstPerson",
-        "DeleteDuringUpload"
+        new KeyValuePair<string, int>("ApplyDuringUpload", 2),
+        new KeyValuePair<string, int>("FullController", 2),
+        new KeyValuePair<string, int>("ArmatureLink", 2),
+        new KeyValuePair<string, int>("ShowInFirstPerson", 2),
+        new KeyValuePair<string, int>("DeleteDuringUpload", 2)
       }
     );
     public static readonly ReadOnlyCollection<string> CVR_INCOMPATIBLE_VRCFURY_FEATURES =

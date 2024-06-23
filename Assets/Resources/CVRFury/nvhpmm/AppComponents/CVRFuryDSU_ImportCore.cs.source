@@ -1,4 +1,4 @@
-// { "version": "0.0.34" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: [], type: "Editor"}
+// { "version": "0.1.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -38,99 +38,142 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the gameObject this component is attached to
       var DSUgameObject = ((CVRFuryDataStorageUnit) target).gameObject;
 
-      // check if that gameObject has VRCFuryComponent on it
-      if (DSUgameObject.GetComponent<VRCFuryComponent>() != null)
+      // check how many VRCFuryComponents are on the gameObject
+      var VRCFuryComponents = DSUgameObject.GetComponents<VRCFuryComponent>();
+
+      // if there are no VRCFuryComponents on the gameObject, return
+      if (VRCFuryComponents.Length == 0)
       {
-        // if the gameObject has VRCFuryComponent on it, get the VRCFuryComponent
-        var VRCFuryComponent = DSUgameObject.GetComponent<VRCFuryComponent>();
+        return;
+      }
 
-        // list for the feature class names
-        List<Tuple<string, FeatureModel>> featureClassInstances = new List<Tuple<string, FeatureModel>>();
+      // get the VRCFuryComponents on the gameObject
+      foreach (var VRCFuryComponent in VRCFuryComponents)
+      {
 
-        VRCFury fury = VRCFuryComponent as VRCFury; // cast to VRCFury
-
-        if (fury != null) {
-          // access the config property
-          VRCFuryConfig config = fury.config;
-
-          // iterate through the features, and list the class names
-          foreach (FeatureModel feature in config.features)
-          {
-            // add the class name and the feature to the featureClassInstances list
-            featureClassInstances.Add(new Tuple<string, FeatureModel>(feature.GetType().Name, feature));
-          }
-        }
-        else
+        // check if the VRCFuryComponent is null
+        if (VRCFuryComponent == null)
         {
-          // converted component is null
-          // send a warning to the console
-          Debug.LogWarning("VRCFuryComponent converted to VRCFury is null");
-          return;
+          // if the VRCFuryComponent is null, send a warning to the console
+          Debug.LogWarning("VRCFuryComponent is null");
+          continue; // continue to the next VRCFuryComponent
         }
 
-        // at this point we have a viable list of featureClassInstances in use, on the gameObject
+        // get the VRCFury from the VRCFuryComponent
+        VRCFury fury = VRCFuryComponent as VRCFury;
 
-        // if there are no features to import, return
-        if (featureClassInstances.Count == 0)
+        // get the version of the VRCFury
+        int version = fury.Version;
+
+        // check if the version is on the import supported list
+        if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(version))
         {
-          return;
-        }
+          // if the version is not on the import supported list, send a warning to the console
+          Debug.LogWarning("VRCFury version " + version + " is not supported for import");
+          continue; // continue to the next VRCFuryComponent
+        } 
 
-        // at this point we have a viable list of featureClassInstances that is not empty.
-        // so all import triggers can go here
-
-        // position in the list
-        int positionInList = 0;
-        // loop featureClassInstances
-        foreach(Tuple<string, FeatureModel> featureClassInstance in featureClassInstances)
+        // now we have a viable VRCFuryComponent we can import from
+        
+        switch (version)
         {
-          // get the feature class name
-          string featureClassName = featureClassInstance.Item1;
-          // get the feature instance
-          FeatureModel featureInstance = featureClassInstance.Item2;
-
-        //--------------------------------------------------------------------------------------------
-          // process feature instance depending on type of feature
-          // modular list of process functions go here
-          // note the function should expect a single feature instance as an argument
-          // along with the rootVisualElement (so it can update/customise the UI) and the positionInList
-          // it is expected that the function will update the UI as required (rootVisualElement.MarkDirtyRepaint();)
-          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_AOU
-          importApplyOnUploadFeature(featureClassInstance, rootVisualElement, positionInList);
-          #endif
-
-          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_FULLCONTROLLER
-          importFullControllerFeature(featureClassInstance, rootVisualElement, positionInList);
-          #endif
-
-          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_ARMATURELINK
-          importArmatureLinkFeature(featureClassInstance, rootVisualElement, positionInList);
-          #endif
-
-          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_SIFP
-          importShowInFirstPersonFeature(featureClassInstance, rootVisualElement, positionInList);
-          #endif
-
-          #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_DOU
-          importDeleteOnUploadFeature(featureClassInstance, rootVisualElement, positionInList);
-          #endif
-
-
-        //--------------------------------------------------------------------------------------------
-          // increment position in list
-          positionInList++;
+          case 2:
+            // import VRCFury version 2
+            importVRCFury(fury, 2);
+            break;
+          case 3:
+            // import VRCFury version 3
+            importVRCFury(fury, 3);
+            break;
+          default:  // default case
+            // send a warning to the console
+            Debug.LogWarning("VRCFury version " + version + " is not supported for import");
+            break;
         }
+      }
 
-        updateFinaliseUI();
+      updateFinaliseUI();
 
+      
+    }
 
+    private void importVRCFury(VRCFury fury, int version)
+    {
+      // list for the feature class names
+      List<Tuple<string, FeatureModel>> featureClassInstances = new List<Tuple<string, FeatureModel>>();
 
+      if (fury != null) {
+        // access the config property
+        VRCFuryConfig config = fury.config;
+
+        // iterate through the features, and list the class names
+        foreach (FeatureModel feature in config.features)
+        {
+          // add the class name and the feature to the featureClassInstances list
+          featureClassInstances.Add(new Tuple<string, FeatureModel>(feature.GetType().Name, feature));
+        }
       }
       else
       {
-        // no VRCFuryComponent on the gameObject, so no data of this type to import
+        // converted component is null
+        // send a warning to the console
+        Debug.LogWarning("VRCFuryComponent converted to VRCFury is null");
+        return;
       }
 
+      // at this point we have a viable list of featureClassInstances in use, on the gameObject
+
+      // if there are no features to import, return
+      if (featureClassInstances.Count == 0)
+      {
+        return;
+      }
+
+      // at this point we have a viable list of featureClassInstances that is not empty.
+      // so all import triggers can go here
+
+      // position in the list
+      int positionInList = 0;
+      // loop featureClassInstances
+      foreach(Tuple<string, FeatureModel> featureClassInstance in featureClassInstances)
+      {
+        // get the feature class name
+        string featureClassName = featureClassInstance.Item1;
+        // get the feature instance
+        FeatureModel featureInstance = featureClassInstance.Item2;
+
+      //--------------------------------------------------------------------------------------------
+        // process feature instance depending on type of feature
+        // modular list of process functions go here
+        // note the function should expect a single feature instance as an argument
+        // along with the rootVisualElement (so it can update/customise the UI) and the positionInList
+        // it is expected that the function will update the UI as required (rootVisualElement.MarkDirtyRepaint();)
+        #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_AOU
+        importApplyOnUploadFeature(featureClassInstance, rootVisualElement, positionInList, version);
+        #endif
+
+        #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_FULLCONTROLLER
+        importFullControllerFeature(featureClassInstance, rootVisualElement, positionInList, version);
+        #endif
+
+        #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_ARMATURELINK
+        importArmatureLinkFeature(featureClassInstance, rootVisualElement, positionInList, version);
+        #endif
+
+        #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_SIFP
+        importShowInFirstPersonFeature(featureClassInstance, rootVisualElement, positionInList, version);
+        #endif
+
+        #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_DOU
+        importDeleteOnUploadFeature(featureClassInstance, rootVisualElement, positionInList, version);
+        #endif
+
+
+      //--------------------------------------------------------------------------------------------
+        // increment position in list
+        positionInList++;
+      }
+  
     }
 
     private void updateFinaliseUI()

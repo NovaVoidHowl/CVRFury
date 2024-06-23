@@ -1,4 +1,4 @@
-// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
+// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -21,7 +21,6 @@ using VF.Model;
 using Action = VF.Model.StateAction.Action;
 using VF.Model.StateAction;
 
-
 /// <summary>
 /// Full Controller import
 ///
@@ -32,11 +31,28 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
-    private void importArmatureLinkFeature(Tuple<string, FeatureModel> featureClassInstance,
-                                            VisualElement rootVisualElement,
-                                            int positionInList
-                                           )
+    private void importArmatureLinkFeature(
+      Tuple<string, FeatureModel> featureClassInstance,
+      VisualElement rootVisualElement,
+      int positionInList,
+      int VRCFuryVersion
+    )
     {
+      // if the VRCFuryVersion is not on the list of supported versions, return
+      if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(VRCFuryVersion))
+      {
+        return;
+      }
+
+      // Find the feature version for "ArmatureLink"
+      int armatureLinkVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+        .FirstOrDefault(kvp => kvp.Key == "ArmatureLink")
+        .Value;
+      // Check if the version is supported for this feature
+      if (armatureLinkVersion < VRCFuryVersion)
+      {
+        return;
+      }
 
       // get the featureClassName name from the tuple
       string featureClassName = featureClassInstance.Item1;
@@ -53,11 +69,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         return;
       }
 
-
       // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
-      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList =
-        rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetailsFeaturesList");
-
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList = rootVisualElement.Q<VisualElement>(
+        "CVRFuryDataStorageUnitDataImportDetailsFeaturesList"
+      );
 
       var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
       var labelAtPosition = featuresList[positionInList] as Label;
@@ -67,7 +82,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
 
         // edit the label text to include a suffix of the position in the list
-        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")" ;
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")";
 
         // add a click event to the label
         labelAtPosition.RegisterCallback<ClickEvent>(evt =>
@@ -77,12 +92,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLog("label at position " + positionInList + " has been clicked");
 
           // get the list of modules from this DSU
-          var modules = ((CVRFuryDataStorageUnit) target).modules.modules;
+          var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
 
           // check to see if the DSU already has an armatureLink module
           if (modules.Any(module => module.GetType().Name == "armatureLink"))
           {
-
             List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
             // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -114,7 +128,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // set the importedFromVRCFury flag to true
           armatureLinkModule.justImported = true;
-
 
           // ---- armatureLink specific properties ----
 
@@ -161,7 +174,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               break;
             default:
               // if the VRCFuryLinkMode is not recognised, tell the user via a popup and stop the import
-              EditorUtility.DisplayDialog("Error", "The ArmatureLinkMode " + VRCFuryLinkMode + " is not recognised/n import aborted", "OK");
+              EditorUtility.DisplayDialog(
+                "Error",
+                "The ArmatureLinkMode " + VRCFuryLinkMode + " is not recognised/n import aborted",
+                "OK"
+              );
               return;
           }
 
@@ -183,7 +200,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               break;
             default:
               // if the VRCFuryKeepBoneOffsets is not recognised, tell the user via a popup and stop the import
-              EditorUtility.DisplayDialog("Error", "The keepBoneOffsets " + VRCFuryKeepBoneOffsets + " is not recognised/n import aborted", "OK");
+              EditorUtility.DisplayDialog(
+                "Error",
+                "The keepBoneOffsets " + VRCFuryKeepBoneOffsets + " is not recognised/n import aborted",
+                "OK"
+              );
               return;
           }
 
@@ -202,20 +223,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // reload the UI finalise UI
           updateFinaliseUI();
-
         });
-
       }
       else
       {
         // print to console that the label is null
         CoreLog("label at position " + positionInList + " is null");
       }
-
     }
 
-  // class end
+    // class end
   }
-// namespace end
+  // namespace end
 }
 #endif

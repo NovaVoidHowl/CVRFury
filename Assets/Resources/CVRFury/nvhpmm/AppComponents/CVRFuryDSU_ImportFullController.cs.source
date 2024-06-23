@@ -1,4 +1,4 @@
-// { "version": "0.0.35" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: [], type: "Editor"}
+// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -23,7 +23,6 @@ using VF.Model;
 using Action = VF.Model.StateAction.Action;
 using VF.Model.StateAction;
 
-
 /// <summary>
 /// Full Controller import
 ///
@@ -34,11 +33,29 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
-    private void importFullControllerFeature(Tuple<string, FeatureModel> featureClassInstance,
-                                            VisualElement rootVisualElement,
-                                            int positionInList
-                                           )
+    private void importFullControllerFeature(
+      Tuple<string, FeatureModel> featureClassInstance,
+      VisualElement rootVisualElement,
+      int positionInList,
+      int VRCFuryVersion
+    )
     {
+      // if the VRCFuryVersion is not on the list of supported versions, return
+      if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(VRCFuryVersion))
+      {
+        return;
+      }
+
+      // Find the feature version for "FullController"
+      int fullControllerVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+        .FirstOrDefault(kvp => kvp.Key == "FullController")
+        .Value;
+
+      // Check if the version is supported for this feature
+      if (fullControllerVersion < VRCFuryVersion)
+      {
+        return;
+      }
 
       // get the featureClassName name from the tuple
       string featureClassName = featureClassInstance.Item1;
@@ -55,11 +72,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         return;
       }
 
-
       // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
-      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList =
-        rootVisualElement.Q<VisualElement>("CVRFuryDataStorageUnitDataImportDetailsFeaturesList");
-
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList = rootVisualElement.Q<VisualElement>(
+        "CVRFuryDataStorageUnitDataImportDetailsFeaturesList"
+      );
 
       var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
       var labelAtPosition = featuresList[positionInList] as Label;
@@ -69,7 +85,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
 
         // edit the label text to include a suffix of the position in the list
-        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")" ;
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")";
 
         // add a click event to the label
         labelAtPosition.RegisterCallback<ClickEvent>(evt =>
@@ -79,12 +95,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLog("label at position " + positionInList + " has been clicked");
 
           // get the list of modules from this DSU
-          var modules = ((CVRFuryDataStorageUnit) target).modules.modules;
+          var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
 
           // check to see if the DSU already has an fullControllerModule module
           if (modules.Any(module => module.GetType().Name == "fullControllerModule"))
           {
-
             List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
             // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
@@ -117,7 +132,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // set the importedFromVRCFury flag to true
           fullControllerModule.importedFromVRCFury = true;
 
-
           // ------
 
           // get the controllers from the VRCFuryControllerFeature
@@ -146,7 +160,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             // initialise the controllers list in the fullControllerModule
             fullControllerModule.controllers = new List<RuntimeAnimatorController>();
-
           }
 
           // loop through the controllers, and add them to the fullControllerModule
@@ -197,8 +210,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             {
               // check if the controllerParameter is one of the ones on the Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC,
               // but not in the Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR
-              if (Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC.Contains(controllerParameter.name) &&
-                  !Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR.Contains(controllerParameter.name))
+              if (
+                Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC.Contains(controllerParameter.name)
+                && !Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR.Contains(controllerParameter.name)
+              )
               {
                 allControllerParametersToLink.Add(controllerParameter.name);
               }
@@ -231,7 +246,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   bool abort = false;
 
                   // first check if the DSU already has a parameterStreamLink module
-                  parameterStreamLink parameterStreamLinkModule = modules.FirstOrDefault(module => module.GetType().Name == "parameterStreamLink") as parameterStreamLink;
+                  parameterStreamLink parameterStreamLinkModule =
+                    modules.FirstOrDefault(module => module.GetType().Name == "parameterStreamLink")
+                    as parameterStreamLink;
 
                   if (parameterStreamLinkModule == null)
                   {
@@ -245,7 +262,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // set the importedFromVRCFury flag to true
                   parameterStreamLinkModule.importedFromVRCFury = true;
 
-
                   // get the type based on parameterStreamMapping.CVR string value for CVRFuryParameterStreamEntry.Type enum
                   CVRFuryParameterStreamEntry.Type typeForEnum = default;
 
@@ -258,7 +274,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   }
                   else
                   {
-                    CoreLogCritical("Could not parse the enum string '" + parameterStreamMapping.CVR + "' into the CVRFuryParameterStreamEntry.Type enum");
+                    CoreLogCritical(
+                      "Could not parse the enum string '"
+                        + parameterStreamMapping.CVR
+                        + "' into the CVRFuryParameterStreamEntry.Type enum"
+                    );
                     abort = true;
                   }
 
@@ -280,14 +300,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                       modules.Add(parameterStreamLinkModule);
                     }
                   }
-
                 }
               }
             }
           }
-
-
-
 
           // check if there are any menus
           if (menus.Count > 0)
@@ -299,7 +315,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // loop through the menus, and add them to the fullControllerModule
           foreach (var menu in menus)
           {
-
             // get the menu from the menu entry
             var sourceMenu = menu.menu.objRef;
 
@@ -328,30 +343,40 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // load the CVRFuryMenuStore from the targetMenuPath and add it to the fullControllerModule
               // along with the prefix
 
-              fullControllerModule.menus.Add(new fullControllerModule.MenuEntry{
-              menu = AssetDatabase.LoadAssetAtPath<CVRFuryMenuStore>(targetMenuPath),
-              prefix = menu.prefix
-            });
+              fullControllerModule.menus.Add(
+                new fullControllerModule.MenuEntry
+                {
+                  menu = AssetDatabase.LoadAssetAtPath<CVRFuryMenuStore>(targetMenuPath),
+                  prefix = menu.prefix
+                }
+              );
             }
             else
             {
               // show popup that the file does not exist
-              if (EditorUtility.DisplayDialog("File does not exist", "The file " + targetMenuPath + " does not exist\n"
-                              + "Please use the Converter to convert the VRCExpressionsMenu to a CVRFuryMenuStore first"
-                              , "OK"
-                              ))
+              if (
+                EditorUtility.DisplayDialog(
+                  "File does not exist",
+                  "The file "
+                    + targetMenuPath
+                    + " does not exist\n"
+                    + "Please use the Converter to convert the VRCExpressionsMenu to a CVRFuryMenuStore first",
+                  "OK"
+                )
+              )
               {
                 // If the user clicked "OK", open a menu.
-                EditorApplication.ExecuteMenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Conversion Tools/Convert VRCExpressionMenu");
+                EditorApplication.ExecuteMenuItem(
+                  "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Conversion Tools/Convert VRCExpressionMenu"
+                );
               }
               // return, as the file does not exist
               return;
             }
-
           }
 
           // check if there are any menus (and if there are any null entries in the list get rid of them)
-          if(fullControllerModule.menus != null)
+          if (fullControllerModule.menus != null)
           {
             // clean out any null entries in the menus list
             fullControllerModule.menus = fullControllerModule.menus.Where(x => x.menu != null).ToList();
@@ -392,21 +417,31 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             if (File.Exists(targetPrmsPath))
             {
               // load the CVRFuryParametersStore from the targetPrmsPath and add it to the fullControllerModule
-              fullControllerModule.parameters.Add(new fullControllerModule.ParamsEntry
-              {
-                parameters = AssetDatabase.LoadAssetAtPath<CVRFuryParametersStore>(targetPrmsPath)
-              });
+              fullControllerModule.parameters.Add(
+                new fullControllerModule.ParamsEntry
+                {
+                  parameters = AssetDatabase.LoadAssetAtPath<CVRFuryParametersStore>(targetPrmsPath)
+                }
+              );
             }
             else
             {
               // show popup that the file does not exist
-              if (EditorUtility.DisplayDialog("File does not exist", "The file " + targetPrmsPath + " does not exist\n"
-                              + "Please use the Converter to convert the VRCExpressionsParameters to a CVRFuryParametersStore first"
-                              , "OK"
-                              ))
+              if (
+                EditorUtility.DisplayDialog(
+                  "File does not exist",
+                  "The file "
+                    + targetPrmsPath
+                    + " does not exist\n"
+                    + "Please use the Converter to convert the VRCExpressionsParameters to a CVRFuryParametersStore first",
+                  "OK"
+                )
+              )
               {
                 // If the user clicked "OK", open a menu.
-                EditorApplication.ExecuteMenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Conversion Tools/Convert VRCExpressionParameters");
+                EditorApplication.ExecuteMenuItem(
+                  "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Conversion Tools/Convert VRCExpressionParameters"
+                );
               }
               // return, as the file does not exist
               return;
@@ -431,21 +466,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             {
               continue;
             }
-            fullControllerModule.smoothedPrms.Add(new fullControllerModule.SmoothParamEntry
-            {
-              name = smoothedPrm.name,
-              smoothingDuration = smoothedPrm.smoothingDuration,
-            });
+            fullControllerModule.smoothedPrms.Add(
+              new fullControllerModule.SmoothParamEntry
+              {
+                name = smoothedPrm.name,
+                smoothingDuration = smoothedPrm.smoothingDuration,
+              }
+            );
           }
 
           //check if there are any smoothed parameters (and if there are any null entries in the list get rid of them)
-          if(fullControllerModule.smoothedPrms != null)
+          if (fullControllerModule.smoothedPrms != null)
           {
             // clean out any null entries in the smoothedPrms list
             fullControllerModule.smoothedPrms = fullControllerModule.smoothedPrms.Where(x => x.name != null).ToList();
           }
-        
-          
+
           // check if there are any global parameters
           if (globalParams.Count > 0)
           {
@@ -462,7 +498,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               fullControllerModule.globalParams.Add(globalParam);
             }
           }
-
 
           // set the toggle parameter in the fullControllerModule
           fullControllerModule.toggleParam = toggleParam;
@@ -482,19 +517,23 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             {
               continue;
             }
-            fullControllerModule.rewriteBindings.Add(new fullControllerModule.BindingRewrite
-            {
-              from = rewriteBinding.from,
-              to = rewriteBinding.to,
-              delete = rewriteBinding.delete
-            });
+            fullControllerModule.rewriteBindings.Add(
+              new fullControllerModule.BindingRewrite
+              {
+                from = rewriteBinding.from,
+                to = rewriteBinding.to,
+                delete = rewriteBinding.delete
+              }
+            );
           }
 
           // check if there are any binding rewrites (and if there are any null entries in the list get rid of them)
-          if(fullControllerModule.rewriteBindings != null)
+          if (fullControllerModule.rewriteBindings != null)
           {
             // clean out any null entries in the rewriteBindings list
-            fullControllerModule.rewriteBindings = fullControllerModule.rewriteBindings.Where(x => x.from != null).ToList();
+            fullControllerModule.rewriteBindings = fullControllerModule.rewriteBindings
+              .Where(x => x.from != null)
+              .ToList();
           }
 
           // add the fullControllerModule to the DSU
@@ -502,20 +541,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // reload the UI finalise UI
           updateFinaliseUI();
-
         });
-
       }
       else
       {
         // print to console that the label is null
         CoreLog("label at position " + positionInList + " is null");
       }
-
     }
 
-  // class end
+    // class end
   }
-// namespace end
+  // namespace end
 }
 #endif
