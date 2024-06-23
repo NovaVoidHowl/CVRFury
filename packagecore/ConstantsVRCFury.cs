@@ -6,7 +6,14 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
   public static partial class Constants
   {
-    public const string VRCFURY_VERSION_COMPATIBILITY = "1.659.0";
+    // note this is not the main version number but rather a breaking change counter,
+    // up to version 1.744 it was 2, and then after that it was 3
+    public static readonly int MAX_VRCFURY_VERSION_DATA = 3;
+    public static readonly int MAX_VRCFURY_VERSION_IMPORT = 2;
+
+    // version numbers for the user to reference
+    public static readonly string MAX_VRCFURY_DATA_USER_VERSION = "1.909.0";
+    public static readonly string MAX_VRCFURY_IMPORT_USER_VERSION = "1.744";
 
     public static readonly ReadOnlyCollection<string> VRCFURY_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
       new List<string>

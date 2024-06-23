@@ -75,8 +75,8 @@ Due to a breaking change in CCK 3.10 only that or later versions of the CCK are 
 
 Data store only compatibility added as of CVRFury 0.124.0-experimental
 
-If you imported a prefab into your scene that was made for a version of VRCFury after 1.744.0, you will need to re-add it
-from its prefab, as if it was there before it's 'content' datastore will be corrupted
+If you imported a prefab into your scene that was made for a version of VRCFury after 1.744.0, you will need to
+re-convert its VRCFury prefab and re-add it, as if it was there before it's 'content' datastore will be corrupted
 
 ### ⏳ Long Running Tasks
 

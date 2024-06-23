@@ -36,10 +36,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     public static readonly string DOCS_URL = "https://repo.cvrfury.uk";
 
-    // note this is not the main version number but rather a breaking change counter,
-    // up to version 1.744 it was 2, and then after that it was 3
-    public static readonly int MAX_VRCFURY_VERSION = 2;
-    public static readonly string MAX_VRCFURY_VERSION_USER_VERSION = "1.744";
 
     public static readonly ReadOnlyCollection<string> CVRFURY_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
       new List<string>
