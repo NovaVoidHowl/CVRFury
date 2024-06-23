@@ -75,3 +75,26 @@
 }
 
 
+.version-label {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background-color: #505050;
+  color: #fff;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 10px;
+  font-size: 12px;
+  border-radius: 0 0 10 0px;
+}
+
+.version-ok-label {
+  border-color: #090;
+  border-width: 0 1 1 0 px;
+}
+
+.version-error-label {
+  border-color: #900;
+  border-width: 0 2 2 0 px;
+}

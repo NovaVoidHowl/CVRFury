@@ -85,67 +85,100 @@ namespace uk.novavoidhowl.dev.cvrfury
       // get the version value from the VRCFury component
       int version = serializedObject.FindProperty("version").intValue;
 
-      // check if its higher than the max import version, if it is, display an error as the import is incompatible
-      if (version > Constants.MAX_VRCFURY_VERSION_IMPORT)
-      {
-        // create a new visual element of the error type
-        var errorVisualElement = new VisualElement();
-
-        // set the name of the errorVisualElement to allow styling
-        errorVisualElement.name = "errorVisualElement";
-
-        // add the errorVisualElement to the rootVisualElement
-        rootVisualElement.Add(errorVisualElement);
-
-        // if it is, add a warning to the rootVisualElement
-        var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
-        warningTitleLabel.AddToClassList("warning-title");
-        errorVisualElement.Add(warningTitleLabel);
-        errorVisualElement.Add(new Label("This VRCFury component is not import compatible with" + " the currently installed version of CVRFury."));
-        errorVisualElement.Add(new Label("Please check that it was not made with a version later than " + Constants.MAX_VRCFURY_IMPORT_USER_VERSION));
-        errorVisualElement.Add(new Label("Note you can review the data store of this component by setting the inspector to debug mode."));
-        errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
-        // add button to open the documentation
-        var openDocumentationButton = new Button(() =>
-        {
-          Application.OpenURL(Constants.DOCS_URL);
-        });
-        openDocumentationButton.text = "Open Documentation";
-        errorVisualElement.Add(openDocumentationButton);
-      }
-
-
-
-      // check if its higher than the max data version, if it is, display an error as the data store is incompatible
+      // add an element to show the version of the VRCFury component
+      var versionLabel = new Label("Datastore Version: " + version);
       if (version > Constants.MAX_VRCFURY_VERSION_DATA)
       {
-        // create a new visual element of the error type
-        var errorVisualElement = new VisualElement();
-
-        // set the name of the errorVisualElement to allow styling
-        errorVisualElement.name = "errorVisualElement";
-
-        // add the errorVisualElement to the rootVisualElement
-        rootVisualElement.Add(errorVisualElement);
-
-        // if it is, add a warning to the rootVisualElement
-        var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Data Store Version");
-        warningTitleLabel.AddToClassList("warning-title");
-        errorVisualElement.Add(warningTitleLabel);
-        errorVisualElement.Add(new Label("This VRCFury component is not compatible with" + " the currently installed version of CVRFury."));
-        errorVisualElement.Add(new Label("Note the converted copy of prefab will likely have a corrupted data store now so please delete it"));
-        errorVisualElement.Add(new Label("Please check that it was not made with a version later than " + Constants.MAX_VRCFURY_DATA_USER_VERSION));
-        errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
-        // add button to open the documentation
-        var openDocumentationButton = new Button(() =>
-        {
-          Application.OpenURL(Constants.DOCS_URL);
-        });
-        openDocumentationButton.text = "Open Documentation";
-        errorVisualElement.Add(openDocumentationButton);
-
+        versionLabel.AddToClassList("version-error-label");
       }
+      else
+      {
+        versionLabel.AddToClassList("version-ok-label");
+      }
+      versionLabel.AddToClassList("version-label");
+      rootVisualElement.Add(versionLabel);
 
+      // only check for compatibility if dev mode is not enabled, as dev mode allows for data store inspection etc.
+      if (!devModeEnabled)
+      {
+        // check if its higher than the max import version, if it is, display an error as the import is incompatible
+        if (version > Constants.MAX_VRCFURY_VERSION_IMPORT)
+        {
+          // create a new visual element of the error type
+          var errorVisualElement = new VisualElement();
+
+          // set the name of the errorVisualElement to allow styling
+          errorVisualElement.name = "errorVisualElement";
+
+          // add the errorVisualElement to the rootVisualElement
+          rootVisualElement.Add(errorVisualElement);
+
+          // if it is, add a warning to the rootVisualElement
+          var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+          warningTitleLabel.AddToClassList("warning-title");
+          errorVisualElement.Add(warningTitleLabel);
+          errorVisualElement.Add(
+            new Label(
+              "This VRCFury component is not import compatible with" + " the currently installed version of CVRFury."
+            )
+          );
+          errorVisualElement.Add(
+            new Label(
+              "Please check that it was not made with a version later than " + Constants.MAX_VRCFURY_IMPORT_USER_VERSION
+            )
+          );
+          errorVisualElement.Add(
+            new Label("Note you can review the data store of this component by setting the inspector to debug mode.")
+          );
+          errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+          // add button to open the documentation
+          var openDocumentationButton = new Button(() =>
+          {
+            Application.OpenURL(Constants.DOCS_URL);
+          });
+          openDocumentationButton.text = "Open Documentation";
+          errorVisualElement.Add(openDocumentationButton);
+        }
+
+        // check if its higher than the max data version, if it is, display an error as the data store is incompatible
+        if (version > Constants.MAX_VRCFURY_VERSION_DATA)
+        {
+          // create a new visual element of the error type
+          var errorVisualElement = new VisualElement();
+
+          // set the name of the errorVisualElement to allow styling
+          errorVisualElement.name = "errorVisualElement";
+
+          // add the errorVisualElement to the rootVisualElement
+          rootVisualElement.Add(errorVisualElement);
+
+          // if it is, add a warning to the rootVisualElement
+          var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Data Store Version");
+          warningTitleLabel.AddToClassList("warning-title");
+          errorVisualElement.Add(warningTitleLabel);
+          errorVisualElement.Add(
+            new Label("This VRCFury component is not compatible with" + " the currently installed version of CVRFury.")
+          );
+          errorVisualElement.Add(
+            new Label(
+              "Note the converted copy of prefab will likely have a corrupted datastore now so please delete it"
+            )
+          );
+          errorVisualElement.Add(
+            new Label(
+              "Please check that it was not made with a version later than " + Constants.MAX_VRCFURY_DATA_USER_VERSION
+            )
+          );
+          errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+          // add button to open the documentation
+          var openDocumentationButton = new Button(() =>
+          {
+            Application.OpenURL(Constants.DOCS_URL);
+          });
+          openDocumentationButton.text = "Open Documentation";
+          errorVisualElement.Add(openDocumentationButton);
+        }
+      }
       // subscribe to the CVRFuryDevModeEnabler component
       devModeSubscribe();
       // Call UpdateUI after creating the UI
@@ -250,8 +283,12 @@ namespace uk.novavoidhowl.dev.cvrfury
 
           // add container for the Feature adder
           var featureAdderContainer = new VisualElement();
-          featureAdderContainer.name = "featureAdderContainer";
+          featureAdderContainer.name = "featureAdderContainerV2";
           defaultEditorContainer.Add(featureAdderContainer);
+
+          // add label for the feature adder to say its for V2 VRCFury features
+          var featureAdderLabel = new Label("V2 VRCFury Feature adder controls");
+          featureAdderContainer.Add(featureAdderLabel);
 
           // add dropdown for feature type
           var featureTypeDropdown = new PopupField<string>("Feature Type", derivedClasses.ConvertAll(x => x.Name), 0);
@@ -280,6 +317,22 @@ namespace uk.novavoidhowl.dev.cvrfury
             }
           });
           addFeatureButton.text = "Add Feature";
+
+          // get the version value from the VRCFury component
+          int version = serializedObject.FindProperty("version").intValue;
+
+
+          if (version != 2)
+          {
+            featureAdderContainer.style.opacity = 0.5f;
+            featureAdderContainer.SetEnabled(false);
+          }
+          else
+          {
+            featureAdderContainer.style.opacity = 1.0f;
+            featureAdderContainer.SetEnabled(true);
+          }
+
           featureAdderContainer.Add(addFeatureButton);
         }
       }
