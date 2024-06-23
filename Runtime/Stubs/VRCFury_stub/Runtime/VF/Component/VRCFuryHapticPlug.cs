@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using VF.Model;
+using VF.Model.StateAction;
 
 namespace VF.Component
 {
@@ -35,6 +36,7 @@ namespace VF.Component
     public bool addDpsTipLight = false;
     public bool spsKeepImports = false;
 
+    [DoNotApplyRestingState]
     public State postBakeActions;
     public bool spsOverrun = true;
     public bool enableDepthAnimations = false;
@@ -64,7 +66,66 @@ namespace VF.Component
 
       [Obsolete]
       public float smoothing;
-      public bool ResetMePlease2;
+    }
+
+    public override bool Upgrade(int fromVersion)
+    {
+#pragma warning disable 0612
+      if (fromVersion < 1)
+      {
+        unitsInMeters = true;
+      }
+      if (fromVersion < 2)
+      {
+        autoRenderer = configureTpsMesh == null || configureTpsMesh.Count == 0;
+        autoLength = length == 0;
+        autoRadius = radius == 0;
+      }
+      if (fromVersion < 3)
+      {
+        enableSps = configureSps;
+      }
+      if (fromVersion < 5)
+      {
+        if (enableSps)
+        {
+          useBoneMask = spsBoneMask;
+          textureMask = spsTextureMask;
+        }
+        else if (configureTps)
+        {
+          useBoneMask = false;
+          textureMask = configureTpsMask;
+        }
+        else
+        {
+          useBoneMask = false;
+        }
+      }
+      if (fromVersion < 6)
+      {
+        useLegacyRendererFinder = !enableSps;
+      }
+      if (fromVersion < 7)
+      {
+        foreach (var a in depthActions)
+        {
+          a.smoothing = (float)Math.Pow(a.smoothing, 0.2);
+        }
+      }
+      if (fromVersion < 8)
+      {
+        foreach (var a in depthActions)
+        {
+          a.smoothingSeconds = VRCFuryHapticSocket.UpgradeFromLegacySmoothing(a.smoothing);
+        }
+      }
+      if (fromVersion < 9)
+      {
+        enableDepthAnimations = depthActions.Count > 0;
+      }
+#pragma warning restore 0612
+      return false;
     }
 
     public override int GetLatestVersion()

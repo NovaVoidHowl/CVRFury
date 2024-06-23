@@ -76,13 +76,7 @@ VRCFuryGlobalCollider.cs:
 
 VRCFuryHapticPlug.cs:
 
-- remove ref `using VF.Model.StateAction;`
-
 - remove component menu link
-
-- remove `[DoNotApplyRestingState]`
-
-- remove Upgrade function
 
 - add DLP notice
 
