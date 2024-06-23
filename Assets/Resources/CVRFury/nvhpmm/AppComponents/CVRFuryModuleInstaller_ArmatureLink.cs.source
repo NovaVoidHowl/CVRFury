@@ -1,4 +1,4 @@
-// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.1.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -766,10 +766,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           for (int i = 0; i < bonesToUpdate.Count; i++)
           {
             // debug print the name of the bone to update along with the index
-            CoreLogDebug("[ArmatureLink][mesh rebind] Bone to update: " + bonesToUpdate[i].name + " at index: " + i)
+            CoreLogDebug("[ArmatureLink][mesh rebind] Bone to update: " + bonesToUpdate[i].name + " at index: " + i
               + " of "
-              + bonesToUpdate.Count;
-
+              + bonesToUpdate.Count
+            );
             // new target bone
             Transform newBone;
 
