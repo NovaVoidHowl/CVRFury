@@ -1,4 +1,4 @@
-// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
+// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -32,7 +32,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
     private void importArmatureLinkFeature(
-      Tuple<string, FeatureModel> featureClassInstance,
+      Tuple<string, FeatureModel, GameObject> featureClassInstance,
       VisualElement rootVisualElement,
       int positionInList,
       int VRCFuryVersion
@@ -59,6 +59,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the ImportArmatureLink feature from the tuple
       FeatureModel importArmatureLinkFeature = featureClassInstance.Item2;
+
+      // get the moduleFoundOnObject from the tuple
+      GameObject moduleFoundOnObject = featureClassInstance.Item3;
 
       // check if the feature is of the 'ArmatureLink' type and if not return. note this is the VRCFury feature
       // name, naming is not 1-to-1 with the class name
@@ -128,6 +131,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // set the importedFromVRCFury flag to true
           armatureLinkModule.justImported = true;
+
+          // set the moduleFoundOnObject to the moduleFoundOnObject
+          armatureLinkModule.moduleFoundOnObject = moduleFoundOnObject;
 
           // ---- armatureLink specific properties ----
 

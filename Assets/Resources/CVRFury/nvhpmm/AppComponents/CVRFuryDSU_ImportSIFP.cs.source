@@ -1,4 +1,4 @@
-// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
+// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -32,7 +32,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
     private void importShowInFirstPersonFeature(
-      Tuple<string, FeatureModel> featureClassInstance,
+      Tuple<string, FeatureModel, GameObject> featureClassInstance,
       VisualElement rootVisualElement,
       int positionInList,
       int VRCFuryVersion
@@ -60,6 +60,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the ShowInFirstPerson feature from the tuple
       FeatureModel importShowInFirstPersonFeature = featureClassInstance.Item2;
+
+      // get the moduleFoundOnObject from the tuple
+      GameObject moduleFoundOnObject = featureClassInstance.Item3;
 
       // print the featureClassName to the console
       // TODO: remove this debug log
@@ -135,6 +138,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // set the importedFromVRCFury flag to true
           showInFirstPersonModule.justImported = true;
+
+          // set the moduleFoundOnObject to the moduleFoundOnObject
+          showInFirstPersonModule.moduleFoundOnObject = moduleFoundOnObject;
 
           // ---- showInFirstPerson specific properties ----
           // when converting from VRCFury to CVRFury, it should be noted that:

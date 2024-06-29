@@ -1,4 +1,4 @@
-// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: [], type: "Editor"}
+// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -32,7 +32,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
     private void importDeleteOnUploadFeature(
-      Tuple<string, FeatureModel> featureClassInstance,
+      Tuple<string, FeatureModel, GameObject> featureClassInstance,
       VisualElement rootVisualElement,
       int positionInList,
       int VRCFuryVersion
@@ -60,6 +60,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the DeleteDuringUpload feature from the tuple
       FeatureModel importDeleteOnUploadFeature = featureClassInstance.Item2;
+
+      // get the moduleFoundOnObject from the tuple
+      GameObject moduleFoundOnObject = featureClassInstance.Item3;
 
       // print the featureClassName to the console
       // TODO: remove this debug log
@@ -153,6 +156,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // get the game object that the VRCFury component is attached to
           deleteOnUploadModule.target = DSUGameObject;
+
+          // set the moduleFoundOnObject to the moduleFoundOnObject
+          deleteOnUploadModule.moduleFoundOnObject = moduleFoundOnObject;
 
           // ---- end armatureLink specific properties ----
 

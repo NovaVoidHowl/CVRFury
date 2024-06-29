@@ -1,4 +1,4 @@
-// { "version": "0.1.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: [], type: "Editor"}
+// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -34,7 +34,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
     private void importFullControllerFeature(
-      Tuple<string, FeatureModel> featureClassInstance,
+      Tuple<string, FeatureModel, GameObject> featureClassInstance,
       VisualElement rootVisualElement,
       int positionInList,
       int VRCFuryVersion
@@ -62,6 +62,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the ImportFullController feature from the tuple
       FeatureModel importFullControllerFeature = featureClassInstance.Item2;
+
+      // get the moduleFoundOnObject from the tuple
+      GameObject moduleFoundOnObject = featureClassInstance.Item3;
 
       // check if the feature is of the 'FullController' type and if not return. note this is the VRCFury feature
       // name, naming is not 1-to-1 with the class name
@@ -131,6 +134,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // set the importedFromVRCFury flag to true
           fullControllerModule.importedFromVRCFury = true;
+
+          // set the moduleFoundOnObject to the moduleFoundOnObject
+          fullControllerModule.moduleFoundOnObject = moduleFoundOnObject;
 
           // ------
 

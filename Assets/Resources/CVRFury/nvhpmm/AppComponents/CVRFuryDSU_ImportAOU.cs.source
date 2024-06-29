@@ -1,4 +1,4 @@
-// { "version": "0.12.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: [], type: "Editor"}
+// { "version": "0.13.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_AOU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -41,7 +41,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
     private void importApplyOnUploadFeature(
-      Tuple<string, FeatureModel> featureClassInstance,
+      Tuple<string, FeatureModel, GameObject> featureClassInstance,
       VisualElement rootVisualElement,
       int positionInList,
       int VRCFuryVersion
@@ -69,6 +69,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the ApplyOnUpload feature from the tuple
       FeatureModel applyOnUploadFeature = featureClassInstance.Item2;
+
+      // get the moduleFoundOnObject from the tuple
+      GameObject moduleFoundOnObject = featureClassInstance.Item3;
 
       // check if the feature is of the 'ApplyDuringUpload' type and if not return. note this is the VRCFury feature
       // name, naming is not 1-to-1 with the class name
@@ -107,7 +110,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get the list of modules from this DSU
             var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
 
-            // iterate through the actions list and print the type of each action to console
+            // iterate through the actions list
             foreach (Action action in state.actions)
             {
               switch (action)
