@@ -703,13 +703,10 @@ namespace VF.Model.Feature
     [Obsolete]
     public bool physbonesOnAvatarBones;
 
-    [Obsolete]
     public HumanBodyBones boneOnAvatar;
 
-    [Obsolete]
     public string bonePathOnAvatar;
 
-    [Obsolete]
     public List<HumanBodyBones> fallbackBones = new List<HumanBodyBones>();
 
     public override bool Upgrade(int fromVersion)

@@ -115,6 +115,12 @@ Feature.cs :
 
 - remove 'using VRC.SDK3.Dynamics.PhysBone.Components;'
 
+- remove `[Obsolete]` tag from 'fallbackBones'
+
+- remove `[Obsolete]` tag from 'bonePathOnAvatar'
+
+- remove `[Obsolete]` tag from 'boneOnAvatar'
+
 - add 'using uk.novavoidhowl.dev.vrcstub;'
 
 GuidWrapper.cs :
