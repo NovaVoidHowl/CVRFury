@@ -32,6 +32,8 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     public bool importedFromVRCFury;
     public bool justImported;
+
+    public GameObject moduleFoundOnObject;
   }
 
   [Serializable]
