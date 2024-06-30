@@ -40,8 +40,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public static readonly ReadOnlyCollection<KeyValuePair<string, int>> COMPATIBLE_VRCFURY_FEATURES = new ReadOnlyCollection<KeyValuePair<string, int>>(
       new List<KeyValuePair<string, int>>
       {
-        new KeyValuePair<string, int>("ApplyDuringUpload", 2),
-        new KeyValuePair<string, int>("FullController", 2),
+        new KeyValuePair<string, int>("ApplyDuringUpload", 3),
+        new KeyValuePair<string, int>("FullController", 3),
         new KeyValuePair<string, int>("ArmatureLink", 3),
         new KeyValuePair<string, int>("ShowInFirstPerson", 2),
         new KeyValuePair<string, int>("DeleteDuringUpload", 2)
