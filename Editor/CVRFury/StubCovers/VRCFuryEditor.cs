@@ -105,6 +105,8 @@ namespace uk.novavoidhowl.dev.cvrfury
 
       // set the name of the componentTypeVisualElement to allow styling
       componentTypeVisualElement.name = "componentTypeVisualElement";
+      // allow clicking through
+      componentTypeVisualElement.pickingMode = PickingMode.Ignore;
 
       // switch statement for the version of the VRCFury component
       switch (version)
@@ -127,12 +129,75 @@ namespace uk.novavoidhowl.dev.cvrfury
 
       #endregion //component type banner logic
 
+      #region unsupported component banner logic v3 only
+
+      if (version == 3)
+      {
+        // get the content property from the serializedObject
+        var contentPropertyBanner = serializedObject.FindProperty("content");
+
+        // get the type of the content property
+        var contentTypeBanner = contentPropertyBanner.managedReferenceFullTypename;
+
+        // check if the content is null/empty
+        if (string.IsNullOrEmpty(contentTypeBanner)) { }
+        else
+        {
+          // get the last part of the content type string (short class name)
+          var contentClassNameBanner = contentTypeBanner.Split('.').Last();
+
+          // check if the contentClassNameBanner is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
+          if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassNameBanner))
+          {
+            // ok this is a feature we don't support at all (not just a version issue)
+            // create a new visual element for the unsupported feature
+            var unsupportedVisualElement = new VisualElement();
+
+            // set the name of the unsupportedVisualElement to allow styling
+            unsupportedVisualElement.name = "unsupportedVisualElement";
+
+            // add the unsupportedVisualElement to the rootVisualElement
+            rootVisualElement.Add(unsupportedVisualElement);
+
+            // add label to the unsupportedVisualElement to say its an unsupported feature
+            var unsupportedTitleLabel = new Label("UNSUPPORTED");
+
+            // add the unsupportedTitleLabel to the unsupportedVisualElement
+            unsupportedVisualElement.Add(unsupportedTitleLabel);
+
+            // get the visual element named VRCFuryStubCoverContent1
+            var content1 = rootVisualElement.Q<VisualElement>("VRCFuryStubCoverContent1");
+
+            //get the visual element named VRCFuryStubCoverContent2
+            var content2 = rootVisualElement.Q<VisualElement>("VRCFuryStubCoverContent2");
+
+            // blank the content1 and content2 visual elements
+            if (content1 != null)
+            {
+              content1.style.display = DisplayStyle.None;
+            }
+
+            if (content2 != null)
+            {
+              content2.style.display = DisplayStyle.None;
+            }
+
+            // get the VRCFuryStubCoverTitle visual element
+            var title = rootVisualElement.Q<Label>("VRCFuryStubCoverTitle");
+
+            // set the text of the title to the contentClassNameBanner
+            title.text = "Unsupported VRCFury Feature";
+          }
+        }
+      }
+
+      #endregion //unsupported component banner logic v3 only
+
 
 
       // only check for compatibility if dev mode is not enabled, as dev mode allows for data store inspection etc.
       if (!devModeEnabled)
       {
-
         // check if its higher than the max data version, if it is, display an error as the data store is incompatible
         if (version > Constants.MAX_VRCFURY_VERSION_DATA)
         {
@@ -213,18 +278,72 @@ namespace uk.novavoidhowl.dev.cvrfury
                 // debug log the content type
                 CoreLogDebug("Content Type class: " + contentClassName);
 
-                // compare the contentClassName to the COMPATIBLE_VRCFURY_FEATURES KeyValuePair list to see if it is compatible
-                // first check if the contentClassName is in the COMPATIBLE_VRCFURY_FEATURES list
-                if (Constants.COMPATIBLE_VRCFURY_FEATURES.Any(x => x.Key == contentClassName))
+                // check if tthe contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
+                if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
                 {
-                  // get the version from the COMPATIBLE_VRCFURY_FEATURES list
-                  var compatibleVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
-                    .First(x => x.Key == contentClassName)
-                    .Value;
+                  // ok this is a feature we don't support at all (not just a version issue)
+                  // create a new visual element for the unsupported feature
+                }
+                else
+                {
+                  // only render detail errors on supported features
 
-                  // check if the version is compatible
-                  if (version > compatibleVersion)
+                  // compare the contentClassName to the COMPATIBLE_VRCFURY_FEATURES KeyValuePair list to see if it is compatible
+                  // first check if the contentClassName is in the COMPATIBLE_VRCFURY_FEATURES list
+                  if (Constants.COMPATIBLE_VRCFURY_FEATURES.Any(x => x.Key == contentClassName))
                   {
+                    // get the version from the COMPATIBLE_VRCFURY_FEATURES list
+                    var compatibleVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+                      .First(x => x.Key == contentClassName)
+                      .Value;
+
+                    // check if the version is compatible
+                    if (version > compatibleVersion)
+                    {
+                      // create a new visual element of the error type
+                      var errorVisualElement = new VisualElement();
+
+                      // set the name of the errorVisualElement to allow styling
+                      errorVisualElement.name = "errorVisualElement";
+
+                      // add the errorVisualElement to the rootVisualElement
+                      rootVisualElement.Add(errorVisualElement);
+
+                      // if it is, add a warning to the rootVisualElement
+                      var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                      warningTitleLabel.AddToClassList("warning-title");
+                      errorVisualElement.Add(warningTitleLabel);
+                      errorVisualElement.Add(
+                        new Label(
+                          "This VRCFury component is not import compatible with"
+                            + " the currently installed version of CVRFury."
+                        )
+                      );
+                      errorVisualElement.Add(
+                        new Label(
+                          "Please check that it was not made with a version later than "
+                            + Constants.MAX_VRCFURY_IMPORT_USER_VERSION
+                        )
+                      );
+                      errorVisualElement.Add(
+                        new Label(
+                          "Note you can review the data store of this component by setting the inspector to debug mode."
+                        )
+                      );
+                      errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+                      // add button to open the documentation
+                      var openDocumentationButton = new Button(() =>
+                      {
+                        Application.OpenURL(Constants.DOCS_URL);
+                      });
+                      openDocumentationButton.text = "Open Documentation";
+                      errorVisualElement.Add(openDocumentationButton);
+                    }
+                  }
+                  else
+                  {
+                    // error as the contentClassName is not in the COMPATIBLE_VRCFURY_FEATURES list, could be its new
+                    // feature that is not supported yet. need to display a warning
                     // create a new visual element of the error type
                     var errorVisualElement = new VisualElement();
 
@@ -240,19 +359,10 @@ namespace uk.novavoidhowl.dev.cvrfury
                     errorVisualElement.Add(warningTitleLabel);
                     errorVisualElement.Add(
                       new Label(
-                        "This VRCFury component is not import compatible with"
+                        "This VRCFury component '"
+                          + contentClassName
+                          + "' is not import compatible with"
                           + " the currently installed version of CVRFury."
-                      )
-                    );
-                    errorVisualElement.Add(
-                      new Label(
-                        "Please check that it was not made with a version later than "
-                          + Constants.MAX_VRCFURY_IMPORT_USER_VERSION
-                      )
-                    );
-                    errorVisualElement.Add(
-                      new Label(
-                        "Note you can review the data store of this component by setting the inspector to debug mode."
                       )
                     );
                     errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
@@ -264,40 +374,6 @@ namespace uk.novavoidhowl.dev.cvrfury
                     openDocumentationButton.text = "Open Documentation";
                     errorVisualElement.Add(openDocumentationButton);
                   }
-                }
-                else
-                {
-                  // error as the contentClassName is not in the COMPATIBLE_VRCFURY_FEATURES list, could be its new
-                  // feature that is not supported yet. need to display a warning
-                  // create a new visual element of the error type
-                  var errorVisualElement = new VisualElement();
-
-                  // set the name of the errorVisualElement to allow styling
-                  errorVisualElement.name = "errorVisualElement";
-
-                  // add the errorVisualElement to the rootVisualElement
-                  rootVisualElement.Add(errorVisualElement);
-
-                  // if it is, add a warning to the rootVisualElement
-                  var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
-                  warningTitleLabel.AddToClassList("warning-title");
-                  errorVisualElement.Add(warningTitleLabel);
-                  errorVisualElement.Add(
-                    new Label(
-                      "This VRCFury component '"
-                        + contentClassName
-                        + "' is not import compatible with"
-                        + " the currently installed version of CVRFury."
-                    )
-                  );
-                  errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
-                  // add button to open the documentation
-                  var openDocumentationButton = new Button(() =>
-                  {
-                    Application.OpenURL(Constants.DOCS_URL);
-                  });
-                  openDocumentationButton.text = "Open Documentation";
-                  errorVisualElement.Add(openDocumentationButton);
                 }
               }
             }
@@ -318,7 +394,8 @@ namespace uk.novavoidhowl.dev.cvrfury
               errorVisualElement.Add(warningTitleLabel);
               errorVisualElement.Add(
                 new Label(
-                  "This VRCFury component is not import compatible with" + " the currently installed version of CVRFury."
+                  "This VRCFury component is not import compatible with"
+                    + " the currently installed version of CVRFury."
                 )
               );
               errorVisualElement.Add(
@@ -328,7 +405,9 @@ namespace uk.novavoidhowl.dev.cvrfury
                 )
               );
               errorVisualElement.Add(
-                new Label("Note you can review the data store of this component by setting the inspector to debug mode.")
+                new Label(
+                  "Note you can review the data store of this component by setting the inspector to debug mode."
+                )
               );
               errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
               // add button to open the documentation
@@ -341,7 +420,6 @@ namespace uk.novavoidhowl.dev.cvrfury
             }
           }
         }
-        
       }
       // subscribe to the CVRFuryDevModeEnabler component
       devModeSubscribe();
@@ -534,7 +612,6 @@ namespace uk.novavoidhowl.dev.cvrfury
       return types;
     }
 
-
     private static void SetComponentTopBarV3(
       VisualElement componentTypeVisualElement,
       SerializedObject serializedObject
@@ -567,18 +644,23 @@ namespace uk.novavoidhowl.dev.cvrfury
 
       // Set the name of the topBar to allow styling
       topBar.name = "topBar";
+      // allow clicking through
+      topBar.pickingMode = PickingMode.Ignore;
 
       // create a visual element for the topBar content
       var topBarContent = new VisualElement();
 
       // Set the name of the topBarContent to allow styling
       topBarContent.name = "topBarContent";
+      // allow clicking through
+      topBarContent.pickingMode = PickingMode.Ignore;
 
       // Add the topBarContent to the topBar
       topBar.Add(topBarContent);
 
       // Add a label to the topBar to show the component type
       var label = new Label(title);
+      label.pickingMode = PickingMode.Ignore; // allow clicking through
       label.style.unityFontStyleAndWeight = FontStyle.Bold; // Make the label text bold
       topBarContent.Add(label);
 
