@@ -1403,6 +1403,40 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         }
       }
 
+      // get the generated folder path for the current avatar
+      string generatedFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name;
+
+      // try and delete the contents of the generated folder
+      if (Directory.Exists(generatedFolderPath))
+      {
+        try
+        {
+          Directory.Delete(generatedFolderPath, true);
+        }
+        catch (Exception e)
+        {
+          // log that the generated folder could not be deleted
+          CoreLogError("Could not delete generated folder: " + generatedFolderPath + "\n" + e.Message);
+        }
+      }
+
+      // try and delete the meta file for the generated folder
+      string generatedFolderPathMeta = generatedFolderPath + ".meta";
+      if (File.Exists(generatedFolderPathMeta))
+      {
+        try
+        {
+          File.Delete(generatedFolderPathMeta);
+        }
+        catch (Exception e)
+        {
+          // log that the generated folder meta file could not be deleted
+          CoreLogError("Could not delete generated folder meta file: " + generatedFolderPathMeta + "\n" + e.Message);
+        }
+      }
+
+      
+
       //update asset database
       AssetDatabase.Refresh();
       // console print to say that the temp files have been purged
