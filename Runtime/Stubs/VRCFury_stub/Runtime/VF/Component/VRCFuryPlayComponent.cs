@@ -1,6 +1,5 @@
 ///
-/// this is an empty stub file for VRCFuryPlayComponent.cs
-/// it's used to prevent class missing errors
+/// Retained for Data Loss Prevention
 ///
 
 using System;
@@ -8,10 +7,42 @@ using UnityEngine;
 
 namespace VF.Component
 {
-  [AddComponentMenu("")] // hide from unity components menu
+  [AddComponentMenu("")]
   public class VRCFuryPlayComponent : MonoBehaviour { }
 
-  public class VRCFurySocketGizmo : VRCFuryPlayComponent { }
+  public class VRCFurySocketGizmo : VRCFuryPlayComponent
+  {
+    public VRCFuryHapticSocket.AddLight type;
+    public Vector3 pos;
+    public Quaternion rot;
+    public bool show = true;
 
-  public class VRCFuryNoUpdateWhenOffscreen : VRCFuryPlayComponent { }
+    bool lastShow = false;
+
+    private void Update()
+    {
+      if (show && !lastShow)
+      {
+        try
+        {
+          EnableSceneLighting?.Invoke();
+        }
+        catch (Exception) { }
+      }
+      lastShow = show;
+    }
+
+    public static Action EnableSceneLighting;
+  }
+
+  public class VRCFuryNoUpdateWhenOffscreen : VRCFuryPlayComponent
+  {
+    private void Update()
+    {
+      var skin = GetComponent<SkinnedMeshRenderer>();
+      if (skin == null)
+        return;
+      skin.updateWhenOffscreen = false;
+    }
+  }
 }

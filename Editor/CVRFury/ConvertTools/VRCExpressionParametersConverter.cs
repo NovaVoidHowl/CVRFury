@@ -22,7 +22,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
     {
       "{fileID: -1506855854, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}"
     };
-    private const string CVRFURY_M_SCRIPT_ID = "{fileID: 11500000, guid: 5b6d1c52f7faa5b4f8ab4fb331d31ffd, type: 3}";
+    private const string CVRFURY_PHYSB_M_SCRIPT_ID = "{fileID: 11500000, guid: 5b6d1c52f7faa5b4f8ab4fb331d31ffd, type: 3}";
 
     // Declare textField as a member variable
     private TextField textField;
@@ -408,7 +408,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               await Task.Delay(barDelay);
 
               // in the new  file, replace  the line m_Script: $IDString
-              // with m_Script: $CVRFURY_M_SCRIPT_ID , which is the CVRFury version of VRCExpressionParameters
+              // with m_Script: $CVRFURY_PHYSB_M_SCRIPT_ID , which is the CVRFury version of VRCExpressionParameters
 
               // read the new file as plain text
               var newFileString = File.ReadAllText(newFilePath);
@@ -419,7 +419,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               progressBar.value = 15;
 
               // replace the line in the file
-              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_M_SCRIPT_ID);
+              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_PHYSB_M_SCRIPT_ID);
 
               // set the text of the progressLabel to "80% -- Rebinding Script"
               progressLabel.text = "40% -- Rebinding Script";
@@ -483,7 +483,14 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                 newCVRFuryParametersStore.parameters[i] = new CVRFuryParametersStore.Parameter
                 {
                   name = parametersFileData.parameters[i].name,
-                  valueType = CVRFuryParametersStore.ValueType.Float,
+                  // set the type of the parameter to match the type of the parameter in the VRCExpressionParameters file
+                  valueType = parametersFileData.parameters[i].valueType switch
+                  {
+                    VRCExpressionParameters.ValueType.Bool => CVRFuryParametersStore.ValueType.Bool,
+                    VRCExpressionParameters.ValueType.Float => CVRFuryParametersStore.ValueType.Float,
+                    VRCExpressionParameters.ValueType.Int => CVRFuryParametersStore.ValueType.Int,
+                    _ => CVRFuryParametersStore.ValueType.Float
+                  },
                   defaultValue = parametersFileData.parameters[i].defaultValue
                 };
 
@@ -672,8 +679,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
         if (parametersFileString.ToString().Contains("m_Script:"))
         {
           // if the string contains the line 'm_Script: '
-          // check if the string contains the line 'm_Script: ' + CVRFURY_M_SCRIPT_ID
-          if (parametersFileString.ToString().Contains("m_Script: " + CVRFURY_M_SCRIPT_ID))
+          // check if the string contains the line 'm_Script: ' + CVRFURY_PHYSB_M_SCRIPT_ID
+          if (parametersFileString.ToString().Contains("m_Script: " + CVRFURY_PHYSB_M_SCRIPT_ID))
           {
             // got a match so set the output vars
             IDmatch = true;

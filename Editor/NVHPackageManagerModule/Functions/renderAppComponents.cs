@@ -38,6 +38,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public partial class ToolSetup : EditorWindow
   {
+    
     private VisualElement renderAppComponents(string scriptingDefines)
     {
       // create a new section root element
@@ -118,15 +119,34 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         string sourceVersion = "";
 
         // paths to the source and target files
-        string targetFile = Constants.ASSETS_MANAGED_FOLDER + "/Editor/" + appComponent;
+        string targetFile = "";
+        string targetFileBase = Constants.ASSETS_MANAGED_FOLDER + "/";
         string sourceFile =
           "Packages/"
           + Constants.PACKAGE_NAME
           + "/Assets/Resources/"
           + Constants.PROGRAM_DISPLAY_NAME
-          + "/nvhpmm/AppComponents/Editor/"
+          + Constants.COMPONENTS_SOURCE_FOLDER
           + appComponent
           + ".source";
+
+
+        // check if the source file is runtime or editor
+        string appComponentType = getTypeOfAppComponentFromFile(sourceFile);
+        switch (appComponentType)
+        {
+          case "Runtime":
+            targetFile = targetFileBase + "Runtime/" + appComponent;
+            break;
+          case "Editor":
+            targetFile = targetFileBase + "Editor/" + appComponent;
+            break;
+          default:
+            // unclear type, default to editor (as older files may not have the type value)
+            targetFile = targetFileBase + "Editor/" + appComponent;
+            break;
+        }
+
 
         // Clone the UXML for each dependency
         var templateContainer = appComponentVisualTree.CloneTree();
@@ -144,6 +164,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         var installButton = appComponentContainer.Q<Button>("installOrUpdateButton");
         var removeButton = appComponentContainer.Q<Button>("removeButton");
         var statusPip = appComponentContainer.Q<VisualElement>("statusPip");
+        var typePip = appComponentContainer.Q<VisualElement>("typePip");
+        var typePipLabel = appComponentContainer.Q<Label>("typePipLabel");
 
         // check if target file exists
         if (AssetDatabase.LoadAssetAtPath(targetFile, typeof(UnityEngine.Object)) != null)
@@ -483,6 +505,29 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         removeButton.AddToClassList("appComponentActionButton");
 
         // formatting section for the appComponentContainer
+
+        // type pip formatting
+        switch (appComponentType)
+        {
+          case "Runtime":
+            typePip.AddToClassList("runtimeType");
+            // set the value of the typePipLabel to 'R'
+            typePipLabel.text = "R";
+            break;
+          case "Editor":
+            typePip.AddToClassList("editorType");
+            // add a label with the letters 'E' to the typePip
+            typePipLabel.text = "E";
+            break;
+          default:
+            // Handle other cases or do nothing
+            typePip.AddToClassList("unknownType");
+            // add a label with the letters 'U' to the typePip
+            typePipLabel.text = "U";
+            break;
+        }
+
+        // install state pip formatting
         if (notInstalled)
         {
           // check if it can be installed

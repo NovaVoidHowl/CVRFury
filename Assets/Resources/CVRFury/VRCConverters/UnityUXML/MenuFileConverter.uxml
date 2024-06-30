@@ -1,11 +1,14 @@
 <UXML xmlns="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
   <VisualElement name="scrollViewContainer">
     <ScrollView name="scrollView">
+
       <VisualElement name="headerContainer">
         <Label name="titleLabel" text="VRCExpressionMenu Converter" />
-        <Label name="descriptionLabel" text="This tool converts VRCExpressionMenu files to CVRFury format." />
+        <Label name="descriptionLabel" text="This tool converts VRCExpressionMenu files to CVRFury format.
+  \nNote you need to provide all parameter files related to this menu in the following list" />
       </VisualElement>
       <VisualElement name="menuFileSelectorContainer">
+        <Label name="stepLabel" text="Step 1" />
         <Label name="selectLabel" text="Drag and drop the VRCExpressionMenu file you want to convert to the box below" />
         <VisualElement name="menuFileDropArea">
           <VisualElement name="menuFileDropAreaLabel">
@@ -15,6 +18,15 @@
         <VisualElement name="menuFileSelectorHolder">
         </VisualElement>
       </VisualElement>
+    
+      <VisualElement name="parameterFilesContainer">
+        <Label name="stepLabel" text="Step 2" />
+        <Label name="parameterFilesLabel" text="CVRFury Parameter files
+  \n\n To add files, drag them in, to remove select and click the '-' button at the end of the list" />
+        <VisualElement name="parameterFilesList">
+        </VisualElement>
+      </VisualElement>
+      
       <VisualElement name="controlsContainer">
         <VisualElement name="convertButtonContainer">
           <Button name="convertButton" text="Convert" />

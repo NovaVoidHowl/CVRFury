@@ -43,7 +43,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           + Constants.PACKAGE_NAME
           + "/Assets/Resources/"
           + Constants.PROGRAM_DISPLAY_NAME
-          + "/nvhpmm/AppComponents/Editor/",
+          + Constants.COMPONENTS_SOURCE_FOLDER,
         "*.source"
       );
 

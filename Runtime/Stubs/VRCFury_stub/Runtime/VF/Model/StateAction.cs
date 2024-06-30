@@ -8,6 +8,14 @@ using uk.novavoidhowl.dev.vrcstub;
 
 namespace VF.Model.StateAction
 {
+  /**
+   * Some Actions contain an implicit "resting state" which is applied to the avatar during the upload automatically.
+   * For instance, if you have a Turn On action somewhere, the object will automatically be "turned off" during the upload.
+   * However, if the action is annotated with this attribute, this behaviour will be skipped.
+   */
+  [AttributeUsage(AttributeTargets.Field)]
+  public class DoNotApplyRestingStateAttribute : Attribute { }
+
   [Serializable]
   public class Action : VrcfUpgradeable
   {
@@ -55,9 +63,30 @@ namespace VF.Model.StateAction
   [Serializable]
   public class MaterialAction : Action
   {
+    [Obsolete]
     public GameObject obj;
+    public Renderer renderer;
     public int materialIndex = 0;
     public GuidMaterial mat = null;
+
+    public override bool Upgrade(int fromVersion)
+    {
+#pragma warning disable 0612
+      if (fromVersion < 1)
+      {
+        if (obj != null)
+        {
+          renderer = obj.GetComponent<Renderer>();
+        }
+      }
+      return false;
+#pragma warning restore 0612
+    }
+
+    public override int GetLatestVersion()
+    {
+      return 1;
+    }
   }
 
   [Serializable]
@@ -165,7 +194,6 @@ namespace VF.Model.StateAction
     public class FlipBookPage
     {
       public State state;
-      public bool ResetMePlease2;
     }
 
     public override bool Upgrade(int fromVersion)
@@ -189,5 +217,13 @@ namespace VF.Model.StateAction
     {
       return 1;
     }
+  }
+
+  [Serializable]
+  public class SmoothLoopAction : Action
+  {
+    public State state1;
+    public State state2;
+    public float loopTime = 5;
   }
 }

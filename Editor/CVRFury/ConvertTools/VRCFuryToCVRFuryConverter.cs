@@ -23,7 +23,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
     };
 
     // CVRFury m_Script ID
-    private static readonly string CVRFURY_M_SCRIPT_ID =
+    private static readonly string CVRFURY_PHYSB_M_SCRIPT_ID =
       "{fileID: 11500000, guid: ad374016dc05c0a41adf2828603e3c76, type: 3}";
 
     // Declare textField as a member variable

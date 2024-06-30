@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Text;
 
 // dynamic using statements
 #if UNITY_EDITOR
@@ -12,7 +13,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
   public static class CoreUtils
   {
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     public static void CoreLog(object message)
     {
       Debug.Log($"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] {message.ToString()}");
@@ -34,14 +35,35 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     public static void CoreLogDebug(object message)
     {
-      if(EditorPrefs.GetBool(Constants.DEBUG_PRINT_EDITOR_PREF, true))
+      if (EditorPrefs.GetBool(Constants.DEBUG_PRINT_EDITOR_PREF, true))
       {
         Debug.Log(
           $"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] <color={Constants.APP_COLOUR_DBG}>[DEBUG]</color> {message.ToString()}"
         );
       }
     }
-    #endif
+
+    public static void CoreLogDebugPrintList(IEnumerable<string> list, string preMessage)
+    {
+      StringBuilder stringBuilder = new StringBuilder();
+      foreach (string item in list)
+      {
+        stringBuilder.Append(item + "\n");
+      }
+      CoreLogDebug(preMessage + "\n" + stringBuilder.ToString());
+    }
+
+    public static void CoreLogDebugPrintDictionary<TKey, TValue>(Dictionary<TKey, TValue> dictionary, string preMessage)
+    {
+      List<string> entriesList = new List<string>();
+      foreach (var kvp in dictionary)
+      {
+        entriesList.Add($"{kvp.Key}: {kvp.Value}");
+      }
+      CoreLogDebugPrintList(entriesList, preMessage);
+    }
+    
+#endif
 
     public static string GetGameObjectPath(GameObject obj)
     {
@@ -58,6 +80,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     {
       return menuName.Replace(" ", "").Replace("\\", "");
     }
+
     public static string TranslateMenuNameToParameterName(string menuName, bool forceMachineName)
     {
       if (forceMachineName)
@@ -72,13 +95,24 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     public static List<GameObject> GetAllChildGameObjects(this GameObject parent)
     {
-        List<GameObject> result = new List<GameObject>();
-        foreach (Transform child in parent.transform)
-        {
-            result.Add(child.gameObject);
-            result.AddRange(child.gameObject.GetAllChildGameObjects());
-        }
-        return result;
+      List<GameObject> result = new List<GameObject>();
+      foreach (Transform child in parent.transform)
+      {
+        result.Add(child.gameObject);
+        result.AddRange(child.gameObject.GetAllChildGameObjects());
+      }
+      return result;
+    }
+
+    public static string GetFullTransformPath(Transform current)
+    {
+      string path = current.name;
+      while (current.parent != null)
+      {
+        current = current.parent;
+        path = current.name + "/" + path;
+      }
+      return path;
     }
 
 #if UNITY_EDITOR
@@ -125,14 +159,29 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       path.Reverse();
       return string.Join("/", path);
     }
+
+    public static bool CheckIfChildrenHaveSkinnedMeshRenderers(GameObject parentGameObject)
+    {
+      SkinnedMeshRenderer[] skinnedMeshRenderers = parentGameObject.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+      if (skinnedMeshRenderers.Length > 0)
+      {
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+
 #endif
   }
+
 #if UNITY_EDITOR
   public class CoreDebugPrintMenu
   {
-    private const string MENU_PATH =
-      "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Console Debug Print Enable";
+    private const string MENU_PATH = "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Console Debug Print Enable";
     private const string EDITOR_PREFS_KEY = Constants.DEBUG_PRINT_EDITOR_PREF;
+
     [MenuItem(MENU_PATH)]
     private static void ToggleConsoleDebugPrint()
     {
@@ -148,7 +197,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, false));
       return true;
     }
-
   }
-  #endif
+#endif
 }

@@ -34,25 +34,31 @@ public partial class CVRFuryMenuStoreEditor : Editor
       // find the 'forceMachineName' property
       SerializedProperty forceMachineNameProperty = element.FindPropertyRelative("forceMachineName");
 
-      // Create a string that contains the information to display
-      string info = " " + TranslateMenuNameToParameterName(nameProperty.stringValue, forceMachineNameProperty.boolValue);
+      // find the 'MachineName' property
+      SerializedProperty machineNameProperty = element.FindPropertyRelative("MachineName");
 
-      // Display the 'Parameter:' label using EditorGUI.PrefixLabel
-      EditorGUI.PrefixLabel(
-        new Rect(rect.x, rect.y + 2 * EditorGUIUtility.singleLineHeight, rect.width, EditorGUIUtility.singleLineHeight),
-        new GUIContent("Parameter:")
-      );
+      // find the 'nameLinkedToMachineName' property
+      SerializedProperty nameLinkedToMachineNameProperty = element.FindPropertyRelative("nameLinkedToMachineName");
 
-      // Display the info string using EditorGUI.LabelField
-      EditorGUI.LabelField(
-        new Rect(
-          rect.x + EditorGUIUtility.labelWidth,
-          rect.y + 2.1f * EditorGUIUtility.singleLineHeight,
-          rect.width - EditorGUIUtility.labelWidth,
-          EditorGUIUtility.singleLineHeight
-        ),
-        info
-      );
+      // Legacy content fixer: auto generate the machine name based on the name property
+      legacyMachineNameFieldUpdate(nameProperty, machineNameProperty);
+
+      // if the 'forceMachineName' property is true, then set the 'nameLinkedToMachineName' property to false
+      if (forceMachineNameProperty.boolValue)
+      {
+        nameLinkedToMachineNameProperty.boolValue = false;
+      }
+
+      // if the nameLinkedToMachineNameProperty value is true, then use the TranslateMenuNameToParameterName function to generate a machine name
+      if (nameLinkedToMachineNameProperty.boolValue)
+      {
+        machineNameProperty.stringValue = TranslateMenuNameToParameterName(
+          nameProperty.stringValue,
+          forceMachineNameProperty.boolValue
+        );
+      }
+
+      renderMachineNameField(nameLinkedToMachineNameProperty, machineNameProperty, forceMachineNameProperty, rect);
 
       SerializedProperty defaultValueProperty = element.FindPropertyRelative("defaultValue");
 

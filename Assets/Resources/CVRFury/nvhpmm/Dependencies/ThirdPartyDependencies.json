@@ -7,7 +7,7 @@
       }
     ],
     "DependencyType": "Mandatory",
-    "Description": "CVR CCK package",
+    "Description": "CVR CCK package, 3.10 or later",
     "InstallCheckMode": "Scripting Define Symbol",
     "InstallCheckValue": "CVR_CCK_EXISTS",
     "Name": "CVR CCK"

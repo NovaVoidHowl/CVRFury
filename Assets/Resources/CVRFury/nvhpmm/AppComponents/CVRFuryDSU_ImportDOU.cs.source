@@ -1,0 +1,183 @@
+// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: [], type: "Editor"}
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using Newtonsoft.Json.Linq;
+using ABI.CCK.Scripts.Editor;
+using VF.Model.Feature;
+using VF.Component;
+using VF.Model;
+using Action = VF.Model.StateAction.Action;
+using VF.Model.StateAction;
+
+/// <summary>
+/// DeleteOnUpload import
+///
+/// </summary>
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public partial class CVRFuryDataStorageUnitEditor : Editor
+  {
+    private void importDeleteOnUploadFeature(
+      Tuple<string, FeatureModel, GameObject> featureClassInstance,
+      VisualElement rootVisualElement,
+      int positionInList,
+      int VRCFuryVersion
+    )
+    {
+      // if the VRCFuryVersion is not on the list of supported versions, return
+      if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(VRCFuryVersion))
+      {
+        return;
+      }
+
+      // Find the feature version for "DeleteDuringUpload"
+      int deleteDuringUploadVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+        .FirstOrDefault(kvp => kvp.Key == "DeleteDuringUpload")
+        .Value;
+
+      // Check if the version is supported for this feature
+      if (deleteDuringUploadVersion < VRCFuryVersion)
+      {
+        return;
+      }
+
+      // get the featureClassName name from the tuple
+      string featureClassName = featureClassInstance.Item1;
+
+      // get the DeleteDuringUpload feature from the tuple
+      FeatureModel importDeleteOnUploadFeature = featureClassInstance.Item2;
+
+      // get the moduleFoundOnObject from the tuple
+      GameObject moduleFoundOnObject = featureClassInstance.Item3;
+
+      // print the featureClassName to the console
+      // TODO: remove this debug log
+      // CoreLog("featureClassName is " + featureClassName);
+
+
+      // check if the feature is of the 'DeleteDuringUpload' type and if not return. note this is the VRCFury feature
+      // name, naming is not 1-to-1 with the class name
+      if (featureClassName != "DeleteDuringUpload")
+      {
+        // this console log is for debugging purposes
+        //CoreLog("feature at position "+positionInList+" is "+featureClassName+" not of the DeleteDuringUpload , returning");
+        return;
+      }
+
+      // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList = rootVisualElement.Q<VisualElement>(
+        "CVRFuryDataStorageUnitDataImportDetailsFeaturesList"
+      );
+
+      var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
+      var labelAtPosition = featuresList[positionInList] as Label;
+      if (labelAtPosition != null)
+      {
+        // add a white border to the label
+        labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
+
+        // edit the label text to include a suffix of the position in the list
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")";
+
+        // add a click event to the label
+        labelAtPosition.RegisterCallback<ClickEvent>(evt =>
+        {
+          // print to console that the label has been clicked
+          // TODO: remove this debug log
+          CoreLog("label at position " + positionInList + " has been clicked");
+
+          // get the list of modules from this DSU
+          var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
+
+          // check to see if the DSU already has an armatureLink module
+          if (modules.Any(module => module.GetType().Name == "deleteOnUpload"))
+          {
+            List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+            // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+            // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+            foreach (var module in modules.Where(module => module.GetType().Name == "deleteOnUpload"))
+            {
+              var armatureLinkModuleInstance = module as armatureLink;
+              if (armatureLinkModuleInstance.importedFromVRCFury && !armatureLinkModuleInstance.justImported)
+              {
+                modulesToRemove.Add(module);
+              }
+            }
+
+            // process the remove list
+            foreach (var module in modulesToRemove)
+            {
+              modules.Remove(module);
+            }
+          }
+
+          // cast the feature to the DeleteDuringUpload type
+          DeleteDuringUpload VRCFuryDeleteOnUpload = (DeleteDuringUpload)importDeleteOnUploadFeature;
+
+          // create a new deleteOnUpload module
+          deleteOnUpload deleteOnUploadModule = new deleteOnUpload();
+
+          // set the importedFromVRCFury flag to true
+          deleteOnUploadModule.importedFromVRCFury = true;
+
+          // set the importedFromVRCFury flag to true
+          deleteOnUploadModule.justImported = true;
+
+          // ---- deleteOnUploadModule specific properties ----
+          // when converting from VRCFury to CVRFury, it should be noted that:
+          // - the 'target' property of the CVRFury module is going to be the game object that the VRCFury component is
+          //   attached to.
+
+          // get the game object that the DSU is attached to ( as it has to be on the same game object as the VCRFury component)
+          GameObject DSUGameObject = ((CVRFuryDataStorageUnit)target).gameObject;
+
+          // check if the VRCFury component is attached to the DSU game object
+          if (DSUGameObject.GetComponent<VRCFury>() == null)
+          {
+            // print to console that the VRCFury component is not attached to the DSU game object
+            CoreLog("VRCFury component is not attached to the DSU game object");
+            return;
+          }
+
+          // get the game object that the VRCFury component is attached to
+          deleteOnUploadModule.target = DSUGameObject;
+
+          // set the moduleFoundOnObject to the moduleFoundOnObject
+          deleteOnUploadModule.moduleFoundOnObject = moduleFoundOnObject;
+
+          // ---- end armatureLink specific properties ----
+
+          // add the armatureLinkModule to the DSU
+          modules.Add(deleteOnUploadModule);
+
+          // reload the UI finalise UI
+          updateFinaliseUI();
+        });
+      }
+      else
+      {
+        // print to console that the label is null
+        CoreLog("label at position " + positionInList + " is null");
+      }
+    }
+
+    // class end
+  }
+  // namespace end
+}
+#endif

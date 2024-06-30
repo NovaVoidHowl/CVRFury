@@ -1,0 +1,296 @@
+// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE_UI", dependencies: [], type: "Editor"}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+using Math = System.Math;
+using System.Collections;
+using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Components;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public class ModalWindow : EditorWindow
+  {
+    private static GameObject uploadedObject;
+    private static double openTime;
+    private static double closeTime;
+
+    private static EditorApplication.CallbackFunction updateProgressBarAction;
+    private static EditorApplication.CallbackFunction closeWindowAction;
+    private static ProgressBar progressBar;
+    private static List<ProgressBar> subProgressBars = new List<ProgressBar>();
+
+    private static CVRFuryDataStorageUnit[] _dataStorageUnits;
+    private static string _pathToUploadedObject;
+
+    public static void ShowWindow(GameObject targetObject, CVRFuryDataStorageUnit[] dataStorageUnits, string pathToUploadedObject)
+    {
+      uploadedObject = targetObject;
+
+      // Store the dataStorageUnits and pathToUploadedObject in static fields
+      _dataStorageUnits = dataStorageUnits;
+      _pathToUploadedObject = pathToUploadedObject;
+
+      // check if any of targetObject, dataStorageUnits or pathToUploadedObject are null
+      if (uploadedObject == null || dataStorageUnits == null || pathToUploadedObject == null)
+      {
+        // if any of targetObject, dataStorageUnits or pathToUploadedObject are null, then stop here and force close the window
+        CoreLogCritical("[ID MIC-227]  targetObject, dataStorageUnits or pathToUploadedObject is null\n"+
+                  " please report this to the CVRFury project"
+                  );
+        // bail out
+        return;
+      }
+
+      var mainWindowPos = EditorGUIUtility.GetMainWindowPosition();
+      var size = new Vector2(600, 600);
+      ModalWindow window = ScriptableObject.CreateInstance<ModalWindow>();
+      window.position = new Rect(mainWindowPos.xMin + (mainWindowPos.width - size.x) * 0.5f, mainWindowPos.yMin + 100, size.x, size.y);
+      window.ShowPopup();
+      // print to console to show that the window has been shown
+      CoreLogDebug("ModalWindow shown");
+    }
+
+    public static void UpdateSubProgressBar(int index, float progress)
+    {
+      if (index >= 0 && index < subProgressBars.Count)
+      {
+        subProgressBars[index].value = progress;
+      }
+    }
+
+    public void OnEnable()
+    {
+      // load base UXML
+      var baseTree = Resources.Load<VisualTreeAsset>(
+        Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryBuildUI/UnityUXML/buildProgressWindow"
+      );
+
+      // Check if the UXML file was loaded
+      if (baseTree == null)
+      {
+        CoreLogError(
+          "Failed to load UXML file at 'UnityUXML/buildProgressWindow'. Please ensure the file exists at the specified path."
+        );
+        // If the UXML file was not loaded add a new label to the root.
+        rootVisualElement.Add(new Label("CRITICAL ERROR : UXML could not be loaded."));
+        return;
+      }
+
+      // Load and apply the stylesheet
+      var stylesheet = Resources.Load<StyleSheet>(
+        Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryBuildUI/UnityStyleSheets/buildProgressWindow"
+      );
+
+      // Check if the StyleSheet was loaded
+      if (stylesheet == null)
+      {
+        CoreLogError(
+          "Failed to load StyleSheet at 'UnityStyleSheets/buildProgressWindow'. Please ensure the file exists at the specified path."
+        );
+        // If the StyleSheet was not loaded add a new label to the root.
+        rootVisualElement.Add(new Label("CRITICAL ERROR : StyleSheet could not be loaded."));
+        return;
+      }
+
+      // Instantiate the UXML tree into a TemplateContainer
+      var templateContainer = baseTree.CloneTree();
+
+      // Create a temporary list to hold the children
+      var children = new List<VisualElement>(templateContainer.Children());
+
+      // Add the children of the TemplateContainer to the rootVisualElement
+      foreach (var child in children)
+      {
+          rootVisualElement.Add(child);
+      }
+
+      // Apply the StyleSheet
+      rootVisualElement.styleSheets.Add(stylesheet);
+
+      // get the CVRFuryDataStorageUnit components
+      var dataStorageUnits = _dataStorageUnits;
+
+      if (dataStorageUnits == null)
+      {
+        // if dataStorageUnits is null, then stop here and force close the window
+        CoreLogCritical("[ID MIC-333]  dataStorageUnits is null\n"+
+                  " looks like the CVR CCK has already stripped the CVRFuryDataStorageUnit components from the uploadedObject\n"+
+                  " this is a race condition, and needs to be fixed, please report this to the CVRFury project"
+                 );
+        closeTime = 0;
+        CloseWindow();
+      }
+      else
+      {
+        //ok so we have dataStorageUnits, let's continue
+
+        // get the number of CVRFuryDataStorageUnit components
+        int numDataStorageUnits = dataStorageUnits.Length;
+
+        // check that the number of CVRFuryDataStorageUnit components is greater than 0
+        if (numDataStorageUnits <= 0)
+        {
+          // if there are no CVRFuryDataStorageUnit components present on the uploadedObject
+          // stop here and force close the window
+          CoreLogCritical("[ID MIC-352] dataStorageUnits not found\n"+
+                  " looks like the CVR CCK has already stripped the CVRFuryDataStorageUnit components from the uploadedObject\n"+
+                  " this is a race condition, and needs to be fixed, please report this to the CVRFury project"
+                 );
+          closeTime = 0;
+          CloseWindow();
+        }
+        else
+        {
+          // and we have one or more of dataStorageUnits, so let's continue
+          // get the BuildProgressWindowTitle label and set its text
+          var buildProgressWindowTitle = rootVisualElement.Q<Label>("BuildProgressWindowTitle");
+          buildProgressWindowTitle.text = "Installing CVR Fury Modules on: " + uploadedObject.name;
+
+          // get the BuildProgressWindowPathToUploadedObject label and set its text
+          var buildProgressWindowPathToUploadedObject = rootVisualElement.Q<Label>("BuildProgressWindowPathToUploadedObject");
+          buildProgressWindowPathToUploadedObject.text = "Path : " + _pathToUploadedObject;
+
+          // get the BuildProgressWindowMessage label and set its text
+          var buildProgressWindowMessage = rootVisualElement.Q<Label>("BuildProgressComponentsMessage");
+          buildProgressWindowMessage.text = "Number of CVRFuryDataStorageUnit components: " + numDataStorageUnits;
+
+          // get the BuildProgressBarHolder and add a new ProgressBar to it
+          var buildProgressBarHolder = rootVisualElement.Q<VisualElement>("BuildProgressBarHolder");
+          progressBar = new ProgressBar();
+          progressBar.value = 0;
+          buildProgressBarHolder.Add(progressBar);
+
+          // get the BuildSubProgressBarsHolder and add a new ProgressBar to it for each CVRFuryDataStorageUnit
+          var buildSubProgressBarsHolder = rootVisualElement.Q<VisualElement>("BuildSubProgressBarsHolder");
+
+          // Clear the list of sub-progress bars
+          subProgressBars.Clear();
+
+          // for each name in dataStorageUnitNames add a new ProgressBar to buildSubProgressBarsHolder
+          foreach (var dataStorageUnit in dataStorageUnits)
+          {
+            // get the name of the object the CVRFuryDataStorageUnit is on
+            string name = dataStorageUnit.gameObject.name;
+            // get the number of Modules in the CVRFuryDataStorageUnit
+            int numModules = dataStorageUnit.modules.modules.Count;
+
+            // create a new ProgressBar
+            var subProgressBar = new ProgressBar();
+            subProgressBar.value = 0;
+            buildSubProgressBarsHolder.Add(subProgressBar);
+            // add a name to the ProgressBar so it can be styled
+            subProgressBar.name = "SubProgressBar";
+            // add a label to the ProgressBar with the name of the CVRFuryDataStorageUnit
+            Label subProgressBarLabel = new Label(name + " (" + numModules + " modules)");
+            // add a name to the ProgressBar so it can be styled
+            subProgressBarLabel.name = "SubProgressBarText";
+            subProgressBar.Add(subProgressBarLabel);
+
+            // Add the sub-progress bar to the list
+            subProgressBars.Add(subProgressBar);
+
+          }
+        }
+      }
+      // Set openTime to the current time
+      openTime = EditorApplication.timeSinceStartup;
+
+      updateProgressBarAction = () => UpdateProgressBar();
+      closeWindowAction = CloseWindow;
+
+      EditorApplication.update += updateProgressBarAction;
+      EditorApplication.update += closeWindowAction;
+    }
+
+    private static void UpdateProgressBar()
+    {
+      // failsafe if subProgressBar is null set closeTime to 1 second in the future
+      if (subProgressBars == null)
+      {
+        if (closeTime == 0)
+        {
+          closeTime = EditorApplication.timeSinceStartup + 1;
+        }
+      }
+      else
+      {
+        // ok so the subProgressBars is not null, let's continue
+        // check if there are any sub-progress bars
+        if (subProgressBars.Count == 0)
+        {
+          // if there are no sub-progress bars, then set the closeTime to 1 second in the future
+          if (closeTime == 0)
+          {
+            closeTime = EditorApplication.timeSinceStartup + 1;
+          }
+        }
+        else
+        {
+
+          // Calculate the total progress of all sub-progress bars
+          float totalSubProgress = 0;
+          foreach (var subProgressBar in subProgressBars)
+          {
+            totalSubProgress += subProgressBar.value;
+          }
+
+          // Calculate the average progress of all sub-progress bars
+          float averageSubProgress = totalSubProgress / subProgressBars.Count;
+
+          // failsafe if progressBar is null set closeTime to 1 second in the future
+          if (progressBar == null)
+          {
+            if (closeTime == 0)
+            {
+              closeTime = EditorApplication.timeSinceStartup + 1;
+            }
+          }
+          else
+          {
+            // progress bar is not null, so set the main progress bar value to the average sub-progress
+            // Set the main progress bar value to the average sub-progress
+            progressBar.value = averageSubProgress;
+
+            if (progressBar.value >= 100 && closeTime == 0)
+            {
+              // Set the close time to 2 seconds in the future
+              closeTime = EditorApplication.timeSinceStartup + 2;
+            }
+          }
+        }
+      }
+    }
+
+    private static void CloseWindow()
+    {
+
+      if (closeTime > 0 && EditorApplication.timeSinceStartup > closeTime)
+      {
+        // Unsubscribe UpdateProgressBar and CloseWindow from EditorApplication.update
+        EditorApplication.update -= updateProgressBarAction;
+        EditorApplication.update -= closeWindowAction;
+
+        // debug print to show that the window is closing
+        CoreLogDebug("ModalWindow closing");
+
+        // Close the window
+        GetWindow<ModalWindow>().Close();
+      }
+    }
+  }
+
+}
+
+// #endif

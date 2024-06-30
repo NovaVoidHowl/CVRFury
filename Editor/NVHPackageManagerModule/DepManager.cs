@@ -42,8 +42,6 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
   public partial class ToolSetup : EditorWindow
   {
     private Vector2 scrollPosition;
-    private const float MIN_WIDTH = 700f;
-    private const float MIN_HEIGHT = 600f;
 
     [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Tool Setup", false, 10000)]
     public static void ShowWindow()
@@ -51,7 +49,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       ToolSetup window = (ToolSetup)
         EditorWindow.GetWindow(typeof(ToolSetup), true, "Tool Setup - " + Constants.PROGRAM_DISPLAY_NAME);
       window.maxSize = new Vector2(2000, 2000);
-      window.minSize = new Vector2(800, 300);
+      window.minSize = new Vector2(900, 300);
       window.Show();
     }
 
@@ -367,7 +365,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         catch (JsonReaderException ex)
         {
           CoreLog(ex.Message);
-          CoreLog("suspect legacy format internal package");
+          CoreLog("suspect legacy format internal package"+ firstLine);
+
           // if it does not parse as json, then it is not the line we want
           // set dict to null, so we can see that it is not valid
           dict = null;
@@ -381,6 +380,35 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       }
 
       return dict;
+    }
+
+    private string getTypeOfAppComponentFromFile(string file)
+    {
+      Dictionary<string, object> dict = getInternalPackageInfoFromFile(file);
+      string typeOfAppComponent;
+
+      if (dict != null)
+      {
+        // check if there is a 'type' key in the dictionary
+        if (!dict.ContainsKey("type"))
+        {
+          // if there is no 'type' key, so we can't get the typeOfAppComponent string
+          // set the typeOfAppComponent string to empty
+          typeOfAppComponent = "";
+        }
+        else
+        {
+          // get the value of the 'type' key as a string
+          typeOfAppComponent = dict["type"].ToString();
+        }
+      }
+      else
+      {
+        // if the dictionary is null, then the file does not contain the line we want
+        // set the typeOfAppComponent string to empty
+        typeOfAppComponent = "Unknown";
+      }
+      return typeOfAppComponent;
     }
 
     private string getVersionFromFile(string file)

@@ -18,3 +18,14 @@
   border-color: #ffffff;
 
 }
+
+#featureAdderContainerV2{
+  margin-top: 10px;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-width: 1px 1px 1px 1px;
+  border-color: #ffffff;
+
+}

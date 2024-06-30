@@ -27,6 +27,13 @@ namespace VF.Component
       }
     }
 
+    public static Action _OnValidate;
+
+    private void OnValidate()
+    {
+      _OnValidate?.Invoke();
+    }
+
     public override int GetLatestVersion()
     {
       return 1;

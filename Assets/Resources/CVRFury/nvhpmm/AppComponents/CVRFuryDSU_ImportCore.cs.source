@@ -1,0 +1,341 @@
+// { "version": "0.1.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: [], type: "Editor"}
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using Newtonsoft.Json.Linq;
+using ABI.CCK.Scripts.Editor;
+using VF.Model.Feature;
+using VF.Component;
+using VF.Model;
+using Action = VF.Model.StateAction.Action;
+using VF.Model.StateAction;
+
+/// <summary>
+/// Full Controller
+/// this imports/convert from VRCFury
+/// </summary>
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public partial class CVRFuryDataStorageUnitEditor : Editor
+  {
+    private void importVRCFuryFeaturesViaUI()
+    {
+      // get the gameObject this component is attached to
+      var DSUgameObject = ((CVRFuryDataStorageUnit)target).gameObject;
+
+      // check how many VRCFuryComponents are on the gameObject
+      VRCFuryComponent[] VRCFuryComponents = DSUgameObject.GetComponentsInChildren<VRCFuryComponent>();
+
+      // if there are no VRCFuryComponents on the gameObject, return
+      if (VRCFuryComponents.Length == 0)
+      {
+        return;
+      }
+
+      // list to store component versions
+      List<int> componentVersions = new List<int>();
+
+      // get the VRCFuryComponents on the gameObject
+      foreach (VRCFuryComponent VRCFuryComponent in VRCFuryComponents)
+      {
+        // check if the VRCFuryComponent is null
+        if (VRCFuryComponent == null)
+        {
+          // if the VRCFuryComponent is null, send a warning to the console
+          Debug.LogWarning("VRCFuryComponent is null");
+          continue; // continue to the next VRCFuryComponent
+        }
+
+        // get the VRCFury from the VRCFuryComponent
+        VRCFury fury = VRCFuryComponent as VRCFury;
+
+        // get the version of the VRCFury
+        int instanceVersion = fury.Version;
+
+        // check if the instanceVersion is on the import supported list
+        if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(instanceVersion))
+        {
+          // if the instanceVersion is not on the import supported list, send a warning to the console
+          Debug.LogWarning("VRCFury version " + instanceVersion + " is not supported for import");
+          continue; // continue to the next VRCFuryComponent
+        }
+
+        // now we have a viable VRCFuryComponent
+
+        // add the instanceVersion to the componentVersions list
+        componentVersions.Add(instanceVersion);
+
+        // debug print the name of the gameObject the VRCFuryComponent is attached to
+        CoreLogDebug("VRCFuryComponent on gameObject: " + VRCFuryComponent.gameObject.name);
+      }
+
+      // deduplicate the componentVersions list
+      componentVersions = componentVersions.Distinct().ToList();
+
+      // check there is only one element in the componentVersions list
+      // (only one version of VRCFury is supported for import per DSU)
+      if (componentVersions.Count != 1)
+      {
+        // if there is not only one element in the componentVersions list, send a warning to the console
+        Debug.LogWarning("Only one version of VRCFury is supported for import per DSU");
+
+        // popup a dialog to inform the user
+        EditorUtility.DisplayDialog(
+          "Import Error",
+          "Only one version of VRCFury is supported for import per DSU"+
+          "\n\n"+
+          "you currently have "+componentVersions.Count+" versions of VRCFury on this gameObject",
+          "OK"
+        );
+
+        return;
+      }
+
+      // set the version to the first element in the componentVersions list
+      int version = componentVersions[0];
+
+      switch (version)
+      {
+        case 2:
+          // import VRCFury version 2
+          importVRCFury(VRCFuryComponents, 2);
+          break;
+        case 3:
+          // import VRCFury version 3
+          importVRCFury(VRCFuryComponents, 3);
+          break;
+        default:  // default case
+          // send a warning to the console
+          Debug.LogWarning("VRCFury version " + version + " is not supported for import");
+          break;
+      }
+      
+
+      updateFinaliseUI();
+    }
+
+    private void importVRCFury(VRCFuryComponent[] furyComponents, int version)
+    {
+    
+      // list for the feature class names
+      // name, FeatureModel instance, moduleFoundOnObject
+      List<Tuple<string, FeatureModel, GameObject>> featureClassInstances = new List<Tuple<string, FeatureModel, GameObject>>();
+
+      if (furyComponents != null)
+      {
+        // ok so what we do here depends on the version of VRCFury we are importing from
+
+        switch (version)
+        {
+          case 2:
+            // for each VRCFuryComponent, import the features from the 'config' of each VRCFury component
+            foreach (VRCFuryComponent furyComponent in furyComponents)
+            {
+              // get the VRCFury from the VRCFuryComponent
+              VRCFury fury = furyComponent as VRCFury;
+
+              // access the config property
+              VRCFuryConfig config = fury.config;
+
+              // get the gameObject the VRCFuryComponent is attached to
+              GameObject gameObject = fury.gameObject;
+
+              // iterate through the features, and list the class names
+              foreach (FeatureModel feature in config.features)
+              {
+                // add the class name and the feature to the featureClassInstances list
+                featureClassInstances.Add(new Tuple<string, FeatureModel, GameObject>(feature.GetType().Name, feature, gameObject));
+              }
+            }
+            break;
+          case 3:
+            // for each VRCFuryComponent, import the feature (v3 only ever has one feature), from the 'content' property
+            foreach (VRCFuryComponent furyComponent in furyComponents)
+            {
+              // get the VRCFury from the VRCFuryComponent
+              VRCFury fury = furyComponent as VRCFury;
+
+              // access the content property
+              FeatureModel content = fury.content;
+
+              // get the gameObject the VRCFuryComponent is attached to
+              GameObject gameObject = fury.gameObject;
+
+              // add the class name and the feature to the featureClassInstances list
+              featureClassInstances.Add(new Tuple<string, FeatureModel, GameObject>(content.GetType().Name, content, gameObject));
+            }
+            break;
+          default:  // default case
+            // send a warning to the console
+            Debug.LogWarning("VRCFury version " + version + " is not supported for import");
+            break;
+        }
+
+      }
+      else
+      {
+        // converted component is null
+        // send a warning to the console
+        Debug.LogWarning("VRCFuryComponent converted to VRCFury is null");
+        return;
+      }
+
+      // at this point we have a viable list of featureClassInstances in use, on the gameObject
+
+      // if there are no features to import, return
+      if (featureClassInstances.Count == 0)
+      {
+        return;
+      }
+
+      // at this point we have a viable list of featureClassInstances that is not empty.
+      // so all import triggers can go here
+
+      // position in the list
+      int positionInList = 0;
+      // loop featureClassInstances
+      foreach (Tuple<string, FeatureModel, GameObject> featureClassInstance in featureClassInstances)
+      {
+        //--------------------------------------------------------------------------------------------
+        // process feature instance depending on type of feature
+        // modular list of process functions go here
+        // note the function should expect a single feature instance as an argument
+        // along with the rootVisualElement (so it can update/customise the UI) and the positionInList
+        // it is expected that the function will update the UI as required (rootVisualElement.MarkDirtyRepaint();)
+#if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_AOU
+        importApplyOnUploadFeature(featureClassInstance, rootVisualElement, positionInList, version);
+#endif
+
+#if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_FULLCONTROLLER
+        importFullControllerFeature(featureClassInstance, rootVisualElement, positionInList, version);
+#endif
+
+#if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_ARMATURELINK
+        importArmatureLinkFeature(featureClassInstance, rootVisualElement, positionInList, version);
+#endif
+
+#if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_SIFP
+        importShowInFirstPersonFeature(featureClassInstance, rootVisualElement, positionInList, version);
+#endif
+
+#if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_DOU
+        importDeleteOnUploadFeature(featureClassInstance, rootVisualElement, positionInList, version);
+#endif
+
+        //--------------------------------------------------------------------------------------------
+        // increment position in list
+        positionInList++;
+      }
+    }
+
+    private void updateFinaliseUI()
+    {
+      // get the list of modules from this DSU
+      var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
+
+      // bool to check if any modules have been imported
+      bool modulesImported = false;
+
+      // loop through the modules
+      foreach (var module in modules)
+      {
+        // check if the module has the 'justImported' bool set to true
+        if (module.justImported)
+        {
+          // if the module has the 'justImported' bool set to true, set modulesImported to true
+          modulesImported = true;
+          // break the loop, if even one module has been imported we need to act on that.
+          break;
+        }
+      }
+
+      // if modulesImported is true, update the UI
+      // this will add a label 'button' to the UI to allow the user to finalise the import
+
+
+      // get the CVRFuryDataStorageUnitDataImportDetails visual element
+      var CVRFuryDataStorageUnitDataImportDetails = rootVisualElement.Q<VisualElement>(
+        "CVRFuryDataStorageUnitDataImportDetails"
+      );
+
+      // check if there are any modules that have been imported
+      if (modulesImported)
+      {
+        // add a label to CVRFuryDataStorageUnitDataImportDetails visual element,
+        // to allow the user to finalise the import
+
+        // check if the finaliseImportLabel already exists
+        if (CVRFuryDataStorageUnitDataImportDetails.Q<Label>("finaliseImportLabel") != null)
+        {
+          // if the finaliseImportLabel already exists, return
+          return;
+        }
+
+        // create a new label
+        var finaliseImportLabel = new Label("Finalise Current Imports");
+        finaliseImportLabel.name = "finaliseImportLabel";
+
+        // add the label to the CVRFuryDataStorageUnitDataImportDetails visual element
+        CVRFuryDataStorageUnitDataImportDetails.Add(finaliseImportLabel);
+
+        // add a click event to the label
+        finaliseImportLabel.RegisterCallback<ClickEvent>(ev =>
+        {
+          // call the finaliseImport function
+          finaliseModuleImport(modules);
+        });
+
+        // add class to the label, to style it
+        finaliseImportLabel.AddToClassList("finaliseImportLabel");
+      }
+      else
+      {
+        // get the finaliseImportLabel
+        Label finaliseImportLabel = CVRFuryDataStorageUnitDataImportDetails.Q<Label>("finaliseImportLabel");
+        if (finaliseImportLabel != null)
+        {
+          // if there is already a finaliseImportLabel, remove it
+          CVRFuryDataStorageUnitDataImportDetails.Remove(finaliseImportLabel);
+        }
+
+        // repaint the CVRFuryDataStorageUnitDataImportDetails visual element
+        CVRFuryDataStorageUnitDataImportDetails.MarkDirtyRepaint();
+      }
+    }
+
+    private void finaliseModuleImport(List<CVRFuryModule> modules)
+    {
+      // loop through the modules
+      foreach (var module in modules)
+      {
+        // check if the module has the 'justImported' bool set to true
+        if (module.justImported)
+        {
+          // if the module has the 'justImported' bool set to true, set it to false
+          module.justImported = false;
+        }
+      }
+
+      // update the UI
+      updateFinaliseUI();
+    }
+
+    // end of class
+  }
+
+  // end of namespace
+}
+#endif

@@ -157,4 +157,15 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   }
   #endregion
 
+  public class DropdownParameter
+  {
+    public string machineName;
+    public List<DropdownParameterPair> pairs = new List<DropdownParameterPair>();
+  }
+  
+  [System.Serializable]
+  public class DropdownParameterPair{
+    public string name;
+    public float value = 0;
+  }
 }
