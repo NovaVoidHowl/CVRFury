@@ -1,4 +1,4 @@
-// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: [], type: "Editor"}
+// { "version": "0.2.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_FULLCONTROLLER", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -454,8 +454,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             }
           }
 
-          // clean out any null entries in the parameters list
-          fullControllerModule.parameters = fullControllerModule.parameters.Where(x => x.parameters != null).ToList();
+          if (fullControllerModule.parameters != null)
+          {
+            // clean out any null entries in the parameters list
+            fullControllerModule.parameters = fullControllerModule.parameters.Where(x => x.parameters != null).ToList();
+          }
 
           // check if there are any smoothed parameters
           if (smoothedPrms.Count > 0)
