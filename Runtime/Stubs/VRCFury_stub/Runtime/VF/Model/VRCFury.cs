@@ -10,6 +10,7 @@ using Action = VF.Model.StateAction.Action;
 
 namespace VF.Model
 {
+  [HelpURL("")]
   [AddComponentMenu("")] // hide from add component menu
   public class VRCFury : VRCFuryComponent
   {
