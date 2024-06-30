@@ -403,7 +403,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
               await Task.Delay(barDelay);
 
               // in the new  file, replace  the line m_Script: $IDString
-              // with m_Script: $CVRFURY_M_SCRIPT_ID , which is the stubbed version of the script
+              // with m_Script: $CVRFURY_PHYSB_M_SCRIPT_ID , which is the stubbed version of the script
 
               // read the new file as plain text
               var newFileString = File.ReadAllText(newFilePath);
@@ -414,7 +414,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
               progressBar.value = 30;
 
               // replace the line in the file
-              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + Constants.CVRFURY_M_SCRIPT_ID);
+              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + Constants.CVRFURY_PHYSB_M_SCRIPT_ID);
 
               // set the text of the progressLabel to "80% -- Rebinding Script"
               progressLabel.text = "80% -- Rebinding Script";

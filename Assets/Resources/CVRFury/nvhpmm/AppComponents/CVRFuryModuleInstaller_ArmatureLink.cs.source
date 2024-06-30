@@ -1,4 +1,4 @@
-// { "version": "0.2.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.2.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1970,7 +1970,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       foreach (string scriptID in Constants.VRCPHYSBONE_M_SCRIPT_IDS)
       {
         // replace the scriptID with Constants.VRCPHYSBONE_M_SCRIPT_ID
-        animationClipText = animationClipText.Replace(scriptID, Constants.CVRFURY_M_SCRIPT_ID);
+        animationClipText = animationClipText.Replace(scriptID, Constants.CVRFURY_PHYSB_M_SCRIPT_ID);
 
         // increment the replacements counter
         replacements++;

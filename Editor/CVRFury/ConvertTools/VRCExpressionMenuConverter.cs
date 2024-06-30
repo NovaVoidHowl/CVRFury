@@ -25,7 +25,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
     {
       "{fileID: -340790334, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}"
     };
-    private const string CVRFURY_M_SCRIPT_ID = "{fileID: 11500000, guid: d2b1b7e16fd63f64d8da1c4065469b76, type: 3}";
+    private const string CVRFURY_PHYSB_M_SCRIPT_ID = "{fileID: 11500000, guid: d2b1b7e16fd63f64d8da1c4065469b76, type: 3}";
 
     // Declare textField as a member variable
     private TextField textField;
@@ -539,7 +539,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               await Task.Delay(barDelay);
 
               // in the new  file, replace  the line m_Script: $IDString
-              // with m_Script: $CVRFURY_M_SCRIPT_ID , which is the CVRFury version of VRCExpressionMenu
+              // with m_Script: $CVRFURY_PHYSB_M_SCRIPT_ID , which is the CVRFury version of VRCExpressionMenu
 
               // read the new file as plain text
               var newFileString = File.ReadAllText(newFilePath);
@@ -550,7 +550,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               progressBar.value = 15;
 
               // replace the line in the file
-              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_M_SCRIPT_ID);
+              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_PHYSB_M_SCRIPT_ID);
 
               // set the text of the progressLabel
               progressLabel.text = "30% -- Rebinding Script";
@@ -681,6 +681,24 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     string machineName = GetCVRFuryMenuSectionMachineName(control);
                     // check if the parameter is in the parameterNamesAndTypes list
                     var parameter = parameterNamesAndTypes.Find(x => x.Item1 == machineName);
+                    
+                    // check if the parameter is null
+                    if (parameter == null)
+                    {
+                      // this happens when there is no parameters file, or the parameter is not in the file
+                      // most commonly the case when people are putting dummy buttons in the menu as credits etc.
+
+                      // TODO : add a way of handling this better, that just skipping the control
+                      // maybe a credits holding class to store these off to, and then display them in a different way
+                      // likely will need a mod for CVR to support this
+                      
+                      // send a warning to the console and continue
+                      CoreLog("Parameter " + machineName + " not found in the parameters file, and will be skipped");
+                      continue;
+                    }
+                    
+                    // now we are safe to get the type of the parameter
+                    
                     // get the type of the parameter
                     var parameterType = parameter.Item2;
 
@@ -1151,8 +1169,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
         if (menuFileString.ToString().Contains("m_Script:"))
         {
           // if the string contains the line 'm_Script: '
-          // check if the string contains the line 'm_Script: ' + CVRFURY_M_SCRIPT_ID
-          if (menuFileString.ToString().Contains("m_Script: " + CVRFURY_M_SCRIPT_ID))
+          // check if the string contains the line 'm_Script: ' + CVRFURY_PHYSB_M_SCRIPT_ID
+          if (menuFileString.ToString().Contains("m_Script: " + CVRFURY_PHYSB_M_SCRIPT_ID))
           {
             // got a match so set the output vars
             IDmatch = true;

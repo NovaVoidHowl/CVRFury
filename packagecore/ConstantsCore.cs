@@ -69,7 +69,16 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     {
       "{fileID: 1661641543, guid: 2a2c05204084d904aa4945ccff20d8e5, type: 3}"
     };
-    public const string CVRFURY_M_SCRIPT_ID = "{fileID: 11500000, guid: 475333861f76b9b43af5db2ad0c0c67d, type: 3}";
+    public const string CVRFURY_PHYSB_M_SCRIPT_ID = "{fileID: 11500000, guid: 475333861f76b9b43af5db2ad0c0c67d, type: 3}";
+
+    // this is for the VRC Animator Driver Stub
+    public static readonly List<string> ANIMATOR_DRIVER_M_SCRIPT_IDS = new List<string>
+    {
+      "{fileID: -706344726, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}"
+    };
+
+    public const string CVRFURY_ANIMDRIVER_M_SCRIPT_ID = "{fileID: 11500000, guid: 3e00de38bef9e114ca08fe6faa7bb341, type: 3}";
+   
 
   }
 }
