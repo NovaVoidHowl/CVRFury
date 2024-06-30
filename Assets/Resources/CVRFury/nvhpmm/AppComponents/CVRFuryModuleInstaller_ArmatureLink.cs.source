@@ -1,4 +1,4 @@
-// { "version": "0.1.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.2.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -347,10 +347,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the Animator component from the avatar
       Animator animator = avatar.GetComponent<Animator>();
-      // get the HumanBodyBones enum value from the armatureBoneToLinkTo
-      HumanBodyBones boneToLinkTo = armatureLinkModule.armatureBoneToLinkTo;
-      // get the GameObject of the boneToLinkTo
-      GameObject boneToLinkToGameObject = animator.GetBoneTransform(boneToLinkTo).gameObject;
+
+      GameObject boneToLinkToGameObject = null;
+
+      // what we do to get the target 'boneToLinkToGameObject' is dependent on the avatarTargetingMode
+      // switch statement to handle the different avatarTargetingModes
+
+      boneToLinkToGameObject = GetBoneToLinkToGameObject(targetAvatar, animator, armatureLinkModule);
+
+      // if the boneToLinkToGameObject is null then there is an issue, log a error to the console and return
+      if (boneToLinkToGameObject == null)
+      {
+        // log as a critical error to the console, as this should not happen
+        CoreLogCritical("[ArmatureLink] boneToLinkToGameObject is null, this should not happen");
+        return;
+      }
 
       // now we have the target bone on the avatar, that we are going to merge this onto
 
@@ -766,9 +777,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           for (int i = 0; i < bonesToUpdate.Count; i++)
           {
             // debug print the name of the bone to update along with the index
-            CoreLogDebug("[ArmatureLink][mesh rebind] Bone to update: " + bonesToUpdate[i].name + " at index: " + i
-              + " of "
-              + bonesToUpdate.Count
+            CoreLogDebug(
+              "[ArmatureLink][mesh rebind] Bone to update: "
+                + bonesToUpdate[i].name
+                + " at index: "
+                + i
+                + " of "
+                + bonesToUpdate.Count
             );
             // new target bone
             Transform newBone;
@@ -1369,11 +1384,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the Animator component from the avatar
       Animator animator = avatar.GetComponent<Animator>();
 
-      // get the HumanBodyBones enum value from the armatureBoneToLinkTo
-      HumanBodyBones boneToLinkTo = armatureLinkModule.armatureBoneToLinkTo;
+      GameObject boneToLinkToGameObject = null;
 
-      // get the GameObject of the boneToLinkTo
-      GameObject boneToLinkToGameObject = animator.GetBoneTransform(boneToLinkTo).gameObject;
+      // what we do to get the target 'boneToLinkToGameObject' is dependent on the avatarTargetingMode
+      // switch statement to handle the different avatarTargetingModes
+      boneToLinkToGameObject = GetBoneToLinkToGameObject(targetAvatar, animator, armatureLinkModule);
+
+      // if the boneToLinkToGameObject is null then there is an issue, log a error to the console and return
+      if (boneToLinkToGameObject == null)
+      {
+        // log as a critical error to the console, as this should not happen
+        CoreLogCritical("[ArmatureLink] boneToLinkToGameObject is null, this should not happen");
+        return;
+      }
 
       // add a empty GameObject to the boneToLinkToGameObject, this is for insulation purposes
       GameObject addonParent = new GameObject("CVRF_Addon_" + DSUNumber);
@@ -2230,6 +2253,160 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         AssetDatabase.SaveAssets();
         EditorUtility.SetDirty(clip);
+      }
+    }
+
+    private GameObject GetBoneToLinkToGameObject(
+      GameObject targetAvatar,
+      Animator animator,
+      armatureLink armatureLinkModule
+    )
+    {
+      // check if animator is null, if it is then there is an issue, log an error to the console and return null
+      if (animator == null)
+      {
+        CoreLogError("[Armature Link] " + Constants.ERR_ARMATURELINK_ANIMATOR_NULL);
+        return null;
+      }
+      // check if armatureLinkModule is null, if it is then there is an issue, log an error to the console and return null
+      if (armatureLinkModule == null)
+      {
+        CoreLogError("[Armature Link] " + Constants.ERR_ARMATURELINK_ARMATURELINKMODULE_NULL);
+        return null;
+      }
+
+      switch (armatureLinkModule.avatarTargetingMode)
+      {
+        case AvatarLinkTargetingMode.basic:
+          // get the boneToLinkTo from the armatureLinkModule
+          HumanBodyBones boneToLinkTo = armatureLinkModule.armatureBoneToLinkTo;
+          // return the boneToLinkTo as a GameObject
+          return animator.GetBoneTransform(boneToLinkTo)?.gameObject;
+
+        case AvatarLinkTargetingMode.order:
+          // get the linkTargets from the armatureLinkModule
+          List<LinkTarget> linkTargets = armatureLinkModule.linkTargets;
+
+          // check if the linkTargets is null or empty, if it is then there is an issue, log an error to the console
+          // and return null
+          if (linkTargets == null || linkTargets.Count == 0)
+          {
+            CoreLogError("[Armature Link] " + Constants.ERR_ARMATURELINK_LINKTARGETS_EMPTY_NULL);
+            return null;
+          }
+
+          // bool to store if a linkTarget has been found
+          bool linkTargetFound = false;
+
+          // loop over the linkTargets
+          foreach (LinkTarget linkTarget in linkTargets)
+          {
+            // get linkType from the linkTarget
+            LinkTargetType linkType = linkTarget.linkType;
+
+            // get the linkedGameObject from the linkTarget
+            GameObject linkedGameObject = GetLinkedGameObject(linkType, linkTarget, animator, targetAvatar);
+
+            // if linkedGameObject is not null then break out of the loop
+            if (linkedGameObject != null)
+            {
+              linkTargetFound = true;
+              return linkedGameObject;
+            }
+          }
+
+          // if the linkTargetFound bool is not set to true by this point then there is an issue, and we need to return
+          // null
+          if (!linkTargetFound)
+          {
+            CoreLogError("[Armature Link] " + Constants.ERR_ARMATURELINK_NOLINKTARGETFOUND);
+            return null;
+          }
+          break; // Explicit break for clarity, even though logic doesn't reach here
+
+        case AvatarLinkTargetingMode.proximity:
+          // TODO: implement proximity targeting
+          CoreLogCritical("AvatarLinkTargetingMode.proximity not yet implemented");
+          return null;
+
+        default:
+          return null;
+      }
+
+      // Failsafe return, should theoretically never be reached due to the default cases / limits
+      return null;
+    }
+
+    public GameObject GetLinkedGameObject(
+      LinkTargetType linkType,
+      LinkTarget linkTarget,
+      Animator animator,
+      GameObject targetAvatar
+    )
+    {
+      switch (linkType)
+      {
+        case LinkTargetType.useHumanBodyBones:
+          HumanBodyBones boneToLinkTo = linkTarget.humanBodyBone;
+          Transform boneToLinkToGameObjectTransform = animator.GetBoneTransform(boneToLinkTo);
+          if (boneToLinkToGameObjectTransform == null)
+          {
+            CoreLogError("[Armature Link] " + Constants.ERR_ARMATURELINK_BONETOLINKTOGAMEOBJECTTRANSFORM_NULL);
+            return null;
+          }
+          else
+          {
+            return boneToLinkToGameObjectTransform.gameObject;
+          }
+
+        case LinkTargetType.useGameObject:
+          if (linkTarget.targetGameObject == null)
+          {
+            CoreLogError("[Armature Link] " + Constants.ERR_ARMATURELINK_TARGETGAMEOBJECT_NULL);
+            return null;
+          }
+
+          GameObject targetGameObject = linkTarget.targetGameObject;
+          if (!string.IsNullOrEmpty(linkTarget.offset))
+          {
+            Transform foundTransform = targetGameObject.transform.Find(linkTarget.offset);
+            if (foundTransform == null)
+            {
+              CoreLogError(
+                "[Armature Link] " + Constants.ERR_ARMATURELINK_TARGETGAMEOBJECT_OFFSET_NULL + ": " + linkTarget.offset
+              );
+              return null;
+            }
+            targetGameObject = foundTransform.gameObject;
+          }
+
+          return targetGameObject;
+
+        case LinkTargetType.useAvatarRoot:
+          if (targetAvatar == null)
+          {
+            CoreLogCritical("[Armature Link] " + Constants.ERR_ARMATURELINK_TARGETAVATAR_NULL);
+            return null;
+          }
+
+          targetGameObject = targetAvatar; // Default to targetAvatar if no offset is provided
+
+          if (!string.IsNullOrEmpty(linkTarget.offset))
+          {
+            Transform foundTransform = targetAvatar.transform.Find(linkTarget.offset);
+            if (foundTransform == null)
+            {
+              CoreLogError("[Armature Link] " + Constants.ERR_ARMATURELINK_TARGETGAMEOBJECT_OFFSET_NULL);
+              return null;
+            }
+            targetGameObject = foundTransform.gameObject;
+          }
+
+          return targetGameObject;
+
+        default:
+          CoreLogCritical("Unknown LinkTargetType: " + linkType);
+          return null;
       }
     }
 
