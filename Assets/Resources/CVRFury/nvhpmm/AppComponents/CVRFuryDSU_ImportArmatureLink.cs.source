@@ -1,4 +1,4 @@
-// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
+// { "version": "0.3.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -137,6 +137,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // ---- armatureLink specific properties ----
 
+          #region basic targeting properties
+
           // set the bonePathOnTargetArmature
           armatureLinkModule.bonePathOnTargetArmature = VRCFuryArmatureLink.bonePathOnAvatar;
 
@@ -145,6 +147,74 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // set the fallbackBones
           armatureLinkModule.fallbackBones = VRCFuryArmatureLink.fallbackBones;
+
+          #endregion // basic targeting properties
+
+          // get the linkTo list from the VRCFuryArmatureLink
+          List<ArmatureLink.LinkTo> VRCFuryLinkTo = VRCFuryArmatureLink.linkTo;
+
+          // check if the VRCFuryLinkTo list is not empty
+          if (VRCFuryLinkTo.Count > 0)
+          {
+            // if we have a LinkTo list set then the data is likely from a v3 VRCFury datastore
+            // and the only targeting option that offers is order (as in use first match in list)
+            // set avatarTargetingMode to AvatarLinkTargetingMode.order
+            armatureLinkModule.avatarTargetingMode = AvatarLinkTargetingMode.order;
+
+            // create a new list of LinkTarget
+            List<LinkTarget> linkTargets = new List<LinkTarget>();
+
+            // loop through the VRCFuryLinkTo list
+            foreach (var linkTo in VRCFuryLinkTo)
+            {
+              // create a new LinkTarget
+              LinkTarget linkTarget = new LinkTarget();
+
+              // get the useBone bool from the VRCFuryLinkTo
+              bool useBone = linkTo.useBone;
+
+              // get the useObj bool from the VRCFuryLinkTo
+              bool useObj = linkTo.useObj;
+
+              // if both useBone and useObj are false, then set the linkType to LinkTargetType.useAvatarRoot
+              if (!useBone && !useObj)
+              {
+                linkTarget.linkType = LinkTargetType.useAvatarRoot;
+              }
+              // if useBone is true and useObj is false, then set the linkType to LinkTargetType.useHumanBodyBones
+              else if (useBone && !useObj)
+              {
+                linkTarget.linkType = LinkTargetType.useHumanBodyBones;
+              }
+              // if useBone is false and useObj is true, then set the linkType to LinkTargetType.useGameObject
+              else if (!useBone && useObj)
+              {
+                linkTarget.linkType = LinkTargetType.useGameObject;
+              }
+
+              // set the humanBodyBone to the bone from the VRCFuryLinkTo
+              linkTarget.humanBodyBone = linkTo.bone;
+
+              // set the targetGameObject to the obj from the VRCFuryLinkTo
+              linkTarget.targetGameObject = linkTo.obj;
+
+              // set the offset to the offset from the VRCFuryLinkTo
+              linkTarget.offset = linkTo.offset;
+
+              // add the linkTarget to the linkTargets list
+              linkTargets.Add(linkTarget);
+            }
+
+            // set the armatureLinkModule.linkTargets to the linkTargets list
+            armatureLinkModule.linkTargets = linkTargets;
+          }
+          else
+          {
+            // if we have no LinkTo list set then the data is likely from a v2 VRCFury datastore
+
+            // set avatarTargetingMode to AvatarLinkTargetingMode.basic
+            armatureLinkModule.avatarTargetingMode = AvatarLinkTargetingMode.basic;
+          }
 
           // set the boneSuffixToStrip
           armatureLinkModule.boneSuffixToStrip = VRCFuryArmatureLink.removeBoneSuffix;
