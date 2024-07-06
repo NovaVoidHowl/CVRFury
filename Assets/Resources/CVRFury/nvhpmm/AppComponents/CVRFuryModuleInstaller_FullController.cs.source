@@ -1,4 +1,4 @@
-// { "version": "0.5.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.6.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -302,12 +302,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               CoreLogDebug("Processing global parameters - count: " + globalParams.Count);
 
               // debug print all global parameters in one debug console print
-              StringBuilder globalParamsDebug = new StringBuilder();
-              foreach (string param in globalParams)
-              {
-                globalParamsDebug.Append(param + "\n");
-              }
-              CoreLogDebug("globalParams: \n" + globalParamsDebug.ToString());
+              CoreLogDebugPrintList(globalParams, "globalParams: ");
+
+              
+
 
               // get the list of parameter names from the sourceAnimatorController
               List<string> sourceParameters = new List<string>(sourceAnimatorController.parameters.Select(p => p.name));
@@ -1157,8 +1155,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       //  - ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
       // this is to ensure all parameters people expect to be global are global
       // only add the ones from VRC if the module is marked as imported from VRCFury (importedFromVRCFury)
-      List<string> globalParams = (module as fullControllerModule).globalParams
-        .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
+      List<string> globalParams = (module as fullControllerModule).globalParams.ToList();
+ 
+      globalParams= globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
         .Concat(
           (module as fullControllerModule).importedFromVRCFury
             ? Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
@@ -1184,11 +1183,26 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // ref https://docs.vrcft.io/docs/tutorial-avatars/tutorial-avatars-extras/parameters
 
       //// BFiVRC - BCI flow to OSC
-
       // add ALWAYS_GLOBAL_PARAMETERS_FROM_BFIVRC to the global parameters list
       globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_BFIVRC).ToList();
 
+      //// Overlay Apps - OVR Toolkit
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_OVR_TOOLKIT to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_OVR_TOOLKIT).ToList();
+
+      //// Overlay Apps - WlxOverlay-S
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_WLXOVERLAY_S to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_WLXOVERLAY_S).ToList();
+
+      //// Overlay Apps - XSOverlay
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_XSOVERLAY to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_XSOVERLAY).ToList();
+
       //// ----------------------------- end of extra projects that add global parameters ------------------------------
+      
+      // TODO: remove this debug print
+      // CoreLogDebugPrintList(globalParams, "globalParams - pre dedupe");
+            
       // de-dupe the global parameters list
       globalParams = globalParams.Distinct().ToList();
 
