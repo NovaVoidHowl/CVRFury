@@ -1,9 +1,10 @@
-// { "version": "0.4.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.5.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Linq;
 using System.IO;
 using UnityEditor;
@@ -13,6 +14,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
 using uk.novavoidhowl.dev.cvrfury.runtime;
+using uk.novavoidhowl.dev.vrcstub;
 using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Scripts;
 using ABI.CCK.Components;
@@ -419,13 +421,134 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // get path of the source controller
               string sourceControllerPath = AssetDatabase.GetAssetPath(sourceAnimatorController);
 
-              // copy the source controller to the temp source controller
-              AssetDatabase.CopyAsset(sourceControllerPath, tempSourceControllerPath);
+              // debug print to say the source controller is being copied
+              CoreLog("Copying source controller to temp source controller");
+
+              // copy the source controller to the temp source controller using File.Copy
+              File.Copy(sourceControllerPath, tempSourceControllerPath, overwrite: true);
+
+              // get the last part of the source controller path without the extension
+              string sourceControllerFileName = Path.GetFileNameWithoutExtension(sourceControllerPath);
+
+              // get the last part of the temp source controller path without the extension
+              string tempSourceControllerFileName = Path.GetFileNameWithoutExtension(tempSourceControllerPath);
+
+              // debug print the source and temp file names
+              CoreLogDebug("[FullController] sourceControllerFileName: " + sourceControllerFileName);
+              CoreLogDebug("[FullController] tempSourceControllerFileName: " + tempSourceControllerFileName);
+
+              # region animator driver stub
+              // Stub out animator drivers (script id change)
+
+              // load the animator controller file as plain text
+              string animatorControllerText = File.ReadAllText(tempSourceControllerPath);
+
+              // counter to keep track of the number of replacements
+              int replacements = 0;
+
+              // look for strings that match the values in Constants.ANIMATOR_DRIVER_M_SCRIPT_IDS
+              foreach (string scriptID in Constants.ANIMATOR_DRIVER_M_SCRIPT_IDS)
+              {
+                // replace the scriptID with Constants.CVRFURY_ANIMDRIVER_M_SCRIPT_ID
+                animatorControllerText = animatorControllerText.Replace(
+                  scriptID,
+                  Constants.CVRFURY_ANIMDRIVER_M_SCRIPT_ID
+                );
+
+                // increment the replacements counter
+                replacements++;
+              }
+
+              // Define the pattern to match lines that end with 'sourceControllerFileName'
+              string pattern = @"^(\s*)m_Name: " + Regex.Escape(sourceControllerFileName) + "($)";
+
+              // Define the replacement text
+              string replacement = "$1m_Name: " + tempSourceControllerFileName + "$2";
+
+              // Replace matches of the pattern in animatorControllerText with the replacement text
+              animatorControllerText = Regex.Replace(
+                animatorControllerText,
+                pattern,
+                replacement,
+                RegexOptions.Multiline
+              );
+
+              // write the modified animator controller file back to disk
+              File.WriteAllText(tempSourceControllerPath, animatorControllerText);
+
+              // log to the console that the animator controller file has been modified
+              CoreLogDebug(
+                "[FullController] Animator controller file modified: "
+                  + tempSourceControllerPath
+                  + " ("
+                  + replacements
+                  + " replacements)"
+              );
+
+              // refresh the asset database
+              AssetDatabase.Refresh();
+
+              // mark the file as dirty
+              AssetDatabase.ImportAsset(tempSourceControllerPath, ImportAssetOptions.ForceUpdate);
+
+              #endregion //animator driver stub
 
               // load the temp source controller
               AnimatorController tempSourceAnimatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
                 tempSourceControllerPath
               );
+
+              // loop over all the layers in the tempSourceAnimatorController and debug print their names
+
+              for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+              {
+                // get the layer
+                var layer = tempSourceAnimatorController.layers[i];
+
+                // get the states in the layer
+                var stateMachine = layer.stateMachine;
+                // loop over all the states in the stateMachine
+                for (int j = 0; j < stateMachine.states.Length; j++)
+                {
+                  // get the state
+                  var state = stateMachine.states[j].state;
+
+                  // check if the state's motion is a blend tree
+                  if (state.motion is BlendTree blendTree)
+                  {
+                    // can ignore this as animation drivers can't be in blend trees
+                  }
+                  else
+                  {
+                    // ok its not a blend tree, so we need to check if it has a VRCAvatarParameterDriver
+                    // get the Behaviours from the state
+                    StateMachineBehaviour[] behaviours = state.behaviours;
+
+                    // loop over all the behaviours
+                    for (int k = 0; k < behaviours.Length; k++)
+                    {
+                      // get the behaviour
+                      StateMachineBehaviour behaviour = behaviours[k];
+
+                      // check if the behaviour is a VRCAvatarParameterDriver
+                      if (behaviour is VRCAvatarParameterDriver)
+                      {
+                        // log to the console that the VRCAvatarParameterDriver has been found
+                        CoreLogDebug("[FullController] VRCAvatarParameterDriver found in state: " + state.name);
+
+                        // call DestroyObjectImmediate on the behaviour
+                        UnityEngine.Object.DestroyImmediate(behaviour, true);
+                      }
+                    }
+                  }
+                }
+              }
+
+              // refresh the asset database
+              AssetDatabase.Refresh();
+
+              // mark the file as dirty
+              AssetDatabase.ImportAsset(tempSourceControllerPath, ImportAssetOptions.ForceUpdate);
 
               #region get DSU location info
               // get the hierarchy path of the DSUObject under the targetAvatar
@@ -654,7 +777,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // debug print to say we are re-binding animation clips
               CoreLog("Rebinding animation clips - Prefab Instance");
-
 
               // get the animation clips from the source controller
               AnimationClip[] pfSourceClips = tempSourceAnimatorController.animationClips;
