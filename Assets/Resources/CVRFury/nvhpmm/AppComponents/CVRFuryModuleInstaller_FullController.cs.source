@@ -1,4 +1,4 @@
-// { "version": "0.6.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.7.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -534,7 +534,96 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                         // log to the console that the VRCAvatarParameterDriver has been found
                         CoreLogDebug("[FullController] VRCAvatarParameterDriver found in state: " + state.name);
 
-                        // call DestroyObjectImmediate on the behaviour
+                        // get the VRCAvatarParameterDriver component
+                        VRCAvatarParameterDriver VRCdriver = behaviour as VRCAvatarParameterDriver;
+
+                        // Add the AnimatorDriver component
+                        AnimatorDriver animatorDriver = state.AddStateMachineBehaviour<AnimatorDriver>();
+
+                        // copy the localOnly flag from the VRCAvatarParameterDriver to the AnimatorDriver
+                        animatorDriver.localOnly = VRCdriver.localOnly;
+
+                        // check is VRCdriver.parameters has at least one element
+                        if (VRCdriver.parameters.Count > 0)
+                        {
+                          // log to the console that the VRCAvatarParameterDriver has at least one parameter
+                          CoreLogDebug(
+                            "[FullController] VRCAvatarParameterDriver has at least one parameter: "
+                              + VRCdriver.parameters[0].name
+                          );
+
+                          // for each parameter in the VRCAvatarParameterDriver
+                          foreach (VRCAvatarParameterDriver.Parameter parameter in VRCdriver.parameters)
+                          {
+                            // log to the console the parameter's name
+                            CoreLogDebug("[FullController] VRCAvatarParameterDriver parameter: " + parameter.name);
+                          
+
+                            // create a new AnimatorDriverTask to hold the bits form the VRCAvatarParameterDriver
+                            AnimatorDriverTask task = new AnimatorDriverTask();
+
+                            // set the targetName to the parameter's name
+                            task.targetName = parameter.name;
+
+                            // set the task's targetType
+                            task.targetType = getParamType(module, parameter.name);
+
+                            // switch to handle the type from the VRCAvatarParameterDriver
+                            switch (parameter.type)
+                            {
+                              case VRCAvatarParameterDriver.ChangeType.Set:
+                                // set the task type to Set
+                                task.op = AnimatorDriverTask.Operator.Set;
+                                task.aType = AnimatorDriverTask.SourceType.Static;
+                                task.aValue = parameter.value;
+                                break;
+                              case VRCAvatarParameterDriver.ChangeType.Add:
+                                // set the task type to Addition
+                                task.op = AnimatorDriverTask.Operator.Addition;
+                                task.aType = AnimatorDriverTask.SourceType.Parameter;
+                                task.aName = parameter.name;
+                                task.aParamType = getParamType(module, parameter.name);
+                                task.bType = AnimatorDriverTask.SourceType.Static;
+                                task.bValue = parameter.value;
+                                break;
+                              case VRCAvatarParameterDriver.ChangeType.Random:
+                                // note bools are odd for random, in VRCFury its a chance to get 1 or 0, not sure
+                                // how to handle this yet. for now no random for bools!
+                                // set the task type to Set
+                                task.op =  AnimatorDriverTask.Operator.Set;
+                                task.aType = AnimatorDriverTask.SourceType.Random;
+                                // in random aValue is the min and aMax is the max
+                                task.aValue = parameter.valueMin;
+                                task.aMax = parameter.valueMax;
+                                break;
+                              case VRCAvatarParameterDriver.ChangeType.Copy:
+                                // set the task type to Copy
+                                task.op =  AnimatorDriverTask.Operator.Set;
+                                task.aType = AnimatorDriverTask.SourceType.Parameter;
+                                task.aName = parameter.source;
+                                break;
+                              default:
+                              // problem here as the enum in VRC may have added a new type
+                              // emit critical error
+                                CoreLogCritical("Unknown VRCAvatarParameterDriver.ChangeType: " + VRCdriver.parameters[0].type);
+                                break;
+                            }
+
+                            // add the task to the animatorDriver
+                            animatorDriver.EnterTasks.Add(task);
+
+                          }
+
+
+                        }
+                        else
+                        {
+                          // log to the console that the VRCAvatarParameterDriver has no parameters
+                          CoreLogDebug("[FullController] VRCAvatarParameterDriver has no parameters");
+                        }
+
+
+                        // call DestroyObjectImmediate on the VRCAvatarParameterDriver behaviour
                         UnityEngine.Object.DestroyImmediate(behaviour, true);
                       }
                     }
@@ -1135,6 +1224,54 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     //// -------------------------------------------- supporting functions ---------------------------------------------
     #region supporting functions
     // general functions
+
+
+    private AnimatorDriverTask.ParameterType getParamType(CVRFuryModule module, string paramName)
+    {
+      // check if can cast the module to fullControllerModule
+      if (!(module is fullControllerModule))
+      {
+        // if it can't, log an error to the console
+        CoreLogError("Module is not a fullControllerModule");
+        // return AnimatorDriverTask.ParameterType.None
+        return AnimatorDriverTask.ParameterType.None;
+      }
+
+      // loop over the Parameters from the module
+      foreach (fullControllerModule.ParamsEntry parameters in (module as fullControllerModule).parameters)
+      {
+        // get the CVRFuryParametersStore from the parameters
+        CVRFuryParametersStore parametersStore = parameters.parameters;
+
+        // loop over the parameters in the parametersStore
+        foreach (CVRFuryParametersStore.Parameter parameter in parametersStore.parameters)
+        {
+          // check if the parameter.name is equal to paramName
+          if (parameter.name == paramName)
+          {
+            // return the parameter.type
+            switch(parameter.valueType)
+            {
+              case CVRFuryParametersStore.ValueType.Bool:
+                return AnimatorDriverTask.ParameterType.Bool;
+              case CVRFuryParametersStore.ValueType.Int:
+                return AnimatorDriverTask.ParameterType.Int;
+              case CVRFuryParametersStore.ValueType.Float:
+                return AnimatorDriverTask.ParameterType.Float;
+              default:
+                // problem here as the valueType in VRC may have added a new type
+                // emit critical error
+                CoreLogCritical("Unknown CVRFuryParametersStore.Parameter.valueType: " + parameter.valueType);
+                return AnimatorDriverTask.ParameterType.None;
+            }
+          }
+        }
+      }
+
+      // return AnimatorDriverTask.ParameterType.None
+      return AnimatorDriverTask.ParameterType.None;
+    }
+
 
     private List<string> getGlobalParameters(CVRFuryModule module)
     {
