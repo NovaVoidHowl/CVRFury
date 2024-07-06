@@ -1,4 +1,4 @@
-// { "version": "0.6.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.6.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1156,7 +1156,44 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // this is to ensure all parameters people expect to be global are global
       // only add the ones from VRC if the module is marked as imported from VRCFury (importedFromVRCFury)
       List<string> globalParams = (module as fullControllerModule).globalParams.ToList();
- 
+
+      // list for parameters to not be global (unless they are in the auto global lists)
+      List<string> nonGlobalParams = new List<string>();
+
+      // check for a * in the global parameters list
+      if (globalParams.Contains("*"))
+      {
+        //check if any parameters have a ! at the start
+        foreach (string parameter in globalParams)
+        {
+          if (parameter.StartsWith("!"))
+          {
+            // add the parameter to the nonGlobalParams list
+            nonGlobalParams.Add(parameter.Substring(1));
+          }
+        }
+
+        // loop over the Parameters from the module
+        foreach (fullControllerModule.ParamsEntry parameters in (module as fullControllerModule).parameters)
+        {
+          // get the CVRFuryParametersStore from the parameters
+          CVRFuryParametersStore parametersStore = parameters.parameters;
+
+          // loop over the parameters in the parametersStore
+          foreach (CVRFuryParametersStore.Parameter parameter in parametersStore.parameters)
+          {
+            // check if the parameter.name in the nonGlobalParams list
+            if (!nonGlobalParams.Contains(parameter.name))
+            {
+              // add the parameter.name to the globalParams list
+              globalParams.Add(parameter.name);
+            }
+          }
+        }
+        // remove the * from the globalParams list
+        globalParams.Remove("*");
+      }
+
       globalParams= globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
         .Concat(
           (module as fullControllerModule).importedFromVRCFury
