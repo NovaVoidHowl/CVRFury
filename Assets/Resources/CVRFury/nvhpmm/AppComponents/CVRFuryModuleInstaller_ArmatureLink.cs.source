@@ -1,4 +1,4 @@
-// { "version": "0.2.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.3.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1104,6 +1104,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // get the path parts count
           int pathPartsCount = pathParts.Length;
 
+          // print the split path to console
+          CoreLogDebugPrintList(pathParts, "[ArmatureLink][animation rebind] source pathParts: ");
+
           // for the number of pathParts, loop over them and check if they are in the dsuInfoUnit.DSUPaths list
           for (int i = 0; i < pathPartsCount; i++)
           {
@@ -1116,6 +1119,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // loop over the dsuInfoUnit.DSUPaths list and check if the path is in it
             for (int j = 0; j < dsuInfoUnit.DSUPaths.Count; j++)
             {
+              // debug print the originalPath from the dsuInfoUnit.DSUPaths list
+              CoreLogDebug(
+                "[ArmatureLink][animation rebind] originalPath to test: " + dsuInfoUnit.DSUPaths[j].originalPath
+              );
+
               // check if the path (exact match, we don't want partial matches) is in the dsuInfoUnit.DSUPaths list
               if (dsuInfoUnit.DSUPaths[j].originalPath == path)
               {
@@ -1729,41 +1737,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     // -----------------------------------------------------------------------------------------------------------------
     #region Helper Functions/structs
 
-    public string GetCommonPath(List<string> paths)
-    {
-      if (paths == null || paths.Count == 0)
-      {
-        return string.Empty;
-      }
-
-      // Split each path into parts
-      var splitPaths = paths.Select(path => path.Split('/')).ToList();
-      var commonParts = new List<string>();
-
-      // Assume the first path is the shortest; adjust if not
-      int shortestPathLength = splitPaths.Min(sp => sp.Length);
-
-      for (int i = 0; i < shortestPathLength; i++)
-      {
-        // Take the ith part of the first path as reference
-        string currentPart = splitPaths[0][i];
-
-        // Check if all paths have the same part at this position
-        if (splitPaths.All(sp => sp[i] == currentPart))
-        {
-          commonParts.Add(currentPart);
-        }
-        else
-        {
-          // As soon as a difference is found, stop looking further
-          break;
-        }
-      }
-
-      // Join the common parts to form the common path
-      string commonPath = string.Join("/", commonParts);
-      return commonPath;
-    }
 
     // Function to get the animation clips files for a given avatar name and DSU number
     public string[] GetAnimationClipFiles(string avatarName, int DSUNumber)

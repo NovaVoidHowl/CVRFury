@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Text;
+using System.Linq;
 
 // dynamic using statements
 #if UNITY_EDITOR
@@ -114,6 +115,43 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
       return path;
     }
+
+    public static string GetCommonPath(List<string> paths)
+    {
+      if (paths == null || paths.Count == 0)
+      {
+        return string.Empty;
+      }
+
+      // Split each path into parts
+      var splitPaths = paths.Select(path => path.Split('/')).ToList();
+      var commonParts = new List<string>();
+
+      // Assume the first path is the shortest; adjust if not
+      int shortestPathLength = splitPaths.Min(sp => sp.Length);
+
+      for (int i = 0; i < shortestPathLength; i++)
+      {
+        // Take the ith part of the first path as reference
+        string currentPart = splitPaths[0][i];
+
+        // Check if all paths have the same part at this position
+        if (splitPaths.All(sp => sp[i] == currentPart))
+        {
+          commonParts.Add(currentPart);
+        }
+        else
+        {
+          // As soon as a difference is found, stop looking further
+          break;
+        }
+      }
+
+      // Join the common parts to form the common path
+      string commonPath = string.Join("/", commonParts);
+      return commonPath;
+    }
+
 
 #if UNITY_EDITOR
     // this bit needs editor to work
