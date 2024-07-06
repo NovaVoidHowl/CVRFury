@@ -1,4 +1,4 @@
-// { "version": "0.41.7" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.41.8" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -759,17 +759,30 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // get the bones from the mesh renderer
             var bones = meshRenderer.bones;
 
-            // get the path to the bone
-            string bonePath = GetFullTransformPath(bones[0]);
+            // get the paths of the bones
+            List<string> bonePaths = bones.Select(x => GetFullTransformPath(x)).ToList();
 
-            // remove the DSUObjectPath from the start of the bonePath (make it relative to the DSUObjectPath)
-            bonePath = bonePath.Replace(DSUObjectPath + "/", "");
+            // debug print the bonePaths
+            CoreLogDebugPrintList(bonePaths, "[StoreDSUInfo] BonePaths:");
 
-            // get the part of the path before the first /
-            string armatureRootPath = bonePath.Split('/')[0];
+            // get the common path for all the bones
+            string commonPath = GetCommonPath(bonePaths);
 
-            // add the armatureRootPath to the armatureRootPaths list
-            armatureRootPaths.Add(armatureRootPath);
+            // debug print the commonPath
+            CoreLogDebug("[StoreDSUInfo] CommonPath - meshRenderer.bones: " + commonPath);
+
+
+            // remove the DSUObjectPath from the start of the commonPath (make it relative to the DSUObjectPath)
+            string bonePath = commonPath.Replace(DSUObjectPath + "/", "");
+
+            // if there is a trailing / then remove it
+            if (bonePath.EndsWith("/"))
+            {
+              bonePath = bonePath.Substring(0, bonePath.Length - 1);
+            }
+
+            // add the boneName to the armatureRootPaths list
+            armatureRootPaths.Add(bonePath);
           }
 
           // deduplicate the armatureRootPaths list
@@ -786,8 +799,20 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             .Select(x => GetFullTransformPath(x))
             .ToList();
 
+          // debug print the addonObjectPaths
+          CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths Raw:");
+
           // remove the DSUObjectPath from the start of all the paths
-          addonObjectPaths = addonObjectPaths.Select(x => x.Replace(DSUObjectPath + "/", "")).ToList();
+          addonObjectPaths = addonObjectPaths.Select(x => x.Replace(DSUObjectPath, "")).ToList();
+
+          // remove / from the start of all the paths (if it is present)
+          addonObjectPaths = addonObjectPaths.Select(x => x.StartsWith("/") ? x.Substring(1) : x).ToList();
+
+          // remove blank entries from the list
+          addonObjectPaths = addonObjectPaths.Where(x => !string.IsNullOrEmpty(x)).ToList();
+          
+          // debug print the addonObjectPaths
+          CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths Relative:");
 
           // remove the armaturePaths (if there are any) from the  list
           addonObjectPaths = addonObjectPaths.Except(armaturePaths).ToList();
