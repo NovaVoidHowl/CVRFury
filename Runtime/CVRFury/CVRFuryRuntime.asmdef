@@ -3,7 +3,8 @@
   "references": [
     "UnityEngine",
     "uk.novavoidhowl.dev.vrcstub",
-    "uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime"
+    "uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime",
+    "uk.novavoidhowl.dev.cvrfury.packagecore"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

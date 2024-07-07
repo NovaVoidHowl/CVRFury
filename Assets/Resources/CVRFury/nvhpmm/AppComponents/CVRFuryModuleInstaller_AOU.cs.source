@@ -1,4 +1,4 @@
-// { "version": "0.8.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
+// { "version": "0.8.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
 using uk.novavoidhowl.dev.cvrfury.runtime;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
 using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
@@ -39,7 +40,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // check if the GameObject exists
         if (pair.objectToSetStateOn != null)
         {
-
           // use objectState to set the GameObject's state, (its an enum with values: "disabled", "enabled")
           switch (pair.stateToSet)
           {
@@ -57,10 +57,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLogError("GameObject " + pair.objectToSetStateOn.name + " does not exist");
         }
       }
-
     }
   }
-
 
   public class objectDefaultMaterialSetterProcessor : IModuleProcessor
   {
@@ -120,7 +118,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // if it doesn't, log an error to the console
         CoreLogError("Renderer " + renderer.name + " does not exist");
       }
-
     }
   }
 
@@ -143,14 +140,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // set the useBlinkBlendshapes to the inverse of the blockBlink value
         avatar.useBlinkBlendshapes = !((blockBlinkSetter)module).blockBlink;
-
       }
       else
       {
         // if it doesn't, log an error to the console
         CoreLogError("Avatar does not exist");
       }
-
     }
   }
 
@@ -173,14 +168,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // set the useVisemeLipsync to the inverse of the blockVisemes value
         avatar.useVisemeLipsync = !((blockVisemesSetter)module).blockVisemes;
-
       }
       else
       {
         // if it doesn't, log an error to the console
         CoreLogError("Avatar does not exist");
       }
-
     }
   }
 
@@ -204,9 +197,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       else
       {
         // if it doesn't, log an error to the console
-        CoreLogError("GameObject " +((deleteOnUpload)module).target.name + " does not exist");
+        CoreLogError("GameObject " + ((deleteOnUpload)module).target.name + " does not exist");
       }
-
     }
   }
 
@@ -232,16 +224,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // set the target value to the GameObject
         exclusion.target = ((showInFirstPerson)module).target.transform;
-
       }
       else
       {
         // if it doesn't, log an error to the console
-        CoreLogError("GameObject " +((showInFirstPerson)module).target.name + " does not exist");
+        CoreLogError("GameObject " + ((showInFirstPerson)module).target.name + " does not exist");
       }
-
     }
   }
-
 }
 // #endif

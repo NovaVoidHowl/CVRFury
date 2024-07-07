@@ -1,4 +1,4 @@
-// { "version": "0.7.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.7.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -13,12 +13,13 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
-using uk.novavoidhowl.dev.cvrfury.runtime;
-using uk.novavoidhowl.dev.vrcstub;
 using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Scripts;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using uk.novavoidhowl.dev.vrcstub;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using static uk.novavoidhowl.dev.cvrfury.deployable.ReportBuilderSupport;
 using static uk.novavoidhowl.dev.cvrfury.supporting_classes.editor.Animation;
@@ -304,9 +305,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // debug print all global parameters in one debug console print
               CoreLogDebugPrintList(globalParams, "globalParams: ");
 
-              
-
-
               // get the list of parameter names from the sourceAnimatorController
               List<string> sourceParameters = new List<string>(sourceAnimatorController.parameters.Select(p => p.name));
 
@@ -557,7 +555,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                           {
                             // log to the console the parameter's name
                             CoreLogDebug("[FullController] VRCAvatarParameterDriver parameter: " + parameter.name);
-                          
 
                             // create a new AnimatorDriverTask to hold the bits form the VRCAvatarParameterDriver
                             AnimatorDriverTask task = new AnimatorDriverTask();
@@ -590,7 +587,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                                 // note bools are odd for random, in VRCFury its a chance to get 1 or 0, not sure
                                 // how to handle this yet. for now no random for bools!
                                 // set the task type to Set
-                                task.op =  AnimatorDriverTask.Operator.Set;
+                                task.op = AnimatorDriverTask.Operator.Set;
                                 task.aType = AnimatorDriverTask.SourceType.Random;
                                 // in random aValue is the min and aMax is the max
                                 task.aValue = parameter.valueMin;
@@ -598,30 +595,28 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                                 break;
                               case VRCAvatarParameterDriver.ChangeType.Copy:
                                 // set the task type to Copy
-                                task.op =  AnimatorDriverTask.Operator.Set;
+                                task.op = AnimatorDriverTask.Operator.Set;
                                 task.aType = AnimatorDriverTask.SourceType.Parameter;
                                 task.aName = parameter.source;
                                 break;
                               default:
-                              // problem here as the enum in VRC may have added a new type
-                              // emit critical error
-                                CoreLogCritical("Unknown VRCAvatarParameterDriver.ChangeType: " + VRCdriver.parameters[0].type);
+                                // problem here as the enum in VRC may have added a new type
+                                // emit critical error
+                                CoreLogCritical(
+                                  "Unknown VRCAvatarParameterDriver.ChangeType: " + VRCdriver.parameters[0].type
+                                );
                                 break;
                             }
 
                             // add the task to the animatorDriver
                             animatorDriver.EnterTasks.Add(task);
-
                           }
-
-
                         }
                         else
                         {
                           // log to the console that the VRCAvatarParameterDriver has no parameters
                           CoreLogDebug("[FullController] VRCAvatarParameterDriver has no parameters");
                         }
-
 
                         // call DestroyObjectImmediate on the VRCAvatarParameterDriver behaviour
                         UnityEngine.Object.DestroyImmediate(behaviour, true);
@@ -1250,7 +1245,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           if (parameter.name == paramName)
           {
             // return the parameter.type
-            switch(parameter.valueType)
+            switch (parameter.valueType)
             {
               case CVRFuryParametersStore.ValueType.Bool:
                 return AnimatorDriverTask.ParameterType.Bool;
@@ -1271,7 +1266,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // return AnimatorDriverTask.ParameterType.None
       return AnimatorDriverTask.ParameterType.None;
     }
-
 
     private List<string> getGlobalParameters(CVRFuryModule module)
     {
@@ -1331,7 +1325,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         globalParams.Remove("*");
       }
 
-      globalParams= globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
+      globalParams = globalParams
+        .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
         .Concat(
           (module as fullControllerModule).importedFromVRCFury
             ? Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
@@ -1373,10 +1368,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_XSOVERLAY).ToList();
 
       //// ----------------------------- end of extra projects that add global parameters ------------------------------
-      
+
       // TODO: remove this debug print
       // CoreLogDebugPrintList(globalParams, "globalParams - pre dedupe");
-            
+
       // de-dupe the global parameters list
       globalParams = globalParams.Distinct().ToList();
 

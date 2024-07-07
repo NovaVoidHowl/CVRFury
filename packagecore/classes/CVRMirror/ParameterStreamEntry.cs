@@ -1,51 +1,31 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using uk.novavoidhowl.dev.vrcstub;
-using uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime;
 using System.Reflection;
 
-//// Supporting classes and structs for the CVRFuryModule
-
-namespace uk.novavoidhowl.dev.cvrfury.runtime
+namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
-  
-  /// <summary>
-  /// A struct to hold a pair of an object and a state to set it to.
-  /// </summary>
-  [Serializable]
-  public struct objectStatePair
-  {
-    public enum objectState
-    {
-      disabled,
-      enabled,
-    }
-
-    public objectState stateToSet;
-    public GameObject objectToSetStateOn;
-  }
-
-  #region CCK stubs
   /// <summary>
   /// this class is a direct copy of the CVRParameterStreamEntry class from the CCK package
-  /// it is used to store the data for the parameter stream link module
-  /// this version based on 3.9.0 version of the CCK
-  /// 
-  /// notes:
-  /// - UI limit needs to be put on accessing the 'TargetType' enum, at the moment the CCK only offers 'Animator'
-  ///   so that's the only one we should expose
-  /// - Type = input from the CVR systems (e.g. time, headset on head, etc)
-  /// - ApplicationType = how to apply the value to the target
-  /// - StaticValue = the value for use with the ApplicationTypes that reference a static value
-  /// - Target = the object to apply the value to (will be blank for just the base avatar animator, but can be set to
-  ///   a specific object for handling sub-animators or other objects)
-  /// - ParameterName = the name of the parameter to apply the value to
-  ///   
+  /// it is used as the CCK can't be accessed from code in the Packages section of the project,
+  /// so we can't use the original class directly. This is a unity limitation
+  ///
+  /// This version based on 3.10.0 version of the CCK
+  ///
   /// </summary>
   [Serializable]
   public class CVRFuryParameterStreamEntry
   {
+    // notes:
+    // - UI limit needs to be put on accessing the 'TargetType' enum, at the moment the CCK only offers 'Animator'
+    //   so that's the only one we should expose
+    // - Type = input from the CVR systems (e.g. time, headset on head, etc)
+    // - ApplicationType = how to apply the value to the target
+    // - StaticValue = the value for use with the ApplicationTypes that reference a static value
+    // - Target = the object to apply the value to (will be blank for just the base avatar animator, but can be set to
+    //   a specific object for handling sub-animators or other objects)
+    // - ParameterName = the name of the parameter to apply the value to
+
       public enum Type
       {
           TimeSeconds = 0,
@@ -154,18 +134,5 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       public GameObject target;
 
       public string parameterName;
-  }
-  #endregion
-
-  public class DropdownParameter
-  {
-    public string machineName;
-    public List<DropdownParameterPair> pairs = new List<DropdownParameterPair>();
-  }
-  
-  [System.Serializable]
-  public class DropdownParameterPair{
-    public string name;
-    public float value = 0;
   }
 }

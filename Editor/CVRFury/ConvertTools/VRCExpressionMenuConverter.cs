@@ -9,6 +9,7 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+using uk.novavoidhowl.dev.cvrfury.packagecore;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.vrcstub;
@@ -25,7 +26,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
     {
       "{fileID: -340790334, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}"
     };
-    private const string CVRFURY_PHYSB_M_SCRIPT_ID = "{fileID: 11500000, guid: d2b1b7e16fd63f64d8da1c4065469b76, type: 3}";
+    private const string CVRFURY_PHYSB_M_SCRIPT_ID =
+      "{fileID: 11500000, guid: d2b1b7e16fd63f64d8da1c4065469b76, type: 3}";
 
     // Declare textField as a member variable
     private TextField textField;
@@ -648,7 +650,6 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // list to hold parameter names and machine names for dropdowns that need to be created
               List<DropdownParameter> dropdownsParameterList = new List<DropdownParameter>();
 
-
               // for each control in the menuToImport
               foreach (var control in menuToImport.controls)
               {
@@ -663,7 +664,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                 // NOTES:
                 // as of CCK 3.10 both name and parameter are exposed in the inspector, so now we should save both bits
 
-                
+
                 // case statement to handle the different control types
                 switch (controlType)
                 {
@@ -681,7 +682,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     string machineName = GetCVRFuryMenuSectionMachineName(control);
                     // check if the parameter is in the parameterNamesAndTypes list
                     var parameter = parameterNamesAndTypes.Find(x => x.Item1 == machineName);
-                    
+
                     // check if the parameter is null
                     if (parameter == null)
                     {
@@ -691,14 +692,14 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                       // TODO : add a way of handling this better, that just skipping the control
                       // maybe a credits holding class to store these off to, and then display them in a different way
                       // likely will need a mod for CVR to support this
-                      
+
                       // send a warning to the console and continue
                       CoreLog("Parameter " + machineName + " not found in the parameters file, and will be skipped");
                       continue;
                     }
-                    
+
                     // now we are safe to get the type of the parameter
-                    
+
                     // get the type of the parameter
                     var parameterType = parameter.Item2;
 
@@ -739,14 +740,10 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                         dropdownsParameterList.Add(
                           new DropdownParameter
                           {
-                            machineName = machineName, 
+                            machineName = machineName,
                             pairs = new List<DropdownParameterPair>
-                            { 
-                              new DropdownParameterPair 
-                              { 
-                                name = control.name.Trim(), 
-                                value = control.value
-                              }
+                            {
+                              new DropdownParameterPair { name = control.name.Trim(), value = control.value }
                             }
                           }
                         );
@@ -765,14 +762,10 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                           dropdownsParameterList.Add(
                             new DropdownParameter
                             {
-                              machineName = machineName, 
-                              pairs = new List<DropdownParameterPair> 
-                              { 
-                                new DropdownParameterPair 
-                                { 
-                                  name = control.name.Trim(), 
-                                  value = control.value
-                                }
+                              machineName = machineName,
+                              pairs = new List<DropdownParameterPair>
+                              {
+                                new DropdownParameterPair { name = control.name.Trim(), value = control.value }
                               }
                             }
                           );
@@ -782,14 +775,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                           // if the machineName is in the list
                           // add the parameter to the existing DropdownParameter
                           existingDropdown.pairs.Add(
-                            new DropdownParameterPair 
-                            { 
-                              name = control.name.Trim(), 
-                              value = control.value 
-                            }
+                            new DropdownParameterPair { name = control.name.Trim(), value = control.value }
                           );
                         }
-                      
                       }
                     }
 
@@ -949,7 +937,6 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                 // add the new dropdown to the convertedMenu
                 convertedMenu.menuItems.Add(newDropdown);
               }
-
 
               #endregion
 
@@ -1205,7 +1192,5 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
       return true;
     }
   }
-
-  
 }
 #endif
