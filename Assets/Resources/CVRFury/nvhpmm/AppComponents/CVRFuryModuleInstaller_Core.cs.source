@@ -1,4 +1,4 @@
-// { "version": "0.42.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.43.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1645,6 +1645,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // run the automatic variable converter
       AutomaticVariableConverter(uploadedObject);
 
+      // run the CVRParameterStream de-duplicator
+      CVRParameterStreamDeDuplicator(uploadedObject);
+
       // run Magica Cloth 2 re-enabler
 #if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
       // only if magica cloth 2 is installed
@@ -1721,6 +1724,101 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // finalise the module installation
       CoreLog("Module installation finalised");
+    }
+
+    /// <summary>
+    /// This function is called to clean up the CVRParameterStream entries list by removing any duplicates
+    /// </summary>
+    /// <param name="uploadedObject"></param>
+    public static void CVRParameterStreamDeDuplicator(GameObject uploadedObject)
+    {
+      // console print to say that the CVRParameterStream de-duplicator is running
+      CoreLog("CVRParameterStream de-duplicator running");
+      // get the CVRParameterStream component from the uploadedObject
+      CVRParameterStream parameterStream = uploadedObject.GetComponent<CVRParameterStream>();
+
+      // if the parameterStream is null, return
+      if (parameterStream == null)
+      {
+        return;
+      }
+
+      // get the entries from the parameterStream
+      List<CVRParameterStreamEntry> entries = parameterStream.entries;
+
+      // if the entries is null, return
+      if (entries == null)
+      {
+        return;
+      }
+
+      List<CVRParameterStreamEntry> deDuplicatedEntries = null;
+
+      // loop over the entries and normalise Null in the target field to null
+      // this is to sort out issues where you can get Null and null in the target field
+      // as these are NOT treated the same by the de-duplicator
+      foreach (var entry in entries)
+      {
+        if (entry.target == null)
+        {
+          entry.target = null;
+        }
+      }
+
+      try
+      {
+        // De-duplicate entries using GroupBy and selecting the first item from each group
+        deDuplicatedEntries = entries
+          .GroupBy(
+            e =>
+              new
+              {
+                e.type,
+                e.targetType,
+                e.applicationType,
+                e.staticValue,
+                e.target,
+                e.parameterName
+              }
+          )
+          .Select(group => group.First())
+          .ToList();
+      }
+      catch (Exception e)
+      {
+        // log the error
+        CoreLogError("Error de-duplicating CVRParameterStream entries: " + e.Message);
+        return;
+      }
+
+      // print the entries to the console
+      CoreLogDebug("Entries: " + entries.Count);
+
+      // print the original entries to the console
+      foreach (var entry in entries)
+      {
+        string targetRepresentation = entry.target == null ? "null" : entry.target.ToString();
+        CoreLogDebug(
+          $"Entry: {entry.type} {entry.targetType} {entry.applicationType} {entry.staticValue} {targetRepresentation} {entry.parameterName}"
+        );
+      }
+
+      CoreLogDebug("De-duplicated entries: " + deDuplicatedEntries.Count);
+
+      // print the entries to the console
+      foreach (var entry in deDuplicatedEntries)
+      {
+        string targetRepresentation = entry.target == null ? "null" : entry.target.ToString();
+        CoreLogDebug(
+          $"Entry: {entry.type} {entry.targetType} {entry.applicationType} {entry.staticValue} {targetRepresentation} {entry.parameterName}"
+        );
+      }
+
+      // Replace the original entries with the de-duplicated list
+      parameterStream.entries = deDuplicatedEntries;
+
+      // console print to say that the CVRParameterStream de-duplicator has finished
+      CoreLog("CVRParameterStream de-duplicator finished");
     }
 
     /// <summary>
@@ -1887,8 +1985,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                       type = targetType,
                       targetType = CVRParameterStreamEntry.TargetType.AvatarAnimator,
                       applicationType = CVRParameterStreamEntry.ApplicationType.Override,
-                      staticValue = 0,
-                      target = null,
                       parameterName = pair.TargetParmName
                     }
                   );
