@@ -1,4 +1,4 @@
-// { "version": "0.41.8" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.42.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.UIElements;
@@ -771,7 +772,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // debug print the commonPath
             CoreLogDebug("[StoreDSUInfo] CommonPath - meshRenderer.bones: " + commonPath);
 
-
             // remove the DSUObjectPath from the start of the commonPath (make it relative to the DSUObjectPath)
             string bonePath = commonPath.Replace(DSUObjectPath + "/", "");
 
@@ -810,7 +810,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // remove blank entries from the list
           addonObjectPaths = addonObjectPaths.Where(x => !string.IsNullOrEmpty(x)).ToList();
-          
+
           // debug print the addonObjectPaths
           CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths Relative:");
 
@@ -981,7 +981,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // console print to say that the DSUInfoUnit has been added
           CoreLog("DSUInfoUnit added to: " + DSUObject.name);
         #endregion // Per-DSU-Object-Processing
-           
         }
       }
     }
@@ -1460,8 +1459,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         }
       }
 
-      
-
       //update asset database
       AssetDatabase.Refresh();
       // console print to say that the temp files have been purged
@@ -1645,6 +1642,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // console print to say that the module installation is being finalised
       CoreLog("Module installation finalising");
 
+      // run the automatic variable converter
+      AutomaticVariableConverter(uploadedObject);
+
       // run Magica Cloth 2 re-enabler
 #if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
       // only if magica cloth 2 is installed
@@ -1706,7 +1706,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // log that the assets have been reimported
         CoreLogDebug("Assets reimported");
-
       }
 
       // force refresh the asset database
@@ -1722,6 +1721,242 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // finalise the module installation
       CoreLog("Module installation finalised");
+    }
+
+    /// <summary>
+    /// This function is called to handel conversion for all variables that are expected
+    /// to be natively present in the VRC runtime environment but don't exist in the
+    /// CVR runtime environment by default
+    /// </summary>
+    public static void AutomaticVariableConverter(GameObject uploadedObject)
+    {
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // if the avatar component is null, return
+      if (avatarComponent == null)
+      {
+        return;
+      }
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // if the overrides are null, return
+      if (overrides == null)
+      {
+        return;
+      }
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // if the animator controller is null, return
+      if (animatorController == null)
+      {
+        return;
+      }
+
+      // get the list of parameters from the animator controller
+      AnimatorControllerParameter[] parameters = animatorController.parameters;
+
+      // list to store the parameter names
+      List<string> parameterNamesAnimator = new List<string>();
+
+      // loop through the parameters and add the names to the list
+      foreach (var parameter in parameters)
+      {
+        parameterNamesAnimator.Add(parameter.name);
+      }
+      // var conversion list
+      Dictionary<string, string> conversionList = new Dictionary<string, string>();
+
+      // loop over the parameterNamesAnimator list and see if they are present in the
+      // Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary (key is the VRC parameter name)
+      foreach (var parameterName in parameterNamesAnimator)
+      {
+        // check if the parameterName is in the Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary
+        if (Constants.VRC_PARAMETER_STREAM_MAPPINGS.ContainsKey(parameterName))
+        {
+          // get the value from the Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary
+          VRCParameterTranslation parameterTranslation = Constants.VRC_PARAMETER_STREAM_MAPPINGS[parameterName];
+
+          // check if the parameterTranslation is null, if it is log a critical error
+          // should never happen, but just in case
+          if (parameterTranslation == null)
+          {
+            CoreLogCritical("VRCParameterTranslation is null for parameter: " + parameterName);
+            continue;
+          }
+
+          // check if the parameter is supported, if not log an error and move on
+          if (!parameterTranslation.Supported)
+          {
+            CoreLogDebug("Parameter: " + parameterName + " is not supported");
+            // pop a dialog box to inform the user that the parameter is not supported
+            EditorUtility.DisplayDialog(
+              "Parameter not supported",
+              "The parameter: "
+                + parameterName
+                + " is not supported by CVR runtime environment\n\n"
+                + "No auto conversion is available and animations that rely upon it won't work",
+              "OK"
+            );
+            continue;
+          }
+          else
+          {
+            // check if the parameterTranslation.CVR is not equal to the parameterName and is set
+            if (parameterTranslation.CVR != parameterName && parameterTranslation.CVR != "")
+            {
+              // add the parameterTranslation.CVR to the conversionList
+              conversionList.Add(parameterName, parameterTranslation.CVR);
+            }
+
+            AnimatorController controllerToMerge = null;
+
+            // check if the NeedsAnimator is true
+            if (parameterTranslation.NeedsAnimator)
+            {
+              // load the required animator controller
+              controllerToMerge = Resources.Load<AnimatorController>(
+                "CVRFury/PreMade/" + parameterName + "/" + parameterName
+              );
+            }
+            else
+            {
+              // set controllerToMerge to an empty animator controller
+              controllerToMerge = new AnimatorController();
+            }
+
+            AnimatorCloner.MergeControllers(
+              animatorController,
+              controllerToMerge,
+              null, // no parameter mapping needed as the A3M only mods the params for the addon controller
+              false // need to make it overwrite the existing controller
+            );
+
+            // check if NeedsParameterStream is true
+            if (parameterTranslation.NeedsParameterStream)
+            {
+              // check if the uploadedObject has a CVRParameterStream on it
+              if (uploadedObject.GetComponent<CVRParameterStream>() == null)
+              {
+                // add the CVRParameterStream component to the uploadedObject
+                uploadedObject.AddComponent<CVRParameterStream>();
+              }
+
+              // get the CVRParameterStream component from the uploadedObject
+              var avatarParameterStream = uploadedObject.GetComponent<CVRParameterStream>();
+
+              // get the ParameterStreamPairs from the parameterTranslation
+              List<CRVParameterStreamPair> parameterStreamPairs = parameterTranslation.ParameterStreamPairs;
+
+              // check if the parameterStreamPairs is null, if it is log a critical error
+              // should never happen, but just in case
+              if (parameterStreamPairs == null)
+              {
+                CoreLogCritical("ParameterStreamPairs is null for parameter: " + parameterName);
+              }
+              else
+              {
+                // otherwise loop through the parameterStreamPairs
+                foreach (CRVParameterStreamPair pair in parameterStreamPairs)
+                {
+                  var sourceTypeName = pair.ParameterStreamSource.ToString();
+
+                  // Now, parse this name to get the corresponding value from the target enum
+                  ABI.CCK.Components.CVRParameterStreamEntry.Type targetType;
+                  if (Enum.TryParse(sourceTypeName, out targetType))
+                  {
+                    // Successfully parsed the name to the target enum type
+                    // 'targetType' now holds the corresponding value from 'ABI.CCK.Components.CVRParameterStreamEntry.Type'
+                  }
+                  else
+                  {
+                    // should never happen, but if it does, log a critical error
+                    CoreLogCritical("[ModuleInstaller][Core] Could not parse the sourceTypeName: " + sourceTypeName);
+                    // skip this iteration
+                    continue;
+                  }
+
+                  // add a new CVRParameterStreamEntry to the avatarParameterStream entries list
+                  avatarParameterStream.entries.Add(
+                    new CVRParameterStreamEntry
+                    {
+                      type = targetType,
+                      targetType = CVRParameterStreamEntry.TargetType.AvatarAnimator,
+                      applicationType = CVRParameterStreamEntry.ApplicationType.Override,
+                      staticValue = 0,
+                      target = null,
+                      parameterName = pair.TargetParmName
+                    }
+                  );
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // debug print the conversionList count
+      CoreLogDebug("[ModuleInstaller][Core]Conversion List count: " + conversionList.Count);
+      // debug print the conversionList in one block
+      CoreLogDebugPrintDictionary(conversionList, "[ModuleInstaller][Core] Conversion List");
+
+      // check if the conversionList is not empty
+      if (conversionList.Count > 0)
+      {
+        // get the file path for the animator controller
+        string animatorControllerFilePath = AssetDatabase.GetAssetPath(animatorController);
+
+        // Load file content
+        string fileContent = File.ReadAllText(animatorControllerFilePath);
+
+        foreach (var conversion in conversionList)
+        {
+          string replacementValue = "";
+          // Check if conversion.Value starts with '#' and enclose in double quotes if it does
+          if (conversion.Value.StartsWith("#"))
+          {
+            replacementValue = "'" + conversion.Value + "'";
+          }
+          else
+          {
+            replacementValue = conversion.Value;
+          }
+
+          // Regex pattern to match the parameter name at the end of a line
+          string pattern = @": " + Regex.Escape(conversion.Key) + "($)";
+          string replacement = ": " + replacementValue + "$1";
+
+          // debug print the pattern and replacement
+          CoreLogDebug("[ModuleInstaller][Core] Pattern: " + pattern);
+          CoreLogDebug("[ModuleInstaller][Core] Replacement: " + replacement);
+
+          try
+          {
+            // Replace occurrences
+            fileContent = Regex.Replace(fileContent, pattern, replacement, RegexOptions.Multiline);
+          }
+          catch (Exception e)
+          {
+            // log the error
+            CoreLogError(
+              "[ModuleInstaller][Core] Error replacing pattern: " + pattern + " with replacement: " + replacement
+            );
+            CoreLogDebug("[ModuleInstaller][Core] Error: " + e.Message);
+          }
+        }
+
+        // Save the modified content back to the file
+        File.WriteAllText(animatorControllerFilePath, fileContent);
+
+        // refresh the asset database
+        AssetDatabase.Refresh();
+        // mark the file as dirty
+        AssetDatabase.ImportAsset(animatorControllerFilePath, ImportAssetOptions.ForceUpdate);
+      }
     }
 
     /// <summary>
