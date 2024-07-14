@@ -42,13 +42,13 @@ AnimatorController:
     m_DefaultFloat: 0
     m_DefaultInt: -1
     m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
-  - m_Name: IsLocal
+    m_Controller: {fileID: 0}
+  - m_Name: '#IsLocal'
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
+    m_Controller: {fileID: 0}
   m_AnimatorLayers:
   - serializedVersion: 5
     m_Name: IsLocal
@@ -75,7 +75,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EnterTasks:
-  - targetType: 2
+  - targetType: 3
     targetName: '#IsLocal'
     op: 0
     aType: 0
@@ -206,7 +206,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EnterTasks:
-  - targetType: 2
+  - targetType: 3
     targetName: '#IsLocal'
     op: 0
     aType: 0

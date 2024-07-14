@@ -1,4 +1,4 @@
-// { "version": "0.43.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.45.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1642,12 +1642,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // console print to say that the module installation is being finalised
       CoreLog("Module installation finalising");
 
-      // run the automatic variable converter
-      AutomaticVariableConverter(uploadedObject);
-
-      // run the CVRParameterStream de-duplicator
-      CVRParameterStreamDeDuplicator(uploadedObject);
-
       // run Magica Cloth 2 re-enabler
 #if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
       // only if magica cloth 2 is installed
@@ -1661,12 +1655,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
       else
       {
-        CoreLogDebug("Animator controller cleaned started");
-        // animator controller cleanup
-        AnimatorControllerCleanup(uploadedObject);
-        //core log that the animator controller has been cleaned up
-        CoreLogDebug("Animator controller cleaned up");
-
         // trigger lock file cleanup
         LockfileCleanup(uploadedObject);
         //core log that the lock file has been cleaned up
@@ -1693,7 +1681,29 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // run Components Cleanup (Deployable) for CVRFury
         ComponentsCleanup(uploadedObject, Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE, "Assembly-CSharp");
+      
+      
+        CoreLogDebug("Animator controller cleaned started");
+        // animator controller cleanup
+        AnimatorControllerCleanup(uploadedObject);
+        //core log that the animator controller has been cleaned up
+        CoreLogDebug("Animator controller cleaned up");
+      
       }
+
+
+
+      // run the CVRParameterStream de-duplicator
+      CVRParameterStreamDeDuplicator(uploadedObject);
+
+      // run missing animation clip fixer
+      MissingAnimationClipFixer(uploadedObject);
+
+      // run the automatic variable converter
+      AutomaticVariableConverter(uploadedObject);
+
+      // run dedupe animator parameters
+      DedupeAnimatorParameters(uploadedObject);
 
       // wait for .5 seconds
       System.Threading.Thread.Sleep(500);
@@ -1724,6 +1734,189 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // finalise the module installation
       CoreLog("Module installation finalised");
+    }
+
+    /// <summary>
+    /// This function to check if the uploadedObject has all needed animator related parts
+    /// </summary>
+    public static bool ValidateAvatarAnimator(GameObject uploadedObject)
+    {
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // if the avatar component is null, return
+      if (avatarComponent == null)
+      {
+        //console error to say that the avatar component is missing
+        CoreLogError("[ValidateAvatarAnimator] Avatar component missing on: " + uploadedObject.name);
+        return false;
+      }
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // if the overrides are null, return
+      if (overrides == null)
+      {
+        //console error to say that the overrides are missing
+        CoreLogError("[ValidateAvatarAnimator] Animator Overrides missing on: " + uploadedObject.name);
+        return false;
+      }
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // if the animator controller is null, return
+      if (animatorController == null)
+      {
+        // console error to say that the animator controller is missing
+        CoreLogError("[ValidateAvatarAnimator] Animator Controller missing from Overrides on: " + uploadedObject.name);
+        return false;
+      }
+
+      return true;
+    }
+
+    /// <summary>
+    /// This function is to remove any duplicate animator parameters from animator controller related
+    /// to the uploadedObject
+    /// </summary>
+    public static void DedupeAnimatorParameters(GameObject uploadedObject)
+    {
+      CoreLog("Deduping animator parameters");
+
+      if (!ValidateAvatarAnimator(uploadedObject))
+      {
+        return;
+      }
+
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // if the animator controller is null, return
+      if (animatorController == null)
+      {
+        return;
+      }
+
+      // get the list of parameters from the animator controller
+      List<AnimatorControllerParameter> parameters = animatorController.parameters.ToList();
+
+      // check if there are any parameters
+      if (parameters.Count == 0)
+      {
+        return;
+      }
+
+      // Create a new list for unique parameters
+      List<AnimatorControllerParameter> uniqueParameters = new List<AnimatorControllerParameter>();
+
+      // Iterate through the original parameters list
+      foreach (var parameter in parameters)
+      {
+        // Check if the new list already contains a parameter with the same name and type
+        if (!uniqueParameters.Any(p => p.name == parameter.name && p.type == parameter.type))
+        {
+          // If not, add the parameter to the new list
+          uniqueParameters.Add(parameter);
+        }
+      }
+
+      // Clear the original parameters list in the animator controller
+      animatorController.parameters = null;
+
+      // Add all unique parameters from the new list back to the animator controller
+      animatorController.parameters = uniqueParameters.ToArray();
+
+      CoreLog("Animator parameters deduped");
+    }
+
+    /// <summary>
+    /// this function is to ensure that all states have a valid animation clip
+    /// if there is no animation clip, it will add in a 'none' animation clip
+    /// this is to resolve an issue where by missing animation clips can cause
+    /// the animator controller to not work correctly (ie avatar ends up in motorcycle pose)
+    /// </summary>
+    /// <param name="uploadedObject"></param>
+    public static void MissingAnimationClipFixer(GameObject uploadedObject)
+    {
+      CoreLog("Missing animation clip fixer running");
+
+      if (!ValidateAvatarAnimator(uploadedObject))
+      {
+        return;
+      }
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // load the null animation clip from the resources folder
+      AnimationClip noneClip = Resources.Load<AnimationClip>("CVRFury/PreMade/NullAnim/CVRF_Nothing");
+
+      // get the list of states from the animator controller
+      AnimatorState[] states = animatorController.layers
+        .SelectMany(x => x.stateMachine.states)
+        .Select(x => x.state)
+        .ToArray();
+
+      foreach (var layer in animatorController.layers)
+      {
+        // Check if state is in a protected layer
+        if (Constants.CVR_PROTECTED_LAYERS.Any(protectedLayer => protectedLayer.Equals(layer.name)))
+        {
+          // debug print that the layer is protected and will be skipped
+          CoreLogDebug("[MissingAnimationClipFixer] Layer: " + layer.name + " is protected and will be skipped");
+          continue;
+        }
+
+        foreach (var state in layer.stateMachine.states.Select(x => x.state))
+        {
+          // check if state has write defaults enabled, if so, skip
+          if (state.writeDefaultValues)
+          {
+            // debug print that the state has write defaults enabled and will be skipped
+            CoreLogDebug(
+              "[MissingAnimationClipFixer] State: "
+                + state.name
+                + " in layer: "
+                + layer.name
+                + " has write defaults enabled and will be skipped"
+            );
+            continue;
+          }
+
+          // Skip if the state has a blend tree
+          if (state.motion is BlendTree)
+          {
+            continue;
+          }
+
+          // Get the clip from the state
+          var clip = state.motion as AnimationClip;
+
+          // If the clip is null, add a 'none' clip
+          if (clip == null)
+          {
+            state.motion = noneClip; // Add the none clip to the state
+            CoreLogDebug(
+              "[MissingAnimationClipFixer] Added 'none' clip to state: " + state.name + " in layer: " + layer.name
+            );
+          }
+        }
+      }
+
+      CoreLog("Missing animation clip fixer finished");
     }
 
     /// <summary>
@@ -1828,32 +2021,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// </summary>
     public static void AutomaticVariableConverter(GameObject uploadedObject)
     {
-      // get the avatar component
-      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+      CoreLog("Automatic variable converter running");
 
-      // if the avatar component is null, return
-      if (avatarComponent == null)
+      if (!ValidateAvatarAnimator(uploadedObject))
       {
         return;
       }
+
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
 
       // get the overrides from the avatar component
       AnimatorOverrideController overrides = avatarComponent.overrides;
 
-      // if the overrides are null, return
-      if (overrides == null)
-      {
-        return;
-      }
-
       // get the animator controller from the AnimatorOverrideController
       AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
-
-      // if the animator controller is null, return
-      if (animatorController == null)
-      {
-        return;
-      }
 
       // get the list of parameters from the animator controller
       AnimatorControllerParameter[] parameters = animatorController.parameters;
@@ -1866,16 +2048,42 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         parameterNamesAnimator.Add(parameter.name);
       }
+      // debug print the parameterNamesAnimator list
+      CoreLogDebugPrintList(
+        parameterNamesAnimator,
+        "[ModuleInstaller][AutomaticVariableConverter] Parameter Names Animator"
+      );
+
       // var conversion list
       Dictionary<string, string> conversionList = new Dictionary<string, string>();
+
+      // get the number of parameters in the parameterNamesAnimator list
+      int parameterNamesAnimatorCount = parameterNamesAnimator.Count;
 
       // loop over the parameterNamesAnimator list and see if they are present in the
       // Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary (key is the VRC parameter name)
       foreach (var parameterName in parameterNamesAnimator)
       {
+        CoreLogDebug(
+          "[ModuleInstaller][AutomaticVariableConverter] Parameter: "
+            + parameterName
+            + " ("
+            + (parameterNamesAnimator.IndexOf(parameterName) + 1)
+            + " of "
+            + parameterNamesAnimatorCount
+            + ")"
+        );
+
         // check if the parameterName is in the Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary
         if (Constants.VRC_PARAMETER_STREAM_MAPPINGS.ContainsKey(parameterName))
         {
+          // debug print the parameterName was found in VRC_PARAMETER_STREAM_MAPPINGS
+          CoreLogDebug(
+            "[ModuleInstaller][AutomaticVariableConverter] Parameter: "
+              + parameterName
+              + " found in Constants.VRC_PARAMETER_STREAM_MAPPINGS"
+          );
+
           // get the value from the Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary
           VRCParameterTranslation parameterTranslation = Constants.VRC_PARAMETER_STREAM_MAPPINGS[parameterName];
 
@@ -1883,122 +2091,132 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // should never happen, but just in case
           if (parameterTranslation == null)
           {
-            CoreLogCritical("VRCParameterTranslation is null for parameter: " + parameterName);
-            continue;
-          }
-
-          // check if the parameter is supported, if not log an error and move on
-          if (!parameterTranslation.Supported)
-          {
-            CoreLogDebug("Parameter: " + parameterName + " is not supported");
-            // pop a dialog box to inform the user that the parameter is not supported
-            EditorUtility.DisplayDialog(
-              "Parameter not supported",
-              "The parameter: "
+            CoreLogCritical(
+              "[ModuleInstaller][AutomaticVariableConverter] VRCParameterTranslation is null for parameter: "
                 + parameterName
-                + " is not supported by CVR runtime environment\n\n"
-                + "No auto conversion is available and animations that rely upon it won't work",
-              "OK"
             );
-            continue;
           }
           else
           {
-            // check if the parameterTranslation.CVR is not equal to the parameterName and is set
-            if (parameterTranslation.CVR != parameterName && parameterTranslation.CVR != "")
+            // check if the parameter is supported, if not log an error and move on
+            if (!parameterTranslation.Supported)
             {
-              // add the parameterTranslation.CVR to the conversionList
-              conversionList.Add(parameterName, parameterTranslation.CVR);
-            }
-
-            AnimatorController controllerToMerge = null;
-
-            // check if the NeedsAnimator is true
-            if (parameterTranslation.NeedsAnimator)
-            {
-              // load the required animator controller
-              controllerToMerge = Resources.Load<AnimatorController>(
-                "CVRFury/PreMade/" + parameterName + "/" + parameterName
+              CoreLogDebug(
+                "[ModuleInstaller][AutomaticVariableConverter] Parameter: " + parameterName + " is not supported"
               );
+              // // pop a dialog box to inform the user that the parameter is not supported
+              // EditorUtility.DisplayDialog(
+              //   "Parameter not supported",
+              //   "The parameter: "
+              //     + parameterName
+              //     + " is not supported by CVR runtime environment\n\n"
+              //     + "No auto conversion is available and animations that rely upon it won't work",
+              //   "OK"
+              // );
             }
             else
             {
-              // set controllerToMerge to an empty animator controller
-              controllerToMerge = new AnimatorController();
-            }
-
-            AnimatorCloner.MergeControllers(
-              animatorController,
-              controllerToMerge,
-              null, // no parameter mapping needed as the A3M only mods the params for the addon controller
-              false // need to make it overwrite the existing controller
-            );
-
-            // check if NeedsParameterStream is true
-            if (parameterTranslation.NeedsParameterStream)
-            {
-              // check if the uploadedObject has a CVRParameterStream on it
-              if (uploadedObject.GetComponent<CVRParameterStream>() == null)
+              #region parameter translation - populate list
+              // check if the parameterTranslation.CVR is not equal to the parameterName and is set
+              if (parameterTranslation.CVR != parameterName && parameterTranslation.CVR != "")
               {
-                // add the CVRParameterStream component to the uploadedObject
-                uploadedObject.AddComponent<CVRParameterStream>();
+                // add the parameterTranslation.CVR to the conversionList
+                conversionList.Add(parameterName, parameterTranslation.CVR);
               }
+              #endregion // parameter translation - populate list
 
-              // get the CVRParameterStream component from the uploadedObject
-              var avatarParameterStream = uploadedObject.GetComponent<CVRParameterStream>();
-
-              // get the ParameterStreamPairs from the parameterTranslation
-              List<CRVParameterStreamPair> parameterStreamPairs = parameterTranslation.ParameterStreamPairs;
-
-              // check if the parameterStreamPairs is null, if it is log a critical error
-              // should never happen, but just in case
-              if (parameterStreamPairs == null)
+              #region parameter specific addon animation controller
+              // check if the NeedsAnimator is true
+              if (parameterTranslation.NeedsAnimator)
               {
-                CoreLogCritical("ParameterStreamPairs is null for parameter: " + parameterName);
+                // load the required animator controller
+                AnimatorController controllerToMerge = Resources.Load<AnimatorController>(
+                  "CVRFury/PreMade/" + parameterName + "/" + parameterName
+                );
+
+                // add in the addon per the parameterName
+                AnimatorCloner.MergeControllers(
+                  animatorController,
+                  controllerToMerge,
+                  null, // no parameter mapping needed as the A3M only mods the params for the addon controller
+                  false // need to make it overwrite the existing controller
+                );
+
+                // debug print that the animator controller for the parameterName has been merged
+                CoreLogDebug(
+                  "[ModuleInstaller][AutomaticVariableConverter] Animator controller for parameter: "
+                    + parameterName
+                    + " merged"
+                );
               }
-              else
+              #endregion // parameter specific addon animation controller
+
+              #region parameter specific CVRParameterStream additions
+              // check if NeedsParameterStream is true
+              if (parameterTranslation.NeedsParameterStream)
               {
-                // otherwise loop through the parameterStreamPairs
-                foreach (CRVParameterStreamPair pair in parameterStreamPairs)
+                // check if the uploadedObject has a CVRParameterStream on it
+                if (uploadedObject.GetComponent<CVRParameterStream>() == null)
                 {
-                  var sourceTypeName = pair.ParameterStreamSource.ToString();
+                  // add the CVRParameterStream component to the uploadedObject
+                  uploadedObject.AddComponent<CVRParameterStream>();
+                }
 
-                  // Now, parse this name to get the corresponding value from the target enum
-                  ABI.CCK.Components.CVRParameterStreamEntry.Type targetType;
-                  if (Enum.TryParse(sourceTypeName, out targetType))
-                  {
-                    // Successfully parsed the name to the target enum type
-                    // 'targetType' now holds the corresponding value from 'ABI.CCK.Components.CVRParameterStreamEntry.Type'
-                  }
-                  else
-                  {
-                    // should never happen, but if it does, log a critical error
-                    CoreLogCritical("[ModuleInstaller][Core] Could not parse the sourceTypeName: " + sourceTypeName);
-                    // skip this iteration
-                    continue;
-                  }
+                // get the CVRParameterStream component from the uploadedObject
+                var avatarParameterStream = uploadedObject.GetComponent<CVRParameterStream>();
 
-                  // add a new CVRParameterStreamEntry to the avatarParameterStream entries list
-                  avatarParameterStream.entries.Add(
-                    new CVRParameterStreamEntry
+                // get the ParameterStreamPairs from the parameterTranslation
+                List<CRVParameterStreamPair> parameterStreamPairs = parameterTranslation.ParameterStreamPairs;
+
+                // check if the parameterStreamPairs is null, if it is log a critical error
+                // should never happen, but just in case
+                if (parameterStreamPairs == null)
+                {
+                  CoreLogCritical("ParameterStreamPairs is null for parameter: " + parameterName);
+                }
+                else
+                {
+                  // otherwise loop through the parameterStreamPairs
+                  foreach (CRVParameterStreamPair pair in parameterStreamPairs)
+                  {
+                    var sourceTypeName = pair.ParameterStreamSource.ToString();
+
+                    // Now, parse this name to get the corresponding value from the target enum
+                    ABI.CCK.Components.CVRParameterStreamEntry.Type targetType;
+                    if (Enum.TryParse(sourceTypeName, out targetType))
                     {
-                      type = targetType,
-                      targetType = CVRParameterStreamEntry.TargetType.AvatarAnimator,
-                      applicationType = CVRParameterStreamEntry.ApplicationType.Override,
-                      parameterName = pair.TargetParmName
+                      // Successfully parsed the name to the target enum type
+                      // 'targetType' now holds the corresponding value from 'ABI.CCK.Components.CVRParameterStreamEntry.Type'
+
+                      // add a new CVRParameterStreamEntry to the avatarParameterStream entries list
+                      avatarParameterStream.entries.Add(
+                        new CVRParameterStreamEntry
+                        {
+                          type = targetType,
+                          targetType = CVRParameterStreamEntry.TargetType.AvatarAnimator,
+                          applicationType = CVRParameterStreamEntry.ApplicationType.Override,
+                          parameterName = pair.TargetParmName
+                        }
+                      );
                     }
-                  );
+                    else
+                    {
+                      // should never happen, but if it does, log a critical error
+                      CoreLogCritical("[ModuleInstaller][Core] Could not parse the sourceTypeName: " + sourceTypeName);
+                    }
+                  }
                 }
               }
+              #endregion // parameter specific CVRParameterStream additions
             }
           }
         }
       }
 
       // debug print the conversionList count
-      CoreLogDebug("[ModuleInstaller][Core]Conversion List count: " + conversionList.Count);
+      CoreLogDebug("[ModuleInstaller][AutomaticVariableConverter]Conversion List count: " + conversionList.Count);
       // debug print the conversionList in one block
-      CoreLogDebugPrintDictionary(conversionList, "[ModuleInstaller][Core] Conversion List");
+      CoreLogDebugPrintDictionary(conversionList, "[ModuleInstaller][AutomaticVariableConverter] Conversion List");
 
       // check if the conversionList is not empty
       if (conversionList.Count > 0)
@@ -2012,7 +2230,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         foreach (var conversion in conversionList)
         {
           string replacementValue = "";
-          // Check if conversion.Value starts with '#' and enclose in double quotes if it does
+          // Check if conversion.Value starts with '#' and enclose in quotes if it does
           if (conversion.Value.StartsWith("#"))
           {
             replacementValue = "'" + conversion.Value + "'";
@@ -2027,32 +2245,58 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           string replacement = ": " + replacementValue + "$1";
 
           // debug print the pattern and replacement
-          CoreLogDebug("[ModuleInstaller][Core] Pattern: " + pattern);
-          CoreLogDebug("[ModuleInstaller][Core] Replacement: " + replacement);
+          CoreLogDebug("[ModuleInstaller][AutomaticVariableConverter] Pattern: " + pattern);
+          CoreLogDebug("[ModuleInstaller][AutomaticVariableConverter] Replacement: " + replacement);
 
           try
           {
             // Replace occurrences
             fileContent = Regex.Replace(fileContent, pattern, replacement, RegexOptions.Multiline);
+
+            // Save the modified content back to the file
+            File.WriteAllText(animatorControllerFilePath, fileContent);
+
+            // workaround for unity oddity where it doesn't always update the file properly
+            #region workaround - file save/update issue
+            // make temp file path
+            string filePathDupe = GenerateDebugCopyFilePath(animatorControllerFilePath, ".post-convert-dupe");
+
+            // copy the asset to a new file
+            AssetDatabase.CopyAsset(animatorControllerFilePath, filePathDupe);
+
+            // copy the dupe back to the original
+            AssetDatabase.CopyAsset(filePathDupe, animatorControllerFilePath);
+
+            // remove the dupe
+            AssetDatabase.DeleteAsset(filePathDupe);
+
+            // link the controller at animatorControllerFilePath back to the overrides
+            overrides.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+              animatorControllerFilePath
+            );
+
+            #endregion // workaround - file save/update issue
           }
           catch (Exception e)
           {
             // log the error
             CoreLogError(
-              "[ModuleInstaller][Core] Error replacing pattern: " + pattern + " with replacement: " + replacement
+              "[ModuleInstaller][AutomaticVariableConverter] Error replacing pattern: "
+                + pattern
+                + " with replacement: "
+                + replacement
             );
-            CoreLogDebug("[ModuleInstaller][Core] Error: " + e.Message);
+            CoreLogDebug("[ModuleInstaller][AutomaticVariableConverter] Error: " + e.Message);
           }
         }
 
-        // Save the modified content back to the file
-        File.WriteAllText(animatorControllerFilePath, fileContent);
-
-        // refresh the asset database
-        AssetDatabase.Refresh();
-        // mark the file as dirty
-        AssetDatabase.ImportAsset(animatorControllerFilePath, ImportAssetOptions.ForceUpdate);
+        // // refresh the asset database
+        // AssetDatabase.Refresh();
+        // // mark the file as dirty
+        // AssetDatabase.ImportAsset(animatorControllerFilePath, ImportAssetOptions.ForceUpdate);
       }
+
+      CoreLog("Automatic variable converter finished");
     }
 
     /// <summary>
@@ -2060,34 +2304,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// </summary>
     public static void AnimatorControllerCleanup(GameObject avatar)
     {
-      // only do this if the full controller module is present
-#if NVH_CVRFURY_EXISTS_MI_FC
-      // get the avatar component
-      var avatarComponent = avatar.GetComponent<CVRAvatar>();
+      CoreLog("Animator controller cleanup running");
 
-      // if the avatar component is null, return
-      if (avatarComponent == null)
+      if (!ValidateAvatarAnimator(avatar))
       {
         return;
       }
+
+      // get the avatar component
+      var avatarComponent = avatar.GetComponent<CVRAvatar>();
 
       // get the overrides from the avatar component
       AnimatorOverrideController overrides = avatarComponent.overrides;
 
-      // if the overrides are null, return
-      if (overrides == null)
-      {
-        return;
-      }
-
       // get the animator controller from the AnimatorOverrideController
       AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
-
-      // if the animator controller is null, return
-      if (animatorController == null)
-      {
-        return;
-      }
 
       // debug print how many layers are in the animator controller
       CoreLogDebug("Number of layers in the animator controller: " + animatorController.layers.Length);
@@ -2095,6 +2326,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // loop through the layers in the animator controller
       for (int i = animatorController.layers.Length - 1; i >= 0; i--)
       {
+        // bool to keep track of if the state is doing something
+        bool layerDoingSomething = false;
+
         // get the layer
         var layer = animatorController.layers[i];
 
@@ -2105,11 +2339,46 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         int numStates = stateMachine.states.Length;
 
         // if there are no states in the state machine
-        if (numStates == 0)
+        if (numStates > 0)
+        {
+          // there are states in the state machine, need to check if they are doing something
+
+          // loop through the states
+          foreach (var state in stateMachine.states)
+          {
+            // check if the state has any animation clip
+            if (state.state.motion != null)
+            {
+              layerDoingSomething = true;
+            }
+
+            // check if the state has any behaviours
+            if (state.state.behaviours.Length > 0)
+            {
+              layerDoingSomething = true;
+            }
+
+            // check if the state is host to a blend tree
+            if (state.state.motion is BlendTree)
+            {
+              layerDoingSomething = true;
+            }    
+
+            // check if the state has any outbound transitions
+            if (state.state.transitions.Length > 0)
+            {
+              layerDoingSomething = true;
+            }
+          }
+      }
+
+        // if the state is not doing anything, remove the layer
+        if (!layerDoingSomething)
         {
           // remove the layer from the animator controller
           animatorController.RemoveLayer(i);
         }
+
         // debug print that layer is being checked
         CoreLogDebug("Checked layer: " + layer.name);
       }
@@ -2117,7 +2386,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // save the animator controller
       EditorUtility.SetDirty(animatorController);
       AssetDatabase.SaveAssets();
-#endif
+
+      CoreLog("Animator controller cleanup finished");
     }
 
     /// <summary>

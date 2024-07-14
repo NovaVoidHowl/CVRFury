@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Text;
 using System.Linq;
+using System.IO;
 
 // dynamic using statements
 #if UNITY_EDITOR
@@ -63,8 +64,28 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
       CoreLogDebugPrintList(entriesList, preMessage);
     }
-    
 #endif
+
+    public static string GenerateDebugCopyFilePath(string fullFilePath, string debugSuffix)
+    {
+      // get part of the path after last .
+      string extension = Path.GetExtension(fullFilePath);
+      // get part of the path before last .
+      string pathWithoutExtension = Path.GetFileNameWithoutExtension(fullFilePath);
+      // combine the path without extension, .debug and extension
+      string debugFilePath = Path.Combine(
+        Path.GetDirectoryName(fullFilePath),
+        pathWithoutExtension + debugSuffix + extension
+      );
+      return debugFilePath;
+    }
+
+    public static void ForceRefreshAssetDatabase()
+    {
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+      EditorApplication.QueuePlayerLoopUpdate();
+    }
 
     public static string GetGameObjectPath(GameObject obj)
     {
@@ -151,7 +172,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       string commonPath = string.Join("/", commonParts);
       return commonPath;
     }
-
 
 #if UNITY_EDITOR
     // this bit needs editor to work
