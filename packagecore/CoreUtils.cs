@@ -80,13 +80,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       return debugFilePath;
     }
 
-    public static void ForceRefreshAssetDatabase()
-    {
-      AssetDatabase.SaveAssets();
-      AssetDatabase.Refresh();
-      EditorApplication.QueuePlayerLoopUpdate();
-    }
-
     public static string GetGameObjectPath(GameObject obj)
     {
       string path = "/" + obj.name;
