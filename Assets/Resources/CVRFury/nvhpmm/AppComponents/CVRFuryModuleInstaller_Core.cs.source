@@ -1,4 +1,4 @@
-// { "version": "0.45.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.47.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1681,20 +1681,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // run Components Cleanup (Deployable) for CVRFury
         ComponentsCleanup(uploadedObject, Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE, "Assembly-CSharp");
-      
-      
+
         CoreLogDebug("Animator controller cleaned started");
         // animator controller cleanup
         AnimatorControllerCleanup(uploadedObject);
         //core log that the animator controller has been cleaned up
         CoreLogDebug("Animator controller cleaned up");
-      
       }
-
-
 
       // run the CVRParameterStream de-duplicator
       CVRParameterStreamDeDuplicator(uploadedObject);
+
+      // run write defaults fixer, MUST happen before missing animation clip fixer!
+      WriteDefaultsFixer(uploadedObject);
 
       // run missing animation clip fixer
       MissingAnimationClipFixer(uploadedObject);
@@ -1734,6 +1733,130 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // finalise the module installation
       CoreLog("Module installation finalised");
+    }
+
+    public static void WriteDefaultsFixer(GameObject uploadedObject)
+    {
+      CoreLog("Fixing write defaults on states");
+
+      if (!ValidateAvatarAnimator(uploadedObject))
+      {
+        return;
+      }
+
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // load the null animation clip from the resources folder
+      AnimationClip noneClip = Resources.Load<AnimationClip>("CVRFury/PreMade/NullAnim/CVRF_Nothing");
+
+      // get the list of states from the animator controller
+      AnimatorState[] states = animatorController.layers
+        .SelectMany(x => x.stateMachine.states)
+        .Select(x => x.state)
+        .ToArray();
+
+      // get count of layers
+      int layerCount = animatorController.layers.Length;
+      // layer index
+      int layerIndex = 0;
+
+      foreach (var layer in animatorController.layers)
+      {
+        // Increment layer counter
+        layerIndex++;
+
+        // debug print the layer name
+        CoreLogDebug(
+          "[WriteDefaultsFixer] Processing layer: " + layer.name + "(" + layerIndex + " of " + layerCount + ")"
+        );
+
+        // Check if state is in a protected layer
+        if (Constants.CVR_PROTECTED_LAYERS.Any(protectedLayer => protectedLayer.Equals(layer.name)))
+        {
+          // debug print that the layer is protected and will be skipped
+          CoreLogDebug("[WriteDefaultsFixer] Layer: " + layer.name + " is protected and will be skipped");
+          continue;
+        }
+
+        // get count of states
+        int stateCount = layer.stateMachine.states.Length;
+        // state index
+        int stateIndex = 0;
+
+        foreach (var state in layer.stateMachine.states.Select(x => x.state))
+        {
+          // Increment state counter
+          stateIndex++;
+          // debug print the state name
+          CoreLogDebug(
+            "[WriteDefaultsFixer] Processing state: " + state.name + "(" + stateIndex + " of " + stateCount + ")"
+          );
+
+          // get the current state's write defaults value
+          bool writeDefaults = state.writeDefaultValues;
+
+          // debug print the current state's write defaults value
+          CoreLogDebug(
+            "[WriteDefaultsFixer] Write Defaults: " + writeDefaults + " on: " + state.name + " in layer: " + layer.name
+          );
+
+          // check if state has write defaults enabled, if so, skip
+          // bool to say if WD can be set to true
+          bool wdCanBeSet = false;
+
+          if (!writeDefaults)
+          {
+            // not write defaults enabled, need to check state
+
+            // check if the state has a behaviour
+            if (state.behaviours.Length > 0)
+            {
+              if (state.motion == null)
+              {
+                // set the write defaults to true
+                wdCanBeSet = true;
+              }
+            }
+            // check if state has an animation clip
+            if (state.motion != null)
+            {
+              // check if the motion is an animation clip
+              if (state.motion is AnimationClip)
+              {
+                // set the write defaults to true
+                wdCanBeSet = true;
+              }
+            }
+            else
+            {
+              // check if the state has a transition
+              if (state.transitions.Length == 0)
+              {
+                // set the write defaults to true
+                wdCanBeSet = true;
+              }
+            }
+          }
+
+          if (wdCanBeSet)
+          {
+            // set the write defaults to true
+            state.writeDefaultValues = true;
+
+            // debug print that the write defaults have been set to true
+            CoreLogDebug(
+              "[WriteDefaultsFixer] Write Defaults set to true on: " + state.name + " in layer: " + layer.name
+            );
+          }
+        }
+      }
     }
 
     /// <summary>
@@ -2362,7 +2485,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             if (state.state.motion is BlendTree)
             {
               layerDoingSomething = true;
-            }    
+            }
 
             // check if the state has any outbound transitions
             if (state.state.transitions.Length > 0)
@@ -2370,7 +2493,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               layerDoingSomething = true;
             }
           }
-      }
+        }
 
         // if the state is not doing anything, remove the layer
         if (!layerDoingSomething)
