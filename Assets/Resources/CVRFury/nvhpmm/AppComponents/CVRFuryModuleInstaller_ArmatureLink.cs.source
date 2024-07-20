@@ -1,4 +1,4 @@
-// { "version": "0.3.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.3.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1938,7 +1938,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       string animationClipText = File.ReadAllText(animationClipPath);
 
       // counter to keep track of the number of replacements
-      int replacements = 0;
+      int replacements_bone = 0;
       // look for strings that match the values in Constants.VRCPHYSBONE_M_SCRIPT_IDS
       foreach (string scriptID in Constants.VRCPHYSBONE_M_SCRIPT_IDS)
       {
@@ -1946,8 +1946,24 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         animationClipText = animationClipText.Replace(scriptID, Constants.CVRFURY_PHYSB_M_SCRIPT_ID);
 
         // increment the replacements counter
-        replacements++;
+        replacements_bone++;
       }
+
+      // counter to keep track of the number of replacements
+      int replacements_bone_collider = 0;
+
+      // look for strings that match the values in Constants.VRCPHYSBONE_COLLIDER_M_SCRIPT_IDS
+      foreach (string scriptID in Constants.VRCPHYSBONE_COLLIDER_M_SCRIPT_IDS)
+      {
+        // replace the scriptID with Constants.VRCPHYSBONE_COLLIDER_M_SCRIPT_ID
+        animationClipText = animationClipText.Replace(scriptID, Constants.CVRFURY_PHYSB_COLLIDER_M_SCRIPT_ID);
+
+        // increment the replacements counter
+        replacements_bone_collider++;
+      }
+
+      //combine the replacements counters
+      int replacements = replacements_bone + replacements_bone_collider;
 
       if (replacements > 0)
       {

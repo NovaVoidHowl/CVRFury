@@ -336,7 +336,12 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
           // if the file has a line starting with 'm_Script:'
           // check if the m_Script line ends with the value in 'VRCPHYSBONE_M_SCRIPT_IDS'
 
-          (bool IDmatch, string IDString) = checkScriptIDs(prefabFile, Constants.VRCPHYSBONE_M_SCRIPT_IDS);
+          (bool IDmatch_Bone, string IDString_bone) = checkScriptIDs(prefabFile, Constants.VRCPHYSBONE_M_SCRIPT_IDS);
+          (bool IDmatch_Collider, string IDString_Collider) = checkScriptIDs(prefabFile, Constants.VRCPHYSBONE_COLLIDER_M_SCRIPT_IDS);
+          
+          // if we get either or both of the IDs, we can proceed
+          bool IDmatch = IDmatch_Bone || IDmatch_Collider;
+          
           if (IDmatch)
           {
             // found the file we are looking for file, (it has PhysBones in it)
@@ -402,7 +407,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
               // Wait for barDelay
               await Task.Delay(barDelay);
 
-              // in the new  file, replace  the line m_Script: $IDString
+              // in the new  file, replace  the line m_Script: $IDString_bone
               // with m_Script: $CVRFURY_PHYSB_M_SCRIPT_ID , which is the stubbed version of the script
 
               // read the new file as plain text
@@ -413,8 +418,19 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
               // set the value of the progressBar to .2
               progressBar.value = 30;
 
-              // replace the line in the file
-              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + Constants.CVRFURY_PHYSB_M_SCRIPT_ID);
+              // replace the line in the file for bones
+              newFileString = newFileString.Replace("m_Script: " + IDString_bone, "m_Script: " + Constants.CVRFURY_PHYSB_M_SCRIPT_ID);
+              
+              // set the text of the progressLabel to "50% -- Rebinding Script"
+              progressLabel.text = "50% -- Rebinding Script";
+              // set the value of the progressBar to .5
+              progressBar.value = 50;
+              
+              
+              // replace the line in the file for colliders
+              newFileString = newFileString.Replace("m_Script: " + IDString_Collider, "m_Script: " + Constants.CVRFURY_PHYSB_COLLIDER_M_SCRIPT_ID);
+
+
 
               // set the text of the progressLabel to "80% -- Rebinding Script"
               progressLabel.text = "80% -- Rebinding Script";
