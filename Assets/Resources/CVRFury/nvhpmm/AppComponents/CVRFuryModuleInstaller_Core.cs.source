@@ -1,4 +1,4 @@
-// { "version": "0.47.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.48.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1689,6 +1689,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         CoreLogDebug("Animator controller cleaned up");
       }
 
+      // run the bounding box fixer
+      BoundingBoxesFixer(uploadedObject);
+
       // run the CVRParameterStream de-duplicator
       CVRParameterStreamDeDuplicator(uploadedObject);
 
@@ -1735,6 +1738,213 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CoreLog("Module installation finalised");
     }
 
+    /// <summary>
+    ///  This function process all skinned mesh renderers in the uploadedObject and attempts
+    ///  to fix their bounding boxes
+    ///  </summary>
+    public static void BoundingBoxesFixer(GameObject uploadedObject)
+    {
+      CoreLog("Fixing bounding boxes");
+
+      // get avatar component from uploadedObject
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // if the avatar component is null, return
+      if (avatarComponent == null)
+      {
+        CoreLogError("No CVRAvatar component found");
+        return;
+      }
+
+      // get the body mesh from the avatar component
+      var bodyMesh = avatarComponent.bodyMesh;
+
+      // if the body mesh is null, return
+      if (bodyMesh == null)
+      {
+        CoreLogError("No body mesh found");
+        return;
+      }
+
+      SkinnedMeshRenderer[] meshRenderers;
+
+      try
+      {
+        // Get all the skinned mesh renderers in the uploadedObject, including those on disabled GameObjects
+        meshRenderers = uploadedObject
+          .GetComponentsInChildren<SkinnedMeshRenderer>(true)
+          .Where(renderer =>
+          {
+            if (renderer.sharedMesh == null)
+            {
+              // if the shared mesh is null, return false AKA don't include it
+              return false;
+            }
+
+            return true; // no issues, include renderer
+          })
+          .ToArray();
+        ;
+      }
+      catch (Exception e)
+      {
+        CoreLogError("[Bounding Box Fix] Error getting skinned mesh renderers: " + e.Message);
+        return;
+      }
+
+      // remove the body mesh from the mesh renderers, as there is no need to process it
+      meshRenderers = meshRenderers.Where(x => x != bodyMesh).ToArray();
+
+      // Get a count of the mesh renderers
+      int meshRendererCount = meshRenderers.Length;
+
+      // debug print the number of mesh renderers
+      CoreLogDebug("[Bounding Box Fix] Number of mesh renderers: " + meshRendererCount);
+
+      // If there are no mesh renderers, return
+      if (meshRendererCount == 0)
+      {
+        CoreLogDebug("No mesh renderers found");
+        return;
+      }
+
+      // Loop over the mesh renderers
+      foreach (SkinnedMeshRenderer meshRenderer in meshRenderers)
+      {
+        // Print the name of the object the mesh renderer is on
+        CoreLogDebug("[Bounding Box Fix] Processing mesh renderer on: " + meshRenderer.gameObject.name);
+
+        // Get the bounds of the mesh renderer
+        Bounds bounds = meshRenderer.bounds;
+
+        // Print the bounds of the mesh renderer
+        CoreLogDebug("[Bounding Box Fix] Bounds: " + bounds);
+
+        Mesh mesh = meshRenderer.sharedMesh;
+        if (mesh != null)
+        {
+          AdjustSkinnedMeshRendererBoundingBox(meshRenderer, uploadedObject);
+        }
+
+        // Print the new bounds of the mesh renderer
+        CoreLogDebug("[Bounding Box Fix] New Bounds: " + meshRenderer.bounds);
+
+        // mark the mesh renderer as dirty
+        EditorUtility.SetDirty(meshRenderer);
+
+        //
+      }
+
+      CoreLog("Bounding box fix completed");
+    }
+
+    /// <summary>
+    /// This function updates the bounding box of a SkinnedMeshRenderer
+    /// </summary>
+    private static void AdjustSkinnedMeshRendererBoundingBox(SkinnedMeshRenderer renderer, GameObject uploadedObject)
+    {
+      Bounds startBounds = CalculateFullUploadedObjectBounds(uploadedObject);
+      Transform root = renderer.rootBone;
+
+      bool ModifyBounds(
+        float sizeX = 0,
+        float sizeY = 0,
+        float sizeZ = 0,
+        float centerX = 0,
+        float centerY = 0,
+        float centerZ = 0
+      )
+      {
+        var b = renderer.localBounds;
+        var extents = b.extents;
+        extents.x += sizeX;
+        extents.y += sizeY;
+        extents.z += sizeZ;
+        b.extents = extents;
+        var center = b.center;
+        center.x += centerX;
+        center.y += centerY;
+        center.z += centerZ;
+        b.center = center;
+
+        var fullBak = startBounds;
+        var updatedBounds = GetUpdatedSkinnedMeshRendererBounds(renderer, b);
+        var fullNew = fullBak;
+        fullNew.Encapsulate(updatedBounds);
+
+        if (fullNew != fullBak)
+        {
+          return false;
+        }
+        renderer.localBounds = b;
+        renderer.updateWhenOffscreen = false;
+        return true;
+      }
+
+      var stepSizeInMeters = 0.025f;
+      var maxSteps = 40;
+      var stepSize = stepSizeInMeters / root.lossyScale.x;
+      for (var i = 0; i < maxSteps; i++)
+      {
+        ModifyBounds(sizeX: stepSize, centerX: -stepSize);
+        ModifyBounds(sizeX: stepSize, centerX: stepSize);
+        ModifyBounds(sizeY: stepSize, centerY: -stepSize);
+        ModifyBounds(sizeY: stepSize, centerY: stepSize);
+        ModifyBounds(sizeZ: stepSize, centerZ: -stepSize);
+        ModifyBounds(sizeZ: stepSize, centerZ: stepSize);
+      }
+    }
+
+    /// <summary>
+    /// This function processed the target renderer and returns the updated bounds
+    /// </summary>
+    private static Bounds GetUpdatedSkinnedMeshRendererBounds(SkinnedMeshRenderer renderer, Bounds newBounds)
+    {
+      var root = renderer.rootBone;
+
+      List<Vector3> GetLocalCorners(Bounds obj)
+      {
+        var result = new List<Vector3>();
+        for (var x = -1; x <= 1; x += 2)
+          for (var y = -1; y <= 1; y += 2)
+            for (var z = -1; z <= 1; z += 2)
+              result.Add(obj.center + Times(obj.extents, new Vector3(x, y, z)));
+        return result;
+      }
+
+      Vector3 Times(Vector3 self, Vector3 other) => new Vector3(self.x * other.x, self.y * other.y, self.z * other.z);
+
+      var corners = GetLocalCorners(newBounds);
+      var b = new Bounds(root.TransformPoint(newBounds.center), Vector3.zero);
+      foreach (var corner in corners)
+      {
+        b.Encapsulate(root.TransformPoint(corner));
+      }
+
+      return b;
+    }
+
+    /// <summary>
+    /// This function calculates the bounds of an uploadedObject by iterating over all the renderers
+    /// in the uploadedObject and its children (inc disabled) and encapsulating their bounds
+    /// </summary>
+    private static Bounds CalculateFullUploadedObjectBounds(GameObject uploadedObject)
+    {
+      Bounds bounds = new Bounds(uploadedObject.transform.position, Vector3.zero);
+      foreach (var renderer in uploadedObject.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+      {
+        if (renderer is MeshRenderer || renderer is SkinnedMeshRenderer)
+        {
+          bounds.Encapsulate(renderer.bounds);
+        }
+      }
+      return bounds;
+    }
+
+    /// <summary>
+    /// This Function iterates over all the animator controllers in the uploadedObject
+    /// and switches layers to WD on where possible
+    /// </summary>
     public static void WriteDefaultsFixer(GameObject uploadedObject)
     {
       CoreLog("Fixing write defaults on states");
