@@ -1,4 +1,4 @@
-// { "version": "0.3.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
+// { "version": "0.4.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -145,6 +145,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // set the armatureBoneToLinkTo
           armatureLinkModule.armatureBoneToLinkTo = VRCFuryArmatureLink.boneOnAvatar;
 
+          // bool to say if the bone is default aka hips
+          bool defaultArmatureBoneToLinkTo = false;
+
+          // check if the armatureBoneToLinkTo is the default bone
+          if (armatureLinkModule.armatureBoneToLinkTo == HumanBodyBones.Hips)
+          {
+            defaultArmatureBoneToLinkTo = true;
+          }
+
           // set the fallbackBones
           armatureLinkModule.fallbackBones = VRCFuryArmatureLink.fallbackBones;
 
@@ -164,6 +173,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             // create a new list of LinkTarget
             List<LinkTarget> linkTargets = new List<LinkTarget>();
 
+            int linkToIndex = 0;
             // loop through the VRCFuryLinkTo list
             foreach (var linkTo in VRCFuryLinkTo)
             {
@@ -195,6 +205,55 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // set the humanBodyBone to the bone from the VRCFuryLinkTo
               linkTarget.humanBodyBone = linkTo.bone;
 
+              if (!defaultArmatureBoneToLinkTo)
+              {
+                // need to check if we need to do an import overwrite
+                // only on first linkTo as its only the first that follows this import behaviour
+                if (linkToIndex == 0)
+                {
+                  // check if the linkTo.bone is set to default hips
+                  if (linkTo.bone == HumanBodyBones.Hips)
+                  {
+                    // ok so on default and likely needs to be overwritten
+                    // copy the value from armatureLinkModule.armatureBoneToLinkTo
+                    linkTarget.humanBodyBone = armatureLinkModule.armatureBoneToLinkTo;
+                  }
+                  else
+                  {
+                    // ok got a problem here as both are not hips (aka both are not default)
+                    // first check if they are the same
+                    if (linkTo.bone == armatureLinkModule.armatureBoneToLinkTo)
+                    {
+                      // ok so they are the same, we can leave them be
+                    }
+                    else
+                    {
+                      // worst case scenario, they are different so we need to ask the user, what to do
+                      // we will ask the user to confirm the overwrite
+                      bool overwrite = EditorUtility.DisplayDialog(
+                        "Armature Link Import",
+                        "The 'bone to link to' is not the default in both 'Bone On Avatar'"
+                          + "and 'Link To' list, do you want to overwrite the 'Link To' bone with the 'Bone On Avatar' bone?"
+                          + "\n\n"
+                          + "Bone On Avatar: "
+                          + armatureLinkModule.armatureBoneToLinkTo
+                          + "\n"
+                          + "Link To: "
+                          + linkTo.bone,
+                        "Yes",
+                        "No"
+                      );
+
+                      // if the user selects yes, then we overwrite the bone
+                      if (overwrite)
+                      {
+                        linkTarget.humanBodyBone = armatureLinkModule.armatureBoneToLinkTo;
+                      }
+                    }
+                  }
+                }
+              }
+
               // set the targetGameObject to the obj from the VRCFuryLinkTo
               linkTarget.targetGameObject = linkTo.obj;
 
@@ -203,6 +262,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // add the linkTarget to the linkTargets list
               linkTargets.Add(linkTarget);
+
+              // increment the linkToIndex
+              linkToIndex++;
             }
 
             // set the armatureLinkModule.linkTargets to the linkTargets list
