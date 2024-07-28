@@ -1,4 +1,4 @@
-// { "version": "0.48.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.50.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -16,6 +16,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
+using UnityEngine.Animations;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Components;
@@ -1649,6 +1650,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       MagicaCloth2ReEnabler(uploadedObject);
 #endif
 
+      // run the nuke pruner
+      NukePruner(uploadedObject);
+
       if (EditorPrefs.GetBool(Constants.CLEANUP_DISABLE_PREF, false))
       {
         CoreLog("Cleanup disabled, skipping cleanup");
@@ -1736,6 +1740,146 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // finalise the module installation
       CoreLog("Module installation finalised");
+    }
+
+    /// <summary>
+    /// This function removes any nuke components that managed to get where they should not ie.
+    /// The armature of the uploadedObject
+    /// </summary>
+    public static void NukePruner(GameObject uploadedObject)
+    {
+      // debug log that the nuke pruner is running
+      CoreLogDebug("[Nuke Pruner] running");
+
+      #region Avatar Armature
+      // get the AvatarInfoUnit component from the uploadedObject
+      CVRFuryAvatarInfoUnit avatarInfoUnit = uploadedObject.GetComponent<CVRFuryAvatarInfoUnit>();
+
+      // get the common string from the avatarInfoUnit.avatarArmaturePaths list
+      string commonPath = GetCommonPath(avatarInfoUnit.avatarArmaturePaths);
+
+      // get the first part of the common path
+      string firstPart = commonPath.Split('/')[0];
+
+      // get the game object from the first part of the common path
+      var firstPartObject = uploadedObject.transform.Find(firstPart);
+
+      // remove the CVRFuryNukeGameObject components from the first part object and all its children (inc disabled)
+      var nukeComponentsAvatarArmature = firstPartObject.GetComponentsInChildren<CVRFuryNukeGameObject>(true);
+      
+      // debug print the name of the first part object
+      CoreLogDebug("[Nuke Pruner] Removing nuke components from: " + firstPartObject.name);
+      
+      foreach (CVRFuryNukeGameObject nukeComponent in nukeComponentsAvatarArmature)
+      {
+        // debug print the name of the object the component is on
+        CoreLogDebug("[Nuke Pruner] Removing nuke component from: " + nukeComponent.gameObject.name);
+
+        UnityEngine.Object.DestroyImmediate(nukeComponent);
+      }
+      #endregion // Avatar Armature
+
+      #region Parent Constraint
+      // get all the parent constraint components in the uploadedObject and its children
+      var parentConstraints = uploadedObject.GetComponentsInChildren<ParentConstraint>(true);
+
+      // create a list to hold all the source gameObjects
+      var parentSourceObjects = new List<UnityEngine.GameObject>();
+
+      // get all the source objects from the parent constraints
+      foreach (var parentConstraint in parentConstraints)
+      {
+          for (int i = 0; i < parentConstraint.sourceCount; i++)
+          {
+              var source = parentConstraint.GetSource(i);
+              parentSourceObjects.Add(source.sourceTransform.gameObject);
+          }
+      }
+      #endregion // Parent Constraint
+
+      #region Scale Constraint
+      // get all the scale constraint components in the uploadedObject and its children
+      var scaleConstraints = uploadedObject.GetComponentsInChildren<ScaleConstraint>(true);
+
+      // create a list to hold all the source gameObjects
+      var scaleSourceObjects = new List<UnityEngine.GameObject>();
+
+      // get all the source objects from the scale constraints
+      foreach (var scaleConstraint in scaleConstraints)
+      {
+          for (int i = 0; i < scaleConstraint.sourceCount; i++)
+          {
+              var source = scaleConstraint.GetSource(i);
+              scaleSourceObjects.Add(source.sourceTransform.gameObject);
+          }
+      }
+
+      #endregion // Scale Constraint
+
+      #region Position Constraint
+      // get all the position constraint components in the uploadedObject and its children
+      var positionConstraints = uploadedObject.GetComponentsInChildren<PositionConstraint>(true);
+
+      // create a list to hold all the source gameObjects
+      var positionSourceObjects = new List<UnityEngine.GameObject>();
+
+      // get all the source objects from the position constraints
+      foreach (var positionConstraint in positionConstraints)
+      {
+          for (int i = 0; i < positionConstraint.sourceCount; i++)
+          {
+              var source = positionConstraint.GetSource(i);
+              positionSourceObjects.Add(source.sourceTransform.gameObject);
+          }
+      }
+
+      #endregion // Position Constraint
+
+      #region constraint fixes
+
+      // main list of constraint source objects
+      var constraintSourceObjects = new List<UnityEngine.GameObject>();
+
+      // add the parent source objects to the constraint source objects list
+      constraintSourceObjects.AddRange(parentSourceObjects);
+      constraintSourceObjects.AddRange(scaleSourceObjects);
+      constraintSourceObjects.AddRange(positionSourceObjects);
+
+      // debug print the number of constraint source objects
+      CoreLogDebug("[Nuke Pruner] Number of constraint source objects: " + constraintSourceObjects.Count);
+      
+      // process the source objects
+      foreach (var sourceObject in constraintSourceObjects)
+      {
+        List<GameObject> objectsToProcess = GetParentObjects(sourceObject, uploadedObject);
+        objectsToProcess.Add(sourceObject);
+        CoreLogDebug("[Nuke Pruner] Number of objects to process: " + objectsToProcess.Count);
+
+        // remove the CVRFuryNukeGameObject components from the source object and its parents
+        foreach (var parentObject in objectsToProcess)
+        {
+          CVRFuryNukeGameObject[] nukeComponents = parentObject.GetComponents<CVRFuryNukeGameObject>();
+          // get count of nuke components
+          int nukeComponentCount = nukeComponents.Length;
+
+          if (nukeComponentCount > 0)
+          {
+            foreach (var nukeComponent in nukeComponents)
+            {
+              // debug print the name of the object the component is on
+              CoreLogDebug("[Nuke Pruner] Removing nuke component from: " + nukeComponent.gameObject.name);
+
+              UnityEngine.Object.DestroyImmediate(nukeComponent);
+            }
+          }
+          
+        }
+      }
+
+      #endregion // constraint fixes
+
+      // debug log that the nuke pruner has finished
+      CoreLogDebug("[Nuke Pruner] finished");
     }
 
     /// <summary>
@@ -1843,8 +1987,36 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     /// </summary>
     private static void AdjustSkinnedMeshRendererBoundingBox(SkinnedMeshRenderer renderer, GameObject uploadedObject)
     {
-      Bounds startBounds = CalculateFullUploadedObjectBounds(uploadedObject);
+      // check if input is not null
+      if (renderer == null)
+      {
+        CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] SkinnedMeshRenderer is null");
+        return;
+      }
+      if (uploadedObject == null)
+      {
+        CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] UploadedObject is null");
+        return;
+      }
+
+      Bounds startBounds;
+      try
+      {
+        startBounds = CalculateFullUploadedObjectBounds(uploadedObject);
+      }
+      catch (Exception e)
+      {
+        CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] Error getting start bounds: " + e.Message);
+        return;
+      }
       Transform root = renderer.rootBone;
+
+      // check if the root is null
+      if (root == null)
+      {
+        CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] Root bone is null");
+        return;
+      }
 
       bool ModifyBounds(
         float sizeX = 0,
@@ -1868,7 +2040,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         b.center = center;
 
         var fullBak = startBounds;
-        var updatedBounds = GetUpdatedSkinnedMeshRendererBounds(renderer, b);
+        Bounds updatedBounds;
+        try
+        {
+          updatedBounds = GetUpdatedSkinnedMeshRendererBounds(renderer, b);
+        }
+        catch (Exception e)
+        {
+          CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] Error getting updated bounds: " + e.Message);
+          return false;
+        }
+        
         var fullNew = fullBak;
         fullNew.Encapsulate(updatedBounds);
 
