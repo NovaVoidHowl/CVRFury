@@ -1,4 +1,4 @@
-// { "version": "0.3.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.5.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -74,7 +74,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (armatureLinkModuleCount > 1)
       {
         // log a error to the console
-        CoreLogError(
+        CoreLogWarning(
           "More than one armatureLink module found on DSUObject, this may cause issues, attempting automatic resolution"
         );
 
@@ -239,6 +239,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             );
             break;
         }
+        AnimationPathFix(avatar, targetAvatar, DSUNumber, DSUObject, armatureLinkModule);
+        GameObjectCleanup(DSUObject);
       }
     }
 
@@ -433,7 +435,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       if (commonBones.Count == 0)
       {
-        CoreLogError(
+        CoreLogWarning(
           "No common bones found between the addon's armature and the avatar's armature"
             + "\n Reattempting case insensitive comparison"
         );
@@ -539,7 +541,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         {
           differentBonesStringBuilder.Append(differentBone + "\n");
         }
-        CoreLogError(
+        CoreLogDebugWarning(
           "The following bones have different rotation/position/scale in the addon's armature compared to the avatar's armature:\n"
             + differentBonesStringBuilder.ToString()
         );
@@ -981,8 +983,116 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       #endregion
 
-      #region Animation rebind
+    }
 
+    private void performReparentRoot(
+      CVRAvatar avatar,
+      GameObject targetAvatar,
+      GameObject DSUObject,
+      int DSUNumber,
+      armatureLink armatureLinkModule
+    )
+    {
+      // Implementation for performReparentRoot
+      // console print to say this function is being called
+      CoreLog("[ArmatureLink] performReparentRoot() called");
+
+      // call function to add the CVRFuryGameObjectInfoTag to the DSUObject + children
+      AddCVRFuryGameObjectInfoTagToAddon(DSUObject, DSUNumber);
+
+      // get the path to the avatar
+      string avatarPath = GetGameObjectPath(avatar.gameObject);
+
+      // get the current path of the addonObjectToLink and store it
+      string addonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
+
+      // remove the avatarPath from the start of the addonObjectToLinkPath
+      addonObjectToLinkPath = addonObjectToLinkPath.Replace(avatarPath, "");
+
+      // remove the starting `/` from the addonObjectToLinkPath if it exists
+      if (addonObjectToLinkPath.StartsWith("/"))
+      {
+        addonObjectToLinkPath = addonObjectToLinkPath.Substring(1);
+      }
+
+      // move the addonObjectToLink to be a child of the armatureBoneToLinkTo, note armatureBoneToLinkTo is of
+      // type HumanBodyBones, the addonObjectToLink is of type GameObject and the addonObjectToLink should not move in
+      // scene space but just be parented to the bone (this is so the user can position the object where they want it)
+
+      // get the Animator component from the avatar
+      Animator animator = avatar.GetComponent<Animator>();
+
+      GameObject boneToLinkToGameObject = null;
+
+      // what we do to get the target 'boneToLinkToGameObject' is dependent on the avatarTargetingMode
+      // switch statement to handle the different avatarTargetingModes
+      boneToLinkToGameObject = GetBoneToLinkToGameObject(targetAvatar, animator, armatureLinkModule);
+
+      // if the boneToLinkToGameObject is null then there is an issue, log a error to the console and return
+      if (boneToLinkToGameObject == null)
+      {
+        // log as a critical error to the console, as this should not happen
+        CoreLogCritical("[ArmatureLink] boneToLinkToGameObject is null, this should not happen");
+        return;
+      }
+
+      // add a empty GameObject to the boneToLinkToGameObject, this is for insulation purposes
+      GameObject addonParent = new GameObject("CVRF_Addon_" + DSUNumber);
+
+      // put the addonParent as a child of the boneToLinkToGameObject
+      addonParent.transform.SetParent(boneToLinkToGameObject.transform, true);
+
+      // put the addonObjectToLink as a child of the boneToLinkToGameObject
+      armatureLinkModule.addonObjectToLink.transform.SetParent(boneToLinkToGameObject.transform, true);
+
+      // copy the position/rotation/scale of the addonObjectToLink to the addonParent
+      addonParent.transform.position = armatureLinkModule.addonObjectToLink.transform.position;
+      addonParent.transform.rotation = armatureLinkModule.addonObjectToLink.transform.rotation;
+      addonParent.transform.localScale = armatureLinkModule.addonObjectToLink.transform.localScale;
+
+      // reparent the addonObjectToLink to the addonParent
+      armatureLinkModule.addonObjectToLink.transform.SetParent(addonParent.transform, true);
+
+      // debug log to console that the object has been re-parented
+      CoreLogDebug("[ArmatureLink] Object has been re-parented to: " + boneToLinkToGameObject.name);
+
+      // ok now to take care of any duplicates (people may want more than one of the same object), we need to
+      // add a tag to the start of the object name to make it unique
+
+      // get the name of the addonObjectToLink
+      string addonObjectToLinkName = armatureLinkModule.addonObjectToLink.name;
+
+      // new name of the addonObjectToLink
+      string newAddonObjectToLinkName = "[CVRF_D" + DSUNumber + "]_" + addonObjectToLinkName;
+
+      // prefix the name of the addonObjectToLink with the DSUNumber
+      armatureLinkModule.addonObjectToLink.name = newAddonObjectToLinkName;
+
+      // console print to say renaming is done
+      CoreLog("[ArmatureLink] Renaming from " + addonObjectToLinkName + " to " + newAddonObjectToLinkName + " done");
+
+      // get the new path of the addonObjectToLink and store it
+      string newAddonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
+
+      // remove the avatarPath from the start of the newAddonObjectToLinkPath
+      newAddonObjectToLinkPath = newAddonObjectToLinkPath.Replace(avatarPath, "");
+
+      // remove the starting `/` from the newAddonObjectToLinkPath if it exists
+      if (newAddonObjectToLinkPath.StartsWith("/"))
+      {
+        newAddonObjectToLinkPath = newAddonObjectToLinkPath.Substring(1);
+      }
+
+      // debug log to console the new path of the addonObjectToLink
+      CoreLogDebug("[ArmatureLink] newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
+    }
+
+
+
+
+
+    private void AnimationPathFix(CVRAvatar avatar, GameObject targetAvatar, int DSUNumber, GameObject DSUObject, armatureLink armatureLinkModule)
+    {
       // there are 2 types of animation paths that need to be sorted out
       // 1. the paths in the animation files that are relative to the armature
       // 2. the paths in the animation files that are relative to the mesh host/other objects
@@ -990,6 +1100,25 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // ON TOP OF THAT, there are 2 types styles of animation files
       // 1. the ones that start from the level that would be under the DSUObject
       // 2. the ones that start from the level of the DSUObject, note that they may not match the DSUObject name
+      //
+      // ON TOP OF THAT, there sometimes the rebind is on the DSUObject itself
+      // this is a special case and needs a custom handler 
+      // (note its not recommended to do when making a prefab, but people may do it anyway)
+
+      // get name of DSUObject
+      string DSUObjectName = DSUObject.name;
+      // check if the component is imported from VRCFury
+      if (armatureLinkModule.importedFromVRCFury)
+      {
+        // remove the `.CVRFury` suffix from the DSUObjectName
+        DSUObjectName = DSUObjectName.Replace(".CVRFury", "");
+      }
+      // remove the `[CVRF_D*]_` prefix from the DSUObjectName
+      DSUObjectName = DSUObjectName.Replace("[CVRF_D"+DSUNumber+"]_", "");
+
+      CoreLogDebug("[ArmatureLink][animation rebind] DSUObjectName processed: " + DSUObjectName);
+
+      CVRFuryDSUInfoUnit dsuInfoUnit = DSUObject.GetComponent<CVRFuryDSUInfoUnit>();
 
       #region Animation rebind - get animation files
       // get a list of the paths to the animation files
@@ -1107,6 +1236,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // print the split path to console
           CoreLogDebugPrintList(pathParts, "[ArmatureLink][animation rebind] source pathParts: ");
 
+          // get the targetAvatar's path
+          string targetAvatarPath = GetGameObjectPath(targetAvatar);
+
           // for the number of pathParts, loop over them and check if they are in the dsuInfoUnit.DSUPaths list
           for (int i = 0; i < pathPartsCount; i++)
           {
@@ -1115,6 +1247,37 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
             // debug print the path
             CoreLogDebug("[ArmatureLink][animation rebind] path to test: " + path);
+
+            // check if the path directly matches the DSUObject name
+            if (path == DSUObjectName)
+            {
+              //// this is the special case where a prefab is set to rebind the whole DSUObject
+              CoreLog("[ArmatureLink][animation rebind] Special case: DSUObject reparent path fix");
+
+              // create a new PathPair
+              ObjectPathPair pathPair = new ObjectPathPair();
+
+              // set the pathPair originalPath to the curveBindingPath
+              pathPair.addonObjectToLinkPath = curveBindingPath;
+
+              // get the path of the DSUObject
+              string newPath = GetGameObjectPath(DSUObject);
+
+              // remove the targetAvatar's path from the start of the newPath
+              newPath = newPath.Replace(targetAvatarPath, "");
+
+              // ensure there is no leading slash
+              newPath = newPath.TrimStart('/');
+
+              // set the pathPair rewrittenPath to the newPath
+              pathPair.newAddonObjectToLinkPath = newPath;
+
+              // add the pathPair to the pathPairs list
+              pathPairs.Add(pathPair);
+
+              // break out of the loop
+              break;
+            }
 
             // loop over the dsuInfoUnit.DSUPaths list and check if the path is in it
             for (int j = 0; j < dsuInfoUnit.DSUPaths.Count; j++)
@@ -1144,8 +1307,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // now this has to be relative to the avatar as that is where the all processed animation clips have to
                   // be relative to, but what we currently have is the full path from the root of the scene, so we need to
                   // strip off the targetAvatar's path from the start of the newPath
-                  // get the targetAvatar's path
-                  string targetAvatarPath = GetGameObjectPath(targetAvatar);
+                  
                   // remove the targetAvatar's path from the start of the newPath
                   newPath = newPath.Replace(targetAvatarPath, "");
                   // ensure there is no leading slash
@@ -1160,8 +1322,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // now this has to be relative to the avatar as that is where the all processed animation clips have to
                   // be relative to, but what we currently have is the full path from the root of the scene, so we need to
                   // strip off the targetAvatar's path from the start of the newPath
-                  // get the targetAvatar's path
-                  string targetAvatarPath = GetGameObjectPath(targetAvatar);
+
                   // remove the targetAvatar's path from the start of the newPath
                   newPath = newPath.Replace(targetAvatarPath, "");
                   // ensure there is no leading slash
@@ -1223,12 +1384,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         #endregion // Animation rebind - rebind all curves
       }
+    }
 
-      #endregion // Animation rebind
 
-      #region DSU cleanup
-      // now we have merged the armatures and rebound the skinned mesh renderers, we can clean up any surplus
-      // gameObjects under the DSU object that are not needed
+
+
+
+
+    private void GameObjectCleanup(GameObject DSUObject)
+    {
+      // clean up any surplus gameObjects under the DSU object that are not needed
 
       // debug print the DSUObject is being cleaned up
       CoreLogDebug("[ArmatureLink][DSU Cleanup] Cleaning up DSUObject");
@@ -1351,388 +1516,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           );
         }
       }
-
-      #endregion
     }
 
-    private void performReparentRoot(
-      CVRAvatar avatar,
-      GameObject targetAvatar,
-      GameObject DSUObject,
-      int DSUNumber,
-      armatureLink armatureLinkModule
-    )
-    {
-      // Implementation for performReparentRoot
-      // console print to say this function is being called
-      CoreLog("[ArmatureLink] performReparentRoot() called");
 
-      // call function to add the CVRFuryGameObjectInfoTag to the DSUObject + children
-      AddCVRFuryGameObjectInfoTagToAddon(DSUObject, DSUNumber);
-
-      // get the path to the avatar
-      string avatarPath = GetGameObjectPath(avatar.gameObject);
-
-      // get the current path of the addonObjectToLink and store it
-      string addonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
-
-      // remove the avatarPath from the start of the addonObjectToLinkPath
-      addonObjectToLinkPath = addonObjectToLinkPath.Replace(avatarPath, "");
-
-      // remove the starting `/` from the addonObjectToLinkPath if it exists
-      if (addonObjectToLinkPath.StartsWith("/"))
-      {
-        addonObjectToLinkPath = addonObjectToLinkPath.Substring(1);
-      }
-
-      // move the addonObjectToLink to be a child of the armatureBoneToLinkTo, note armatureBoneToLinkTo is of
-      // type HumanBodyBones, the addonObjectToLink is of type GameObject and the addonObjectToLink should not move in
-      // scene space but just be parented to the bone (this is so the user can position the object where they want it)
-
-      // get the Animator component from the avatar
-      Animator animator = avatar.GetComponent<Animator>();
-
-      GameObject boneToLinkToGameObject = null;
-
-      // what we do to get the target 'boneToLinkToGameObject' is dependent on the avatarTargetingMode
-      // switch statement to handle the different avatarTargetingModes
-      boneToLinkToGameObject = GetBoneToLinkToGameObject(targetAvatar, animator, armatureLinkModule);
-
-      // if the boneToLinkToGameObject is null then there is an issue, log a error to the console and return
-      if (boneToLinkToGameObject == null)
-      {
-        // log as a critical error to the console, as this should not happen
-        CoreLogCritical("[ArmatureLink] boneToLinkToGameObject is null, this should not happen");
-        return;
-      }
-
-      // add a empty GameObject to the boneToLinkToGameObject, this is for insulation purposes
-      GameObject addonParent = new GameObject("CVRF_Addon_" + DSUNumber);
-
-      // put the addonParent as a child of the boneToLinkToGameObject
-      addonParent.transform.SetParent(boneToLinkToGameObject.transform, true);
-
-      // put the addonObjectToLink as a child of the boneToLinkToGameObject
-      armatureLinkModule.addonObjectToLink.transform.SetParent(boneToLinkToGameObject.transform, true);
-
-      // copy the position/rotation/scale of the addonObjectToLink to the addonParent
-      addonParent.transform.position = armatureLinkModule.addonObjectToLink.transform.position;
-      addonParent.transform.rotation = armatureLinkModule.addonObjectToLink.transform.rotation;
-      addonParent.transform.localScale = armatureLinkModule.addonObjectToLink.transform.localScale;
-
-      // reparent the addonObjectToLink to the addonParent
-      armatureLinkModule.addonObjectToLink.transform.SetParent(addonParent.transform, true);
-
-      // debug log to console that the object has been re-parented
-      CoreLogDebug("[ArmatureLink] Object has been re-parented to: " + boneToLinkToGameObject.name);
-
-      // ok now to take care of any duplicates (people may want more than one of the same object), we need to
-      // add a tag to the start of the object name to make it unique
-
-      // get the name of the addonObjectToLink
-      string addonObjectToLinkName = armatureLinkModule.addonObjectToLink.name;
-
-      // new name of the addonObjectToLink
-      string newAddonObjectToLinkName = "[CVRF_D" + DSUNumber + "]_" + addonObjectToLinkName;
-
-      // prefix the name of the addonObjectToLink with the DSUNumber
-      armatureLinkModule.addonObjectToLink.name = newAddonObjectToLinkName;
-
-      // console print to say renaming is done
-      CoreLog("[ArmatureLink] Renaming from " + addonObjectToLinkName + " to " + newAddonObjectToLinkName + " done");
-
-      // get the new path of the addonObjectToLink and store it
-      string newAddonObjectToLinkPath = GetGameObjectPath(armatureLinkModule.addonObjectToLink);
-
-      // remove the avatarPath from the start of the newAddonObjectToLinkPath
-      newAddonObjectToLinkPath = newAddonObjectToLinkPath.Replace(avatarPath, "");
-
-      // remove the starting `/` from the newAddonObjectToLinkPath if it exists
-      if (newAddonObjectToLinkPath.StartsWith("/"))
-      {
-        newAddonObjectToLinkPath = newAddonObjectToLinkPath.Substring(1);
-      }
-
-      // debug log to console the new path of the addonObjectToLink
-      CoreLogDebug("[ArmatureLink] newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
-
-      // ok, so now we have the new path of the addonObjectToLink, that is the base for re-writing the animation clips
-      // note the animations packaged with the addon will be expected to start from that as a root
-
-      // get the DSU component from the DSUObject
-      CVRFuryDataStorageUnit DSUComponent = DSUObject.GetComponent<CVRFuryDataStorageUnit>();
-
-      // check if the modules of the DSUComponent  and see if there is a fullControllerModule type module present
-      if (DSUComponent.modules.modules.Any(m => m.ModuleType == "fullControllerModule"))
-      {
-        // of so there is a fullControllerModule type module present,
-
-        // get the fullControllerModule from the DSUComponent
-        fullControllerModule controllerModule =
-          DSUComponent.modules.modules.FirstOrDefault(m => m.ModuleType == "fullControllerModule")
-          as fullControllerModule;
-
-        // check if the fullControllerModule is null, if it is then there is an issue, log an error to the console and return
-        if (controllerModule == null)
-        {
-          CoreLogError("fullControllerModule is null, cannot rebind animations");
-          return;
-        }
-
-        // get the controllers from the fullControllerModule
-        List<RuntimeAnimatorController> controllers = controllerModule.controllers;
-
-        // check if the controllers is null or empty, if it is then looks like there are no animations to rebind,
-        // log a warning to the console and return
-        if (controllers == null || controllers.Count == 0)
-        {
-          // log as a warning to the console
-          CoreLog("[Warning] controllers is null or empty, no animations to rebind");
-          return;
-        }
-
-        // at this point there is at least one controller in the controllers list, so there should be animations to
-        // rebind. so w need to check if there is a folder for the animations, if there is not then there is an issue,
-        // log an error to the console and return
-
-        // get a list of the paths to the animation files
-        string[] animationFiles = GetAnimationClipFiles(avatar.name, DSUNumber);
-
-        // check if the animationFiles is null or empty, if it is then there is an issue, log an error to the console and return
-        if (animationFiles == null || animationFiles.Length == 0)
-        {
-          // log as an error to the console
-          CoreLogError("animationFiles is null or empty, no animations to rebind");
-          return;
-        }
-
-        // debug print the list of animationFiles to console in one block
-        StringBuilder animationFilesStringBuilder = new StringBuilder();
-        foreach (string animationFile in animationFiles)
-        {
-          animationFilesStringBuilder.Append(animationFile + "\n");
-        }
-        CoreLogDebug("[ArmatureLink] animationFiles:\n" + animationFilesStringBuilder.ToString());
-
-        // at this point there is at least one animation file in the animationFiles array, so there should be animations
-        // to rebind. so we need to loop over them and re-write the paths
-
-        // ObjectPathPair list to store the addonObjectToLinkPath and the newAddonObjectToLinkPath
-        List<ObjectPathPair> objectPathPairs = new List<ObjectPathPair>();
-
-        // loop over the animationFiles and rebind the paths
-        foreach (string animationFile in animationFiles)
-        {
-          // print to console that the animation file is being processed
-          CoreLog("[ArmatureLink] Processing animation file: " + animationFile);
-
-          // load the animation clip from the animationFile
-          AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationFile);
-
-          // get all the paths in the clip
-          EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
-          EditorCurveBinding[] objectReferenceCurveBindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);
-
-          // merge curveBindings and objectReferenceCurveBindings
-          EditorCurveBinding[] allCurveBindings = curveBindings.Concat(objectReferenceCurveBindings).ToArray();
-
-          // overwrite the curveBindings with the allCurveBindings (so we can use the same loop for both)
-          curveBindings = allCurveBindings;
-
-          // debug print all the curveBindings to console in one block
-          StringBuilder curveBindingsStringBuilder = new StringBuilder();
-          foreach (EditorCurveBinding curveBinding in curveBindings)
-          {
-            curveBindingsStringBuilder.Append(
-              "path: "
-                + curveBinding.path
-                + ", propertyName: "
-                + curveBinding.propertyName
-                + ", type: "
-                + curveBinding.type
-                + "\n\n"
-            );
-          }
-          CoreLogDebug("[ArmatureLink] curveBindings:\n\n" + curveBindingsStringBuilder.ToString());
-
-          // var for the addonObjectToLinkNameForPathRewrites, as needs to be modified
-          string addonObjectToLinkNameForPathRewrites = addonObjectToLinkName;
-
-          // only do this bit if we have an imported module
-          // (the converter adds the suffix .CVRFury by default to differentiate it from the original prefab)
-          if (controllerModule.importedFromVRCFury)
-          {
-            // remove the '.CVRFury' from the addonObjectToLinkNameForPathRewrites if it exists
-            if (addonObjectToLinkNameForPathRewrites.EndsWith(".CVRFury"))
-            {
-              CoreLogDebug(
-                "[ArmatureLink] addonObjectToLinkNameForPathRewrites pre-cleanup: "
-                  + addonObjectToLinkNameForPathRewrites
-              );
-              // remove the '.CVRFury' from the end of addonObjectToLinkNameForPathRewrites
-              addonObjectToLinkNameForPathRewrites = addonObjectToLinkNameForPathRewrites.Substring(
-                0,
-                addonObjectToLinkNameForPathRewrites.Length - ".CVRFury".Length
-              );
-              CoreLogDebug(
-                "[ArmatureLink] addonObjectToLinkNameForPathRewrites post-cleanup: "
-                  + addonObjectToLinkNameForPathRewrites
-              );
-            }
-          }
-
-          // get the CVRFuryAvatarInfoUnit component from the targetAvatar GameObject (it will always be there as it is
-          // it is added by the pre-run tasks)
-          CVRFuryAvatarInfoUnit avatarInfoUnit = targetAvatar.GetComponent<CVRFuryAvatarInfoUnit>();
-
-          // get the avatarArmaturePaths list from the CVRFuryAvatarInfoUnit
-          List<string> avatarArmaturePaths = avatarInfoUnit.avatarArmaturePaths;
-
-          // check how many entries are in the avatarArmaturePaths list
-          int avatarArmaturePathsCount = avatarArmaturePaths.Count;
-
-          // if there are one or more we need to remove them from the curveBindings
-          // this is so that we don't impact animations the prefab maker intended to impact the core armature
-          if (avatarArmaturePathsCount > 0)
-          {
-            // debug print the avatarArmaturePathsCount
-            CoreLogDebug("[ArmatureLink] avatarArmaturePathsCount: " + avatarArmaturePathsCount);
-
-            // debug print the avatarArmaturePaths to console in one block
-            StringBuilder avatarArmaturePathsStringBuilder = new StringBuilder();
-            foreach (string avatarArmaturePath in avatarArmaturePaths)
-            {
-              avatarArmaturePathsStringBuilder.Append(avatarArmaturePath + "\n");
-            }
-            CoreLogDebug("[ArmatureLink] avatarArmaturePaths:\n" + avatarArmaturePathsStringBuilder.ToString());
-
-            // debug print the curveBindings to the console in one block
-            StringBuilder curveBindingsStringBuilder2 = new StringBuilder();
-            foreach (EditorCurveBinding curveBinding in curveBindings)
-            {
-              curveBindingsStringBuilder2.Append(
-                "path: "
-                  + curveBinding.path
-                  + ", propertyName: "
-                  + curveBinding.propertyName
-                  + ", type: "
-                  + curveBinding.type
-                  + "\n\n"
-              );
-            }
-            CoreLogDebug("[ArmatureLink] curveBindings pre-filtering:\n\n" + curveBindingsStringBuilder2.ToString());
-
-            // remove any curveBindings that have the avatarArmaturePaths in the path
-            curveBindings = curveBindings.Where(cb => !avatarArmaturePaths.Contains(cb.path)).ToArray();
-
-            // debug print the curveBindings to the console in one block
-            StringBuilder curveBindingsStringBuilder3 = new StringBuilder();
-            foreach (EditorCurveBinding curveBinding in curveBindings)
-            {
-              curveBindingsStringBuilder3.Append(
-                "path: "
-                  + curveBinding.path
-                  + ", propertyName: "
-                  + curveBinding.propertyName
-                  + ", type: "
-                  + curveBinding.type
-                  + "\n\n"
-              );
-            }
-            CoreLogDebug("[ArmatureLink] curveBindings post-filtering:\n\n" + curveBindingsStringBuilder3.ToString());
-          }
-
-          // debug print the count of the curveBindings
-          CoreLogDebug("[ArmatureLink] curveBindings count: " + curveBindings.Length);
-
-          // prefix the path of the curveBindings with the newAddonObjectToLinkPath
-          foreach (EditorCurveBinding curveBinding in curveBindings)
-          {
-            // get the path of the curveBinding
-            string path = curveBinding.path;
-
-            // if path is empty then there is an issue, log an error to the console and continue to the next curveBinding
-            if (string.IsNullOrEmpty(path))
-            {
-              // log as an error to the console
-              CoreLogError("[ArmatureLink] Path is empty for curveBinding: " + curveBinding.propertyName);
-              continue;
-            }
-
-            string trailingPath;
-
-            // check if there is a '/' in the path
-            if (!path.Contains("/"))
-            {
-              // no slash in the path, thus no trailing path
-              trailingPath = "";
-            }
-            else
-            {
-              // remove the first part of the path up to the first '/'
-              int firstSlashIndex = path.IndexOf("/");
-              trailingPath = path.Substring(firstSlashIndex);
-            }
-
-            // debug print the path, newAddonObjectToLinkPath and trailingPath
-            CoreLogDebug(
-              "[ArmatureLink] path: "
-                + path
-                + "\n newAddonObjectToLinkPath: "
-                + newAddonObjectToLinkPath
-                + "\n trailingPath: "
-                + trailingPath
-            );
-
-            objectPathPairs.Add(
-              new ObjectPathPair
-              {
-                addonObjectToLinkPath = path,
-                newAddonObjectToLinkPath = newAddonObjectToLinkPath + trailingPath
-              }
-            );
-          }
-
-          // debug log to console that the animation file has been re-written
-          CoreLog("[ArmatureLink] Animation paths updates from  '" + animationFile + "' stored");
-        }
-
-        // deduplicate the objectPathPairs list
-        objectPathPairs = objectPathPairs.Distinct().ToList();
-
-        // print all the objectPathPairs to console in one block
-        StringBuilder objectPathPairsStringBuilder = new StringBuilder();
-        foreach (ObjectPathPair objectPathPair in objectPathPairs)
-        {
-          objectPathPairsStringBuilder.Append(
-            "addonPath: "
-              + objectPathPair.addonObjectToLinkPath
-              + ",\n avatarPath: "
-              + objectPathPair.newAddonObjectToLinkPath
-              + "\n\n"
-          );
-        }
-        CoreLogDebug("[ArmatureLink] objectPathPairs:\n" + objectPathPairsStringBuilder.ToString());
-
-        // create a list of tuples to store the addonObjectToLinkPath and the newAddonObjectToLinkPath
-        List<System.Tuple<string, string>> objectPathPairsTuple = objectPathPairs
-          .Select(pair => new System.Tuple<string, string>(pair.addonObjectToLinkPath, pair.newAddonObjectToLinkPath))
-          .ToList();
-
-        // mass update the animation clips (multi path per save)
-        UpdateAnimationClips(avatar.name, objectPathPairsTuple, DSUNumber);
-
-        // log that the animation clips have been updated
-        CoreLog("[ArmatureLink] Animation clips updated");
-
-        // at this point all the animation files have been re-written, so we need to save/refresh the asset database
-
-        // save the asset database
-        AssetDatabase.SaveAssets();
-        // update the asset database
-        AssetDatabase.Refresh();
-      }
-    }
 
     // -----------------------------------------------------------------------------------------------------------------
     #region Helper Functions/structs
@@ -1753,7 +1539,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (!Directory.Exists(animationsFolderPath))
       {
         // log as an error to the console
-        CoreLogError("[ArmatureLink] Directory does not exist: " + animationsFolderPath);
+        CoreLogDebugWarning("[ArmatureLink] Directory does not exist: " + animationsFolderPath);
         return new string[] { };
       }
 
