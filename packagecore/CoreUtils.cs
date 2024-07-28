@@ -35,12 +35,29 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       );
     }
 
+    public static void CoreLogWarning(object message)
+    {
+      Debug.LogWarning(
+        $"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] <color={Constants.APP_COLOUR_WARN}>[WARNING]</color> {message.ToString()}"
+      );
+    }
+
     public static void CoreLogDebug(object message)
     {
       if (EditorPrefs.GetBool(Constants.DEBUG_PRINT_EDITOR_PREF, true))
       {
         Debug.Log(
           $"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] <color={Constants.APP_COLOUR_DBG}>[DEBUG]</color> {message.ToString()}"
+        );
+      }
+    }
+
+    public static void CoreLogDebugWarning(object message)
+    {
+      if (EditorPrefs.GetBool(Constants.DEBUG_PRINT_EDITOR_PREF, true))
+      {
+        Debug.LogWarning(
+          $"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] <color={Constants.APP_COLOUR_WARN}>[WARNING]</color> {message.ToString()}"
         );
       }
     }
@@ -65,6 +82,23 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       CoreLogDebugPrintList(entriesList, preMessage);
     }
 #endif
+
+    public static List<GameObject> GetParentObjects(GameObject currentObject, GameObject targetParent)
+    {
+        List<GameObject> parentObjects = new List<GameObject>();
+
+        Transform currentTransform = currentObject.transform;
+        while (currentTransform != null && currentTransform.gameObject != targetParent)
+        {
+            currentTransform = currentTransform.parent;
+            if (currentTransform != null)
+            {
+                parentObjects.Add(currentTransform.gameObject);
+            }
+        }
+
+        return parentObjects;
+    }
 
     public static string GenerateDebugCopyFilePath(string fullFilePath, string debugSuffix)
     {

@@ -8,6 +8,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
   {
     public const string PROGRAM_DISPLAY_NAME = "CVRFury";
     public const string APP_COLOUR = "#0080FF";
+    public const string  APP_COLOUR_WARN = "#FFFF00";
     public const string APP_COLOUR_ERROR = "#FF8000";
     public const string APP_COLOUR_CRIT = "#FF0000";
     public const string APP_COLOUR_DBG = "#B7FF00";
