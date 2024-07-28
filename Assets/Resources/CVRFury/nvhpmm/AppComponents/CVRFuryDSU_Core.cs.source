@@ -1,4 +1,4 @@
-// { "version": "0.2.12" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
+// { "version": "0.2.13" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -178,6 +178,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private void OnDisable()
     {
+      // check if target is null
+      if (target == null)
+      {
+        // if target is null, return
+        return;
+      }
+
       if (target is CVRFuryDataStorageUnit cvrFuryDataStorageUnit && cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
       {
         var CVRFuryDevModeEnabler = cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>();
