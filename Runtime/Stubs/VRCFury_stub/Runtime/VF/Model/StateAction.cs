@@ -63,7 +63,6 @@ namespace VF.Model.StateAction
   [Serializable]
   public class MaterialAction : Action
   {
-    [Obsolete]
     public GameObject obj;
     public Renderer renderer;
     public int materialIndex = 0;
