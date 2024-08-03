@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using static uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime.General;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
 
 namespace uk.novavoidhowl.dev.cvrfury.runtime
 {
@@ -24,22 +25,14 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public string name;
     public bool forceMachineName = false;
 
-    // getter that returns the machineName based on formatParameterNameForMachineName() and name, if forceMachineName is
-    // false (the default) then it will pass the name through formatParameterNameForMachineName() to get the machineName
-    // if forceMachineName is true then it will return the name as is 
-    public string MachineName
-    {
-      get { 
-        if (forceMachineName)
-         { 
-          return name;
-         }
-        else
-         { 
-          return formatParameterNameForMachineName(name); 
-         }
-      }
-    }
+    // as of CCK3.10 the machine name is exposed in the inspector, this is to allow the user to set it
+    // so no more need to force set it
+    public string MachineName;
+
+    // echo of what you get in the CCK menu items, if true then name and machine name are kept in sync
+    // intrinsically set to false if forceMachineName is true
+    public bool nameLinkedToMachineName = true;
+
 
     [SerializeField]
     private string menuParameterType;
@@ -69,7 +62,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public toggleParameter()
       : base("toggleParameter") { }
 
-    public bool defaultState;
+    public float defaultState;
 
     public GenerateType generateType = GenerateType.Bool; // default to bool as it is the most efficient for a toggle
 
@@ -88,11 +81,11 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public dropdownParameter()
       : base("dropdownParameter") { }
 
-    public int defaultIndex;
+    public float defaultIndex;
     public GenerateType generateType = GenerateType.Int;
 
-    // list of strings for the dropdown list
-    public List<string> dropdownList = new List<string>();
+    [SerializeField]
+    public List<DropdownParameterPair> dropdownList = new List<DropdownParameterPair>();
   }
 
   public class sliderParameter : menuParameter
@@ -152,4 +145,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   //   InputSingle -- not added as its not clear what this would be used for
   //   InputVector2 -- not added as its not clear what this would be used for
   //   InputVector3 -- not added as its not clear what this would be used for
+
+  // Supporting classes -------------------------------------------------------------------------------------------------
+
 }

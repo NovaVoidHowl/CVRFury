@@ -1,0 +1,36 @@
+#CVRFuryMagicaCloth2ConfigEditor{
+  height: 100%;
+  margin-left: -15px;
+  margin-right: -10px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+#CVRFuryMagicaCloth2ConfigEditor .icon-and-info-box{
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  padding-top: 10px;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-bottom: 4px;
+  border-width: 1px; /* Set the border width */
+  border-color: #ccc; /* Set the border color */
+}
+#CVRFuryMagicaCloth2ConfigEditor .info-box{
+  white-space: normal;
+  border-color: transparent; /* Remove border color */
+  border-width: 0px; /* Remove border width */
+  background-color: transparent; /* Remove background color */
+  height: 100%;
+  padding-left: 40px;
+  padding-bottom: 10px;
+}
+#CVRFuryMagicaCloth2ConfigEditor .icon{
+  margin-top: 16px;
+  margin-left: 4px;
+  margin-right: 6px;
+  height: 30px;
+  width: 30px;
+  position: absolute;
+}

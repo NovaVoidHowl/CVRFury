@@ -1,0 +1,236 @@
+// { "version": "0.8.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+using Math = System.Math;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
+using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Components;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+
+/// <summary>
+/// Apply On Upload
+/// this is installs modules that set the state of objects just before upload/play
+/// </summary>
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public class objectStateSetterProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      // Implementation for objectStateSetter
+      // console print to say this function is being called
+      CoreLogDebug("objectStateSetterProcessor.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // for each of the objectStatePairs in the module
+      foreach (objectStatePair pair in ((objectStateSetter)module).objectStatePairs)
+      {
+        // check if the GameObject exists
+        if (pair.objectToSetStateOn != null)
+        {
+          // use objectState to set the GameObject's state, (its an enum with values: "disabled", "enabled")
+          switch (pair.stateToSet)
+          {
+            case objectStatePair.objectState.disabled:
+              pair.objectToSetStateOn.SetActive(false);
+              break;
+            case objectStatePair.objectState.enabled:
+              pair.objectToSetStateOn.SetActive(true);
+              break;
+          }
+        }
+        else
+        {
+          // if it doesn't, log an error to the console
+          CoreLogError("GameObject " + pair.objectToSetStateOn.name + " does not exist");
+        }
+      }
+    }
+  }
+
+  public class objectDefaultMaterialSetterProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      // Implementation for objectDefaultMaterialSetter
+      // console print to say this function is being called
+      CoreLogDebug("objectDefaultMaterialSetter.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // get the renderer from the module
+      Renderer renderer = ((objectDefaultMaterialSetter)module).renderer;
+
+      // get the GameObject from the renderer
+      GameObject rendererGameObject = renderer.gameObject;
+
+      // get the renderer index from the module
+      int rendererIndex = ((objectDefaultMaterialSetter)module).rendererIndex;
+
+      // get the default material from the module
+      Material defaultMaterial = ((objectDefaultMaterialSetter)module).defaultMaterial;
+
+      // console print the renderer index, and the default material
+      CoreLog("rendererIndex: " + rendererIndex + ", defaultMaterial: " + defaultMaterial);
+
+      // check if the renderer exists
+      if (renderer != null)
+      {
+        // check if the renderer index is valid
+        if (rendererIndex >= 0 && rendererIndex < renderer.materials.Length)
+        {
+          //console print to say the renderer index is valid, and what the length of the materials array is
+          CoreLog("rendererIndex: " + rendererIndex + " is valid, materials.Length: " + renderer.materials.Length);
+
+          // get a copy of the materials array
+          Material[] materialsCopy = renderer.materials;
+
+          // set the material at the index to the default material
+          materialsCopy[rendererIndex] = defaultMaterial;
+
+          // assign the modified array back to the renderer
+          renderer.materials = materialsCopy;
+
+          // update the renderer on the rendererGameObject
+          rendererGameObject.GetComponent<Renderer>().materials = materialsCopy;
+        }
+        else
+        {
+          // if it isn't, log an error to the console
+          CoreLogError("Renderer index " + rendererIndex + " is invalid");
+        }
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        CoreLogError("Renderer " + renderer.name + " does not exist");
+      }
+    }
+  }
+
+  public class blockBlinkSetterProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      // Implementation for blockBlinkSetterProcessor
+      // console print to say this function is being called
+      CoreLogDebug("blockBlinkSetterProcessor.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // access the CVRAvatar component on the targetAvatar
+      CVRAvatar avatar = targetAvatar.GetComponent<CVRAvatar>();
+
+      // check if the avatar exists
+      if (avatar != null)
+      {
+        // set the useBlinkBlendshapes to the inverse of the blockBlink value
+        avatar.useBlinkBlendshapes = !((blockBlinkSetter)module).blockBlink;
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        CoreLogError("Avatar does not exist");
+      }
+    }
+  }
+
+  public class blockVisemesSetterProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      // Implementation for blockVisemesSetterProcessor
+      // console print to say this function is being called
+      CoreLogDebug("blockVisemesSetterProcessor.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // access the CVRAvatar component on the targetAvatar
+      CVRAvatar avatar = targetAvatar.GetComponent<CVRAvatar>();
+
+      // check if the avatar exists
+      if (avatar != null)
+      {
+        // set the useVisemeLipsync to the inverse of the blockVisemes value
+        avatar.useVisemeLipsync = !((blockVisemesSetter)module).blockVisemes;
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        CoreLogError("Avatar does not exist");
+      }
+    }
+  }
+
+  public class deleteOnUploadProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      // Implementation for deleteOnUploadAction
+      // console print to say this function is being called
+      CoreLogDebug("deleteOnUploadAction.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // check if the GameObject exists
+      if (((deleteOnUpload)module).target != null)
+      {
+        // destroy the GameObject
+        GameObject.Destroy(((deleteOnUpload)module).target);
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        CoreLogError("GameObject " + ((deleteOnUpload)module).target.name + " does not exist");
+      }
+    }
+  }
+
+  public class showInFirstPersonProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      // Implementation for showInFirstPersonAction
+      // console print to say this function is being called
+      CoreLogDebug("showInFirstPersonAction.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // check if the GameObject exists
+      if (((showInFirstPerson)module).target != null)
+      {
+        // add the FPRExclusion component to the GameObject
+        FPRExclusion exclusion = ((showInFirstPerson)module).target.AddComponent<FPRExclusion>();
+
+        // set the isShown value to the show value
+        exclusion.isShown = ((showInFirstPerson)module).show;
+
+        // set the target value to the GameObject
+        exclusion.target = ((showInFirstPerson)module).target.transform;
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        CoreLogError("GameObject " + ((showInFirstPerson)module).target.name + " does not exist");
+      }
+    }
+  }
+}
+// #endif

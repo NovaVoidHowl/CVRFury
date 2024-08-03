@@ -1,0 +1,377 @@
+// { "version": "0.4.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_ARMATURELINK", dependencies: [], type: "Editor"}
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using Newtonsoft.Json.Linq;
+using ABI.CCK.Scripts.Editor;
+using VF.Model.Feature;
+using VF.Component;
+using VF.Model;
+using Action = VF.Model.StateAction.Action;
+using VF.Model.StateAction;
+
+/// <summary>
+/// Full Controller import
+///
+/// </summary>
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public partial class CVRFuryDataStorageUnitEditor : Editor
+  {
+    private void importArmatureLinkFeature(
+      Tuple<string, FeatureModel, GameObject> featureClassInstance,
+      VisualElement rootVisualElement,
+      int positionInList,
+      int VRCFuryVersion
+    )
+    {
+      // if the VRCFuryVersion is not on the list of supported versions, return
+      if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(VRCFuryVersion))
+      {
+        return;
+      }
+
+      // Find the feature version for "ArmatureLink"
+      int armatureLinkVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+        .FirstOrDefault(kvp => kvp.Key == "ArmatureLink")
+        .Value;
+      // Check if the version is supported for this feature
+      if (armatureLinkVersion < VRCFuryVersion)
+      {
+        return;
+      }
+
+      // get the featureClassName name from the tuple
+      string featureClassName = featureClassInstance.Item1;
+
+      // get the ImportArmatureLink feature from the tuple
+      FeatureModel importArmatureLinkFeature = featureClassInstance.Item2;
+
+      // get the moduleFoundOnObject from the tuple
+      GameObject moduleFoundOnObject = featureClassInstance.Item3;
+
+      // check if the feature is of the 'ArmatureLink' type and if not return. note this is the VRCFury feature
+      // name, naming is not 1-to-1 with the class name
+      if (featureClassName != "ArmatureLink")
+      {
+        // this console log is for debugging purposes
+        //CoreLog("feature at position "+positionInList+" is "+featureClassName+" not of the ArmatureLink , returning");
+        return;
+      }
+
+      // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList = rootVisualElement.Q<VisualElement>(
+        "CVRFuryDataStorageUnitDataImportDetailsFeaturesList"
+      );
+
+      var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
+      var labelAtPosition = featuresList[positionInList] as Label;
+      if (labelAtPosition != null)
+      {
+        // add a white border to the label
+        labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
+
+        // edit the label text to include a suffix of the position in the list
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")";
+
+        // add a click event to the label
+        labelAtPosition.RegisterCallback<ClickEvent>(evt =>
+        {
+          // print to console that the label has been clicked
+          // TODO: remove this debug log
+          CoreLog("label at position " + positionInList + " has been clicked");
+
+          // get the list of modules from this DSU
+          var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
+
+          // check to see if the DSU already has an armatureLink module
+          if (modules.Any(module => module.GetType().Name == "armatureLink"))
+          {
+            List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+
+            // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+            // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+            foreach (var module in modules.Where(module => module.GetType().Name == "armatureLink"))
+            {
+              var armatureLinkModuleInstance = module as armatureLink;
+              if (armatureLinkModuleInstance.importedFromVRCFury && !armatureLinkModuleInstance.justImported)
+              {
+                modulesToRemove.Add(module);
+              }
+            }
+
+            // process the remove list
+            foreach (var module in modulesToRemove)
+            {
+              modules.Remove(module);
+            }
+          }
+          //importArmatureLinkFeature
+          // cast the feature to the ArmatureLink type
+          ArmatureLink VRCFuryArmatureLink = (ArmatureLink)importArmatureLinkFeature;
+
+          // create a new armatureLink module
+          armatureLink armatureLinkModule = new armatureLink();
+
+          // set the importedFromVRCFury flag to true
+          armatureLinkModule.importedFromVRCFury = true;
+
+          // set the importedFromVRCFury flag to true
+          armatureLinkModule.justImported = true;
+
+          // set the moduleFoundOnObject to the moduleFoundOnObject
+          armatureLinkModule.moduleFoundOnObject = moduleFoundOnObject;
+
+          // ---- armatureLink specific properties ----
+
+          #region basic targeting properties
+
+          // set the bonePathOnTargetArmature
+          armatureLinkModule.bonePathOnTargetArmature = VRCFuryArmatureLink.bonePathOnAvatar;
+
+          // set the armatureBoneToLinkTo
+          armatureLinkModule.armatureBoneToLinkTo = VRCFuryArmatureLink.boneOnAvatar;
+
+          // bool to say if the bone is default aka hips
+          bool defaultArmatureBoneToLinkTo = false;
+
+          // check if the armatureBoneToLinkTo is the default bone
+          if (armatureLinkModule.armatureBoneToLinkTo == HumanBodyBones.Hips)
+          {
+            defaultArmatureBoneToLinkTo = true;
+          }
+
+          // set the fallbackBones
+          armatureLinkModule.fallbackBones = VRCFuryArmatureLink.fallbackBones;
+
+          #endregion // basic targeting properties
+
+          // get the linkTo list from the VRCFuryArmatureLink
+          List<ArmatureLink.LinkTo> VRCFuryLinkTo = VRCFuryArmatureLink.linkTo;
+
+          // check if the VRCFuryLinkTo list is not empty
+          if (VRCFuryLinkTo.Count > 0)
+          {
+            // if we have a LinkTo list set then the data is likely from a v3 VRCFury datastore
+            // and the only targeting option that offers is order (as in use first match in list)
+            // set avatarTargetingMode to AvatarLinkTargetingMode.order
+            armatureLinkModule.avatarTargetingMode = AvatarLinkTargetingMode.order;
+
+            // create a new list of LinkTarget
+            List<LinkTarget> linkTargets = new List<LinkTarget>();
+
+            int linkToIndex = 0;
+            // loop through the VRCFuryLinkTo list
+            foreach (var linkTo in VRCFuryLinkTo)
+            {
+              // create a new LinkTarget
+              LinkTarget linkTarget = new LinkTarget();
+
+              // get the useBone bool from the VRCFuryLinkTo
+              bool useBone = linkTo.useBone;
+
+              // get the useObj bool from the VRCFuryLinkTo
+              bool useObj = linkTo.useObj;
+
+              // if both useBone and useObj are false, then set the linkType to LinkTargetType.useAvatarRoot
+              if (!useBone && !useObj)
+              {
+                linkTarget.linkType = LinkTargetType.useAvatarRoot;
+              }
+              // if useBone is true and useObj is false, then set the linkType to LinkTargetType.useHumanBodyBones
+              else if (useBone && !useObj)
+              {
+                linkTarget.linkType = LinkTargetType.useHumanBodyBones;
+              }
+              // if useBone is false and useObj is true, then set the linkType to LinkTargetType.useGameObject
+              else if (!useBone && useObj)
+              {
+                linkTarget.linkType = LinkTargetType.useGameObject;
+              }
+
+              // set the humanBodyBone to the bone from the VRCFuryLinkTo
+              linkTarget.humanBodyBone = linkTo.bone;
+
+              if (!defaultArmatureBoneToLinkTo)
+              {
+                // need to check if we need to do an import overwrite
+                // only on first linkTo as its only the first that follows this import behaviour
+                if (linkToIndex == 0)
+                {
+                  // check if the linkTo.bone is set to default hips
+                  if (linkTo.bone == HumanBodyBones.Hips)
+                  {
+                    // ok so on default and likely needs to be overwritten
+                    // copy the value from armatureLinkModule.armatureBoneToLinkTo
+                    linkTarget.humanBodyBone = armatureLinkModule.armatureBoneToLinkTo;
+                  }
+                  else
+                  {
+                    // ok got a problem here as both are not hips (aka both are not default)
+                    // first check if they are the same
+                    if (linkTo.bone == armatureLinkModule.armatureBoneToLinkTo)
+                    {
+                      // ok so they are the same, we can leave them be
+                    }
+                    else
+                    {
+                      // worst case scenario, they are different so we need to ask the user, what to do
+                      // we will ask the user to confirm the overwrite
+                      bool overwrite = EditorUtility.DisplayDialog(
+                        "Armature Link Import",
+                        "The 'bone to link to' is not the default in both 'Bone On Avatar'"
+                          + "and 'Link To' list, do you want to overwrite the 'Link To' bone with the 'Bone On Avatar' bone?"
+                          + "\n\n"
+                          + "Bone On Avatar: "
+                          + armatureLinkModule.armatureBoneToLinkTo
+                          + "\n"
+                          + "Link To: "
+                          + linkTo.bone,
+                        "Yes",
+                        "No"
+                      );
+
+                      // if the user selects yes, then we overwrite the bone
+                      if (overwrite)
+                      {
+                        linkTarget.humanBodyBone = armatureLinkModule.armatureBoneToLinkTo;
+                      }
+                    }
+                  }
+                }
+              }
+
+              // set the targetGameObject to the obj from the VRCFuryLinkTo
+              linkTarget.targetGameObject = linkTo.obj;
+
+              // set the offset to the offset from the VRCFuryLinkTo
+              linkTarget.offset = linkTo.offset;
+
+              // add the linkTarget to the linkTargets list
+              linkTargets.Add(linkTarget);
+
+              // increment the linkToIndex
+              linkToIndex++;
+            }
+
+            // set the armatureLinkModule.linkTargets to the linkTargets list
+            armatureLinkModule.linkTargets = linkTargets;
+          }
+          else
+          {
+            // if we have no LinkTo list set then the data is likely from a v2 VRCFury datastore
+
+            // set avatarTargetingMode to AvatarLinkTargetingMode.basic
+            armatureLinkModule.avatarTargetingMode = AvatarLinkTargetingMode.basic;
+          }
+
+          // set the boneSuffixToStrip
+          armatureLinkModule.boneSuffixToStrip = VRCFuryArmatureLink.removeBoneSuffix;
+
+          // ---- end armatureLink specific properties ----
+
+          // ---- CVRFuryModuleLinker specific properties ----
+
+          // set the addonObjectToLink to propBone
+          armatureLinkModule.addonObjectToLink = VRCFuryArmatureLink.propBone;
+
+          // set the addonLinkMode to linkMode, note this use enums so needs conversion layer
+          // get the ArmatureLinkMode from the VRCFuryArmatureLink
+          ArmatureLink.ArmatureLinkMode VRCFuryLinkMode = VRCFuryArmatureLink.linkMode;
+
+          // case statement to convert the VRCFuryLinkMode to the CVRFuryModuleLinker.linkMode
+          switch (VRCFuryLinkMode)
+          {
+            case ArmatureLink.ArmatureLinkMode.Auto:
+              armatureLinkModule.addonLinkMode = CVRFuryModuleLinker.linkMode.Auto;
+              break;
+            case ArmatureLink.ArmatureLinkMode.SkinRewrite:
+              armatureLinkModule.addonLinkMode = CVRFuryModuleLinker.linkMode.MeshRebind;
+              break;
+            case ArmatureLink.ArmatureLinkMode.MergeAsChildren:
+              armatureLinkModule.addonLinkMode = CVRFuryModuleLinker.linkMode.MergeAsChildren;
+              break;
+            case ArmatureLink.ArmatureLinkMode.ParentConstraint:
+              armatureLinkModule.addonLinkMode = CVRFuryModuleLinker.linkMode.ParentConstraint;
+              break;
+            case ArmatureLink.ArmatureLinkMode.ReparentRoot:
+              armatureLinkModule.addonLinkMode = CVRFuryModuleLinker.linkMode.ReparentRoot;
+              break;
+            default:
+              // if the VRCFuryLinkMode is not recognised, tell the user via a popup and stop the import
+              EditorUtility.DisplayDialog(
+                "Error",
+                "The ArmatureLinkMode " + VRCFuryLinkMode + " is not recognised/n import aborted",
+                "OK"
+              );
+              return;
+          }
+
+          // set the keepBoneOffsets to keepBoneOffsets2 , note this use enums so needs conversion layer
+          // get the keepBoneOffsets from the VRCFuryArmatureLink
+          ArmatureLink.KeepBoneOffsets VRCFuryKeepBoneOffsets = VRCFuryArmatureLink.keepBoneOffsets2;
+
+          // case statement to convert the VRCFuryKeepBoneOffsets to the CVRFuryModuleLinker.KeepBoneOffsets
+          switch (VRCFuryKeepBoneOffsets)
+          {
+            case ArmatureLink.KeepBoneOffsets.Auto:
+              armatureLinkModule.keepBoneOffsets = CVRFuryModuleLinker.KeepBoneOffsets.Auto;
+              break;
+            case ArmatureLink.KeepBoneOffsets.Yes:
+              armatureLinkModule.keepBoneOffsets = CVRFuryModuleLinker.KeepBoneOffsets.Yes;
+              break;
+            case ArmatureLink.KeepBoneOffsets.No:
+              armatureLinkModule.keepBoneOffsets = CVRFuryModuleLinker.KeepBoneOffsets.No;
+              break;
+            default:
+              // if the VRCFuryKeepBoneOffsets is not recognised, tell the user via a popup and stop the import
+              EditorUtility.DisplayDialog(
+                "Error",
+                "The keepBoneOffsets " + VRCFuryKeepBoneOffsets + " is not recognised/n import aborted",
+                "OK"
+              );
+              return;
+          }
+
+          // set the meshRewriteScalingFactor to skinRewriteScalingFactor
+          armatureLinkModule.meshRewriteScalingFactor = VRCFuryArmatureLink.skinRewriteScalingFactor;
+
+          // set the scalingFactorPowersOf10Only to scalingFactorPowersOf10Only
+          armatureLinkModule.scalingFactorPowersOf10Only = VRCFuryArmatureLink.scalingFactorPowersOf10Only;
+
+          // ---- end CVRFuryModuleLinker specific properties ----
+
+
+
+          // add the armatureLinkModule to the DSU
+          modules.Add(armatureLinkModule);
+
+          // reload the UI finalise UI
+          updateFinaliseUI();
+        });
+      }
+      else
+      {
+        // print to console that the label is null
+        CoreLog("label at position " + positionInList + " is null");
+      }
+    }
+
+    // class end
+  }
+  // namespace end
+}
+#endif

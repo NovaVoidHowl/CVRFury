@@ -51,6 +51,7 @@ namespace VF.Upgradeable
           {
             list.Add(upgradeable);
           }
+          return UnitySerializationUtils.IterateResult.Continue;
         }
       );
       list.Reverse();
@@ -73,6 +74,7 @@ namespace VF.Upgradeable
           {
             tooNew |= upgradeable.Version > upgradeable.GetLatestVersion();
           }
+          return UnitySerializationUtils.IterateResult.Continue;
         }
       );
       return tooNew;

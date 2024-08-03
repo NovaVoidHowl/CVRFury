@@ -25,5 +25,15 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
     );
 
+    public static readonly ReadOnlyCollection<string> CVR_PROTECTED_LAYERS = new ReadOnlyCollection<string>(
+      new List<string>
+      {
+        "Locomotion/Emotes",
+        "LeftHand",
+        "RightHand",
+        "Toggles"
+      }
+    );
+
   }
 }

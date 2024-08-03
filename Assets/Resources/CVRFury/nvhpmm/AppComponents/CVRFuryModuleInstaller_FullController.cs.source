@@ -1,0 +1,1797 @@
+// { "version": "0.7.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+using Math = System.Math;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Linq;
+using System.IO;
+using UnityEditor;
+using UnityEditor.Animations;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Scripts;
+using ABI.CCK.Components;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using uk.novavoidhowl.dev.vrcstub;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using static uk.novavoidhowl.dev.cvrfury.deployable.ReportBuilderSupport;
+using static uk.novavoidhowl.dev.cvrfury.supporting_classes.editor.Animation;
+using static uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime.General;
+
+// temp using for testing
+using System.Text;
+
+/// <summary>
+/// fullController Module
+/// this is handles avatar controller/config (menus, animators etc.) just before upload/play
+/// </summary>
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public class fullControllerModuleProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      // Implementation for fullControllerModuleProcessor
+      // console print to say this function is being called
+      CoreLog("fullControllerModuleProcessor.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // access the CVRAvatar component on the targetAvatar
+      CVRAvatar avatar = targetAvatar.GetComponent<CVRAvatar>();
+
+      // check if the avatar exists
+      if (avatar != null)
+      {
+        // we have the avatar, and it is valid, also we have a FullController type Module
+        // so we need to ensure that 'advanced avatar settings' is enabled on the avatar
+        avatar.avatarUsesAdvancedSettings = true;
+
+        // get the avatarSettings from the avatar
+        CVRAdvancedAvatarSettings advancedAvatarSettings = avatar.avatarSettings;
+
+        // get the list of menu stores from the avatarSettings (settings public variable)
+        List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList = advancedAvatarSettings.settings;
+
+        // create a temp over all parameter rewrite list (<string, string>)
+        Dictionary<string, string> perModuleParametersPairToRename = null;
+
+        // section to handle CVR Fury Controllers
+        // check and see if the module has any controllers
+        if ((module as fullControllerModule).controllers.Count > 0)
+        {
+          //// path vars section
+
+          // create a folder in the project to store the generated controller
+          // this is based on Constants.ASSETS_MANAGED_FOLDER_GENERATED + AvatarName
+          string generatedItemsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name;
+
+          if (!Directory.Exists(generatedItemsFolder))
+          {
+            Directory.CreateDirectory(generatedItemsFolder);
+          }
+
+          //// file paths for the generated controllers/locks etc.
+
+          // create path for temp items
+          string tempItemsPath = generatedItemsFolder + "/temp_items/DSU-" + DSUNumber;
+
+          // ensure the temp items folder exists
+          if (!Directory.Exists(tempItemsPath))
+          {
+            Directory.CreateDirectory(tempItemsPath);
+          }
+
+          // create a new override controller file path based on the generatedItemsFolder
+          // called 'overrides_controller_'avatar.name
+          string overrideControllerPath =
+            generatedItemsFolder + "/overrides_controller_" + avatar.name + ".overrideController";
+
+          // create a new animator controller file path based on the generatedItemsFolder
+          // called 'final_controller_'avatar.name
+          string finalControllerPath = generatedItemsFolder + "/final_controller_" + avatar.name + ".controller";
+
+          // create animatorProcessing lock file path based on the generatedItemsFolder called 'processing.lock'
+          string processingLockPath = generatedItemsFolder + "/processing.lock";
+
+          // create baseControllerImport lock file path based on the generatedItemsFolder
+          // called 'baseControllerImport.lock'
+          string baseControllerImportLockPath = generatedItemsFolder + "/baseControllerImport.lock";
+
+          // create build report file path based on the generatedItemsFolder called 'build_report.txt'
+          string buildReportPath =
+            generatedItemsFolder + "/" + module.ModuleType + "_build_report_" + module.name + ".txt";
+
+          // call the report init function if the build report file doesn't exist
+          if (!File.Exists(buildReportPath))
+          {
+            // call the report init function
+            ReportInit(buildReportPath, avatar, module);
+          }
+
+          // loop through the controllers in the module
+          foreach (RuntimeAnimatorController controller in (module as fullControllerModule).controllers)
+          {
+            // log the controller's name to the console
+            CoreLog("controller.name: " + controller.name);
+            ReportAddLine(buildReportPath, "controller.name: " + controller.name);
+            ReportAddBlankLine(buildReportPath);
+
+            // get the baseController from the avatarSettings
+            RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
+
+            #region baseController validation
+            // check if baseController don't exist
+            if (baseController == null)
+            {
+              // if they don't, log an error to the console
+              CoreLogError("No base controller found, restoring defaults");
+              ReportAddErrorLine(buildReportPath, "No base controller found, restoring defaults");
+              // set the  the CCK default animator controller to the controller file at path
+              // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
+              advancedAvatarSettings.baseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+                "Assets/ABI.CCK/Animations/AvatarAnimator.controller"
+              );
+            }
+            #endregion
+            // so we now have a baseController we can build upon should there not be any built ones
+
+            #region processing flow logic
+            // check the lock file to see if controller processing is in progress
+            // if it is, we already have a controller in progress from this and can add to it
+            // if it isn't, then what we have is the old controller and we need to start fresh
+
+            //vars to hold the controller/override files
+            AnimatorOverrideController CVRFuryOverrides;
+            AnimatorController CVRFuryFinalController;
+
+            // check if the processing lock file exists
+            if (File.Exists(processingLockPath))
+            {
+              //console print to say we are continuing with controller processing
+              CoreLog("Continuing with controller processing");
+              ReportAddBlankLine(buildReportPath);
+              ReportAddLine(buildReportPath, "Continuing with controller processing");
+
+              // currently exists so there should be a controller set in progress so load them
+              // load the override controller file
+              CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(overrideControllerPath);
+
+              // load the animator controller file
+              CVRFuryFinalController = AssetDatabase.LoadAssetAtPath<AnimatorController>(finalControllerPath);
+            }
+            else
+            {
+              //console print to say we are starting fresh
+              CoreLog("New processing run creating fresh controllers");
+              ReportAddBlankLine(buildReportPath);
+              ReportAddLine(buildReportPath, "New processing run creating fresh controllers");
+
+              // no lock file so we need to start fresh
+              // get rid of any existing controller/import lock files
+              AssetDatabase.DeleteAsset(overrideControllerPath);
+              AssetDatabase.DeleteAsset(finalControllerPath);
+              AssetDatabase.DeleteAsset(baseControllerImportLockPath);
+              // refresh the asset database
+              AssetDatabase.Refresh();
+
+              // create the override file
+              AssetDatabase.CreateAsset(new AnimatorOverrideController(), overrideControllerPath);
+
+              // load the override controller file
+              CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(overrideControllerPath);
+
+              // create the controller file
+              AssetDatabase.CreateAsset(new AnimatorController(), finalControllerPath);
+
+              // load the animator controller file
+              CVRFuryFinalController = AssetDatabase.LoadAssetAtPath<AnimatorController>(finalControllerPath);
+
+              // create the lock file
+              File.WriteAllText(processingLockPath, string.Empty);
+              // finalise assets writes
+              AssetDatabase.SaveAssets();
+              AssetDatabase.Refresh();
+            }
+
+            #endregion
+            // at this point we have the override controller and the final controller loaded
+
+            // link the final controller to the overrides
+            CVRFuryOverrides.runtimeAnimatorController = CVRFuryFinalController;
+
+            #region baseController import logic
+            // check to see if the baseControllerImport lock file exists
+            if (!File.Exists(baseControllerImportLockPath))
+            {
+              // if it doesn't, we need to import the base controller/user's controller
+              // set the baseControllerImport lock file
+              File.WriteAllText(baseControllerImportLockPath, string.Empty);
+
+              // load the animator from the advancedAvatarSettings
+              AnimatorController userAnimator = advancedAvatarSettings.animator;
+
+              // load the overrides from the advancedAvatarSettings
+              AnimatorOverrideController userOverrides = advancedAvatarSettings.overrides;
+
+              ReportAddLine(buildReportPath, "Importing base controller");
+              // now if the user already has an animator and overrides we need to use those as a base,
+              // if not we use the base controller
+              if (userAnimator != null)
+              {
+                // print to console that user controller is being used
+                CoreLog("Using current AAS controller as base controller");
+                ReportAddLine(buildReportPath, "Using current AAS controller as base controller");
+
+                // input will be - userAnimator
+                // target will be - CVRFuryFinalController
+                // no need to change any parameters, as this is the first import
+                // direct write to the target controller (CVRFuryFinalController)
+                AnimatorCloner.MergeControllers(CVRFuryFinalController, userAnimator, null, false);
+
+                // debug print that the merge was successful (TODO: remove this debug print)
+                CoreLog("Merge successful");
+              }
+              else
+              {
+                // print to console that base controller is being used
+                CoreLog("Using base controller as user controller is null");
+                ReportAddLine(buildReportPath, "Using base controller as user controller is null");
+                // Cast the baseController to AnimatorController
+                AnimatorController baseAnimatorController = baseController as AnimatorController;
+
+                if (baseAnimatorController != null)
+                {
+                  // input will be - baseAnimatorController
+                  // target will be - CVRFuryFinalController
+                  // no need to change any parameters, as this is the first import
+                  // direct write to the target controller (CVRFuryFinalController)
+                  AnimatorCloner.MergeControllers(CVRFuryFinalController, baseAnimatorController, null, false);
+
+                  // debug print that the merge was successful (TODO: remove this debug print)
+                  CoreLog("Merge successful");
+                }
+                else
+                {
+                  // Handle the case where baseController could not be cast to AnimatorController
+                  CoreLogError("baseController is not an AnimatorController");
+                  ReportAddErrorLine(buildReportPath, "[CRITICAL]: baseController is not an AnimatorController");
+                }
+              }
+            }
+
+            #endregion
+            // ok so at this point we should have everything from the base controller in the final controller
+            // along with any previous module's additions (we only import the base once, hence the lock file)
+            // so now we need to add bits the current controller we are processing
+
+
+            // get the controller
+            AnimatorController sourceAnimatorController = controller as AnimatorController;
+
+            //check if the sourceAnimatorController is null
+            if (sourceAnimatorController == null)
+            {
+              // if it is, log an error to the console
+              CoreLogError("sourceAnimatorController is null");
+              ReportAddErrorLine(buildReportPath, "[CRITICAL]: sourceAnimatorController is null");
+            }
+            else
+            {
+              // ok so that means we should have a valid sourceAnimatorController (not null)
+
+              // debug print the sourceAnimatorController's name
+              CoreLog("sourceAnimatorController.name: " + sourceAnimatorController.name);
+
+              // debug print to say global parameters are being processed
+              CoreLog("Processing global parameters");
+
+              // get the list of global parameters from the module
+              List<string> globalParams = getGlobalParameters(module);
+
+              // debug print to say global parameters are being processed
+              CoreLogDebug("Processing global parameters - de-duped list made");
+              CoreLogDebug("Processing global parameters - count: " + globalParams.Count);
+
+              // debug print all global parameters in one debug console print
+              CoreLogDebugPrintList(globalParams, "globalParams: ");
+
+              // get the list of parameter names from the sourceAnimatorController
+              List<string> sourceParameters = new List<string>(sourceAnimatorController.parameters.Select(p => p.name));
+
+              // debug print to say parameters list acquired from sourceAnimatorController
+              CoreLog("Processing parameters - source parameter name list made - count: " + sourceParameters.Count);
+
+              // temp list to hold the parameters that need re-naming (assuming structure is oldName -> newName)
+              Dictionary<string, string> parametersPairToRename = null;
+
+              // find all the global parameters that have prefix of 'cascade_cvrf_enable/'
+              // and add them to the cascadeGlobalParams list
+              List<string> cascadeGlobalParams = globalParams.FindAll(p => p.StartsWith("cascade_cvrf_enable/"));
+
+              // remove the cascadeGlobalParams from the globalParams list
+              globalParams.RemoveAll(p => p.StartsWith("cascade_cvrf_enable/"));
+
+              // remove the prefix of 'cascade_cvrf_enable/' from the cascadeGlobalParams
+              cascadeGlobalParams = cascadeGlobalParams.Select(p => p.Replace("cascade_cvrf_enable/", "")).ToList();
+
+              // debug print the cascadeGlobalParams in one debug console print
+              StringBuilder cascadeGlobalParamsDebug = new StringBuilder();
+              foreach (string param in cascadeGlobalParams)
+              {
+                cascadeGlobalParamsDebug.Append(param + "\n");
+              }
+              CoreLog("cascadeGlobalParams: \n" + cascadeGlobalParamsDebug.ToString());
+
+              // check if the sourceParameters list is not empty
+              if (sourceParameters.Count > 0)
+              {
+                // loop through the source parameters and if they are not global add them to the parametersPairToRename list
+                foreach (string parameter in sourceParameters)
+                {
+                  // bool to track if we found it in the global params
+                  bool globalParamFound = false;
+
+                  // check if the parameter is in the cascadeGlobalParams list, note cascadeGlobalParams only contains the suffix
+                  foreach (string cascadeParam in cascadeGlobalParams)
+                  {
+                    // check if the parameter is in the cascadeGlobalParams list
+                    if (parameter.EndsWith(cascadeParam))
+                    {
+                      // debug print the parameter name (TODO: remove this debug print)
+                      CoreLog("Cascade global parameter found: " + parameter);
+                      // set the globalParamFound to true
+                      globalParamFound = true;
+                      break;
+                    }
+                  }
+
+                  // check if the parameter is in the globalParams list
+                  if (globalParams.Contains(parameter) || globalParamFound)
+                  {
+                    // debug print the parameter name (TODO: remove this debug print)
+                    CoreLog("Global parameter found: " + parameter);
+                    // set the globalParamFound to true
+                    globalParamFound = true;
+                  }
+
+                  // process the parameter if it is not a global parameter
+                  if (!globalParamFound)
+                  {
+                    if (parametersPairToRename == null)
+                    {
+                      // init the parametersPairToRename list
+                      parametersPairToRename = new Dictionary<string, string>();
+                    }
+                    if (perModuleParametersPairToRename == null)
+                    {
+                      // init the perModuleParametersPairToRename list
+                      perModuleParametersPairToRename = new Dictionary<string, string>();
+                    }
+                    // new name string
+                    string newParameterName = "[CVRFury_" + DSUNumber + "]_" + parameter;
+                    // add the parameter to the parametersPairToRename list
+                    parametersPairToRename.Add(parameter, newParameterName);
+                    // add the parameter to the perModuleParametersPairToRename list
+                    perModuleParametersPairToRename.Add(parameter, newParameterName);
+                  }
+                }
+              }
+
+              if (parametersPairToRename != null)
+              {
+                // debug print the parametersPairToRename entries all in one debug console print
+                StringBuilder parametersPairToRenameDebug = new StringBuilder();
+                foreach (KeyValuePair<string, string> pair in parametersPairToRename)
+                {
+                  parametersPairToRenameDebug.Append(pair.Key + " -> " + pair.Value + "\n");
+                }
+                CoreLog("parametersPairToRename List: \n" + parametersPairToRenameDebug.ToString());
+              }
+
+              // log the controller's name to the console and build report
+              CoreLog("animatorController.name: " + sourceAnimatorController.name);
+              ReportAddLine(buildReportPath, "animatorController.name: " + sourceAnimatorController.name);
+              ReportAddBlankLine(buildReportPath);
+
+              // make a ephemeral copy of the source controller
+              // this is to ensure that the source controller is not modified
+              // this is a deep copy of the source controller
+
+              // create GUID
+              System.Guid tempSourceControllerGUID = System.Guid.NewGuid();
+
+              // path of temp the source controller
+              string tempSourceControllerPath =
+                tempItemsPath + "/temp_source_controller_" + tempSourceControllerGUID + ".controller";
+
+              // get path of the source controller
+              string sourceControllerPath = AssetDatabase.GetAssetPath(sourceAnimatorController);
+
+              // debug print to say the source controller is being copied
+              CoreLog("Copying source controller to temp source controller");
+
+              // copy the source controller to the temp source controller using File.Copy
+              File.Copy(sourceControllerPath, tempSourceControllerPath, overwrite: true);
+
+              // get the last part of the source controller path without the extension
+              string sourceControllerFileName = Path.GetFileNameWithoutExtension(sourceControllerPath);
+
+              // get the last part of the temp source controller path without the extension
+              string tempSourceControllerFileName = Path.GetFileNameWithoutExtension(tempSourceControllerPath);
+
+              // debug print the source and temp file names
+              CoreLogDebug("[FullController] sourceControllerFileName: " + sourceControllerFileName);
+              CoreLogDebug("[FullController] tempSourceControllerFileName: " + tempSourceControllerFileName);
+
+              # region animator driver stub
+              // Stub out animator drivers (script id change)
+
+              // load the animator controller file as plain text
+              string animatorControllerText = File.ReadAllText(tempSourceControllerPath);
+
+              // counter to keep track of the number of replacements
+              int replacements = 0;
+
+              // look for strings that match the values in Constants.ANIMATOR_DRIVER_M_SCRIPT_IDS
+              foreach (string scriptID in Constants.ANIMATOR_DRIVER_M_SCRIPT_IDS)
+              {
+                // replace the scriptID with Constants.CVRFURY_ANIMDRIVER_M_SCRIPT_ID
+                animatorControllerText = animatorControllerText.Replace(
+                  scriptID,
+                  Constants.CVRFURY_ANIMDRIVER_M_SCRIPT_ID
+                );
+
+                // increment the replacements counter
+                replacements++;
+              }
+
+              // Define the pattern to match lines that end with 'sourceControllerFileName'
+              string pattern = @"^(\s*)m_Name: " + Regex.Escape(sourceControllerFileName) + "($)";
+
+              // Define the replacement text
+              string replacement = "$1m_Name: " + tempSourceControllerFileName + "$2";
+
+              // Replace matches of the pattern in animatorControllerText with the replacement text
+              animatorControllerText = Regex.Replace(
+                animatorControllerText,
+                pattern,
+                replacement,
+                RegexOptions.Multiline
+              );
+
+              // write the modified animator controller file back to disk
+              File.WriteAllText(tempSourceControllerPath, animatorControllerText);
+
+              // log to the console that the animator controller file has been modified
+              CoreLogDebug(
+                "[FullController] Animator controller file modified: "
+                  + tempSourceControllerPath
+                  + " ("
+                  + replacements
+                  + " replacements)"
+              );
+
+              // refresh the asset database
+              AssetDatabase.Refresh();
+
+              // mark the file as dirty
+              AssetDatabase.ImportAsset(tempSourceControllerPath, ImportAssetOptions.ForceUpdate);
+
+              #endregion //animator driver stub
+
+              // load the temp source controller
+              AnimatorController tempSourceAnimatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+                tempSourceControllerPath
+              );
+
+              // loop over all the layers in the tempSourceAnimatorController and debug print their names
+
+              for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+              {
+                // get the layer
+                var layer = tempSourceAnimatorController.layers[i];
+
+                // get the states in the layer
+                var stateMachine = layer.stateMachine;
+                // loop over all the states in the stateMachine
+                for (int j = 0; j < stateMachine.states.Length; j++)
+                {
+                  // get the state
+                  var state = stateMachine.states[j].state;
+
+                  // check if the state's motion is a blend tree
+                  if (state.motion is BlendTree blendTree)
+                  {
+                    // can ignore this as animation drivers can't be in blend trees
+                  }
+                  else
+                  {
+                    // ok its not a blend tree, so we need to check if it has a VRCAvatarParameterDriver
+                    // get the Behaviours from the state
+                    StateMachineBehaviour[] behaviours = state.behaviours;
+
+                    // loop over all the behaviours
+                    for (int k = 0; k < behaviours.Length; k++)
+                    {
+                      // get the behaviour
+                      StateMachineBehaviour behaviour = behaviours[k];
+
+                      // check if the behaviour is a VRCAvatarParameterDriver
+                      if (behaviour is VRCAvatarParameterDriver)
+                      {
+                        // log to the console that the VRCAvatarParameterDriver has been found
+                        CoreLogDebug("[FullController] VRCAvatarParameterDriver found in state: " + state.name);
+
+                        // get the VRCAvatarParameterDriver component
+                        VRCAvatarParameterDriver VRCdriver = behaviour as VRCAvatarParameterDriver;
+
+                        // Add the AnimatorDriver component
+                        AnimatorDriver animatorDriver = state.AddStateMachineBehaviour<AnimatorDriver>();
+
+                        // copy the localOnly flag from the VRCAvatarParameterDriver to the AnimatorDriver
+                        animatorDriver.localOnly = VRCdriver.localOnly;
+
+                        // check is VRCdriver.parameters has at least one element
+                        if (VRCdriver.parameters.Count > 0)
+                        {
+                          // log to the console that the VRCAvatarParameterDriver has at least one parameter
+                          CoreLogDebug(
+                            "[FullController] VRCAvatarParameterDriver has at least one parameter: "
+                              + VRCdriver.parameters[0].name
+                          );
+
+                          // for each parameter in the VRCAvatarParameterDriver
+                          foreach (VRCAvatarParameterDriver.Parameter parameter in VRCdriver.parameters)
+                          {
+                            // log to the console the parameter's name
+                            CoreLogDebug("[FullController] VRCAvatarParameterDriver parameter: " + parameter.name);
+
+                            // create a new AnimatorDriverTask to hold the bits form the VRCAvatarParameterDriver
+                            AnimatorDriverTask task = new AnimatorDriverTask();
+
+                            // set the targetName to the parameter's name
+                            task.targetName = parameter.name;
+
+                            // set the task's targetType
+                            task.targetType = getParamType(module, parameter.name);
+
+                            // switch to handle the type from the VRCAvatarParameterDriver
+                            switch (parameter.type)
+                            {
+                              case VRCAvatarParameterDriver.ChangeType.Set:
+                                // set the task type to Set
+                                task.op = AnimatorDriverTask.Operator.Set;
+                                task.aType = AnimatorDriverTask.SourceType.Static;
+                                task.aValue = parameter.value;
+                                break;
+                              case VRCAvatarParameterDriver.ChangeType.Add:
+                                // set the task type to Addition
+                                task.op = AnimatorDriverTask.Operator.Addition;
+                                task.aType = AnimatorDriverTask.SourceType.Parameter;
+                                task.aName = parameter.name;
+                                task.aParamType = getParamType(module, parameter.name);
+                                task.bType = AnimatorDriverTask.SourceType.Static;
+                                task.bValue = parameter.value;
+                                break;
+                              case VRCAvatarParameterDriver.ChangeType.Random:
+                                // note bools are odd for random, in VRCFury its a chance to get 1 or 0, not sure
+                                // how to handle this yet. for now no random for bools!
+                                // set the task type to Set
+                                task.op = AnimatorDriverTask.Operator.Set;
+                                task.aType = AnimatorDriverTask.SourceType.Random;
+                                // in random aValue is the min and aMax is the max
+                                task.aValue = parameter.valueMin;
+                                task.aMax = parameter.valueMax;
+                                break;
+                              case VRCAvatarParameterDriver.ChangeType.Copy:
+                                // set the task type to Copy
+                                task.op = AnimatorDriverTask.Operator.Set;
+                                task.aType = AnimatorDriverTask.SourceType.Parameter;
+                                task.aName = parameter.source;
+                                break;
+                              default:
+                                // problem here as the enum in VRC may have added a new type
+                                // emit critical error
+                                CoreLogCritical(
+                                  "Unknown VRCAvatarParameterDriver.ChangeType: " + VRCdriver.parameters[0].type
+                                );
+                                break;
+                            }
+
+                            // add the task to the animatorDriver
+                            animatorDriver.EnterTasks.Add(task);
+                          }
+                        }
+                        else
+                        {
+                          // log to the console that the VRCAvatarParameterDriver has no parameters
+                          CoreLogDebug("[FullController] VRCAvatarParameterDriver has no parameters");
+                        }
+
+                        // call DestroyObjectImmediate on the VRCAvatarParameterDriver behaviour
+                        UnityEngine.Object.DestroyImmediate(behaviour, true);
+                      }
+                    }
+                  }
+                }
+              }
+
+              // refresh the asset database
+              AssetDatabase.Refresh();
+
+              // mark the file as dirty
+              AssetDatabase.ImportAsset(tempSourceControllerPath, ImportAssetOptions.ForceUpdate);
+
+              #region get DSU location info
+              // get the hierarchy path of the DSUObject under the targetAvatar
+              string DSUObjectPath = GetHierarchyPath(targetAvatar, DSUObject);
+
+              // remove the name of the targetAvatar from the start of the DSUObjectPath so it is relative
+              DSUObjectPath = DSUObjectPath.Substring(targetAvatar.name.Length + 1);
+              #endregion
+
+              // section to handle manual clip curve path rewrites
+              #region rebind animation clips - Manual
+              // this has to happen before prefab related rebinds, as it is intended to be used for
+              // to get edit animation clip paths to match the prefab base
+
+              // debug print to say we are rebinding animation clips
+              CoreLog("Rebinding animation clips - Manual");
+
+              // counter for the number of rewrites done
+              int rewritesDone = 0;
+
+              // print the binding rewrites to the console in one go
+              StringBuilder bindingRewritesDebug = new StringBuilder();
+              foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
+              {
+                bindingRewritesDebug.Append(
+                  "rewrite.from: "
+                    + rewrite.from
+                    + "\n rewrite.to: "
+                    + rewrite.to
+                    + "\n rewrite.delete: "
+                    + rewrite.delete
+                    + "\n\n"
+                );
+              }
+              CoreLogDebug("[FullController][manual rewrites] bindingRewrites: \n" + bindingRewritesDebug.ToString());
+
+              // check and see if the module has any binding rewrites
+              if ((module as fullControllerModule).rewriteBindings.Count > 0)
+              {
+                // loop through the binding rewrites in the module
+                foreach (
+                  fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings
+                )
+                {
+                  // generate a guid for the temp clips
+                  System.Guid tempClipGUID = System.Guid.NewGuid();
+
+                  // log the binding rewrite's name to the console
+                  CoreLog(
+                    "rewrite count ID: "
+                      + rewritesDone
+                      + "\nrewrite.from: "
+                      + rewrite.from
+                      + "\n rewrite.to: "
+                      + rewrite.to
+                      + "\n rewrite.delete: "
+                      + rewrite.delete
+                  );
+
+                  // get the animation clips from the source controller
+                  AnimationClip[] mrSourceClips = tempSourceAnimatorController.animationClips;
+
+                  // loop through the layers
+                  for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+                  {
+                    var layer = tempSourceAnimatorController.layers[i];
+                    var stateMachine = layer.stateMachine;
+
+                    // loop through the states
+                    for (int j = 0; j < stateMachine.states.Length; j++)
+                    {
+                      var state = stateMachine.states[j].state;
+
+                      // check if the state's motion is a blend tree
+                      if (state.motion is BlendTree blendTree)
+                      {
+                        // get the clips from the blend tree
+                        var blendTreeClips = GetClipsFromBlendTree(blendTree);
+
+                        // add the clips to the source clips
+                        mrSourceClips = mrSourceClips.Concat(blendTreeClips).ToArray();
+                      }
+                      else if (state.motion is AnimationClip clip)
+                      {
+                        // add the clip to the source clips
+                        mrSourceClips = mrSourceClips.Append(clip).ToArray();
+                      }
+                    }
+                  }
+
+                  // loop through the animation clips
+                  foreach (AnimationClip clip in mrSourceClips)
+                  {
+                    // get the clip's path
+                    string clipPath = AssetDatabase.GetAssetPath(clip);
+
+                    //get the filename of the clip, excluding the path and extension
+                    string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
+
+                    // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
+                    if (clipFileName.Contains("_clip_gen_pre_"))
+                    {
+                      clipFileName = clipFileName.Substring(0, clipFileName.IndexOf("_clip_gen_pre_"));
+                    }
+
+                    // generate a temp clip path
+                    string tempClipPath =
+                      tempItemsPath
+                      + "/"
+                      + clipFileName
+                      + "_clip_gen_pre_mrw_"
+                      + rewritesDone
+                      + "_"
+                      + tempClipGUID
+                      + ".anim";
+
+                    // check if a temp clip already exists
+                    AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+                    if (tempClip == null)
+                    {
+                      // copy the clip to the temp clip
+                      AssetDatabase.CopyAsset(clipPath, tempClipPath);
+                      // load the temp clip
+                      tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+                    }
+
+                    // loop through the layers
+                    for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+                    {
+                      var layer = tempSourceAnimatorController.layers[i];
+                      var stateMachine = layer.stateMachine;
+
+                      // loop through the states
+                      for (int j = 0; j < stateMachine.states.Length; j++)
+                      {
+                        var state = stateMachine.states[j].state;
+
+                        // if the state's motion is the original clip, replace it with the temp clip
+                        if (state.motion == clip)
+                        {
+                          if (rewrite.delete)
+                          {
+                            rewrite.to = "";
+                          }
+
+                          // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
+                          tempClip = rewriteAnimationClipCurvePaths(tempClip, rewrite.from, rewrite.to);
+
+                          // mark the tempClip as dirty
+                          EditorUtility.SetDirty(tempClip);
+
+                          // set the file path as dirty
+                          AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
+
+                          // save the temp clip
+                          AssetDatabase.SaveAssets();
+
+                          state.motion = tempClip;
+                        }
+                        // if the state's motion is a blend tree, check its children
+                        else if (state.motion is BlendTree blendTree)
+                        {
+                          ReplaceClipInBlendTree(blendTree, clip, tempClip, tempClipPath, rewrite);
+                        }
+                      }
+                    }
+
+                    // save the temp source controller
+                    AssetDatabase.SaveAssets();
+                  }
+                  // update the rewritesDone counter
+                  rewritesDone++;
+                }
+                // refresh the asset database after all the clips have been processed
+                AssetDatabase.Refresh();
+              }
+
+              // loop over all files in the tempItemsPath and debug print their paths in one go
+              string[] tempItemsFiles = Directory.GetFiles(tempItemsPath + "/");
+              // order the files by Alphabetical order
+              System.Array.Sort(tempItemsFiles);
+
+              // debug print to say we are checking the files in the tempItemsPath
+              StringBuilder tempItemsFilesDebug = new StringBuilder();
+              foreach (string file in tempItemsFiles)
+              {
+                tempItemsFilesDebug.Append(file + "\n");
+              }
+              CoreLogDebug(
+                "[FullController][manual rewrites] Files in tempItemsPath: \n" + tempItemsFilesDebug.ToString()
+              );
+
+              #endregion
+
+
+              #region rebind animation clips - Prefab Instance
+              // rebind prefab name to current name in hierarchy, this needs to be done so that the created animation
+              // clips link correctly to the prefab instances
+
+              // get the DSU component from the DSUObject
+              CVRFuryDataStorageUnit DSUComponent = DSUObject.GetComponent<CVRFuryDataStorageUnit>();
+
+              // get the base bind name from the DSUObject, this is the default behaviour if no armatureLink module is
+              // present, as that module can override this
+              string animationBaseBindName = DSUObject.name;
+
+              // bool to track if the armatureLink module is present
+              bool armatureLinkModulePresent = false;
+
+              // check if the modules of the DSUComponent  and see if there is a armatureLink type module present
+              if (DSUComponent.modules.modules.Any(m => m.ModuleType == "armatureLink"))
+              {
+                // get the armatureLink from the DSUComponent
+                armatureLink armatureLinkModule =
+                  DSUComponent.modules.modules.First(m => m.ModuleType == "armatureLink") as armatureLink;
+
+                // get the addonObjectToLink from it
+                GameObject addonObjectToLink = armatureLinkModule.addonObjectToLink;
+
+                // overwrite the animationBaseBindName with the name of the addonObjectToLink
+                animationBaseBindName = addonObjectToLink.name;
+
+                // set the armatureLinkModulePresent to true
+                armatureLinkModulePresent = true;
+              }
+
+              // debug print to say we are re-binding animation clips
+              CoreLog("Rebinding animation clips - Prefab Instance");
+
+              // get the animation clips from the source controller
+              AnimationClip[] pfSourceClips = tempSourceAnimatorController.animationClips;
+
+              // loop through the layers
+              for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+              {
+                var layer = tempSourceAnimatorController.layers[i];
+                var stateMachine = layer.stateMachine;
+
+                // loop through the states
+                for (int j = 0; j < stateMachine.states.Length; j++)
+                {
+                  var state = stateMachine.states[j].state;
+
+                  // check if the state's motion is a blend tree
+                  if (state.motion is BlendTree blendTree)
+                  {
+                    // get the clips from the blend tree
+                    var blendTreeClips = GetClipsFromBlendTree(blendTree);
+
+                    // add the clips to the source clips
+                    pfSourceClips = pfSourceClips.Concat(blendTreeClips).ToArray();
+                  }
+                  else if (state.motion is AnimationClip clip)
+                  {
+                    // add the clip to the source clips
+                    pfSourceClips = pfSourceClips.Append(clip).ToArray();
+                  }
+                }
+              }
+
+              // debug print the pfSourceClips in one debug console print
+              StringBuilder sourceClipsDebug = new StringBuilder();
+              foreach (AnimationClip clip in pfSourceClips)
+              {
+                sourceClipsDebug.Append(clip.name + "\n");
+              }
+              CoreLogDebug(
+                "[FullController][prefab rewrites] pfSourceClips pre-dedupe: \n" + sourceClipsDebug.ToString()
+              );
+
+              // dedupe the pfSourceClips list
+              pfSourceClips = pfSourceClips.Distinct().ToArray();
+
+              // debug print the pfSourceClips in one debug console print
+              sourceClipsDebug.Clear();
+              foreach (AnimationClip clip in pfSourceClips)
+              {
+                sourceClipsDebug.Append(clip.name + "\n");
+              }
+              CoreLogDebug(
+                "[FullController][prefab rewrites] pfSourceClips post-dedupe: \n" + sourceClipsDebug.ToString()
+              );
+
+              // loop through the animation clips
+              foreach (AnimationClip clip in pfSourceClips)
+              {
+                // get the clip's path
+                string clipPath = AssetDatabase.GetAssetPath(clip);
+
+                //get the filename of the clip, excluding the path and extension
+                string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
+
+                // generate a guid for the temp clip
+                System.Guid tempClipGUID = System.Guid.NewGuid();
+
+                // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
+                if (clipFileName.Contains("_clip_gen_pre_"))
+                {
+                  clipFileName = clipFileName.Substring(0, clipFileName.IndexOf("_clip_gen_pre_"));
+                }
+
+                // generate a temp clip path
+                string tempClipPath = tempItemsPath + "/" + clipFileName + "_clip_gen_" + tempClipGUID + ".anim";
+
+                // copy the clip to the temp clip
+                AssetDatabase.CopyAsset(clipPath, tempClipPath);
+
+                // load the temp clip
+                AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+
+                // loop through the layers
+                for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+                {
+                  var layer = tempSourceAnimatorController.layers[i];
+                  var stateMachine = layer.stateMachine;
+
+                  // loop through the states
+                  for (int j = 0; j < stateMachine.states.Length; j++)
+                  {
+                    var state = stateMachine.states[j].state;
+
+                    // if the state's motion is the original clip, replace it with the temp clip
+                    if (state.motion == clip)
+                    {
+                      // need to choose rewrite mode now, based on the armatureLinkModulePresent
+                      if (armatureLinkModulePresent)
+                      {
+                        // armature link module is present, so no need to rewrite the paths as they will have been
+                        // setup ready for the armatureLink module to handle
+                      }
+                      else
+                      {
+                        // no armatureLink module present, so we need to use the DSUObjectPath + animationBaseBindName
+
+                        // check if the animationBaseBindName and the DSUObjectPath match (if they do, we don't need to rewrite the paths)
+                        if (animationBaseBindName != DSUObjectPath)
+                        {
+                          // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
+                          tempClip = rewriteAnimationClipCurvePaths(tempClip, animationBaseBindName, DSUObjectPath);
+
+                          // mark the tempClip as dirty
+                          EditorUtility.SetDirty(tempClip);
+
+                          // set the file path as dirty
+                          AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
+
+                          // save the temp clip
+                          AssetDatabase.SaveAssets();
+                        }
+                      }
+
+                      state.motion = tempClip;
+                    }
+                    // if the state's motion is a blend tree, check its children
+                    else if (state.motion is BlendTree blendTree)
+                    {
+                      ReplaceClipInBlendTree(
+                        blendTree,
+                        clip,
+                        tempClip,
+                        tempClipPath,
+                        new fullControllerModule.BindingRewrite { from = animationBaseBindName, to = DSUObjectPath }
+                      );
+                    }
+                  }
+                }
+
+                // save the temp source controller
+                AssetDatabase.SaveAssets();
+              }
+
+              // refresh the asset database after all the clips have been processed
+              AssetDatabase.Refresh();
+
+              #endregion
+
+
+              // merge the source into the final controller, renaming the parameters that are not global
+              // again direct merge to the target controller (CVRFuryFinalController)
+              AnimatorCloner.MergeControllers(
+                CVRFuryFinalController,
+                tempSourceAnimatorController,
+                parametersPairToRename,
+                false
+              );
+
+              // at this point we need to set the animator and overrides in the advancedAvatarSettings
+              // so that they can be used in the next module (additive process)
+
+              // set the animator in the advancedAvatarSettings
+              advancedAvatarSettings.animator = CVRFuryFinalController;
+
+              // set the overrides in the advancedAvatarSettings
+              advancedAvatarSettings.overrides = CVRFuryOverrides;
+
+              // set the core Overrides in the avatar
+              avatar.overrides = CVRFuryOverrides;
+
+              // report that the controller has been processed
+              ReportAddLine(buildReportPath, "Controller processed");
+
+              // null the temp controller
+              sourceAnimatorController = null;
+
+              // notes: under advancedAvatarSettings there are the following public variables
+              // settings: List<CVRAdvancedSettingsEntry> - list of settings for the avatar
+              // animator: Animator - the final animator for the avatar (after compiling all layers etc)
+              // overrides: AnimatorOverrideController - the overrides for the avatar animator above
+              // baseController: RuntimeAnimatorController - the base controller for the avatar
+              // baseOverrideController: RuntimeAnimatorController - the base override controller for the avatar
+              //                         ref baseController
+              // the base ones are used as input for the final animator to be built atop
+            }
+          }
+
+          // end the report
+          ReportEnd(buildReportPath);
+        }
+
+        // section to handle CVR Fury Menu Store
+        // check and see if the module has any menus
+        if ((module as fullControllerModule).menus.Count > 0)
+        {
+          // check if the perModuleParametersPairToRename is null and if so init it
+          if (perModuleParametersPairToRename == null)
+          {
+            CoreLogDebug("perModuleParametersPairToRename is null, init now");
+            perModuleParametersPairToRename = new Dictionary<string, string>();
+          }
+
+          // loop through the menus in the module
+          foreach (fullControllerModule.MenuEntry menuEntry in (module as fullControllerModule).menus)
+          {
+            // log the menu's name to the console
+            CoreLog("menuEntry.menu.name: " + menuEntry.menu.name);
+
+            // get the menu's prefix
+            string prefix = menuEntry.prefix;
+
+            // if the prefix is not null or empty add a forward slash to the end if there is not already one
+            if (!string.IsNullOrEmpty(prefix) && !prefix.EndsWith("/"))
+            {
+              prefix += "/";
+            }
+
+            if (!menuEntry.forcePrefixStringFormat)
+            {
+              // force all backslashes to forward slashes in the prefix
+              // this is to ensure that the menu structure is correctly formatted
+              // for DakyModsCVR's ActionMenu mod (if the user has it installed)
+              // ref https://github.com/dakyneko/DakyModsCVR/tree/master/ActionMenu
+              prefix = prefix.Replace("\\", "/");
+            }
+
+            // load the menu file from the menuEntry
+            CVRFuryMenuStore menu = menuEntry.menu;
+
+            // check if the menu exists
+            if (menu != null)
+            {
+              // now we can access the menu's properties
+              // load the menu's menuItems
+              List<menuParameter> menuItems = menu.menuItems;
+
+              // loop through the menuItems
+              foreach (menuParameter menuItem in menuItems)
+              {
+                // case statement to handle the different types of menu items
+                switch (menuItem.MenuParameterType)
+                {
+                  case "toggleParameter":
+                    // cast the menuItem to a toggleParameter
+                    toggleParameter toggleParam = menuItem as toggleParameter;
+                    // call the ProcessToggleParameter function to handle the toggle parameter
+                    ProcessToggleParameter(
+                      toggleParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
+
+                    break;
+
+                  case "dropdownParameter":
+                    // cast the menuItem to a dropdownParameter
+                    dropdownParameter dropdownParam = menuItem as dropdownParameter;
+                    // call the ProcessDropdownParameter function to handle the dropdown parameter
+                    ProcessDropdownParameter(
+                      dropdownParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
+
+                    break;
+
+                  case "sliderParameter":
+                    // cast the menuItem to a sliderParameter
+                    sliderParameter sliderParam = menuItem as sliderParameter;
+                    // call the ProcessSliderParameter function to handle the slider parameter
+                    ProcessSliderParameter(
+                      sliderParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
+
+                    break;
+
+                  case "twoDJoystickParameter":
+                    // cast the menuItem to a twoDJoystickParameter
+                    twoDJoystickParameter twoDJoystickParam = menuItem as twoDJoystickParameter;
+                    // call the ProcessTwoDJoystickParameter function to handle the twoDJoystick parameter
+                    ProcessTwoDJoystickParameter(
+                      twoDJoystickParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
+
+                    break;
+
+                  case "threeDJoystickParameter":
+                    // cast the menuItem to a threeDJoystickParameter
+                    threeDJoystickParameter threeDJoystickParam = menuItem as threeDJoystickParameter;
+                    // call the ProcessThreeDJoystickParameter function to handle the threeDJoystick parameter
+                    ProcessThreeDJoystickParameter(
+                      threeDJoystickParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
+
+                    break;
+
+                  default:
+                    // if the menuItem is not valid, log an error to the console
+                    CoreLogError("Unknown menu item type: " + menuItem.MenuParameterType);
+                    break;
+                }
+              }
+            }
+          }
+        }
+
+        // no smoothing logic for now, may be better to point people to the BTKS for this
+        // https://github.com/ddakebono/BTKSAUtils
+        // as that sorts all the smoothing out for you (no avatar side work needed)
+        #region smoothing logic
+        // TODO: // section to handle CVR Fury Smoothed Parameters
+        // check and see if the module has any smoothed parameters
+        // if ((module as fullControllerModule).smoothedPrms.Count > 0)
+        // {
+        //   // loop through the smoothed parameters in the module
+        //   foreach (
+        //     fullControllerModule.SmoothParamEntry smoothedParamEntry in (module as fullControllerModule).smoothedPrms
+        //   )
+        //   {
+        //     // log the smoothed parameter's name to the console
+        //     CoreLog("smoothedParamEntry.name: " + smoothedParamEntry.name);
+
+        //     // TODO
+        //   }
+        // }
+        #endregion
+
+        // TODO: // section to handle CVR Fury Toggle Parameter
+        // not sure how this could be done as CVR has a flat menu structure, and thus no toggles linked to menu sections
+        // need to add a warning if the module has a toggle parameter
+        #region Toggle Parameter
+        // check and see if the module has a toggle parameter
+        // if (!string.IsNullOrWhiteSpace((module as fullControllerModule).toggleParam))
+        // {
+        //   // log the toggle parameter's name to the console
+        //   CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
+        // }
+        #endregion
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        CoreLogError("Avatar does not exist");
+      }
+    }
+
+    //// -------------------------------------------- supporting functions ---------------------------------------------
+    #region supporting functions
+    // general functions
+
+
+    private AnimatorDriverTask.ParameterType getParamType(CVRFuryModule module, string paramName)
+    {
+      // check if can cast the module to fullControllerModule
+      if (!(module is fullControllerModule))
+      {
+        // if it can't, log an error to the console
+        CoreLogError("Module is not a fullControllerModule");
+        // return AnimatorDriverTask.ParameterType.None
+        return AnimatorDriverTask.ParameterType.None;
+      }
+
+      // loop over the Parameters from the module
+      foreach (fullControllerModule.ParamsEntry parameters in (module as fullControllerModule).parameters)
+      {
+        // get the CVRFuryParametersStore from the parameters
+        CVRFuryParametersStore parametersStore = parameters.parameters;
+
+        // loop over the parameters in the parametersStore
+        foreach (CVRFuryParametersStore.Parameter parameter in parametersStore.parameters)
+        {
+          // check if the parameter.name is equal to paramName
+          if (parameter.name == paramName)
+          {
+            // return the parameter.type
+            switch (parameter.valueType)
+            {
+              case CVRFuryParametersStore.ValueType.Bool:
+                return AnimatorDriverTask.ParameterType.Bool;
+              case CVRFuryParametersStore.ValueType.Int:
+                return AnimatorDriverTask.ParameterType.Int;
+              case CVRFuryParametersStore.ValueType.Float:
+                return AnimatorDriverTask.ParameterType.Float;
+              default:
+                // problem here as the valueType in VRC may have added a new type
+                // emit critical error
+                CoreLogCritical("Unknown CVRFuryParametersStore.Parameter.valueType: " + parameter.valueType);
+                return AnimatorDriverTask.ParameterType.None;
+            }
+          }
+        }
+      }
+
+      // return AnimatorDriverTask.ParameterType.None
+      return AnimatorDriverTask.ParameterType.None;
+    }
+
+    private List<string> getGlobalParameters(CVRFuryModule module)
+    {
+      // check if can cast the module to fullControllerModule
+      if (!(module is fullControllerModule))
+      {
+        // if it can't, log an error to the console
+        CoreLogError("Module is not a fullControllerModule");
+        // return an empty list
+        return new List<string>();
+      }
+
+      // concatenate the global parameters from the module with the global parameters from the
+      // constants class to get a list of all global parameters
+      // note: source parameters constants are:
+      //  - ALWAYS_GLOBAL_PARAMETERS_FROM_CVR
+      // and
+      //  - ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
+      // this is to ensure all parameters people expect to be global are global
+      // only add the ones from VRC if the module is marked as imported from VRCFury (importedFromVRCFury)
+      List<string> globalParams = (module as fullControllerModule).globalParams.ToList();
+
+      // list for parameters to not be global (unless they are in the auto global lists)
+      List<string> nonGlobalParams = new List<string>();
+
+      // check for a * in the global parameters list
+      if (globalParams.Contains("*"))
+      {
+        //check if any parameters have a ! at the start
+        foreach (string parameter in globalParams)
+        {
+          if (parameter.StartsWith("!"))
+          {
+            // add the parameter to the nonGlobalParams list
+            nonGlobalParams.Add(parameter.Substring(1));
+          }
+        }
+
+        // loop over the Parameters from the module
+        foreach (fullControllerModule.ParamsEntry parameters in (module as fullControllerModule).parameters)
+        {
+          // get the CVRFuryParametersStore from the parameters
+          CVRFuryParametersStore parametersStore = parameters.parameters;
+
+          // loop over the parameters in the parametersStore
+          foreach (CVRFuryParametersStore.Parameter parameter in parametersStore.parameters)
+          {
+            // check if the parameter.name in the nonGlobalParams list
+            if (!nonGlobalParams.Contains(parameter.name))
+            {
+              // add the parameter.name to the globalParams list
+              globalParams.Add(parameter.name);
+            }
+          }
+        }
+        // remove the * from the globalParams list
+        globalParams.Remove("*");
+      }
+
+      globalParams = globalParams
+        .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_CVR)
+        .Concat(
+          (module as fullControllerModule).importedFromVRCFury
+            ? Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRC
+            : new List<string>()
+        )
+        .ToList();
+
+      //// --------------------------------- extra projects that add global parameters ---------------------------------
+
+      //// VRCFT - face tracking software
+
+      // this has both v4 and v5 global parameters (v4 no longer under active development)
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_VRCFT_V4 to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRCFT_V4).ToList();
+
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_VRCFT_V5 to the global parameters list, but prefix each of them with "cascade_cvrf_enable/
+      globalParams = globalParams
+        .Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_VRCFT_V5.Select(param => "cascade_cvrf_enable/" + param))
+        .ToList();
+      // note v5 is special in that the list provided is just the postfix of the parameter as it can
+      // drive that at any path ie. ExamplePrefix/v2/JawOpen, v2/JawOpen, myPrefab/v2/JawOpen are all the same to it
+      // so the cascade_cvrf_enable/ prefix is added to allow other modules to know that it is a cascade parameter
+      // ref https://docs.vrcft.io/docs/tutorial-avatars/tutorial-avatars-extras/parameters
+
+      //// BFiVRC - BCI flow to OSC
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_BFIVRC to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_BFIVRC).ToList();
+
+      //// Overlay Apps - OVR Toolkit
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_OVR_TOOLKIT to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_OVR_TOOLKIT).ToList();
+
+      //// Overlay Apps - WlxOverlay-S
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_WLXOVERLAY_S to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_WLXOVERLAY_S).ToList();
+
+      //// Overlay Apps - XSOverlay
+      // add ALWAYS_GLOBAL_PARAMETERS_FROM_XSOVERLAY to the global parameters list
+      globalParams = globalParams.Concat(Constants.ALWAYS_GLOBAL_PARAMETERS_FROM_XSOVERLAY).ToList();
+
+      //// ----------------------------- end of extra projects that add global parameters ------------------------------
+
+      // TODO: remove this debug print
+      // CoreLogDebugPrintList(globalParams, "globalParams - pre dedupe");
+
+      // de-dupe the global parameters list
+      globalParams = globalParams.Distinct().ToList();
+
+      // console print the global parameters list count
+      CoreLogDebug("globalParams.Count: " + globalParams.Count);
+      // return the list of global parameters
+      return globalParams;
+    }
+
+    // function to get clips from a blend tree
+    List<AnimationClip> GetClipsFromBlendTree(BlendTree blendTree)
+    {
+      List<AnimationClip> clips = new List<AnimationClip>();
+
+      foreach (var child in blendTree.children)
+      {
+        if (child.motion is BlendTree childBlendTree)
+        {
+          // if the child is a blend tree, get the clips from it
+          clips.AddRange(GetClipsFromBlendTree(childBlendTree));
+        }
+        else if (child.motion is AnimationClip clip)
+        {
+          // if the child is a clip, add it to the list
+          clips.Add(clip);
+        }
+      }
+
+      return clips;
+    }
+
+    void ReplaceClipInBlendTree(
+      BlendTree blendTree,
+      AnimationClip clip,
+      AnimationClip tempClip,
+      string tempClipPath,
+      fullControllerModule.BindingRewrite rewrite
+    )
+    {
+      // Create a new array to hold the modified ChildMotion objects
+      ChildMotion[] newChildren = new ChildMotion[blendTree.children.Length];
+
+      for (int i = 0; i < blendTree.children.Length; i++)
+      {
+        var child = blendTree.children[i];
+
+        // if the child's motion is the original clip, replace it with the temp clip
+        if (child.motion == clip)
+        {
+          if (rewrite.delete)
+          {
+            rewrite.to = "";
+          }
+
+          // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
+          tempClip = rewriteAnimationClipCurvePaths(tempClip, rewrite.from, rewrite.to);
+
+          // mark the tempClip as dirty
+          EditorUtility.SetDirty(tempClip);
+
+          // set the file path as dirty
+          AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
+
+          // save the temp clip
+          AssetDatabase.SaveAssets();
+
+          child.motion = tempClip;
+        }
+        // if the child's motion is another blendTree, call this function recursively
+        else if (child.motion is BlendTree childBlendTree)
+        {
+          ReplaceClipInBlendTree(childBlendTree, clip, tempClip, tempClipPath, rewrite);
+        }
+
+        // Add the modified ChildMotion object to the new array
+        newChildren[i] = child;
+      }
+
+      // Set the children property of the BlendTree to the new array
+      blendTree.children = newChildren;
+    }
+
+    #endregion
+    // functions to handle CVR Fury Menu Store bits --------------------------------------------------------------------
+    #region  supporting functions for CVR Fury Menu Store
+
+    public string ProcessParameterMachineName(
+      Dictionary<string, string> perModuleParametersPairToRename,
+      string MachineName
+    )
+    {
+      // check if the parameter's name is in the perModuleParametersPairToRename list
+      if (perModuleParametersPairToRename.ContainsKey(MachineName))
+      {
+        //console print the toggle parameter's name and the value in the perModuleParametersPairToRename list
+        CoreLogDebug("input param name: " + MachineName + " -> " + perModuleParametersPairToRename[MachineName]);
+
+        // if it is, return the value in the perModuleParametersPairToRename list
+        return perModuleParametersPairToRename[MachineName];
+      }
+      else
+      {
+        // console print the toggle parameter's MachineName
+        CoreLog("No change to input param name: " + MachineName);
+
+        // if it isn't, return the toggle parameter's MachineName
+        return MachineName;
+      }
+    }
+
+    #endregion
+
+    #region CVR Fury Menu Store functions
+
+    public void ProcessToggleParameter(
+      toggleParameter toggleParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
+    )
+    {
+      // log the toggle parameter's name to the console
+      CoreLogDebug("toggleParam.name: " + toggleParam.name);
+
+      // log the toggle parameter's default state to the console
+      CoreLogDebug("toggleParam.defaultState: " + toggleParam.defaultState);
+
+      // log the toggle parameter's generate type to the console
+      CoreLogDebug("toggleParam.generateType: " + toggleParam.generateType);
+
+      // create CVRAdvancedSettingsEntry for the toggle parameter
+      CVRAdvancedSettingsEntry toggleEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.Toggle (Breaking change for CCK 3.10)
+      toggleEntry.type = CVRAdvancedSettingsEntry.SettingsType.Toggle;
+
+      // set the CVRAdvancedSettingsEntry's name to the toggle parameter's name with the prefix
+      toggleEntry.name = prefix + toggleParam.name;
+
+      // process the toggle parameter's MachineName, based on the perModuleParametersPairToRename list
+      toggleEntry.machineName = ProcessParameterMachineName(perModuleParametersPairToRename, toggleParam.MachineName);
+
+      // create a new CVRAdvancesAvatarSettingGameObjectToggle
+      CVRAdvancesAvatarSettingGameObjectToggle toggleSetting = new CVRAdvancesAvatarSettingGameObjectToggle();
+
+      // Default state input is a float, so we need to cast it to a bool (ref cck allows float in type,
+      // but only true/false for value)
+      // set the CVRAdvancesAvatarSettingGameObjectToggle's defaultValue to the toggle parameter's default state
+      toggleSetting.defaultValue = toggleParam.defaultState != 0.0f;
+
+      // set the CVRAdvancesAvatarSettingGameObjectToggle's usedType to the toggle parameter's generate type via a cast
+      switch (toggleParam.generateType)
+      {
+        case toggleParameter.GenerateType.Bool:
+          toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.Bool;
+          break;
+        case toggleParameter.GenerateType.Float:
+          toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.Float;
+          break;
+        case toggleParameter.GenerateType.Int:
+          toggleSetting.usedType = CVRAdvancesAvatarSettingGameObjectToggle.ParameterType.Int;
+          break;
+      }
+
+      // put the CVRAdvancesAvatarSettingGameObjectToggle into the CVRAdvancedSettingsEntry's value
+      toggleEntry.setting = toggleSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(toggleEntry);
+    }
+
+    public void ProcessDropdownParameter(
+      dropdownParameter dropdownParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
+    )
+    {
+      // log the dropdown parameter's name to the console
+      CoreLog("dropdownParam.name: " + dropdownParam.name);
+
+      // create CVRAdvancedSettingsEntry for the dropdown parameter
+      CVRAdvancedSettingsEntry dropdownEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.Dropdown (Breaking change for CCK 3.10)
+      dropdownEntry.type = CVRAdvancedSettingsEntry.SettingsType.Dropdown;
+
+      // set the CVRAdvancedSettingsEntry's name to the dropdown parameter's name with the prefix
+      dropdownEntry.name = prefix + dropdownParam.name;
+
+      // process the dropdownEntry parameter's MachineName, based on the perModuleParametersPairToRename list
+      dropdownEntry.machineName = ProcessParameterMachineName(
+        perModuleParametersPairToRename,
+        dropdownParam.MachineName
+      );
+
+      // create a new CVRAdvancesAvatarSettingGameObjectDropdown
+      CVRAdvancesAvatarSettingGameObjectDropdown dropdownSetting = new CVRAdvancesAvatarSettingGameObjectDropdown();
+
+      // for dropdowns, again you can set the type to float or int, but the value is always an int
+      // set the CVRAdvancesAvatarSettingGameObjectDropdown's defaultValue to the dropdown parameter's default index
+      dropdownSetting.defaultValue = (int)dropdownParam.defaultIndex;
+
+      // console print the dropdown parameter's default index
+      CoreLog("dropdownParam.defaultIndex: " + dropdownParam.defaultIndex);
+
+      // console print the dropdown parameter's generate type
+      CoreLog("dropdownParam.generateType: " + dropdownParam.generateType);
+
+      // set the CVRAdvancesAvatarSettingGameObjectDropdown's usedType to the dropdown parameter's
+      // generate type via a cast
+      switch (dropdownParam.generateType)
+      {
+        case dropdownParameter.GenerateType.Float:
+          dropdownSetting.usedType = CVRAdvancesAvatarSettingGameObjectDropdown.ParameterType.Float;
+          break;
+        case dropdownParameter.GenerateType.Int:
+          dropdownSetting.usedType = CVRAdvancesAvatarSettingGameObjectDropdown.ParameterType.Int;
+          break;
+      }
+
+      // create a CVRAdvancedSettingsDropDownEntry list for the dropdownSetting's options
+      List<CVRAdvancedSettingsDropDownEntry> dropdownOptions = new List<CVRAdvancedSettingsDropDownEntry>();
+
+      // ok so now the dropdownParam.dropdownList is a paring of value vs name
+      // (ref 'uk.novavoidhowl.dev.cvrfury.runtime.DropdownParameterPair)
+      // but due to how CVR makes dropdowns, they need to be in the correct order (starts from 0)
+
+      // this means that if we have gaps in the dropdownParam.dropdownList, we need to fill them in
+      // or the numbers will not match up to the animator
+
+      List<DropdownParameterPair> originalList = dropdownParam.dropdownList;
+      List<DropdownParameterPair> orderedList = new List<DropdownParameterPair>();
+
+      float maxVal = originalList.Max(x => x.value);
+
+      for (float i = 0; i <= maxVal; i++)
+      {
+        DropdownParameterPair pair = originalList.FirstOrDefault(x => x.value == i);
+        if (pair != null)
+        {
+          orderedList.Add(pair);
+        }
+        else
+        {
+          orderedList.Add(new DropdownParameterPair { name = "----", value = i });
+        }
+      }
+
+      dropdownParam.dropdownList = orderedList;
+
+      // debug print the dropdownParam.dropdownList in one go
+      StringBuilder dropdownListDebug = new StringBuilder();
+      foreach (DropdownParameterPair pair in dropdownParam.dropdownList)
+      {
+        dropdownListDebug.Append(pair.name + " : " + pair.value + "\n");
+      }
+      CoreLogDebug("[FullController] dropdownParam.dropdownList: \n" + dropdownListDebug.ToString());
+
+      // loop through the dropdownParam's options
+      foreach (DropdownParameterPair option in dropdownParam.dropdownList)
+      {
+        // create a new CVRAdvancedSettingsDropDownEntry
+        CVRAdvancedSettingsDropDownEntry dropdownOption = new CVRAdvancedSettingsDropDownEntry();
+
+        // set the CVRAdvancedSettingsDropDownEntry's name to the option
+        dropdownOption.name = option.name;
+
+        // add the CVRAdvancedSettingsDropDownEntry to the dropdownOptions list
+        dropdownOptions.Add(dropdownOption);
+      }
+
+      // set the CVRAdvancesAvatarSettingGameObjectDropdown's options to the dropdownOptions list
+      dropdownSetting.options = dropdownOptions;
+
+      // put the CVRAdvancesAvatarSettingGameObjectDropdown into the CVRAdvancedSettingsEntry's value
+      dropdownEntry.setting = dropdownSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(dropdownEntry);
+    }
+
+    public void ProcessSliderParameter(
+      sliderParameter sliderParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
+    )
+    {
+      // log the slider parameter's name to the console
+      CoreLog("sliderParam.name: " + sliderParam.name);
+
+      // create CVRAdvancedSettingsEntry for the slider parameter
+      CVRAdvancedSettingsEntry sliderEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.Slider
+      sliderEntry.type = CVRAdvancedSettingsEntry.SettingsType.Slider;
+
+      // set the CVRAdvancedSettingsEntry's name to the slider parameter's name with the prefix
+      sliderEntry.name = prefix + sliderParam.name;
+
+      // process the slider parameter's MachineName, based on the perModuleParametersPairToRename list
+      sliderEntry.machineName = ProcessParameterMachineName(perModuleParametersPairToRename, sliderParam.MachineName);
+
+      // create a new CVRAdvancesAvatarSettingSlider
+      CVRAdvancesAvatarSettingSlider sliderSetting = new CVRAdvancesAvatarSettingSlider();
+
+      // set the CVRAdvancesAvatarSettingSlider's defaultValue to the slider parameter's default value
+      sliderSetting.defaultValue = sliderParam.defaultValue;
+
+      // put the CVRAdvancesAvatarSettingSlider into the CVRAdvancedSettingsEntry's value
+      sliderEntry.setting = sliderSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(sliderEntry);
+    }
+
+    public void ProcessTwoDJoystickParameter(
+      twoDJoystickParameter twoDJoystickParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
+    )
+    {
+      // log the twoDJoystick parameter's name to the console
+      CoreLog("twoDJoystickParam.name: " + twoDJoystickParam.name);
+
+      // create CVRAdvancedSettingsEntry for the twoDJoystick parameter
+      CVRAdvancedSettingsEntry twoDJoystickEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.Joystick2D
+      twoDJoystickEntry.type = CVRAdvancedSettingsEntry.SettingsType.Joystick2D;
+
+      // set the CVRAdvancedSettingsEntry's name to the twoDJoystick parameter's name with the prefix
+      twoDJoystickEntry.name = prefix + twoDJoystickParam.name;
+
+      // process the twoDJoystick parameter's MachineName, based on the perModuleParametersPairToRename list
+      twoDJoystickEntry.machineName = ProcessParameterMachineName(
+        perModuleParametersPairToRename,
+        twoDJoystickParam.MachineName
+      );
+
+      // create a new CVRAdvancesAvatarSettingJoystick2D
+      CVRAdvancesAvatarSettingJoystick2D twoDJoystickSetting = new CVRAdvancesAvatarSettingJoystick2D();
+
+      // set the CVRAdvancesAvatarSettingTwoDJoystick's defaultValue to the twoDJoystick parameter's default values
+      // note in this case the default value is a Vector2, filled by two floats
+      twoDJoystickSetting.defaultValue = new Vector2(twoDJoystickParam.defaultXValue, twoDJoystickParam.defaultYValue);
+
+      // set the minimum pair of values for the twoDJoystick parameter
+      twoDJoystickSetting.rangeMin = new Vector2(twoDJoystickParam.minXValue, twoDJoystickParam.minYValue);
+
+      // set the maximum pair of values for the twoDJoystick parameter
+      twoDJoystickSetting.rangeMax = new Vector2(twoDJoystickParam.maxXValue, twoDJoystickParam.maxYValue);
+
+      // put the CVRAdvancesAvatarSettingTwoDJoystick into the CVRAdvancedSettingsEntry's value
+      twoDJoystickEntry.setting = twoDJoystickSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(twoDJoystickEntry);
+    }
+
+    public void ProcessThreeDJoystickParameter(
+      threeDJoystickParameter threeDJoystickParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
+    )
+    {
+      // log the threeDJoystick parameter's name to the console
+      CoreLog("threeDJoystickParam.name: " + threeDJoystickParam.name);
+
+      // create CVRAdvancedSettingsEntry for the threeDJoystick parameter
+      CVRAdvancedSettingsEntry threeDJoystickEntry = new CVRAdvancedSettingsEntry();
+
+      // set the CVRAdvancedSettingsEntry's type to SettingsType.ThreeDJoystick
+      threeDJoystickEntry.type = CVRAdvancedSettingsEntry.SettingsType.Joystick3D;
+
+      // set the CVRAdvancedSettingsEntry's name to the threeDJoystick parameter's name with the prefix
+      threeDJoystickEntry.name = prefix + threeDJoystickParam.name;
+
+      // process the threeDJoystick parameter's MachineName, based on the perModuleParametersPairToRename list
+      threeDJoystickEntry.machineName = ProcessParameterMachineName(
+        perModuleParametersPairToRename,
+        threeDJoystickParam.MachineName
+      );
+
+      // create a new CVRAdvancesAvatarSettingJoystick3D
+      CVRAdvancesAvatarSettingJoystick3D threeDJoystickSetting = new CVRAdvancesAvatarSettingJoystick3D();
+
+      // set the CVRAdvancesAvatarSettingThreeDJoystick's defaultValue to the threeDJoystick parameter's default values
+      // note in this case the default value is a Vector3, filled by three floats
+      threeDJoystickSetting.defaultValue = new Vector3(
+        threeDJoystickParam.defaultXValue,
+        threeDJoystickParam.defaultYValue,
+        threeDJoystickParam.defaultZValue
+      );
+
+      // set the minimum set of values for the threeDJoystick parameter
+      threeDJoystickSetting.rangeMin = new Vector3(
+        threeDJoystickParam.minXValue,
+        threeDJoystickParam.minYValue,
+        threeDJoystickParam.minZValue
+      );
+
+      // set the maximum set of values for the threeDJoystick parameter
+      threeDJoystickSetting.rangeMax = new Vector3(
+        threeDJoystickParam.maxXValue,
+        threeDJoystickParam.maxYValue,
+        threeDJoystickParam.maxZValue
+      );
+
+      // put the CVRAdvancesAvatarSettingThreeDJoystick into the CVRAdvancedSettingsEntry's value
+      threeDJoystickEntry.setting = threeDJoystickSetting;
+
+      // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
+      CVRAdvancedAvatarMenuList.Add(threeDJoystickEntry);
+    }
+
+    #endregion
+  }
+}
+// #endif

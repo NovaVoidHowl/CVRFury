@@ -24,6 +24,28 @@
   font-size: 12px;
 }
 
+#parameterFilesContainer{
+  width: 100%;
+  height: auto;
+  top: 0;
+  left: 0;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 16px;
+  margin-top: 10px;
+  border-bottom-width: 1px;
+  border-bottom-color: #afafaf;
+}
+#parameterFilesList{
+  margin-top: 6px;
+}
+
+#stepLabel{
+  font-size: 16px;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
 #menuFileSelectorContainer{
   width: 100%;
   height: auto;

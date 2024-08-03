@@ -1,5 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
   <ui:VisualElement name="appComponentContainer" >
+    <ui:VisualElement name="typePip" >
+      <ui:Label name="typePipLabel" />
+    </ui:VisualElement>
     <ui:VisualElement name="appComponentInfoAndTools">
       <ui:Label name="componentStateLabel" />
       <ui:Label class="installedVersionLabel" name="installedVersionLabel" />

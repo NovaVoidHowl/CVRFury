@@ -1,0 +1,60 @@
+// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_CCK_LINK", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"], type: "Editor"}
+#if UNITY_EDITOR
+
+using Math = System.Math;
+using System.Collections;
+using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Scripts;
+using ABI.CCK.Components;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+
+  public class CVRFury_CCKLink
+  {
+    public static string GetCCKVersion()
+    {
+      return ABI.CCK.Scripts.CVRCommon.CCK_VERSION_NUMBER;
+    }
+
+    public static string GetCCKBuildNumber()
+    {
+      int buildNumberInt = ABI.CCK.Scripts.CVRCommon.CCK_BUILD_NUMBER;
+      return buildNumberInt.ToString();
+    }
+
+    public static string GetCCKVersionFull()
+    {
+      return ABI.CCK.Scripts.CVRCommon.CCK_VERSION_FULL;
+    }
+
+    public static string GetCCKReleaseType()
+    {
+      string versionFull = ABI.CCK.Scripts.CVRCommon.CCK_VERSION_FULL;
+      string baseVersion = ABI.CCK.Scripts.CVRCommon.CCK_VERSION_NUMBER;
+      int buildNumberInt = ABI.CCK.Scripts.CVRCommon.CCK_BUILD_NUMBER;
+      string buildNumber = buildNumberInt.ToString();
+
+      // Remove the base version and build number from the full version string
+      string releaseType = versionFull.Replace($"{baseVersion} ", "")
+              .Replace($" (Build {buildNumber})", "");
+
+      return releaseType;
+    }
+
+  }
+
+}
+
+#endif

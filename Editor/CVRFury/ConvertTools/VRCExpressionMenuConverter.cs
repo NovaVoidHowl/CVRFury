@@ -5,9 +5,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+using uk.novavoidhowl.dev.cvrfury.packagecore;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.vrcstub;
@@ -24,10 +26,14 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
     {
       "{fileID: -340790334, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}"
     };
-    private const string CVRFURY_M_SCRIPT_ID = "{fileID: 11500000, guid: d2b1b7e16fd63f64d8da1c4065469b76, type: 3}";
+    private const string CVRFURY_PHYSB_M_SCRIPT_ID =
+      "{fileID: 11500000, guid: d2b1b7e16fd63f64d8da1c4065469b76, type: 3}";
 
     // Declare textField as a member variable
     private TextField textField;
+
+    // Declare CVRFuryParametersStore as a member variable
+    private List<CVRFuryParametersStore> parametersStoreItems;
 
     // Declare barDelay as a member variable
     private int barDelay = 1000;
@@ -60,6 +66,47 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
       rootVisualElement.Clear();
       // re-render the UI
       renderMenuConverterGUI();
+    }
+
+    void HandleDragAndDrop(
+      IMGUIContainer container,
+      ReorderableList reorderableList,
+      List<CVRFuryParametersStore> items
+    )
+    {
+      Event e = Event.current;
+
+      // Check if the event is null
+      if (e == null)
+      {
+        return;
+      }
+
+      switch (e.type)
+      {
+        case EventType.DragUpdated:
+        case EventType.DragPerform:
+          if (!container.ContainsPoint(container.WorldToLocal(e.mousePosition)))
+            return;
+
+          DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+          if (e.type == EventType.DragPerform)
+          {
+            DragAndDrop.AcceptDrag();
+
+            foreach (var draggedObject in DragAndDrop.objectReferences)
+            {
+              var item = draggedObject as CVRFuryParametersStore;
+              if (item != null && !items.Contains(item))
+              {
+                items.Add(item);
+                e.Use();
+              }
+            }
+          }
+          break;
+      }
     }
 
     public void renderMenuConverterGUI()
@@ -111,6 +158,87 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
       // Apply the StyleSheet
       rootVisualElement.styleSheets.Add(stylesheet);
 
+      // get the parameterFilesList element
+      var parameterFilesList = rootVisualElement.Q<VisualElement>("parameterFilesList");
+
+      // check if parametersStoreItems is null
+      if (parametersStoreItems == null)
+      {
+        // if parametersStoreItems is null, create a new List<CVRFuryParametersStore>
+        parametersStoreItems = new List<CVRFuryParametersStore>();
+      }
+
+      // Create a new ReorderableList
+      ReorderableList reorderableList = new ReorderableList(
+        parametersStoreItems,
+        typeof(CVRFuryParametersStore),
+        true,
+        true,
+        true,
+        true
+      );
+
+      // Remove the header
+      reorderableList.headerHeight = 0;
+      // hide the + button
+      reorderableList.displayAdd = false;
+
+      // Set the drawElementCallback to display an ObjectField for each CVRFuryParametersStore
+      reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
+      {
+        Event e = Event.current;
+
+        switch (e.type)
+        {
+          case EventType.DragUpdated:
+          case EventType.DragPerform:
+            if (!rect.Contains(e.mousePosition))
+              return;
+
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+            if (e.type == EventType.DragPerform)
+            {
+              DragAndDrop.AcceptDrag();
+
+              foreach (var draggedObject in DragAndDrop.objectReferences)
+              {
+                var item = draggedObject as CVRFuryParametersStore;
+                if (item != null && !parametersStoreItems.Contains(item))
+                {
+                  parametersStoreItems.Add(item);
+                  e.Use();
+                }
+              }
+            }
+            break;
+        }
+
+        if (index < parametersStoreItems.Count)
+        {
+          EditorGUI.ObjectField(rect, parametersStoreItems[index], typeof(CVRFuryParametersStore), false);
+        }
+      };
+
+      // Create a new IMGUIContainer that will contain the ReorderableList
+      IMGUIContainer container = new IMGUIContainer(() =>
+      {
+        reorderableList.DoLayoutList();
+      });
+
+      // Add DragUpdated and DragPerform events to the IMGUIContainer
+      container.RegisterCallback<DragUpdatedEvent>(
+        e => HandleDragAndDrop(container, reorderableList, parametersStoreItems)
+      );
+      container.RegisterCallback<DragPerformEvent>(
+        e => HandleDragAndDrop(container, reorderableList, parametersStoreItems)
+      );
+
+      // Add the IMGUIContainer to the parameterFilesList
+      parameterFilesList.Add(container);
+
+      //// section to handle file selection ----------------------------------------------------------------------------
+      #region file selection
       // Get the menuFileSelectorHolder element
       var menuFileSelectorHolder = rootVisualElement.Q<VisualElement>("menuFileSelectorHolder");
 
@@ -193,6 +321,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
           CoreLog("No files dragged and dropped");
         }
       });
+
+      #endregion
 
       // Make the TextField read-only
       textField.SetEnabled(false);
@@ -398,6 +528,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
             }
             else
             {
+              #region stage 1 - duplicate file and replace m_Script line
               // copy the file to the new location
               AssetDatabase.CopyAsset(filePath, newFilePath);
 
@@ -410,7 +541,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               await Task.Delay(barDelay);
 
               // in the new  file, replace  the line m_Script: $IDString
-              // with m_Script: $CVRFURY_M_SCRIPT_ID , which is the CVRFury version of VRCExpressionMenu
+              // with m_Script: $CVRFURY_PHYSB_M_SCRIPT_ID , which is the CVRFury version of VRCExpressionMenu
 
               // read the new file as plain text
               var newFileString = File.ReadAllText(newFilePath);
@@ -421,7 +552,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               progressBar.value = 15;
 
               // replace the line in the file
-              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_M_SCRIPT_ID);
+              newFileString = newFileString.Replace("m_Script: " + IDString, "m_Script: " + CVRFURY_PHYSB_M_SCRIPT_ID);
 
               // set the text of the progressLabel
               progressLabel.text = "30% -- Rebinding Script";
@@ -450,8 +581,46 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // set the value of the progressBar
               progressBar.value = 50;
 
+              #endregion
+
+              #region stage 2 - load the intermediate file and process the controls
               // load the intermediate menu file based off the 'newFilePath' an the class 'VRCExpressionsMenu'(stub)
               VRCExpressionsMenu menuToImport = AssetDatabase.LoadAssetAtPath<VRCExpressionsMenu>(newFilePath);
+
+              // loop over all the parametersStoreItems list and get the parameter names and types out of them
+              // this will give us a list of parameter 'MachineNames' vs type
+
+              // create a list of Tuple<string, CVRFuryParametersStore.ValueType> to store the parameter names and types
+              List<System.Tuple<string, CVRFuryParametersStore.ValueType>> parameterNamesAndTypes =
+                new List<System.Tuple<string, CVRFuryParametersStore.ValueType>>();
+
+              // loop over all the parametersStoreItems
+              foreach (CVRFuryParametersStore parameterStore in parametersStoreItems)
+              {
+                // get the parameters from the parameterStore
+                CVRFuryParametersStore.Parameter[] parameters = parameterStore.parameters;
+
+                // loop over all the parameters
+                foreach (CVRFuryParametersStore.Parameter parameter in parameters)
+                {
+                  // get the type of the parameter
+                  var parameterType = parameter.valueType;
+
+                  // get the name of the parameter
+                  var parameterName = parameter.name;
+
+                  // save the parameter name and type to the parameterNamesAndTypes list
+                  parameterNamesAndTypes.Add(
+                    new System.Tuple<string, CVRFuryParametersStore.ValueType>(parameterName, parameterType)
+                  );
+                }
+              }
+
+              // loop over parameterNamesAndTypes and print the values to the console
+              foreach (var parameter in parameterNamesAndTypes)
+              {
+                CoreLog("Parameter Name: " + parameter.Item1 + " Parameter Type: " + parameter.Item2);
+              }
 
               // set the text of the progressLabel
               progressLabel.text = "60% -- Loading Intermediate File";
@@ -478,6 +647,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // create CVRFuryMenuStore to store the converted menu
               CVRFuryMenuStore convertedMenu = ScriptableObject.CreateInstance<CVRFuryMenuStore>();
 
+              // list to hold parameter names and machine names for dropdowns that need to be created
+              List<DropdownParameter> dropdownsParameterList = new List<DropdownParameter>();
+
               // for each control in the menuToImport
               foreach (var control in menuToImport.controls)
               {
@@ -490,13 +662,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                 ControlType controlType = control.type;
 
                 // NOTES:
-                // CVR has the menu item name and parameter linked together so for converted
-                // stuff CVR name = VRC parameter
-                // spaces in the name are ignored in the parameter
-                // case sensitivity persist in the parameter so 'Test Var' in the name will be TestVar
-                // in the parameter
-                // '\' in the name will be ignored in the parameter
-                // '/' in the name will be kept in the parameter
+                // as of CCK 3.10 both name and parameter are exposed in the inspector, so now we should save both bits
+
 
                 // case statement to handle the different control types
                 switch (controlType)
@@ -506,23 +673,113 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                   // there is not really an analogue for this in CVR, best we can do for this is a toggle
                   //break; //this break is disabled to allow the toggle to be created
                   case ControlType.Toggle:
-                    // create a new toggleParameter
-                    toggleParameter newToggle = new toggleParameter();
 
-                    // set the name of the new toggle
-                    newToggle.name = GetCVRFuryMenuSectionName(control);
+                    // first we need to check what type the related parameter is
+                    // if the parameter is a bool, then we can use a toggle in CVR
+                    // if the parameter is not a bool, then we need to store it off to be made into a dropdown
 
-                    // set the default state of the new toggle to the value of the control
-                    newToggle.defaultState = control.value == 1f ? true : false;
+                    // get the parameter of the control and see if its in the parameterNamesAndTypes list
+                    string machineName = GetCVRFuryMenuSectionMachineName(control);
+                    // check if the parameter is in the parameterNamesAndTypes list
+                    var parameter = parameterNamesAndTypes.Find(x => x.Item1 == machineName);
 
-                    // set the generateType of the new toggle to bool
-                    newToggle.generateType = toggleParameter.GenerateType.Bool;
+                    // check if the parameter is null
+                    if (parameter == null)
+                    {
+                      // this happens when there is no parameters file, or the parameter is not in the file
+                      // most commonly the case when people are putting dummy buttons in the menu as credits etc.
 
-                    // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
-                    newToggle.forceMachineName = true;
+                      // TODO : add a way of handling this better, that just skipping the control
+                      // maybe a credits holding class to store these off to, and then display them in a different way
+                      // likely will need a mod for CVR to support this
 
-                    // add the new toggle to the convertedMenu
-                    convertedMenu.menuItems.Add(newToggle);
+                      // send a warning to the console and continue
+                      CoreLog("Parameter " + machineName + " not found in the parameters file, and will be skipped");
+                      continue;
+                    }
+
+                    // now we are safe to get the type of the parameter
+
+                    // get the type of the parameter
+                    var parameterType = parameter.Item2;
+
+                    // if the parameterType is a bool carry on and make a toggle
+                    if (parameterType == CVRFuryParametersStore.ValueType.Bool)
+                    {
+                      // create a new toggleParameter
+                      toggleParameter newToggle = new toggleParameter();
+
+                      // set the name of the new toggle
+                      newToggle.name = control.name.Trim();
+
+                      // set the machineName of the new toggle
+                      newToggle.MachineName = machineName;
+
+                      // set the default state of the new toggle to the value of the control
+                      newToggle.defaultState = control.value == 1f ? 1 : 0;
+
+                      // set the generateType of the new toggle to bool
+                      newToggle.generateType = toggleParameter.GenerateType.Bool;
+
+                      // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
+                      newToggle.forceMachineName = true;
+
+                      // add the new toggle to the convertedMenu
+                      convertedMenu.menuItems.Add(newToggle);
+                    }
+                    else
+                    {
+                      // if the parameterType is not a bool, then we need to store it off to be made into a dropdown
+                      // send a warning to the console
+                      CoreLog("Parameter " + machineName + " is not a bool, will be made into a dropdown");
+
+                      // check if dropdownsToCreate has any items in it
+                      if (dropdownsParameterList.Count == 0)
+                      {
+                        // if dropdownsToCreate is empty, create a new DropdownParameter
+                        dropdownsParameterList.Add(
+                          new DropdownParameter
+                          {
+                            machineName = machineName,
+                            pairs = new List<DropdownParameterPair>
+                            {
+                              new DropdownParameterPair { name = control.name.Trim(), value = control.value }
+                            }
+                          }
+                        );
+                      }
+                      else
+                      {
+                        // if dropdownsToCreate is not empty, add the parameter to the existing DropdownParameter
+
+                        // check and see if the machineName is already in the list
+                        var existingDropdown = dropdownsParameterList.Find(x => x.machineName == machineName);
+
+                        // if the machineName is not in the list
+                        if (existingDropdown == null)
+                        {
+                          // create a new DropdownParameter
+                          dropdownsParameterList.Add(
+                            new DropdownParameter
+                            {
+                              machineName = machineName,
+                              pairs = new List<DropdownParameterPair>
+                              {
+                                new DropdownParameterPair { name = control.name.Trim(), value = control.value }
+                              }
+                            }
+                          );
+                        }
+                        else
+                        {
+                          // if the machineName is in the list
+                          // add the parameter to the existing DropdownParameter
+                          existingDropdown.pairs.Add(
+                            new DropdownParameterPair { name = control.name.Trim(), value = control.value }
+                          );
+                        }
+                      }
+                    }
 
                     break;
 
@@ -588,8 +845,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                       // get the common prefix of the two subParameter names
                       string commonPrefix = GetCommonPrefix(subParameter1.name, subParameter2.name);
 
-                      // set the name of the new joystick to the common prefix
-                      newJoystick.name = commonPrefix;
+                      // set the machineName of the new toggle
+                      newJoystick.MachineName = commonPrefix;
 
                       // the value of the control is the default value of the the VRC menu open value, is bool
                       // so we can ignore that as it does not exist in CVR
@@ -622,7 +879,10 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     sliderParameter newSlider = new sliderParameter();
 
                     // set the name of the new toggle
-                    newSlider.name = GetCVRFuryMenuSectionName(control);
+                    newSlider.name = control.name.Trim();
+
+                    // set the machineName of the new toggle
+                    newSlider.MachineName = GetCVRFuryMenuSectionMachineName(control);
 
                     // the value of the control is the default value of the the VRC menu open value, is bool
                     // so we can ignore that as it does not exist in CVR
@@ -641,6 +901,46 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                     break;
                 }
               }
+
+              #endregion
+
+              #region stage 2.5 - process dropdowns
+
+              // print all the dropdowns to the console
+              foreach (var dropdown in dropdownsParameterList)
+              {
+                // print the machineName of the dropdown
+                CoreLog("Dropdown MachineName: " + dropdown.machineName);
+
+                // print all the pairs in the dropdown
+                foreach (var pair in dropdown.pairs)
+                {
+                  // print the name and value of the pair
+                  CoreLog("Dropdown Pair Name: " + pair.name + " Value: " + pair.value);
+                }
+
+                // create a new dropdownParameter
+                dropdownParameter newDropdown = new dropdownParameter();
+
+                // set the name of the new dropdown
+                newDropdown.name = dropdown.machineName;
+
+                // set the machineName of the new dropdown
+                newDropdown.MachineName = dropdown.machineName;
+
+                // set the forceMachineName of the new dropdown to true as we want to use the name as the machineName
+                newDropdown.forceMachineName = true;
+
+                // set the dropdownList of the new dropdown to the pairs of the dropdown
+                newDropdown.dropdownList = dropdown.pairs;
+
+                // add the new dropdown to the convertedMenu
+                convertedMenu.menuItems.Add(newDropdown);
+              }
+
+              #endregion
+
+              #region stage 3 - write the converted menu to a new file
 
               // set the text of the progressLabel
               progressLabel.text = "95% -- Writing Output File";
@@ -681,6 +981,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               );
               // Wait for barDelay
               await Task.Delay(barDelay);
+
+              #endregion
             }
           }
           else
@@ -741,7 +1043,7 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
       return string1.Substring(0, minLength);
     }
 
-    public string GetCVRFuryMenuSectionName(Control control)
+    public string GetCVRFuryMenuSectionMachineName(Control control)
     {
       // get the name of the control
       string controlName = control.name;
@@ -854,8 +1156,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
         if (menuFileString.ToString().Contains("m_Script:"))
         {
           // if the string contains the line 'm_Script: '
-          // check if the string contains the line 'm_Script: ' + CVRFURY_M_SCRIPT_ID
-          if (menuFileString.ToString().Contains("m_Script: " + CVRFURY_M_SCRIPT_ID))
+          // check if the string contains the line 'm_Script: ' + CVRFURY_PHYSB_M_SCRIPT_ID
+          if (menuFileString.ToString().Contains("m_Script: " + CVRFURY_PHYSB_M_SCRIPT_ID))
           {
             // got a match so set the output vars
             IDmatch = true;

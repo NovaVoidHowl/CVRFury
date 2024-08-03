@@ -64,23 +64,43 @@ VRCFury.asmdef :
 
 #### Component
 
-- remove 'VRCFuryComponentNew.cs'
+VRCFuryComponentNew.cs:
 
-- remove 'VRCFuryComponentNew.cs.meta'
+- remove whole file
 
-- empty stub 'VRCFuryPlayComponent.cs'
+VRCFuryGlobalCollider.cs:
 
-- empty stub 'VRCFuryGlobalCollider.cs'
+- remove component menu link
 
-- empty stub 'VRCFuryHapticPlug.cs'
+- add DLP notice
 
-- empty stub 'VRCFuryHapticSocket.cs'
+VRCFuryHapticPlug.cs:
 
-- empty stub 'VRCFuryHapticTouchReceiver.cs'
+- remove component menu link
 
-- empty stub 'VRCFuryHapticTouchSender.cs'
+- add DLP notice
 
-- empty stub 'VRCFuryPlayComponent.cs'
+VRCFuryHapticSocket.cs:
+
+- remove component menu link
+
+- add DLP notice
+
+VRCFuryHapticTouchReceiver.cs:
+
+- remove component menu link
+
+- add DLP notice
+
+VRCFuryHapticTouchSender.cs:
+
+- remove component menu link
+
+- add DLP notice
+
+VRCFuryPlayComponent.cs:
+
+- add DLP notice
 
 #### Model
 
@@ -94,6 +114,12 @@ Feature.cs :
 - remove 'using VRC.SDK3.Avatars.ScriptableObjects;'
 
 - remove 'using VRC.SDK3.Dynamics.PhysBone.Components;'
+
+- remove `[Obsolete]` tag from 'fallbackBones'
+
+- remove `[Obsolete]` tag from 'bonePathOnAvatar'
+
+- remove `[Obsolete]` tag from 'boneOnAvatar'
 
 - add 'using uk.novavoidhowl.dev.vrcstub;'
 

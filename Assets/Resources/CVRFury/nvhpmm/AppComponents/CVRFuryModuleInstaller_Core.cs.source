@@ -1,0 +1,2981 @@
+// { "version": "0.50.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+using Math = System.Math;
+using System.Collections;
+using System.Collections.Generic;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using UnityEditor;
+using UnityEditor.Animations;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.SceneManagement;
+using UnityEngine.Animations;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Components;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
+using uk.novavoidhowl.dev.vrcstub;
+
+// dynamic namespace loads
+#if MAGICACLOTH2
+using MagicaCloth2;
+#endif
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public interface IModuleProcessor
+  {
+    void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject);
+  }
+
+  public partial class CVRFuryModuleInstaller
+  {
+    //// Standard functions --------------------------------------------------------------------------------------------
+    private static string InstallModeString(int mode)
+    {
+      string baseString = "CVRFury Module Installer - ";
+      if (mode == 0)
+        return baseString + "Play Mode";
+      else if (mode == 1)
+        return baseString + "Build Mode";
+      else
+        return baseString + "Unknown Mode";
+    }
+
+    public static void HandleModule(
+      CVRFuryModule module,
+      GameObject uploadedObject,
+      int DSUNumber,
+      GameObject DSUObject
+    )
+    {
+      IModuleProcessor processor = null;
+      // case statement to process the module based on its type
+      switch (module)
+      {
+#if NVH_CVRFURY_EXISTS_MI_AOU
+        case objectStateSetter:
+          processor = new objectStateSetterProcessor();
+          break;
+        case objectDefaultMaterialSetter:
+          processor = new objectDefaultMaterialSetterProcessor();
+          break;
+
+        case blockBlinkSetter:
+          processor = new blockBlinkSetterProcessor();
+          break;
+
+        case blockVisemesSetter:
+          processor = new blockVisemesSetterProcessor();
+          break;
+
+        case deleteOnUpload:
+          processor = new deleteOnUploadProcessor();
+          break;
+
+        case showInFirstPerson:
+          processor = new showInFirstPersonProcessor();
+          break;
+#endif
+#if NVH_CVRFURY_EXISTS_MI_FC
+        case fullControllerModule:
+          processor = new fullControllerModuleProcessor();
+          break;
+#endif
+#if NVH_CVRFURY_EXISTS_MI_PARAM_STREAM
+        case parameterStreamLink:
+          processor = new parameterStreamLinkModuleProcessor();
+          break;
+#endif
+#if NVH_CVRFURY_EXISTS_MI_AL
+        case armatureLink:
+          processor = new armatureLinkModuleProcessor();
+          break;
+#endif
+
+        default:
+          // console print to say that the module type is not recognised
+          CoreLog("Module type not recognised");
+          break;
+      }
+
+      if (processor != null)
+      {
+        processor.ProcessModule(module, uploadedObject, DSUNumber, DSUObject);
+      }
+
+      // console print to say that the module has been processed
+      CoreLog("Module " + module.name + " processed");
+    }
+
+    /// <summary>
+    /// Install CVRFury Modules on a given GameObject, Async for play mode
+    /// Mode 0 = Play Mode
+    /// Mode 1 = Build Mode
+    /// </summary>
+    /// <param name="uploadedObject"></param>
+    /// <param name="mode"></param>
+    public static void InstallCVRFuryModules(GameObject uploadedObject, int mode = 0)
+    {
+      // trap for play mode, this method should not be called in play mode
+      if (mode == 0)
+      {
+        CoreLogCritical("InstallCVRFuryModules called in play mode");
+        return;
+      }
+
+      // Run modules pre tasks
+      RunModulesPreTasks(uploadedObject);
+
+      // Initialize the overlay unity progress bar
+      float progress = 0;
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "Initializing...", progress, 500);
+
+      // popup title depending on mode, suffixing with " - Play Mode" or " - Build Mode"
+      string popupTitle = InstallModeString(mode);
+
+      progress = 0.1f;
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "getting uploadObject", progress, 500);
+
+      // Implementation
+      string path = GetGameObjectPath(uploadedObject);
+      progress = 0.4f;
+      DisplayProgressBarAndSleep(
+        "CVRFury Module Installation",
+        "Target for CVRFury Modules is \n\n" + path,
+        progress,
+        2000
+      );
+
+      progress = 0.6f;
+      DisplayProgressBarAndSleep(
+        "CVRFury Module Installation",
+        "Getting CVRFuryDataStorageUnit components",
+        progress,
+        500
+      );
+
+      // get the CVRFuryDataStorageUnit components
+      var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
+
+      // get the number of CVRFuryDataStorageUnit components
+      int numDataStorageUnits = dataStorageUnits.Length;
+
+      // if there are 1 or more CVRFuryDataStorageUnit components present on the uploadedObject
+      // then run the module installer
+      if (numDataStorageUnits > 0)
+      {
+        progress = 0.8f;
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "Starting module processing", progress, 500);
+
+        progress = 1;
+        DisplayProgressBarAndSleep("CVRFury Module Installation", "Processing modules started", progress, 2000);
+        // close the progress bar
+        EditorUtility.ClearProgressBar();
+
+        // Start processing the modules
+        ProcessModules(dataStorageUnits, uploadedObject);
+      }
+      else
+      {
+        // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
+        progress = 1;
+        DisplayProgressBarAndSleep(
+          "CVRFury Module Installation",
+          "No CVRFuryDataStorageUnit components found",
+          progress,
+          2000
+        );
+        // close the progress bar
+        EditorUtility.ClearProgressBar();
+      }
+      // log cleanup process is triggered
+      CoreLogDebug("Cleanup process triggered");
+
+      // execute the the cleanup code
+      ModulesInstallationFinalise(uploadedObject);
+
+      // log that the module installation has been completed
+      CoreLog("Module installation completed");
+    }
+
+    private static void ProcessModules(CVRFuryDataStorageUnit[] dataStorageUnits, GameObject uploadedObject)
+    {
+      // Process each data storage unit
+      for (int i = 0; i < dataStorageUnits.Length; i++)
+      {
+        var dataStorageUnit = dataStorageUnits[i];
+
+        // get the modules
+        var modules = dataStorageUnit.modules.modules;
+
+        // check if modules is null
+        if (modules == null)
+        {
+          // console print to say that the modules are null
+          CoreLogCritical("Modules are null");
+          return;
+        }
+
+        // get a count of the modules
+        int numModules = modules.Count;
+
+        // check if numModules is 0
+        if (numModules == 0)
+        {
+          // console print to say that the number of modules is 0
+          CoreLogError("No modules found in the data storage unit");
+          return;
+        }
+
+        // divide the progress bar into equal parts for each module
+        float progressPerModuleOnUnityProgressBar = 1f / numModules;
+
+        // initialize the unity progress bar
+        float progressOnUnityProgressBar = 0;
+        DisplayProgressBarAndSleep(
+          "CVRFury Module Installation",
+          "Processing modules started",
+          progressOnUnityProgressBar,
+          500
+        );
+
+        // get the object the DSU is attached to
+        var DSUObject = dataStorageUnit.gameObject;
+
+        // re-order the modules such that all the modules that are of ModuleType="armatureLink" are processed last
+        modules.Sort(
+          (x, y) =>
+          {
+            if (
+              string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+              && !string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+            )
+            {
+              return 1; // x is "greater", i.e., it should come later
+            }
+            if (
+              !string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+              && string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+            )
+            {
+              return -1; // x is "less", i.e., it should come earlier
+            }
+            return 0; // x and y are "equal" in terms of sorting
+          }
+        );
+
+        // for each module in modules
+        for (int j = 0; j < numModules; j++)
+        {
+          // module processing code triggers etc
+
+          // wait for 1 seconds
+          System.Threading.Thread.Sleep(1000);
+
+          // module processing trigger code
+          // get the module
+          var module = modules[j];
+          HandleModule(module, uploadedObject, i, DSUObject);
+
+          // Update the progress bar after processing the module
+          progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
+
+          // Update the unity progress bar
+          DisplayProgressBarAndSleep(
+            "CVRFury Module Installation",
+            "Processing modules",
+            progressOnUnityProgressBar,
+            0
+          );
+        }
+        // module done
+        // close current unity progress bar
+        EditorUtility.ClearProgressBar();
+      }
+      // all modules done
+    }
+
+    //// Async functions -----------------------------------------------------------------------------------------------
+    public static async Task SelectAnimationClipsAsync(string tempItemsFolderPath)
+    {
+      // Get all animation clip files in the tempItemsFolderPath
+      string[] animationClipFiles = Directory.GetFiles(tempItemsFolderPath, "*.anim", SearchOption.AllDirectories);
+
+      // core log that the animation clip files paths have been loaded
+      CoreLog("Animation clip files paths loaded");
+      // log the number of animation clip files
+      CoreLog("Number of animation clip files: " + animationClipFiles.Length);
+
+      // Convert the file paths to asset paths
+      string[] animationClipAssets = animationClipFiles
+        .Select(x => x.Replace(Application.dataPath, "").Replace('\\', '/'))
+        .ToArray();
+
+      // core log that the animation clip assets paths have been loaded
+      CoreLog("Animation clip assets paths loaded");
+      // log the number of animation clip assets
+      CoreLog("Number of animation clip assets: " + animationClipAssets.Length);
+
+      foreach (string animationClipAsset in animationClipAssets)
+      {
+        CoreLog("Processing animation clip asset: " + animationClipAsset);
+
+        // Get the animation clip
+        AnimationClip animationClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationClipAsset);
+
+        if (animationClip == null)
+        {
+          CoreLog("Failed to load animation clip at path: " + animationClipAsset);
+          continue;
+        }
+
+        // Delay the selection of the animation clip until the next Editor update
+        EditorApplication.delayCall += () =>
+        {
+          // Ping the animation clip in the Project window
+          EditorGUIUtility.PingObject(animationClip);
+
+          // Select the animation clip in the Unity Editor
+          Selection.activeObject = animationClip;
+
+          // log that the animation clip has been selected
+          CoreLog("Animation clip selected: " + animationClip.name);
+        };
+
+        // Wait for a short time to allow the Unity Editor to update
+        await Task.Delay(Constants.CLIP_VIEW_DELAY);
+      }
+
+      // deselect all objects in the Unity Editor
+      Selection.activeObject = null;
+    }
+
+    /// <summary>
+    /// Install CVRFury Modules on a given GameObject, Async for play mode
+    /// Mode 0 = Play Mode
+    /// Mode 1 = Build Mode
+    /// </summary>
+    /// <param name="uploadedObject"></param>
+    /// <param name="mode"></param>
+    public static async Task InstallCVRFuryModulesAsync(GameObject uploadedObject, int mode = 0)
+    {
+      // trap for build mode, this method should not be called in build mode
+      if (mode == 1)
+      {
+        CoreLogCritical("InstallCVRFuryModulesAsync called in build mode");
+        return;
+      }
+
+      // Run modules pre tasks
+      RunModulesPreTasks(uploadedObject);
+
+      // Initialize the overlay unity progress bar
+      float progress = 0;
+      await DisplayProgressBarAndSleepAsync("CVRFury Module Installation", "Initializing...", progress, 500);
+
+      // popup title depending on mode, suffixing with " - Play Mode" or " - Build Mode"
+      string popupTitle = InstallModeString(mode);
+
+      progress = 0.1f;
+      DisplayProgressBarAndSleep("CVRFury Module Installation", "getting uploadObject", progress, 500);
+
+      // Implementation
+      string path = GetGameObjectPath(uploadedObject);
+      progress = 0.4f;
+      await DisplayProgressBarAndSleepAsync(
+        "CVRFury Module Installation",
+        "Target for CVRFury Modules is \n\n" + path,
+        progress,
+        2000
+      );
+
+      progress = 0.6f;
+      await DisplayProgressBarAndSleepAsync(
+        "CVRFury Module Installation",
+        "Getting CVRFuryDataStorageUnit components",
+        progress,
+        500
+      );
+
+      // get the CVRFuryDataStorageUnit components
+      var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
+
+      // get the number of CVRFuryDataStorageUnit components
+      int numDataStorageUnits = dataStorageUnits.Length;
+
+      // if there are 1 or more CVRFuryDataStorageUnit components present on the uploadedObject
+      // then run the module installer
+      if (numDataStorageUnits > 0)
+      {
+        progress = 0.8f;
+        await DisplayProgressBarAndSleepAsync(
+          "CVRFury Module Installation",
+          "Starting module processing",
+          progress,
+          500
+        );
+        // show modal progress window
+        ModalWindow.ShowWindow(uploadedObject, dataStorageUnits, path);
+
+        progress = 1;
+        await DisplayProgressBarAndSleepAsync(
+          "CVRFury Module Installation",
+          "Processing modules started",
+          progress,
+          2000
+        );
+        // close the progress bar
+        EditorUtility.ClearProgressBar();
+        // Start processing the modules asynchronously
+        await ProcessModulesAsync(dataStorageUnits, uploadedObject);
+      }
+      else
+      {
+        // if there are no CVRFuryDataStorageUnit components present on the uploadedObject, then do nothing
+        progress = 1;
+        await DisplayProgressBarAndSleepAsync(
+          "CVRFury Module Installation",
+          "No CVRFuryDataStorageUnit components found",
+          progress,
+          2000
+        );
+        // close the progress bar
+        EditorUtility.ClearProgressBar();
+      }
+      // log cleanup process is triggered
+      CoreLogDebug("Cleanup process triggered");
+
+      // execute the the cleanup code
+      ModulesInstallationFinalise(uploadedObject);
+
+      // get the path to the temp items folder
+      string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
+
+      // await SelectAnimationClipsAsync(tempItemsFolderPath);
+
+      // log that the module installation has been completed
+      CoreLog("Module installation completed");
+    }
+
+    private static async Task ProcessModulesAsync(CVRFuryDataStorageUnit[] dataStorageUnits, GameObject uploadedObject)
+    {
+      // Process each data storage unit
+      for (int i = 0; i < dataStorageUnits.Length; i++)
+      {
+        var dataStorageUnit = dataStorageUnits[i];
+
+        // get the modules
+        var modules = dataStorageUnit.modules.modules;
+
+        // check if modules is null
+        if (modules == null)
+        {
+          // console print to say that the modules are null
+          CoreLogCritical("Modules are null");
+          ModalWindow.UpdateSubProgressBar(i, 100);
+          return;
+        }
+
+        // get a count of the modules
+        int numModules = modules.Count;
+
+        // check if numModules is 0
+        if (numModules == 0)
+        {
+          // console print to say that the number of modules is 0
+          CoreLogError("No modules found in the data storage unit");
+          ModalWindow.UpdateSubProgressBar(i, 100);
+          return;
+        }
+
+        // divide the progress bar into equal parts for each module
+        float progressPerModule = 100f / numModules;
+        float progressPerModuleOnUnityProgressBar = 1f / numModules;
+
+        // initialize the unity progress bar
+        float progressOnUnityProgressBar = 0;
+        await DisplayProgressBarAndSleepAsync(
+          "CVRFury Module Installation",
+          "Processing modules started",
+          progressOnUnityProgressBar,
+          500
+        );
+
+        // initialize the sub-progress bar
+        float progress = 0;
+        ModalWindow.UpdateSubProgressBar(i, progress);
+
+        // get the object the DSU is attached to
+        var DSUObject = dataStorageUnit.gameObject;
+
+        // check how many modules are there
+        if (numModules > 1)
+        {
+          // console print to say that the module order is being re-ordered
+          CoreLogDebug("Re-ordering modules");
+
+          // re-order the modules such that all the modules that are of ModuleType="armatureLink" are processed last
+          modules.Sort(
+            (x, y) =>
+            {
+              if (
+                string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+              )
+              {
+                return 1; // x is "greater", i.e., it should come later
+              }
+              if (
+                !string.Equals(x.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(y.ModuleType, "armatureLink", StringComparison.OrdinalIgnoreCase)
+              )
+              {
+                return -1; // x is "less", i.e., it should come earlier
+              }
+              return 0; // x and y are "equal" in terms of sorting
+            }
+          );
+        }
+
+        // for each module in modules
+        for (int j = 0; j < numModules; j++)
+        {
+          // module processing code triggers etc
+
+          // wait for 1 seconds
+          await Task.Delay(1000);
+
+          // module processing trigger code
+          // get the module
+          var module = modules[j];
+          HandleModule(module, uploadedObject, i, DSUObject);
+
+          // Update the progress bar after processing the module
+          progress = progressPerModule * (j + 1);
+          progressOnUnityProgressBar = progressPerModuleOnUnityProgressBar * (j + 1);
+
+          // Update the unity progress bar
+          await DisplayProgressBarAndSleepAsync(
+            "CVRFury Module Installation",
+            "Processing modules",
+            progressOnUnityProgressBar,
+            0
+          );
+
+          // Update the sub-progress bar
+          ModalWindow.UpdateSubProgressBar(i, progress);
+        }
+
+        // module done
+        // close current unity progress bar
+        EditorUtility.ClearProgressBar();
+      }
+      // all modules done
+    }
+
+    //// assistive functions --------------------------------------------------------------------------------------------
+    /// <summary>
+    /// this function is called to run any pre-tasks before the module installation
+    /// ie. cleanup of previous runs
+    /// </summary>
+    public static void RunModulesPreTasks(GameObject uploadedObject)
+    {
+      // deselect all objects in the Unity Editor
+      Selection.activeObject = null;
+
+      // purge old temp files
+      PurgeTempFiles(uploadedObject);
+
+      // avatar armature path setter
+      AvatarInfoArmaturePathSetter(uploadedObject);
+
+      // store DSU info
+      StoreDSUInfo(uploadedObject);
+
+      // Dynamic Bone Disabler (if dynamic bone is present on addon and active when applied it can cause issues)
+      DynamicBoneDisabler(uploadedObject);
+
+      // Magica Cloth 2 Disabler (if magica cloth 2 is present on addon and active when applied it can cause issues)
+      MagicaCloth2Disabler(uploadedObject);
+
+      // prefab unpacker
+      PrefabUnpacker(uploadedObject);
+
+      // console print to say that the pre-tasks have been run
+      CoreLog("Pre-tasks run");
+    }
+
+    public static void StoreDSUInfo(GameObject uploadedObject)
+    {
+      // get the CVRFuryDataStorageUnit components
+      var dataStorageUnits = uploadedObject.GetComponentsInChildren<CVRFuryDataStorageUnit>();
+
+      // get the number of CVRFuryDataStorageUnit components
+      int numDataStorageUnits = dataStorageUnits.Length;
+
+      // if there are 1 or more CVRFuryDataStorageUnit components present on the uploadedObject
+      // then run the module installer
+      if (numDataStorageUnits > 0)
+      {
+        foreach (var dataStorageUnit in dataStorageUnits)
+        {
+          #region Per-DSU-Object-Processing
+          // get the object the DSU is attached to
+          var DSUObject = dataStorageUnit.gameObject;
+
+          // NOTE: Keeping this for future reference, may yet be useful if we find addons with proper full humanoid
+          // armatures/rigs
+          //
+          // // check if the DSUObject has an animator component
+          // if (DSUObject.GetComponent<Animator>() == null)
+          // {
+          //   // console print to say that the DSUObject does not have an animator component
+          //   CoreLogDebug("[StoreDSUInfo] DSUObject does not have an animator component");
+          // }
+          // else
+          // {
+          //   // console print to say that the DSUObject has an animator component
+          //   CoreLog("[StoreDSUInfo] DSUObject has an animator component processing...");
+
+          //   // check if the animator component has an avatar
+          //   if (DSUObject.GetComponent<Animator>().avatar == null)
+          //   {
+          //     // console print to say that the animator component does not have an avatar
+          //     CoreLogDebug("[StoreDSUInfo] Animator component does not have an avatar");
+          //   }
+          //   else
+          //   {
+          //     // console print to say that the animator component has an avatar
+          //     CoreLog("[StoreDSUInfo] Animator component has an avatar processing...");
+
+          //     // get the avatar from the animator component
+          //     var avatar = DSUObject.GetComponent<Animator>().avatar;
+
+          //     // get the animator from the animator component
+          //     var animator = DSUObject.GetComponent<Animator>();
+
+          //     // Dictionary to store the HumanBodyBones to Transform mappings
+          //     Dictionary<Transform, HumanBodyBones> boneMap = new Dictionary<Transform, HumanBodyBones>();
+
+          //     foreach (HumanBodyBones bone in System.Enum.GetValues(typeof(HumanBodyBones)))
+          //     {
+          //       // debug print the bone
+          //       CoreLogDebug("[StoreDSUInfo] Bone: " + bone);
+
+          //       if (bone != HumanBodyBones.LastBone) // LastBone is not an actual bone
+          //       {
+          //         Transform boneTransform = animator.GetBoneTransform(bone);
+          //         if (boneTransform != null)
+          //         {
+          //           boneMap[boneTransform] = bone;
+          //           // debug print the bone and the boneTransform
+          //           CoreLogDebug("[StoreDSUInfo] Bone: " + bone + " BoneTransform: " + boneTransform);
+          //         }
+          //         else
+          //         {
+          //           // debug print that the boneTransform is null
+          //           CoreLogDebug("[StoreDSUInfo] BoneTransform is null");
+          //         }
+          //       }
+          //     }
+
+          //     // debug print the boneMap
+          //     CoreLogDebugPrintDictionary(boneMap, "[StoreDSUInfo] BoneMap: ");
+          //   }
+          // }
+          //
+
+          // get the path of the DSU object
+          string DSUObjectPath = GetGameObjectPath(DSUObject);
+
+          // remove the leading / if it is present
+          if (DSUObjectPath.StartsWith("/"))
+          {
+            DSUObjectPath = DSUObjectPath.Substring(1);
+          }
+
+          // print the DSUObjectPath
+          CoreLog("[StoreDSUInfo] DSUObjectPath: " + DSUObjectPath);
+
+          // add a CVRFuryDSUInfoUnit component to the DSUObject
+          var DSUInfoUnit = DSUObject.AddComponent<CVRFuryDSUInfoUnit>();
+
+          // check and see if there are any skinned mesh renderers on any of the children of the DSU object
+          var skinnedMeshRenderers = DSUObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+          var meshRenderBones = new List<Transform>();
+
+          // if there are any skinned mesh renderers get the bones from them
+          if (skinnedMeshRenderers.Length > 0)
+          {
+            // get the bones from the skinned mesh renderers
+            meshRenderBones = skinnedMeshRenderers.SelectMany(x => x.bones).Distinct().ToList();
+          }
+
+          // list to store armature paths
+          List<string> armaturePaths = new List<string>();
+
+          // list to store armature root paths
+          List<string> armatureRootPaths = new List<string>();
+
+          // for each bone in the meshRenderBones list
+          foreach (var bone in meshRenderBones)
+          {
+            // get the path to the bone
+            string bonePath = GetFullTransformPath(bone);
+
+            // remove the DSUObjectPath from the start of the bonePath (make it relative to the DSUObjectPath)
+            bonePath = bonePath.Replace(DSUObjectPath + "/", "");
+
+            // make a new DSUPath
+            DSUPath DSUBonePathInstance = new DSUPath
+            {
+              originalPath = bonePath,
+              rewrittenPath = "",
+              type = DSUPath.pathType.ArmaturePath,
+              isPartOfHumanoidArmature = false, // locked to false for now see note above re HumanBodyBones
+              humanBodyBone = HumanBodyBones.LastBone, // locked to LastBone for now see note above re HumanBodyBones
+              originalObject = bone.gameObject
+            };
+
+            // add the DSUBonePath to the DSUInfoUnit
+            DSUInfoUnit.DSUPaths.Add(DSUBonePathInstance);
+
+            // add the bonePath to the armaturePaths list
+            armaturePaths.Add(bonePath);
+          }
+
+          // for each mesh renderer in the skinnedMeshRenderers list
+          foreach (var meshRenderer in skinnedMeshRenderers)
+          {
+            // get the bones from the mesh renderer
+            var bones = meshRenderer.bones;
+
+            // get the paths of the bones
+            List<string> bonePaths = bones.Select(x => GetFullTransformPath(x)).ToList();
+
+            // debug print the bonePaths
+            CoreLogDebugPrintList(bonePaths, "[StoreDSUInfo] BonePaths:");
+
+            // get the common path for all the bones
+            string commonPath = GetCommonPath(bonePaths);
+
+            // debug print the commonPath
+            CoreLogDebug("[StoreDSUInfo] CommonPath - meshRenderer.bones: " + commonPath);
+
+            // remove the DSUObjectPath from the start of the commonPath (make it relative to the DSUObjectPath)
+            string bonePath = commonPath.Replace(DSUObjectPath + "/", "");
+
+            // if there is a trailing / then remove it
+            if (bonePath.EndsWith("/"))
+            {
+              bonePath = bonePath.Substring(0, bonePath.Length - 1);
+            }
+
+            // add the boneName to the armatureRootPaths list
+            armatureRootPaths.Add(bonePath);
+          }
+
+          // deduplicate the armatureRootPaths list
+          armatureRootPaths = armatureRootPaths.Distinct().ToList();
+
+          // debug print the armatureRootPaths
+          CoreLogDebugPrintList(armatureRootPaths, "[StoreDSUInfo] ArmatureRootPaths:");
+          // debug print the armaturePaths
+          CoreLogDebugPrintList(armaturePaths, "[StoreDSUInfo] ArmaturePaths:");
+
+          // get the list of paths of all objects under the DSU object
+          List<String> addonObjectPaths = DSUObject
+            .GetComponentsInChildren<Transform>(true)
+            .Select(x => GetFullTransformPath(x))
+            .ToList();
+
+          // debug print the addonObjectPaths
+          CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths Raw:");
+
+          // remove the DSUObjectPath from the start of all the paths
+          addonObjectPaths = addonObjectPaths.Select(x => x.Replace(DSUObjectPath, "")).ToList();
+
+          // remove / from the start of all the paths (if it is present)
+          addonObjectPaths = addonObjectPaths.Select(x => x.StartsWith("/") ? x.Substring(1) : x).ToList();
+
+          // remove blank entries from the list
+          addonObjectPaths = addonObjectPaths.Where(x => !string.IsNullOrEmpty(x)).ToList();
+
+          // debug print the addonObjectPaths
+          CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths Relative:");
+
+          // remove the armaturePaths (if there are any) from the  list
+          addonObjectPaths = addonObjectPaths.Except(armaturePaths).ToList();
+
+          // remove the armatureRootPaths (if there are any) from the list
+          addonObjectPaths = addonObjectPaths.Except(armatureRootPaths).ToList();
+
+          // debug print the addonObjectPaths
+          CoreLogDebugPrintList(addonObjectPaths, "[StoreDSUInfo] AddonObjectPaths:");
+
+          // for each path in the list
+          foreach (var path in addonObjectPaths)
+          {
+            // if the path exactly matches the DSUObjectPath then skip it
+            if (path == DSUObjectPath)
+            {
+              continue;
+            }
+
+            // need to trap '_end' type GameObjects here and set them to ArmatureEndBonePath
+            // check if the path starts with one of the armatureRootPaths
+            if (armatureRootPaths.Any(x => path.StartsWith(x)))
+            {
+              // check if the path ends with _end (case insensitive match)
+              if (path.EndsWith("_end", StringComparison.OrdinalIgnoreCase))
+              {
+                try
+                {
+                  // make a new DSUPath
+                  DSUPath DSUBonePathInstanceEnd = new DSUPath
+                  {
+                    originalPath = path,
+                    rewrittenPath = "",
+                    type = DSUPath.pathType.ArmatureEndBonePath,
+                    originalObject = DSUObject.transform.Find(path).gameObject
+                  };
+
+                  // add the DSUPath to the DSUInfoUnit
+                  DSUInfoUnit.DSUPaths.Add(DSUBonePathInstanceEnd);
+                }
+                catch (Exception e)
+                {
+                  CoreLogCritical("[StoreDSUInfo] Error for path " + path + " : " + e.Message);
+                  continue;
+                }
+                continue;
+              }
+            }
+
+            // all the other paths are ObjectPaths
+            // make a new DSUPath
+            try
+            {
+              DSUPath DSUBonePathInstanceObject = new DSUPath
+              {
+                originalPath = path,
+                rewrittenPath = "",
+                type = DSUPath.pathType.ObjectPath,
+                originalObject = DSUObject.transform.Find(path).gameObject
+              };
+
+              // add the DSUPath to the DSUInfoUnit
+              DSUInfoUnit.DSUPaths.Add(DSUBonePathInstanceObject);
+            }
+            catch (Exception e)
+            {
+              CoreLogCritical("[StoreDSUInfo] Error" + path + "  " + e.Message);
+              continue;
+            }
+          }
+
+          // list to hold the DSUPaths that need to be removed
+          List<DSUPath> DSUPathsToRemove = new List<DSUPath>();
+
+          // ist to hold the DSUPaths that need to be set to ArmatureRootPath
+          List<DSUPath> DSUPathsToSetArmatureRootPaths = new List<DSUPath>();
+
+          // print the count of DSUPaths
+          CoreLogDebug("[StoreDSUInfo] DSUInfoUnit.DSUPaths count: " + DSUInfoUnit.DSUPaths.Count);
+
+          // loop through the DSUPaths in the DSUInfoUnit
+          foreach (var DSUPath in DSUInfoUnit.DSUPaths)
+          {
+            // debug print the DSUPath originalPath
+            CoreLogDebug("[StoreDSUInfo] DSUPath originalPath: " + DSUPath.originalPath);
+
+            // if the path matches the DSUObjectPath exactly, then remove it
+            if (DSUPath.originalPath == DSUObjectPath)
+            {
+              // add the DSUPath to the DSUPathsToRemove list
+              DSUPathsToRemove.Add(DSUPath);
+              continue;
+            }
+
+            // counter to keep track of the index of the DSUPath
+            int armatureRootPathsIndex = 0;
+            // check if there are any armatureRootPaths
+            if (armatureRootPaths.Count > 0)
+            {
+              // increment the armatureRootPathsIndex
+              armatureRootPathsIndex++;
+              // debug print the that there are armatureRootPaths
+              CoreLogDebug(
+                "[StoreDSUInfo] ArmatureRootPaths present, processing..."
+                  + armatureRootPathsIndex
+                  + " of "
+                  + armatureRootPaths.Count
+              );
+
+              // if the path matches a path in the armatureRootPaths list, exactly then set its type to ArmatureRootPath
+              // loop over each armatureRootPath in the armatureRootPaths list
+              foreach (string armatureRootPath in armatureRootPaths)
+              {
+                // debug print the armatureRootPath
+                CoreLogDebug("[StoreDSUInfo] ArmatureRootPath: " + armatureRootPath);
+
+                // if the DSUPath matches the armatureRootPath exactly
+                if (DSUPath.originalPath == armatureRootPath)
+                {
+                  // add the DSUPath to the DSUPathsToSetArmatureRootPaths list
+                  DSUPathsToSetArmatureRootPaths.Add(DSUPath);
+                  continue;
+                }
+              }
+            }
+          }
+
+          // print the count of DSUPathsToRemove
+          CoreLogDebug("[StoreDSUInfo] DSUPathsToRemove count: " + DSUPathsToRemove.Count);
+          // print the count of DSUPathsToSetArmatureRootPaths
+          CoreLogDebug("[StoreDSUInfo] DSUPathsToSetArmatureRootPaths count: " + DSUPathsToSetArmatureRootPaths.Count);
+
+          // check if there are any DSUPathsToSetArmatureRootPaths and process them
+          foreach (var DSUPathToSetArmatureRootPath in DSUPathsToSetArmatureRootPaths)
+          {
+            // Find the matching DSUPath in DSUInfoUnit.DSUPaths
+            var matchingDSUPath = DSUInfoUnit.DSUPaths.FirstOrDefault(
+              dsuPath => dsuPath.originalPath == DSUPathToSetArmatureRootPath.originalPath
+            );
+
+            if (matchingDSUPath != null)
+            {
+              // Set the type of the matching DSUPath to ArmatureRootPath
+              matchingDSUPath.type = DSUPath.pathType.ArmatureRootPath;
+              // Debug print that the DSUObjectPath has been set to ArmatureRootPath
+              CoreLogDebug("[StoreDSUInfo] DSUObjectPath " + matchingDSUPath.originalPath + " set to ArmatureRootPath");
+            }
+          }
+
+          // check if there are any DSUPathsToRemove and process them
+          if (DSUPathsToRemove.Count > 0)
+          {
+            // remove the DSUPathsToRemove from the DSUInfoUnit.DSUPaths
+            foreach (var DSUPathToRemove in DSUPathsToRemove)
+            {
+              // remove the DSUPathToRemove from the DSUInfoUnit.DSUPaths
+              DSUInfoUnit.DSUPaths.Remove(DSUPathToRemove);
+              // debug print that the DSUObjectPath has been removed
+              CoreLogDebug("[StoreDSUInfo] DSUObjectPath " + DSUPathToRemove.originalPath + " removed");
+            }
+          }
+
+          // set the dataLoadFailed flag to false
+          DSUInfoUnit.dataLoadFailed = false;
+
+          // console print to say that the DSUInfoUnit has been added
+          CoreLog("DSUInfoUnit added to: " + DSUObject.name);
+        #endregion // Per-DSU-Object-Processing
+        }
+      }
+    }
+
+    public static void MagicaCloth2Disabler(GameObject uploadedObject)
+    {
+      // debug log that the magica cloth 2 disabler is running
+      CoreLogDebug("[Magica Cloth 2 disabler] running");
+
+      // now we only want to disable magica cloth 2 on the addons so we need to get all the game objects with DSU
+      // components on them then get the magica cloth 2 components on those children of the DSU objects and disable them
+
+      // get all the game objects with DSU components on them
+      var DSUObjects = uploadedObject
+        .GetComponentsInChildren<CVRFuryDataStorageUnit>()
+        .Select(x => x.gameObject)
+        .ToList();
+
+      // debug print that DSU objects are loaded
+      CoreLogDebug("[Magica Cloth 2 disabler] DSU objects loaded");
+
+      // check if there are any DSU objects
+      if (DSUObjects.Count == 0)
+      {
+        // debug log that there are no DSU objects
+        CoreLogDebug("[Magica Cloth 2 disabler] No DSU objects found");
+        return;
+      }
+
+      // debug print the number of DSU objects
+      CoreLogDebug("[Magica Cloth 2 disabler] Number of DSU objects: " + DSUObjects.Count);
+
+      // int to store the DSU object count
+      int DSUObjectCount = 0;
+
+      // loop through the DSU objects
+      foreach (var DSUObject in DSUObjects)
+      {
+        // debug print the DSU number
+        CoreLogDebug("[Magica Cloth 2 disabler] Processing DSU number: " + DSUObjectCount);
+
+#if MAGICACLOTH2
+        // get the magica cloth 2 components on the DSU object
+        var magicaCloth2Components = DSUObject.GetComponentsInChildren<MagicaCloth2.MagicaCloth>().ToList();
+
+        // check if there are any magica cloth 2 components
+        if (magicaCloth2Components.Count == 0)
+        {
+          // debug log that there are no magica cloth 2 components
+          CoreLogDebug("[Magica Cloth 2 disabler] No Magica Cloth 2 components found");
+          continue;
+        }
+
+        // debug print the number of magica cloth 2 components
+        CoreLogDebug("[Magica Cloth 2 disabler] Number of Magica Cloth 2 components: " + magicaCloth2Components.Count);
+
+        // loop through the magica cloth 2 components
+        foreach (var magicaCloth2Component in magicaCloth2Components)
+        {
+#if NVH_CVRFURY_EXISTS_COMP_MC2C
+          // now we need to tag it for restore at the end of the module installation process
+          // add the CVRFuryMagicaCloth2Config component to the magica cloth 2 component
+          var magicaCloth2Config = magicaCloth2Component.gameObject.AddComponent<CVRFuryMagicaCloth2Config>();
+
+          // debug print the that CVRFuryMagicaCloth2Config component has been added
+          CoreLogDebug("[Magica Cloth 2 disabler] CVRFuryMagicaCloth2Config component added");
+
+          // set the sourcePrefabName to the prefabName from the DSU component
+          magicaCloth2Config.sourcePrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
+
+          //debug print that the sourcePrefabName has been set
+          CoreLogDebug("[Magica Cloth 2 disabler] sourcePrefabName set to: " + magicaCloth2Config.sourcePrefabName);
+
+          // set the enabled flag (magicaCloth2WasEnabled) to the current state of the magica cloth 2 component
+          magicaCloth2Config.magicaCloth2WasEnabled = magicaCloth2Component.enabled;
+
+          // console print to say that the magica cloth 2 component state has been stored
+          CoreLogDebug(
+            "[Magica Cloth 2 disabler] Magica Cloth 2 component state stored: "
+              + magicaCloth2Config.magicaCloth2WasEnabled
+          );
+
+          // set the relatedMagicaCloth2InstanceID to the instanceID of the magica cloth 2 component
+          magicaCloth2Config.relatedMagicaCloth2InstanceID = magicaCloth2Component.GetInstanceID();
+
+          // store the serializeData of the magica cloth 2 component
+          magicaCloth2Config.magicaCloth2SerializeData = magicaCloth2Component.SerializeData;
+
+          // store the gizmoSerializeData of the magica cloth 2 component
+          magicaCloth2Config.magicaCloth2GizmoSerializeData = magicaCloth2Component.GizmoSerializeData;
+
+          // console print to say that the magica cloth 2 component instanceID has been stored
+          CoreLogDebug(
+            "[Magica Cloth 2 disabler] Magica Cloth 2 component instanceID stored: "
+              + magicaCloth2Config.relatedMagicaCloth2InstanceID
+          );
+
+#endif // NVH_CVRFURY_EXISTS_COMP_MC2C
+
+#if !NVH_CVRFURY_EXISTS_COMP_MC2C
+          // log that the CVRFuryMagicaCloth2Config component is not present and should be installed
+          CoreLogCritical(
+            "CVRFuryMagicaCloth2Config component not found. Please install via Tool Setup"
+              + "Without this component, the Magica Cloth 2 will not work on addons."
+          );
+
+          // show a dialog box to the user to inform them that the CVRFuryMagicaCloth2Config component is not present
+          EditorUtility.DisplayDialog(
+            "CVRFuryMagicaCloth2Config component not found",
+            "Please install the CVRFuryMagicaCloth2Config component via the Tool Setup window."
+              + "\n\nWithout this component, the Magica Cloth 2 will not work on addons.",
+            "OK"
+          );
+#endif // !NVH_CVRFURY_EXISTS_COMP_MC2C
+
+          // disable the magica cloth 2 component
+          magicaCloth2Component.enabled = false;
+
+          // remove the magica cloth 2 component from the game object
+          UnityEngine.Object.DestroyImmediate(magicaCloth2Component);
+#if NVH_CVRFURY_EXISTS_COMP_MC2C
+          // console print to say that the magica cloth 2 component has been disabled
+          CoreLogDebug("Magica Cloth 2 component disabled on: " + magicaCloth2Config.relatedMagicaCloth2InstanceID);
+#endif // NVH_CVRFURY_EXISTS_COMP_MC2C
+        }
+#endif // MAGICACLOTH2
+        // increment the DSU object count
+        DSUObjectCount++;
+      }
+
+      // debug log that the magica cloth 2 disabler has finished
+      CoreLogDebug("[Magica Cloth 2 disabler] finished");
+    }
+
+    public static void DynamicBoneDisabler(GameObject uploadedObject)
+    {
+      // debug log that the dynamic bone disabler is running
+      CoreLogDebug("[Dynamic bone disabler] running");
+
+      // now we only want to disable dynamic bones on the addons so we need to get all the game objects with DSU
+      // components on them then get the dynamic bone components on those children of the DSU objects and disable them
+
+      // get all the game objects with DSU components on them
+      var DSUObjects = uploadedObject
+        .GetComponentsInChildren<CVRFuryDataStorageUnit>()
+        .Select(x => x.gameObject)
+        .ToList();
+
+      // loop through the DSU objects
+      foreach (var DSUObject in DSUObjects)
+      {
+        // get the dynamic bone components on the DSU object
+        var dynamicBoneComponents = DSUObject.GetComponentsInChildren<DynamicBone>();
+
+        // loop through the dynamic bone components
+        foreach (var dynamicBoneComponent in dynamicBoneComponents)
+        {
+          //// TODO: restore this section when the dynamic bone config component is ready
+
+          // // now we need to tag it for restore at the end of the module installation process
+          // // add the CVRFuryDynamicBoneConfig component to the dynamic bone component
+          // var dynamicBoneConfig = dynamicBoneComponent.gameObject.AddComponent<CVRFuryDynamicBoneConfig>();
+
+          // // set the sourcePrefabName to the prefabName from the DSU component
+          // dynamicBoneConfig.sourcePrefabName = DSUObject.GetComponent<CVRFuryDataStorageUnit>().prefabName;
+
+          // // set the enabled flag (dynamicBoneWasEnabled) to the current state of the dynamic bone component
+          // dynamicBoneConfig.dynamicBoneWasEnabled = dynamicBoneComponent.enabled;
+
+          // // set the relatedDynamicBoneInstanceID to the instanceID of the dynamic bone component
+          // dynamicBoneConfig.relatedDynamicBoneInstanceID = dynamicBoneComponent.GetInstanceID();
+
+          // disable the dynamic bone component
+          dynamicBoneComponent.enabled = false;
+
+          // console print to say that the dynamic bone component has been disabled
+          CoreLogDebug("Dynamic bone component disabled on: " + dynamicBoneComponent.gameObject.name);
+        }
+      }
+
+      // debug log that the dynamic bone disabler has finished
+      CoreLogDebug("[Dynamic bone disabler] finished");
+    }
+
+    /// <summary>
+    /// this function reads all the armature paths in the uploadedObject and adds them to the CVRFuryAvatarInfoUnit
+    /// avatarArmaturePaths variable
+    /// </summary>
+    public static void AvatarInfoArmaturePathSetter(GameObject uploadedObject)
+    {
+      // debug log that the avatar armature path setter is running
+      CoreLogDebug("[Avatar armature path setter] running");
+
+      // get the CVRFuryAvatarInfoUnit component
+      var avatarInfoUnit = uploadedObject.GetComponent<CVRFuryAvatarInfoUnit>();
+
+      // if the CVRFuryAvatarInfoUnit component is not present, add it
+      if (avatarInfoUnit == null)
+      {
+        avatarInfoUnit = uploadedObject.AddComponent<CVRFuryAvatarInfoUnit>();
+      }
+
+      // check if there is a CVRAvatar component on the uploadedObject
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // if there is no Animator component or CVRAvatar component on the uploadedObject, then return
+      if (avatarComponent == null)
+      {
+        // set the dataLoadFailed flag to true
+        avatarInfoUnit.dataLoadFailed = true;
+
+        // console print to say that the armature paths have not been set
+        CoreLogCritical("No CVRAvatar component found, armature paths not set");
+        // debug log that the avatar armature path setter has finished
+        CoreLogDebug("[Avatar armature path setter] finished");
+        return;
+      }
+
+      // get the bodyMesh object from the CVRAvatar component
+      var bodyMesh = avatarComponent.bodyMesh;
+
+      // if the bodyMesh object is null, then return
+      if (bodyMesh == null)
+      {
+        // set the dataLoadFailed flag to true
+        avatarInfoUnit.dataLoadFailed = true;
+
+        // console print to say that the armature paths have not been set
+        CoreLogCritical("No bodyMesh found, armature paths not set");
+        // debug log that the avatar armature path setter has finished
+        CoreLogDebug("[Avatar armature path setter] finished");
+        return;
+      }
+
+      // get the root bone object from the bodyMesh
+      var rootBone = bodyMesh.rootBone;
+
+      // if the rootBone object is null, then return
+      if (rootBone == null)
+      {
+        // set the dataLoadFailed flag to true
+        avatarInfoUnit.dataLoadFailed = true;
+
+        // console print to say that the armature paths have not been set
+        CoreLogCritical("No rootBone found, armature paths not set");
+        // debug log that the avatar armature path setter has finished
+        CoreLogDebug("[Avatar armature path setter] finished");
+        return;
+      }
+
+      // get the armature paths
+      var armaturePaths = rootBone.GetComponentsInChildren<Transform>().Select(x => GetFullTransformPath(x)).ToList();
+
+      // get the path to the uploadedObject
+      string uploadedObjectPath = GetGameObjectPath(uploadedObject);
+
+      // remove the '/' at the start of the uploadedObject path if it exists
+      if (uploadedObjectPath.StartsWith("/"))
+      {
+        uploadedObjectPath = uploadedObjectPath.Substring(1);
+      }
+
+      // debug print the uploadedObject path
+      CoreLogDebug("[Avatar armature path setter] Uploaded object path: " + uploadedObjectPath);
+
+      // loop over the armature paths and remove the uploadedObject path from them
+      for (int i = 0; i < armaturePaths.Count; i++)
+      {
+        armaturePaths[i] = armaturePaths[i].Replace(uploadedObjectPath + "/", "");
+      }
+
+      // set the armature paths in the CVRFuryAvatarInfoUnit component
+      avatarInfoUnit.avatarArmaturePaths = armaturePaths;
+
+      // console print to say that the armature paths have been set
+      CoreLog("Armature paths set");
+
+      // get the game objects under the uploadedObject
+      var children = uploadedObject.GetComponentsInChildren<Transform>();
+
+      // list of other paths related to the avatar
+      List<string> otherPaths = new List<string>();
+
+      // list of ignored transforms
+      List<Transform> ignoredTransforms = new List<Transform>();
+
+      // loop over the children
+      foreach (var child in children)
+      {
+        // get the child path
+        string childPath = GetFullTransformPath(child);
+
+        // remove the uploadedObjectPath from the start of the child path
+        childPath = childPath.Replace(uploadedObjectPath + "/", "");
+
+        // ensure there is no '/' at the start of the child path
+        if (childPath.StartsWith("/"))
+        {
+          childPath = childPath.Substring(1);
+        }
+
+        // print the child path
+        CoreLogDebug("[Avatar armature path setter] Child path: " + childPath);
+
+        // if the path of the child matches any of the armature paths ignore it
+        if (armaturePaths.Contains(childPath))
+        {
+          // add the child to the ignored transforms list
+          ignoredTransforms.Add(child);
+          continue;
+        }
+
+        // if the child has a DSU component then ignore it
+        if (child.gameObject.GetComponent<CVRFuryDataStorageUnit>() != null)
+        {
+          // add the child to the ignored transforms list
+          ignoredTransforms.Add(child);
+          continue;
+        }
+
+        // if the child's parent is in the ignored transforms list then ignore it
+        if (ignoredTransforms.Contains(child.parent))
+        {
+          // add the child to the ignored transforms list
+          ignoredTransforms.Add(child);
+          continue;
+        }
+
+        // add the child path to the other paths list
+        otherPaths.Add(childPath);
+      }
+
+      // loop over the otherPaths and remove the uploadedObject path from the front of them
+      for (int i = 0; i < otherPaths.Count; i++)
+      {
+        otherPaths[i] = otherPaths[i].Replace(uploadedObjectPath + "/", "");
+      }
+
+      // remove the uploadedObject name from the other paths list
+      otherPaths.Remove(uploadedObject.name);
+
+      // set the other paths in the CVRFuryAvatarInfoUnit component
+      avatarInfoUnit.avatarOtherPaths = otherPaths;
+
+      // debug log that the avatar armature path setter has finished
+      CoreLogDebug("[Avatar armature path setter] finished");
+    }
+
+    /// <summary>
+    /// function to walk the whole uploadedObject hierarchy and fully unpack any prefabs it finds
+    /// also if it finds a prefab with a DSU component, it will tag in the name
+    /// </summary>
+    public static void PrefabUnpacker(GameObject uploadedObject)
+    {
+      // debug log that the prefab unpacker is running
+      CoreLogDebug("[Prefab unpacker] running");
+
+      // get the root game object of the uploadedObject
+      var root = uploadedObject.transform.root;
+
+      // get the children of the root game object
+      var children = root.GetComponentsInChildren<Transform>();
+
+      // counter for the number of prefabs found
+      int numPrefabs = 0;
+
+      // loop through the children
+      foreach (var child in children)
+      {
+        // if the child is a prefab
+        if (PrefabUtility.IsPartOfAnyPrefab(child.gameObject))
+        {
+          // debug log that prefab is being unpacked
+          CoreLogDebug("[Prefab unpacker] unpacking prefab: " + child.gameObject.name);
+          // unpack the prefab
+          PrefabUtility.UnpackPrefabInstance(
+            child.gameObject,
+            PrefabUnpackMode.Completely,
+            InteractionMode.AutomatedAction
+          );
+          // increment the number of prefabs found
+          numPrefabs++;
+        }
+      }
+
+      // debug log that the prefab unpacker has finished
+      CoreLogDebug("[Prefab unpacker] finished, unpacked " + numPrefabs + " prefabs");
+    }
+
+    /// <summary>
+    /// This function is called to purge any temp files from previous runs
+    /// </summary>
+    public static void PurgeTempFiles(GameObject uploadedObject)
+    {
+      // console print to say that the temp files are being purged
+      CoreLogDebug("[Purge temp files] running");
+      // get the temp folder path for the current avatar controller creation
+      string tempFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
+
+      // if the temp folder exists, try to delete it
+      if (Directory.Exists(tempFolderPath))
+      {
+        try
+        {
+          Directory.Delete(tempFolderPath, true);
+        }
+        catch (Exception e)
+        {
+          // log that the temp folder could not be deleted
+          CoreLogError("Could not delete temp folder: " + tempFolderPath + "\n" + e.Message);
+        }
+      }
+
+      // provided that the folder was removed successfully, try to get rid of the meta file for the folder
+      string tempFolderPathMeta = tempFolderPath + ".meta";
+      if (File.Exists(tempFolderPathMeta))
+      {
+        try
+        {
+          File.Delete(tempFolderPathMeta);
+        }
+        catch (Exception e)
+        {
+          // log that the temp folder meta file could not be deleted
+          CoreLogError("Could not delete temp folder meta file: " + tempFolderPathMeta + "\n" + e.Message);
+        }
+      }
+
+      // if the folder and meta file are still there, loop through the files in the folder and try to delete them
+      if (Directory.Exists(tempFolderPath))
+      {
+        string[] files = Directory.GetFiles(tempFolderPath);
+        foreach (string file in files)
+        {
+          try
+          {
+            File.Delete(file);
+          }
+          catch (Exception e)
+          {
+            // log that the file could not be deleted
+            CoreLogError("Could not delete file: " + file + "\n" + e.Message);
+          }
+        }
+      }
+
+      // get the generated folder path for the current avatar
+      string generatedFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name;
+
+      // try and delete the contents of the generated folder
+      if (Directory.Exists(generatedFolderPath))
+      {
+        try
+        {
+          Directory.Delete(generatedFolderPath, true);
+        }
+        catch (Exception e)
+        {
+          // log that the generated folder could not be deleted
+          CoreLogError("Could not delete generated folder: " + generatedFolderPath + "\n" + e.Message);
+        }
+      }
+
+      // try and delete the meta file for the generated folder
+      string generatedFolderPathMeta = generatedFolderPath + ".meta";
+      if (File.Exists(generatedFolderPathMeta))
+      {
+        try
+        {
+          File.Delete(generatedFolderPathMeta);
+        }
+        catch (Exception e)
+        {
+          // log that the generated folder meta file could not be deleted
+          CoreLogError("Could not delete generated folder meta file: " + generatedFolderPathMeta + "\n" + e.Message);
+        }
+      }
+
+      //update asset database
+      AssetDatabase.Refresh();
+      // console print to say that the temp files have been purged
+      CoreLogDebug("[Purge temp files] finished");
+    }
+
+    /// <summary>
+    /// This function is called to destroy any gameObjects tagged with active nuke components
+    /// </summary>
+    public static void CleanupNuke(GameObject uploadedObject)
+    {
+      // get all components of type CVRFuryNukeGameObject from all children of the uploadedObject
+      var nukeComponents = uploadedObject.GetComponentsInChildren<CVRFuryNukeGameObject>();
+
+      // loop through the nuke components
+      foreach (var nukeComponent in nukeComponents)
+      {
+        // check if nukeComponent is null, is so skip it
+        if (nukeComponent == null)
+        {
+          continue;
+        }
+
+        // get the gameObject from the nuke component
+        var gameObject = nukeComponent.gameObject;
+
+        // check if gameObject is null, is so skip it
+        if (gameObject == null)
+        {
+          continue;
+        }
+
+        //check if nukeEnabled is true
+        if (nukeComponent.nukeEnabled)
+        {
+          // console print to say that the gameObject is being destroyed
+          CoreLogDebug("Destroying gameObject: " + gameObject.name);
+          // destroy the gameObject
+          UnityEngine.Object.DestroyImmediate(gameObject);
+        }
+      }
+    }
+
+    /// <summary>
+    /// This function is called to remove any components defined in the provided remove list from the uploadedObject
+    /// </summary>
+    public static void ComponentsCleanup(
+      GameObject uploadedObject,
+      System.Collections.ObjectModel.ReadOnlyCollection<string> typesToRemove,
+      string assemblyToLoadFrom
+    )
+    {
+      // loop over the list of types to remove
+      foreach (var typeName in typesToRemove)
+      {
+        //console print to say the component type is being removed
+        CoreLog("[Components Cleanup] Removing components of type: " + typeName + " from " + uploadedObject.name);
+
+        Assembly assembly;
+        // try to Get the assembly that contains the type
+        try
+        {
+          assembly = Assembly.Load(assemblyToLoadFrom);
+        }
+        catch (Exception e)
+        {
+          CoreLog("[Components Cleanup] Error loading assembly: " + assemblyToLoadFrom);
+          CoreLogDebug("[Components Cleanup] Error: " + e.Message);
+          continue;
+        }
+
+        // Get the type from the assembly
+        var type = assembly.GetType(typeName);
+        if (type == null)
+        {
+          CoreLogDebug("Type " + typeName + " not found.");
+          continue;
+        }
+
+        UnityEngine.Component[] components;
+
+        // try to get all components of type type from all children of the uploadedObject
+        try
+        {
+          components = uploadedObject.GetComponentsInChildren(type, true);
+          // console print to say that the components loaded
+          CoreLogDebug("[Components Cleanup] Components loaded: " + components.Length);
+        }
+        catch (Exception e)
+        {
+          CoreLog(
+            "[Components Cleanup] Error loading components of type: " + typeName + " from " + uploadedObject.name
+          );
+          CoreLogDebug("[Components Cleanup] Error: " + e.Message);
+          continue;
+        }
+        // console print to say that the components loaded
+        CoreLogDebug("[Components Cleanup] Components loaded: " + components.Length);
+
+        // if there are components is null, continue
+        if (components == null)
+        {
+          //console print to say that there are no components of type type
+          CoreLog("[Components Cleanup] No components of type: " + typeName + " found in " + uploadedObject.name);
+          continue;
+        }
+
+        // if there are no components of type type, continue
+        if (components.Length == 0)
+        {
+          // console print to say that there are no components of type type
+          CoreLog("[Components Cleanup] No components of type: " + typeName + " found in " + uploadedObject.name);
+          continue;
+        }
+
+        // loop through the components
+        foreach (var component in components)
+        {
+          // get the gameObject from the component
+          var gameObject = component.gameObject;
+
+          // console print to say that the component is being destroyed
+          CoreLogDebug("Destroying component type '" + typeName + "' on : " + gameObject.name);
+
+          // destroy the component
+          UnityEngine.Object.DestroyImmediate(component);
+        }
+      }
+    }
+
+#if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
+    public static void MagicaCloth2ReEnabler(GameObject uploadedObject)
+    {
+      // debug log that the magica cloth 2 re-enabler is running
+      CoreLogDebug("[Magica Cloth 2 re-enabler] running");
+
+      // find all the CVRFuryMagicaCloth2Config components
+      var magicaCloth2Configs = uploadedObject.GetComponentsInChildren<CVRFuryMagicaCloth2Config>();
+
+      // loop through the magica cloth 2 configs
+      foreach (var magicaCloth2Config in magicaCloth2Configs)
+      {
+        // get the related game object the magica cloth 2 component is on
+        var m2GameObject = magicaCloth2Config.gameObject;
+
+        // add a new magica cloth 2 component to the related game object
+        var newMagicaCloth2Component = m2GameObject.AddComponent<MagicaCloth2.MagicaCloth>();
+
+        // get the type of the new component
+        var type = newMagicaCloth2Component.GetType();
+
+        // get the private field
+        var field = type.GetField("serializeData", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // set the value of the private field
+        field.SetValue(newMagicaCloth2Component, magicaCloth2Config.magicaCloth2SerializeData);
+
+        // get the private field for GizmoSerializeData
+        var gizmoField = type.GetField("gizmoSerializeData", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // set the value of the private field for GizmoSerializeData
+        gizmoField.SetValue(newMagicaCloth2Component, magicaCloth2Config.magicaCloth2GizmoSerializeData);
+
+        // enable the new component
+        newMagicaCloth2Component.enabled = true;
+
+        // console print to say that the magica cloth 2 component has been re-enabled
+        CoreLogDebug("Magica Cloth 2 component re-enabled on: " + m2GameObject.name);
+      }
+
+      // debug log that the magica cloth 2 re-enabler has finished
+      CoreLogDebug("[Magica Cloth 2 re-enabler] finished");
+    }
+#endif
+
+    /// <summary>
+    /// This function is called to finalise the module installation and do trigger any final cleanup code
+    /// </summary>
+    public static void ModulesInstallationFinalise(GameObject uploadedObject)
+    {
+      // console print to say that the module installation is being finalised
+      CoreLog("Module installation finalising");
+
+      // run Magica Cloth 2 re-enabler
+#if MAGICACLOTH2 && NVH_CVRFURY_EXISTS_COMP_MC2C
+      // only if magica cloth 2 is installed
+      // Magica Cloth 2 Re-enabler (if magica cloth 2 was present on addon and disabled during the module installation process)
+      MagicaCloth2ReEnabler(uploadedObject);
+#endif
+
+      // run the nuke pruner
+      NukePruner(uploadedObject);
+
+      if (EditorPrefs.GetBool(Constants.CLEANUP_DISABLE_PREF, false))
+      {
+        CoreLog("Cleanup disabled, skipping cleanup");
+      }
+      else
+      {
+        // trigger lock file cleanup
+        LockfileCleanup(uploadedObject);
+        //core log that the lock file has been cleaned up
+        CoreLogDebug("Lock files cleaned up");
+
+        // run cleanup nuke
+        CleanupNuke(uploadedObject);
+        CoreLogDebug("Nuke cleanup done");
+
+        // run Components Cleanup for VRCStub
+        ComponentsCleanup(uploadedObject, Constants.VRCSTUB_COMPONENTS_TO_REMOVE, "uk.novavoidhowl.dev.vrcstub");
+        CoreLogDebug("VRCStub cleanup done");
+
+        // run Components Cleanup for VRCFury
+        ComponentsCleanup(uploadedObject, Constants.VRCFURY_COMPONENTS_TO_REMOVE, "VRCFury");
+        CoreLogDebug("VRCFuryStub cleanup done");
+
+        // run Components Cleanup for CVRFury
+        ComponentsCleanup(
+          uploadedObject,
+          Constants.CVRFURY_COMPONENTS_TO_REMOVE,
+          "uk.novavoidhowl.dev.cvrfury.runtime"
+        );
+
+        // run Components Cleanup (Deployable) for CVRFury
+        ComponentsCleanup(uploadedObject, Constants.CVRFURY_DEP_COMPONENTS_TO_REMOVE, "Assembly-CSharp");
+
+        CoreLogDebug("Animator controller cleaned started");
+        // animator controller cleanup
+        AnimatorControllerCleanup(uploadedObject);
+        //core log that the animator controller has been cleaned up
+        CoreLogDebug("Animator controller cleaned up");
+      }
+
+      // run the bounding box fixer
+      BoundingBoxesFixer(uploadedObject);
+
+      // run the CVRParameterStream de-duplicator
+      CVRParameterStreamDeDuplicator(uploadedObject);
+
+      // run write defaults fixer, MUST happen before missing animation clip fixer!
+      WriteDefaultsFixer(uploadedObject);
+
+      // run missing animation clip fixer
+      MissingAnimationClipFixer(uploadedObject);
+
+      // run the automatic variable converter
+      AutomaticVariableConverter(uploadedObject);
+
+      // run dedupe animator parameters
+      DedupeAnimatorParameters(uploadedObject);
+
+      // wait for .5 seconds
+      System.Threading.Thread.Sleep(500);
+
+      // get the path to the temp items folder
+      string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
+
+      // check if the temp items folder exists
+      if (Directory.Exists(tempItemsFolderPath))
+      {
+        // reimport all assets in the the temp_items folder
+        AssetDatabase.ImportAsset(tempItemsFolderPath, ImportAssetOptions.ImportRecursive);
+
+        // log that the assets have been reimported
+        CoreLogDebug("Assets reimported");
+      }
+
+      // force refresh the asset database
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+      EditorApplication.QueuePlayerLoopUpdate();
+
+      // log that asset database has been refreshed
+      CoreLogDebug("Asset database refreshed");
+
+      // wait for 1 seconds
+      System.Threading.Thread.Sleep(500);
+
+      // finalise the module installation
+      CoreLog("Module installation finalised");
+    }
+
+    /// <summary>
+    /// This function removes any nuke components that managed to get where they should not ie.
+    /// The armature of the uploadedObject
+    /// </summary>
+    public static void NukePruner(GameObject uploadedObject)
+    {
+      // debug log that the nuke pruner is running
+      CoreLogDebug("[Nuke Pruner] running");
+
+      #region Avatar Armature
+      // get the AvatarInfoUnit component from the uploadedObject
+      CVRFuryAvatarInfoUnit avatarInfoUnit = uploadedObject.GetComponent<CVRFuryAvatarInfoUnit>();
+
+      // get the common string from the avatarInfoUnit.avatarArmaturePaths list
+      string commonPath = GetCommonPath(avatarInfoUnit.avatarArmaturePaths);
+
+      // get the first part of the common path
+      string firstPart = commonPath.Split('/')[0];
+
+      // get the game object from the first part of the common path
+      var firstPartObject = uploadedObject.transform.Find(firstPart);
+
+      // remove the CVRFuryNukeGameObject components from the first part object and all its children (inc disabled)
+      var nukeComponentsAvatarArmature = firstPartObject.GetComponentsInChildren<CVRFuryNukeGameObject>(true);
+      
+      // debug print the name of the first part object
+      CoreLogDebug("[Nuke Pruner] Removing nuke components from: " + firstPartObject.name);
+      
+      foreach (CVRFuryNukeGameObject nukeComponent in nukeComponentsAvatarArmature)
+      {
+        // debug print the name of the object the component is on
+        CoreLogDebug("[Nuke Pruner] Removing nuke component from: " + nukeComponent.gameObject.name);
+
+        UnityEngine.Object.DestroyImmediate(nukeComponent);
+      }
+      #endregion // Avatar Armature
+
+      #region Parent Constraint
+      // get all the parent constraint components in the uploadedObject and its children
+      var parentConstraints = uploadedObject.GetComponentsInChildren<ParentConstraint>(true);
+
+      // create a list to hold all the source gameObjects
+      var parentSourceObjects = new List<UnityEngine.GameObject>();
+
+      // get all the source objects from the parent constraints
+      foreach (var parentConstraint in parentConstraints)
+      {
+          for (int i = 0; i < parentConstraint.sourceCount; i++)
+          {
+              var source = parentConstraint.GetSource(i);
+              parentSourceObjects.Add(source.sourceTransform.gameObject);
+          }
+      }
+      #endregion // Parent Constraint
+
+      #region Scale Constraint
+      // get all the scale constraint components in the uploadedObject and its children
+      var scaleConstraints = uploadedObject.GetComponentsInChildren<ScaleConstraint>(true);
+
+      // create a list to hold all the source gameObjects
+      var scaleSourceObjects = new List<UnityEngine.GameObject>();
+
+      // get all the source objects from the scale constraints
+      foreach (var scaleConstraint in scaleConstraints)
+      {
+          for (int i = 0; i < scaleConstraint.sourceCount; i++)
+          {
+              var source = scaleConstraint.GetSource(i);
+              scaleSourceObjects.Add(source.sourceTransform.gameObject);
+          }
+      }
+
+      #endregion // Scale Constraint
+
+      #region Position Constraint
+      // get all the position constraint components in the uploadedObject and its children
+      var positionConstraints = uploadedObject.GetComponentsInChildren<PositionConstraint>(true);
+
+      // create a list to hold all the source gameObjects
+      var positionSourceObjects = new List<UnityEngine.GameObject>();
+
+      // get all the source objects from the position constraints
+      foreach (var positionConstraint in positionConstraints)
+      {
+          for (int i = 0; i < positionConstraint.sourceCount; i++)
+          {
+              var source = positionConstraint.GetSource(i);
+              positionSourceObjects.Add(source.sourceTransform.gameObject);
+          }
+      }
+
+      #endregion // Position Constraint
+
+      #region constraint fixes
+
+      // main list of constraint source objects
+      var constraintSourceObjects = new List<UnityEngine.GameObject>();
+
+      // add the parent source objects to the constraint source objects list
+      constraintSourceObjects.AddRange(parentSourceObjects);
+      constraintSourceObjects.AddRange(scaleSourceObjects);
+      constraintSourceObjects.AddRange(positionSourceObjects);
+
+      // debug print the number of constraint source objects
+      CoreLogDebug("[Nuke Pruner] Number of constraint source objects: " + constraintSourceObjects.Count);
+      
+      // process the source objects
+      foreach (var sourceObject in constraintSourceObjects)
+      {
+        List<GameObject> objectsToProcess = GetParentObjects(sourceObject, uploadedObject);
+        objectsToProcess.Add(sourceObject);
+        CoreLogDebug("[Nuke Pruner] Number of objects to process: " + objectsToProcess.Count);
+
+        // remove the CVRFuryNukeGameObject components from the source object and its parents
+        foreach (var parentObject in objectsToProcess)
+        {
+          CVRFuryNukeGameObject[] nukeComponents = parentObject.GetComponents<CVRFuryNukeGameObject>();
+          // get count of nuke components
+          int nukeComponentCount = nukeComponents.Length;
+
+          if (nukeComponentCount > 0)
+          {
+            foreach (var nukeComponent in nukeComponents)
+            {
+              // debug print the name of the object the component is on
+              CoreLogDebug("[Nuke Pruner] Removing nuke component from: " + nukeComponent.gameObject.name);
+
+              UnityEngine.Object.DestroyImmediate(nukeComponent);
+            }
+          }
+          
+        }
+      }
+
+      #endregion // constraint fixes
+
+      // debug log that the nuke pruner has finished
+      CoreLogDebug("[Nuke Pruner] finished");
+    }
+
+    /// <summary>
+    ///  This function process all skinned mesh renderers in the uploadedObject and attempts
+    ///  to fix their bounding boxes
+    ///  </summary>
+    public static void BoundingBoxesFixer(GameObject uploadedObject)
+    {
+      CoreLog("Fixing bounding boxes");
+
+      // get avatar component from uploadedObject
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // if the avatar component is null, return
+      if (avatarComponent == null)
+      {
+        CoreLogError("No CVRAvatar component found");
+        return;
+      }
+
+      // get the body mesh from the avatar component
+      var bodyMesh = avatarComponent.bodyMesh;
+
+      // if the body mesh is null, return
+      if (bodyMesh == null)
+      {
+        CoreLogError("No body mesh found");
+        return;
+      }
+
+      SkinnedMeshRenderer[] meshRenderers;
+
+      try
+      {
+        // Get all the skinned mesh renderers in the uploadedObject, including those on disabled GameObjects
+        meshRenderers = uploadedObject
+          .GetComponentsInChildren<SkinnedMeshRenderer>(true)
+          .Where(renderer =>
+          {
+            if (renderer.sharedMesh == null)
+            {
+              // if the shared mesh is null, return false AKA don't include it
+              return false;
+            }
+
+            return true; // no issues, include renderer
+          })
+          .ToArray();
+        ;
+      }
+      catch (Exception e)
+      {
+        CoreLogError("[Bounding Box Fix] Error getting skinned mesh renderers: " + e.Message);
+        return;
+      }
+
+      // remove the body mesh from the mesh renderers, as there is no need to process it
+      meshRenderers = meshRenderers.Where(x => x != bodyMesh).ToArray();
+
+      // Get a count of the mesh renderers
+      int meshRendererCount = meshRenderers.Length;
+
+      // debug print the number of mesh renderers
+      CoreLogDebug("[Bounding Box Fix] Number of mesh renderers: " + meshRendererCount);
+
+      // If there are no mesh renderers, return
+      if (meshRendererCount == 0)
+      {
+        CoreLogDebug("No mesh renderers found");
+        return;
+      }
+
+      // Loop over the mesh renderers
+      foreach (SkinnedMeshRenderer meshRenderer in meshRenderers)
+      {
+        // Print the name of the object the mesh renderer is on
+        CoreLogDebug("[Bounding Box Fix] Processing mesh renderer on: " + meshRenderer.gameObject.name);
+
+        // Get the bounds of the mesh renderer
+        Bounds bounds = meshRenderer.bounds;
+
+        // Print the bounds of the mesh renderer
+        CoreLogDebug("[Bounding Box Fix] Bounds: " + bounds);
+
+        Mesh mesh = meshRenderer.sharedMesh;
+        if (mesh != null)
+        {
+          AdjustSkinnedMeshRendererBoundingBox(meshRenderer, uploadedObject);
+        }
+
+        // Print the new bounds of the mesh renderer
+        CoreLogDebug("[Bounding Box Fix] New Bounds: " + meshRenderer.bounds);
+
+        // mark the mesh renderer as dirty
+        EditorUtility.SetDirty(meshRenderer);
+
+        //
+      }
+
+      CoreLog("Bounding box fix completed");
+    }
+
+    /// <summary>
+    /// This function updates the bounding box of a SkinnedMeshRenderer
+    /// </summary>
+    private static void AdjustSkinnedMeshRendererBoundingBox(SkinnedMeshRenderer renderer, GameObject uploadedObject)
+    {
+      // check if input is not null
+      if (renderer == null)
+      {
+        CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] SkinnedMeshRenderer is null");
+        return;
+      }
+      if (uploadedObject == null)
+      {
+        CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] UploadedObject is null");
+        return;
+      }
+
+      Bounds startBounds;
+      try
+      {
+        startBounds = CalculateFullUploadedObjectBounds(uploadedObject);
+      }
+      catch (Exception e)
+      {
+        CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] Error getting start bounds: " + e.Message);
+        return;
+      }
+      Transform root = renderer.rootBone;
+
+      // check if the root is null
+      if (root == null)
+      {
+        CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] Root bone is null");
+        return;
+      }
+
+      bool ModifyBounds(
+        float sizeX = 0,
+        float sizeY = 0,
+        float sizeZ = 0,
+        float centerX = 0,
+        float centerY = 0,
+        float centerZ = 0
+      )
+      {
+        var b = renderer.localBounds;
+        var extents = b.extents;
+        extents.x += sizeX;
+        extents.y += sizeY;
+        extents.z += sizeZ;
+        b.extents = extents;
+        var center = b.center;
+        center.x += centerX;
+        center.y += centerY;
+        center.z += centerZ;
+        b.center = center;
+
+        var fullBak = startBounds;
+        Bounds updatedBounds;
+        try
+        {
+          updatedBounds = GetUpdatedSkinnedMeshRendererBounds(renderer, b);
+        }
+        catch (Exception e)
+        {
+          CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] Error getting updated bounds: " + e.Message);
+          return false;
+        }
+        
+        var fullNew = fullBak;
+        fullNew.Encapsulate(updatedBounds);
+
+        if (fullNew != fullBak)
+        {
+          return false;
+        }
+        renderer.localBounds = b;
+        renderer.updateWhenOffscreen = false;
+        return true;
+      }
+
+      var stepSizeInMeters = 0.025f;
+      var maxSteps = 40;
+      var stepSize = stepSizeInMeters / root.lossyScale.x;
+      for (var i = 0; i < maxSteps; i++)
+      {
+        ModifyBounds(sizeX: stepSize, centerX: -stepSize);
+        ModifyBounds(sizeX: stepSize, centerX: stepSize);
+        ModifyBounds(sizeY: stepSize, centerY: -stepSize);
+        ModifyBounds(sizeY: stepSize, centerY: stepSize);
+        ModifyBounds(sizeZ: stepSize, centerZ: -stepSize);
+        ModifyBounds(sizeZ: stepSize, centerZ: stepSize);
+      }
+    }
+
+    /// <summary>
+    /// This function processed the target renderer and returns the updated bounds
+    /// </summary>
+    private static Bounds GetUpdatedSkinnedMeshRendererBounds(SkinnedMeshRenderer renderer, Bounds newBounds)
+    {
+      var root = renderer.rootBone;
+
+      List<Vector3> GetLocalCorners(Bounds obj)
+      {
+        var result = new List<Vector3>();
+        for (var x = -1; x <= 1; x += 2)
+          for (var y = -1; y <= 1; y += 2)
+            for (var z = -1; z <= 1; z += 2)
+              result.Add(obj.center + Times(obj.extents, new Vector3(x, y, z)));
+        return result;
+      }
+
+      Vector3 Times(Vector3 self, Vector3 other) => new Vector3(self.x * other.x, self.y * other.y, self.z * other.z);
+
+      var corners = GetLocalCorners(newBounds);
+      var b = new Bounds(root.TransformPoint(newBounds.center), Vector3.zero);
+      foreach (var corner in corners)
+      {
+        b.Encapsulate(root.TransformPoint(corner));
+      }
+
+      return b;
+    }
+
+    /// <summary>
+    /// This function calculates the bounds of an uploadedObject by iterating over all the renderers
+    /// in the uploadedObject and its children (inc disabled) and encapsulating their bounds
+    /// </summary>
+    private static Bounds CalculateFullUploadedObjectBounds(GameObject uploadedObject)
+    {
+      Bounds bounds = new Bounds(uploadedObject.transform.position, Vector3.zero);
+      foreach (var renderer in uploadedObject.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+      {
+        if (renderer is MeshRenderer || renderer is SkinnedMeshRenderer)
+        {
+          bounds.Encapsulate(renderer.bounds);
+        }
+      }
+      return bounds;
+    }
+
+    /// <summary>
+    /// This Function iterates over all the animator controllers in the uploadedObject
+    /// and switches layers to WD on where possible
+    /// </summary>
+    public static void WriteDefaultsFixer(GameObject uploadedObject)
+    {
+      CoreLog("Fixing write defaults on states");
+
+      if (!ValidateAvatarAnimator(uploadedObject))
+      {
+        return;
+      }
+
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // load the null animation clip from the resources folder
+      AnimationClip noneClip = Resources.Load<AnimationClip>("CVRFury/PreMade/NullAnim/CVRF_Nothing");
+
+      // get the list of states from the animator controller
+      AnimatorState[] states = animatorController.layers
+        .SelectMany(x => x.stateMachine.states)
+        .Select(x => x.state)
+        .ToArray();
+
+      // get count of layers
+      int layerCount = animatorController.layers.Length;
+      // layer index
+      int layerIndex = 0;
+
+      foreach (var layer in animatorController.layers)
+      {
+        // Increment layer counter
+        layerIndex++;
+
+        // debug print the layer name
+        CoreLogDebug(
+          "[WriteDefaultsFixer] Processing layer: " + layer.name + "(" + layerIndex + " of " + layerCount + ")"
+        );
+
+        // Check if state is in a protected layer
+        if (Constants.CVR_PROTECTED_LAYERS.Any(protectedLayer => protectedLayer.Equals(layer.name)))
+        {
+          // debug print that the layer is protected and will be skipped
+          CoreLogDebug("[WriteDefaultsFixer] Layer: " + layer.name + " is protected and will be skipped");
+          continue;
+        }
+
+        // get count of states
+        int stateCount = layer.stateMachine.states.Length;
+        // state index
+        int stateIndex = 0;
+
+        foreach (var state in layer.stateMachine.states.Select(x => x.state))
+        {
+          // Increment state counter
+          stateIndex++;
+          // debug print the state name
+          CoreLogDebug(
+            "[WriteDefaultsFixer] Processing state: " + state.name + "(" + stateIndex + " of " + stateCount + ")"
+          );
+
+          // get the current state's write defaults value
+          bool writeDefaults = state.writeDefaultValues;
+
+          // debug print the current state's write defaults value
+          CoreLogDebug(
+            "[WriteDefaultsFixer] Write Defaults: " + writeDefaults + " on: " + state.name + " in layer: " + layer.name
+          );
+
+          // check if state has write defaults enabled, if so, skip
+          // bool to say if WD can be set to true
+          bool wdCanBeSet = false;
+
+          if (!writeDefaults)
+          {
+            // not write defaults enabled, need to check state
+
+            // check if the state has a behaviour
+            if (state.behaviours.Length > 0)
+            {
+              if (state.motion == null)
+              {
+                // set the write defaults to true
+                wdCanBeSet = true;
+              }
+            }
+            // check if state has an animation clip
+            if (state.motion != null)
+            {
+              // check if the motion is an animation clip
+              if (state.motion is AnimationClip)
+              {
+                // set the write defaults to true
+                wdCanBeSet = true;
+              }
+            }
+            else
+            {
+              // check if the state has a transition
+              if (state.transitions.Length == 0)
+              {
+                // set the write defaults to true
+                wdCanBeSet = true;
+              }
+            }
+          }
+
+          if (wdCanBeSet)
+          {
+            // set the write defaults to true
+            state.writeDefaultValues = true;
+
+            // debug print that the write defaults have been set to true
+            CoreLogDebug(
+              "[WriteDefaultsFixer] Write Defaults set to true on: " + state.name + " in layer: " + layer.name
+            );
+          }
+        }
+      }
+    }
+
+    /// <summary>
+    /// This function to check if the uploadedObject has all needed animator related parts
+    /// </summary>
+    public static bool ValidateAvatarAnimator(GameObject uploadedObject)
+    {
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // if the avatar component is null, return
+      if (avatarComponent == null)
+      {
+        //console error to say that the avatar component is missing
+        CoreLogError("[ValidateAvatarAnimator] Avatar component missing on: " + uploadedObject.name);
+        return false;
+      }
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // if the overrides are null, return
+      if (overrides == null)
+      {
+        //console error to say that the overrides are missing
+        CoreLogError("[ValidateAvatarAnimator] Animator Overrides missing on: " + uploadedObject.name);
+        return false;
+      }
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // if the animator controller is null, return
+      if (animatorController == null)
+      {
+        // console error to say that the animator controller is missing
+        CoreLogError("[ValidateAvatarAnimator] Animator Controller missing from Overrides on: " + uploadedObject.name);
+        return false;
+      }
+
+      return true;
+    }
+
+    /// <summary>
+    /// This function is to remove any duplicate animator parameters from animator controller related
+    /// to the uploadedObject
+    /// </summary>
+    public static void DedupeAnimatorParameters(GameObject uploadedObject)
+    {
+      CoreLog("Deduping animator parameters");
+
+      if (!ValidateAvatarAnimator(uploadedObject))
+      {
+        return;
+      }
+
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // if the animator controller is null, return
+      if (animatorController == null)
+      {
+        return;
+      }
+
+      // get the list of parameters from the animator controller
+      List<AnimatorControllerParameter> parameters = animatorController.parameters.ToList();
+
+      // check if there are any parameters
+      if (parameters.Count == 0)
+      {
+        return;
+      }
+
+      // Create a new list for unique parameters
+      List<AnimatorControllerParameter> uniqueParameters = new List<AnimatorControllerParameter>();
+
+      // Iterate through the original parameters list
+      foreach (var parameter in parameters)
+      {
+        // Check if the new list already contains a parameter with the same name and type
+        if (!uniqueParameters.Any(p => p.name == parameter.name && p.type == parameter.type))
+        {
+          // If not, add the parameter to the new list
+          uniqueParameters.Add(parameter);
+        }
+      }
+
+      // Clear the original parameters list in the animator controller
+      animatorController.parameters = null;
+
+      // Add all unique parameters from the new list back to the animator controller
+      animatorController.parameters = uniqueParameters.ToArray();
+
+      CoreLog("Animator parameters deduped");
+    }
+
+    /// <summary>
+    /// this function is to ensure that all states have a valid animation clip
+    /// if there is no animation clip, it will add in a 'none' animation clip
+    /// this is to resolve an issue where by missing animation clips can cause
+    /// the animator controller to not work correctly (ie avatar ends up in motorcycle pose)
+    /// </summary>
+    /// <param name="uploadedObject"></param>
+    public static void MissingAnimationClipFixer(GameObject uploadedObject)
+    {
+      CoreLog("Missing animation clip fixer running");
+
+      if (!ValidateAvatarAnimator(uploadedObject))
+      {
+        return;
+      }
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // load the null animation clip from the resources folder
+      AnimationClip noneClip = Resources.Load<AnimationClip>("CVRFury/PreMade/NullAnim/CVRF_Nothing");
+
+      // get the list of states from the animator controller
+      AnimatorState[] states = animatorController.layers
+        .SelectMany(x => x.stateMachine.states)
+        .Select(x => x.state)
+        .ToArray();
+
+      foreach (var layer in animatorController.layers)
+      {
+        // Check if state is in a protected layer
+        if (Constants.CVR_PROTECTED_LAYERS.Any(protectedLayer => protectedLayer.Equals(layer.name)))
+        {
+          // debug print that the layer is protected and will be skipped
+          CoreLogDebug("[MissingAnimationClipFixer] Layer: " + layer.name + " is protected and will be skipped");
+          continue;
+        }
+
+        foreach (var state in layer.stateMachine.states.Select(x => x.state))
+        {
+          // check if state has write defaults enabled, if so, skip
+          if (state.writeDefaultValues)
+          {
+            // debug print that the state has write defaults enabled and will be skipped
+            CoreLogDebug(
+              "[MissingAnimationClipFixer] State: "
+                + state.name
+                + " in layer: "
+                + layer.name
+                + " has write defaults enabled and will be skipped"
+            );
+            continue;
+          }
+
+          // Skip if the state has a blend tree
+          if (state.motion is BlendTree)
+          {
+            continue;
+          }
+
+          // Get the clip from the state
+          var clip = state.motion as AnimationClip;
+
+          // If the clip is null, add a 'none' clip
+          if (clip == null)
+          {
+            state.motion = noneClip; // Add the none clip to the state
+            CoreLogDebug(
+              "[MissingAnimationClipFixer] Added 'none' clip to state: " + state.name + " in layer: " + layer.name
+            );
+          }
+        }
+      }
+
+      CoreLog("Missing animation clip fixer finished");
+    }
+
+    /// <summary>
+    /// This function is called to clean up the CVRParameterStream entries list by removing any duplicates
+    /// </summary>
+    /// <param name="uploadedObject"></param>
+    public static void CVRParameterStreamDeDuplicator(GameObject uploadedObject)
+    {
+      // console print to say that the CVRParameterStream de-duplicator is running
+      CoreLog("CVRParameterStream de-duplicator running");
+      // get the CVRParameterStream component from the uploadedObject
+      CVRParameterStream parameterStream = uploadedObject.GetComponent<CVRParameterStream>();
+
+      // if the parameterStream is null, return
+      if (parameterStream == null)
+      {
+        return;
+      }
+
+      // get the entries from the parameterStream
+      List<CVRParameterStreamEntry> entries = parameterStream.entries;
+
+      // if the entries is null, return
+      if (entries == null)
+      {
+        return;
+      }
+
+      List<CVRParameterStreamEntry> deDuplicatedEntries = null;
+
+      // loop over the entries and normalise Null in the target field to null
+      // this is to sort out issues where you can get Null and null in the target field
+      // as these are NOT treated the same by the de-duplicator
+      foreach (var entry in entries)
+      {
+        if (entry.target == null)
+        {
+          entry.target = null;
+        }
+      }
+
+      try
+      {
+        // De-duplicate entries using GroupBy and selecting the first item from each group
+        deDuplicatedEntries = entries
+          .GroupBy(
+            e =>
+              new
+              {
+                e.type,
+                e.targetType,
+                e.applicationType,
+                e.staticValue,
+                e.target,
+                e.parameterName
+              }
+          )
+          .Select(group => group.First())
+          .ToList();
+      }
+      catch (Exception e)
+      {
+        // log the error
+        CoreLogError("Error de-duplicating CVRParameterStream entries: " + e.Message);
+        return;
+      }
+
+      // print the entries to the console
+      CoreLogDebug("Entries: " + entries.Count);
+
+      // print the original entries to the console
+      foreach (var entry in entries)
+      {
+        string targetRepresentation = entry.target == null ? "null" : entry.target.ToString();
+        CoreLogDebug(
+          $"Entry: {entry.type} {entry.targetType} {entry.applicationType} {entry.staticValue} {targetRepresentation} {entry.parameterName}"
+        );
+      }
+
+      CoreLogDebug("De-duplicated entries: " + deDuplicatedEntries.Count);
+
+      // print the entries to the console
+      foreach (var entry in deDuplicatedEntries)
+      {
+        string targetRepresentation = entry.target == null ? "null" : entry.target.ToString();
+        CoreLogDebug(
+          $"Entry: {entry.type} {entry.targetType} {entry.applicationType} {entry.staticValue} {targetRepresentation} {entry.parameterName}"
+        );
+      }
+
+      // Replace the original entries with the de-duplicated list
+      parameterStream.entries = deDuplicatedEntries;
+
+      // console print to say that the CVRParameterStream de-duplicator has finished
+      CoreLog("CVRParameterStream de-duplicator finished");
+    }
+
+    /// <summary>
+    /// This function is called to handel conversion for all variables that are expected
+    /// to be natively present in the VRC runtime environment but don't exist in the
+    /// CVR runtime environment by default
+    /// </summary>
+    public static void AutomaticVariableConverter(GameObject uploadedObject)
+    {
+      CoreLog("Automatic variable converter running");
+
+      if (!ValidateAvatarAnimator(uploadedObject))
+      {
+        return;
+      }
+
+      // get the avatar component
+      var avatarComponent = uploadedObject.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // get the list of parameters from the animator controller
+      AnimatorControllerParameter[] parameters = animatorController.parameters;
+
+      // list to store the parameter names
+      List<string> parameterNamesAnimator = new List<string>();
+
+      // loop through the parameters and add the names to the list
+      foreach (var parameter in parameters)
+      {
+        parameterNamesAnimator.Add(parameter.name);
+      }
+      // debug print the parameterNamesAnimator list
+      CoreLogDebugPrintList(
+        parameterNamesAnimator,
+        "[ModuleInstaller][AutomaticVariableConverter] Parameter Names Animator"
+      );
+
+      // var conversion list
+      Dictionary<string, string> conversionList = new Dictionary<string, string>();
+
+      // get the number of parameters in the parameterNamesAnimator list
+      int parameterNamesAnimatorCount = parameterNamesAnimator.Count;
+
+      // loop over the parameterNamesAnimator list and see if they are present in the
+      // Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary (key is the VRC parameter name)
+      foreach (var parameterName in parameterNamesAnimator)
+      {
+        CoreLogDebug(
+          "[ModuleInstaller][AutomaticVariableConverter] Parameter: "
+            + parameterName
+            + " ("
+            + (parameterNamesAnimator.IndexOf(parameterName) + 1)
+            + " of "
+            + parameterNamesAnimatorCount
+            + ")"
+        );
+
+        // check if the parameterName is in the Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary
+        if (Constants.VRC_PARAMETER_STREAM_MAPPINGS.ContainsKey(parameterName))
+        {
+          // debug print the parameterName was found in VRC_PARAMETER_STREAM_MAPPINGS
+          CoreLogDebug(
+            "[ModuleInstaller][AutomaticVariableConverter] Parameter: "
+              + parameterName
+              + " found in Constants.VRC_PARAMETER_STREAM_MAPPINGS"
+          );
+
+          // get the value from the Constants.VRC_PARAMETER_STREAM_MAPPINGS Dictionary
+          VRCParameterTranslation parameterTranslation = Constants.VRC_PARAMETER_STREAM_MAPPINGS[parameterName];
+
+          // check if the parameterTranslation is null, if it is log a critical error
+          // should never happen, but just in case
+          if (parameterTranslation == null)
+          {
+            CoreLogCritical(
+              "[ModuleInstaller][AutomaticVariableConverter] VRCParameterTranslation is null for parameter: "
+                + parameterName
+            );
+          }
+          else
+          {
+            // check if the parameter is supported, if not log an error and move on
+            if (!parameterTranslation.Supported)
+            {
+              CoreLogDebug(
+                "[ModuleInstaller][AutomaticVariableConverter] Parameter: " + parameterName + " is not supported"
+              );
+              // // pop a dialog box to inform the user that the parameter is not supported
+              // EditorUtility.DisplayDialog(
+              //   "Parameter not supported",
+              //   "The parameter: "
+              //     + parameterName
+              //     + " is not supported by CVR runtime environment\n\n"
+              //     + "No auto conversion is available and animations that rely upon it won't work",
+              //   "OK"
+              // );
+            }
+            else
+            {
+              #region parameter translation - populate list
+              // check if the parameterTranslation.CVR is not equal to the parameterName and is set
+              if (parameterTranslation.CVR != parameterName && parameterTranslation.CVR != "")
+              {
+                // add the parameterTranslation.CVR to the conversionList
+                conversionList.Add(parameterName, parameterTranslation.CVR);
+              }
+              #endregion // parameter translation - populate list
+
+              #region parameter specific addon animation controller
+              // check if the NeedsAnimator is true
+              if (parameterTranslation.NeedsAnimator)
+              {
+                // load the required animator controller
+                AnimatorController controllerToMerge = Resources.Load<AnimatorController>(
+                  "CVRFury/PreMade/" + parameterName + "/" + parameterName
+                );
+
+                // add in the addon per the parameterName
+                AnimatorCloner.MergeControllers(
+                  animatorController,
+                  controllerToMerge,
+                  null, // no parameter mapping needed as the A3M only mods the params for the addon controller
+                  false // need to make it overwrite the existing controller
+                );
+
+                // debug print that the animator controller for the parameterName has been merged
+                CoreLogDebug(
+                  "[ModuleInstaller][AutomaticVariableConverter] Animator controller for parameter: "
+                    + parameterName
+                    + " merged"
+                );
+              }
+              #endregion // parameter specific addon animation controller
+
+              #region parameter specific CVRParameterStream additions
+              // check if NeedsParameterStream is true
+              if (parameterTranslation.NeedsParameterStream)
+              {
+                // check if the uploadedObject has a CVRParameterStream on it
+                if (uploadedObject.GetComponent<CVRParameterStream>() == null)
+                {
+                  // add the CVRParameterStream component to the uploadedObject
+                  uploadedObject.AddComponent<CVRParameterStream>();
+                }
+
+                // get the CVRParameterStream component from the uploadedObject
+                var avatarParameterStream = uploadedObject.GetComponent<CVRParameterStream>();
+
+                // get the ParameterStreamPairs from the parameterTranslation
+                List<CRVParameterStreamPair> parameterStreamPairs = parameterTranslation.ParameterStreamPairs;
+
+                // check if the parameterStreamPairs is null, if it is log a critical error
+                // should never happen, but just in case
+                if (parameterStreamPairs == null)
+                {
+                  CoreLogCritical("ParameterStreamPairs is null for parameter: " + parameterName);
+                }
+                else
+                {
+                  // otherwise loop through the parameterStreamPairs
+                  foreach (CRVParameterStreamPair pair in parameterStreamPairs)
+                  {
+                    var sourceTypeName = pair.ParameterStreamSource.ToString();
+
+                    // Now, parse this name to get the corresponding value from the target enum
+                    ABI.CCK.Components.CVRParameterStreamEntry.Type targetType;
+                    if (Enum.TryParse(sourceTypeName, out targetType))
+                    {
+                      // Successfully parsed the name to the target enum type
+                      // 'targetType' now holds the corresponding value from 'ABI.CCK.Components.CVRParameterStreamEntry.Type'
+
+                      // add a new CVRParameterStreamEntry to the avatarParameterStream entries list
+                      avatarParameterStream.entries.Add(
+                        new CVRParameterStreamEntry
+                        {
+                          type = targetType,
+                          targetType = CVRParameterStreamEntry.TargetType.AvatarAnimator,
+                          applicationType = CVRParameterStreamEntry.ApplicationType.Override,
+                          parameterName = pair.TargetParmName
+                        }
+                      );
+                    }
+                    else
+                    {
+                      // should never happen, but if it does, log a critical error
+                      CoreLogCritical("[ModuleInstaller][Core] Could not parse the sourceTypeName: " + sourceTypeName);
+                    }
+                  }
+                }
+              }
+              #endregion // parameter specific CVRParameterStream additions
+            }
+          }
+        }
+      }
+
+      // debug print the conversionList count
+      CoreLogDebug("[ModuleInstaller][AutomaticVariableConverter]Conversion List count: " + conversionList.Count);
+      // debug print the conversionList in one block
+      CoreLogDebugPrintDictionary(conversionList, "[ModuleInstaller][AutomaticVariableConverter] Conversion List");
+
+      // check if the conversionList is not empty
+      if (conversionList.Count > 0)
+      {
+        // get the file path for the animator controller
+        string animatorControllerFilePath = AssetDatabase.GetAssetPath(animatorController);
+
+        // Load file content
+        string fileContent = File.ReadAllText(animatorControllerFilePath);
+
+        foreach (var conversion in conversionList)
+        {
+          string replacementValue = "";
+          // Check if conversion.Value starts with '#' and enclose in quotes if it does
+          if (conversion.Value.StartsWith("#"))
+          {
+            replacementValue = "'" + conversion.Value + "'";
+          }
+          else
+          {
+            replacementValue = conversion.Value;
+          }
+
+          // Regex pattern to match the parameter name at the end of a line
+          string pattern = @": " + Regex.Escape(conversion.Key) + "($)";
+          string replacement = ": " + replacementValue + "$1";
+
+          // debug print the pattern and replacement
+          CoreLogDebug("[ModuleInstaller][AutomaticVariableConverter] Pattern: " + pattern);
+          CoreLogDebug("[ModuleInstaller][AutomaticVariableConverter] Replacement: " + replacement);
+
+          try
+          {
+            // Replace occurrences
+            fileContent = Regex.Replace(fileContent, pattern, replacement, RegexOptions.Multiline);
+
+            // Save the modified content back to the file
+            File.WriteAllText(animatorControllerFilePath, fileContent);
+
+            // workaround for unity oddity where it doesn't always update the file properly
+            #region workaround - file save/update issue
+            // make temp file path
+            string filePathDupe = GenerateDebugCopyFilePath(animatorControllerFilePath, ".post-convert-dupe");
+
+            // copy the asset to a new file
+            AssetDatabase.CopyAsset(animatorControllerFilePath, filePathDupe);
+
+            // copy the dupe back to the original
+            AssetDatabase.CopyAsset(filePathDupe, animatorControllerFilePath);
+
+            // remove the dupe
+            AssetDatabase.DeleteAsset(filePathDupe);
+
+            // link the controller at animatorControllerFilePath back to the overrides
+            overrides.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+              animatorControllerFilePath
+            );
+
+            #endregion // workaround - file save/update issue
+          }
+          catch (Exception e)
+          {
+            // log the error
+            CoreLogError(
+              "[ModuleInstaller][AutomaticVariableConverter] Error replacing pattern: "
+                + pattern
+                + " with replacement: "
+                + replacement
+            );
+            CoreLogDebug("[ModuleInstaller][AutomaticVariableConverter] Error: " + e.Message);
+          }
+        }
+
+        // // refresh the asset database
+        // AssetDatabase.Refresh();
+        // // mark the file as dirty
+        // AssetDatabase.ImportAsset(animatorControllerFilePath, ImportAssetOptions.ForceUpdate);
+      }
+
+      CoreLog("Automatic variable converter finished");
+    }
+
+    /// <summary>
+    /// This function removes empty layers from the final animator controller
+    /// </summary>
+    public static void AnimatorControllerCleanup(GameObject avatar)
+    {
+      CoreLog("Animator controller cleanup running");
+
+      if (!ValidateAvatarAnimator(avatar))
+      {
+        return;
+      }
+
+      // get the avatar component
+      var avatarComponent = avatar.GetComponent<CVRAvatar>();
+
+      // get the overrides from the avatar component
+      AnimatorOverrideController overrides = avatarComponent.overrides;
+
+      // get the animator controller from the AnimatorOverrideController
+      AnimatorController animatorController = overrides.runtimeAnimatorController as AnimatorController;
+
+      // debug print how many layers are in the animator controller
+      CoreLogDebug("Number of layers in the animator controller: " + animatorController.layers.Length);
+
+      // loop through the layers in the animator controller
+      for (int i = animatorController.layers.Length - 1; i >= 0; i--)
+      {
+        // bool to keep track of if the state is doing something
+        bool layerDoingSomething = false;
+
+        // get the layer
+        var layer = animatorController.layers[i];
+
+        // get the state machine from the layer
+        var stateMachine = layer.stateMachine;
+
+        // get the number of states in the state machine
+        int numStates = stateMachine.states.Length;
+
+        // if there are no states in the state machine
+        if (numStates > 0)
+        {
+          // there are states in the state machine, need to check if they are doing something
+
+          // loop through the states
+          foreach (var state in stateMachine.states)
+          {
+            // check if the state has any animation clip
+            if (state.state.motion != null)
+            {
+              layerDoingSomething = true;
+            }
+
+            // check if the state has any behaviours
+            if (state.state.behaviours.Length > 0)
+            {
+              layerDoingSomething = true;
+            }
+
+            // check if the state is host to a blend tree
+            if (state.state.motion is BlendTree)
+            {
+              layerDoingSomething = true;
+            }
+
+            // check if the state has any outbound transitions
+            if (state.state.transitions.Length > 0)
+            {
+              layerDoingSomething = true;
+            }
+          }
+        }
+
+        // if the state is not doing anything, remove the layer
+        if (!layerDoingSomething)
+        {
+          // remove the layer from the animator controller
+          animatorController.RemoveLayer(i);
+        }
+
+        // debug print that layer is being checked
+        CoreLogDebug("Checked layer: " + layer.name);
+      }
+
+      // save the animator controller
+      EditorUtility.SetDirty(animatorController);
+      AssetDatabase.SaveAssets();
+
+      CoreLog("Animator controller cleanup finished");
+    }
+
+    /// <summary>
+    /// This function clears up relevant lock files
+    /// </summary>
+    public static void LockfileCleanup(GameObject avatar)
+    {
+      // only do this if the full controller module is present
+#if NVH_CVRFURY_EXISTS_MI_FC
+      // get the lock file path for the current avatar controller creation and delete it if it exists
+      string lockFilePath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name + "/processing.lock";
+      if (File.Exists(lockFilePath))
+      {
+        File.Delete(lockFilePath);
+      }
+      // and get rid of the meta file for the lock file
+      string lockFilePathMeta = lockFilePath + ".meta";
+      if (File.Exists(lockFilePathMeta))
+      {
+        File.Delete(lockFilePathMeta);
+      }
+
+#endif
+    }
+  }
+
+  public class ReportBuilderSupport
+  {
+    public static void ReportInit(string buildReportPath, CVRAvatar avatar, CVRFuryModule module)
+    {
+      // create a new build report file using the buildReportPath
+      File.WriteAllText(buildReportPath, string.Empty);
+
+      // add a header to the build report file
+      File.AppendAllText(buildReportPath, "Build Report\n\n");
+
+      // add a timestamp to the build report file
+      File.AppendAllText(buildReportPath, "Timestamp: " + System.DateTime.Now + "\n\n");
+
+      // add the avatar name to the build report file
+      File.AppendAllText(buildReportPath, "Avatar Name: " + avatar.name + "\n\n");
+
+      // add the module name to the build report file
+      File.AppendAllText(buildReportPath, "Module Name: " + module.name + "\n\n");
+
+      // add a separator to the build report file
+      File.AppendAllText(buildReportPath, "----------------------------------------\n\n");
+    }
+
+    public static void ReportAddBlankLine(string buildReportPath)
+    {
+      // add a blank line to the build report file
+      File.AppendAllText(buildReportPath, "\n");
+    }
+
+    public static void ReportAddLine(string buildReportPath, string message)
+    {
+      // add a message to the build report file
+      File.AppendAllText(buildReportPath, message + "\n");
+    }
+
+    public static void ReportAddErrorLine(string buildReportPath, string message)
+    {
+      // add an error message to the build report file
+      File.AppendAllText(buildReportPath, "Error: " + message + "\n");
+    }
+
+    public static void ReportEnd(string buildReportPath)
+    {
+      // add a separator to the build report file
+      File.AppendAllText(buildReportPath, "\n----------------------------------------\n\n");
+    }
+  }
+}
+
+// #endif
