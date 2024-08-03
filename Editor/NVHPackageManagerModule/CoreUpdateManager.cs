@@ -79,7 +79,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       string packagePath = Path.Combine(Application.dataPath, "..", "Packages", "uk.novavoidhowl.dev.cvrfury");
       Debug.Log("Checking path: " + packagePath);
 
-      if (Directory.Exists(packagePath))
+      DirectoryInfo dirInfo = new DirectoryInfo(packagePath);
+      if (dirInfo.Exists && (dirInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
       {
         Debug.Log("Package found in Packages directory");
 
