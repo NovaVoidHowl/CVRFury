@@ -116,7 +116,7 @@ TBC
 
 Note the following should be auto installed to the project by adding this package
 
-- com.unity.nuget.newtonsoft-json: 3.0.2
+- com.unity.nuget.newtonsoft-json: 3.1.0
 - com.unity.vectorgraphics: 2.0.0-preview.21
 - com.unity.editorcoroutines: 1.0.0
 
