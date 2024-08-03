@@ -1,4 +1,4 @@
-// Version 0.0.1
+// Version 1.0.0
 // editor only script to manage what channel of the package is being used and apply updates to the package
 #if UNITY_EDITOR
 
