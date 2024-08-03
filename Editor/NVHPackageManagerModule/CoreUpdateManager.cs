@@ -73,10 +73,6 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       rootVisualElement.style.paddingBottom = 10;
 
 #if !NVH_CVRFURY_DEV_PACKAGE_OVERRIDE
-
-      using System.IO;
-      using UnityEngine;
-      using UnityEngine.UIElements;
       
       public class CoreUpdateManager : MonoBehaviour
       {
