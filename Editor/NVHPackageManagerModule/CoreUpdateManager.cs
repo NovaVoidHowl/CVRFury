@@ -2,6 +2,7 @@
 // editor only script to manage what channel of the package is being used and apply updates to the package
 #if UNITY_EDITOR
 
+using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -471,7 +472,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             {
               Directory.Delete(editorFolder, true);
             }
-            catch (e)
+            catch (Exception e)
             {
               // print error message
               Debug.LogError(e);
@@ -486,7 +487,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             {
               Directory.Delete(runtimeFolder, true);
             }
-            catch (e)
+            catch (Exception e)
             {
               // print error message
               Debug.LogError(e);
