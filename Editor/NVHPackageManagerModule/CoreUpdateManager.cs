@@ -75,12 +75,32 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 
 #if !NVH_CVRFURY_DEV_PACKAGE_OVERRIDE
 
-      // Check if folder exists at Packages\uk.novavoidhowl.dev.cvrfury
-      string packagePath = Path.Combine(Application.dataPath, "..", "Packages", "uk.novavoidhowl.dev.cvrfury");
-      Debug.Log("Checking path: " + packagePath);
+      bool packageExists = false;
 
-      DirectoryInfo dirInfo = new DirectoryInfo(packagePath);
-      if (dirInfo.Exists && (dirInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+      // list folders in the Library\PackageCache
+      DirectoryInfo packageCacheDirInfo = new DirectoryInfo(Path.Combine(Application.dataPath, "..", "Library", "PackageCache"));
+      if (packageCacheDirInfo.Exists && (packageCacheDirInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+      {
+        Debug.Log("Package Cache directory found");
+
+        // get the list of directories in the PackageCache directory
+        DirectoryInfo[] packageCacheDirs = packageCacheDirInfo.GetDirectories();
+        foreach (DirectoryInfo dir in packageCacheDirs)
+        {
+          // if one of the directories starts with 'uk.novavoidhowl.dev.cvrfury', the package is installed
+          if (dir.Name.StartsWith("uk.novavoidhowl.dev.cvrfury"))
+          {
+            packageExists = true;
+            break;
+          }
+        }
+      }
+      else
+      {
+        Debug.Log("Package Cache directory not found");
+      }
+      
+      if (!packageExists)
       {
         Debug.Log("Package found in Packages directory");
 
