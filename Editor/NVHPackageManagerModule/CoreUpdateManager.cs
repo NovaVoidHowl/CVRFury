@@ -455,6 +455,10 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           string editorFolder = Path.Combine(Application.dataPath, Constants.ASSETS_MANAGED_FOLDER, "Editor");
           string runtimeFolder = Path.Combine(Application.dataPath, Constants.ASSETS_MANAGED_FOLDER, "Runtime");
 
+          // debug print the paths
+          Debug.Log("Editor Folder: " + editorFolder);
+          Debug.Log("Runtime Folder: " + runtimeFolder);
+
           if (Directory.Exists(editorFolder))
           {
             try
