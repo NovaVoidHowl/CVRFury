@@ -474,7 +474,6 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
               try
               {
                 Directory.Delete(editorFolder, true);
-                
               }
               catch (Exception e)
               {
@@ -566,6 +565,9 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 
       // Refresh the package manager to apply the changes
       RefreshPackageManager();
+
+      // close the window
+      Close();
     }
 
     private void UpdateManifestJson(string urlSuffix)
