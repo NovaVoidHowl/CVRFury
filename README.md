@@ -110,8 +110,6 @@ See the [VRCFury Webpage](https://vrcfury.com/) for more info on the project tha
 
 ## Getting Started
 
-TBC
-
 ### Prerequisites
 
 Note the following should be auto installed to the project by adding this package
@@ -127,7 +125,9 @@ Note the following should be auto installed to the project by adding this packag
 3. Paste in the git url of this repo `https://github.com/NovaVoidHowl/CVRFury.git#alpha`
 4. Click the add button
 
-The script should then be ready to use.
+The script should then be ready to configure via `NVH -> CVRFury -> Tool Setup`.
+> ⓘ \
+Recommendation is to install all app components from the Tool Setup menu to enable all possible features
 
 ### Core Update Manager
 
