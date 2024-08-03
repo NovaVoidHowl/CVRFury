@@ -14,6 +14,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Networking;
 using Unity.EditorCoroutines.Editor;
+using Newtonsoft.Json.Linq;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
