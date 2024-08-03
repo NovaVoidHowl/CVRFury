@@ -2,6 +2,10 @@
 // editor only script to manage what channel of the package is being used and apply updates to the package
 #if UNITY_EDITOR
 
+using System.IO;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEditor.PackageManager;
@@ -9,10 +13,7 @@ using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Networking;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.EditorCoroutines.Editor;
-using System.Linq;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
@@ -73,70 +74,54 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       rootVisualElement.style.paddingBottom = 10;
 
 #if !NVH_CVRFURY_DEV_PACKAGE_OVERRIDE
-      
-      public class CoreUpdateManager : MonoBehaviour
+
+      // Check if folder exists at Packages\uk.novavoidhowl.dev.cvrfury
+      string packagePath = Path.Combine(Application.dataPath, "..", "Packages", "uk.novavoidhowl.dev.cvrfury");
+      Debug.Log("Checking path: " + packagePath);
+
+      if (Directory.Exists(packagePath))
       {
-          private VisualElement rootVisualElement;
-      
-          void Start()
-          {
-              rootVisualElement = new VisualElement();
-      
-              // Check if folder exists at Packages\uk.novavoidhowl.dev.cvrfury
-              string packagePath = Path.Combine(Application.dataPath, "..", "Packages", "uk.novavoidhowl.dev.cvrfury");
-              Debug.Log("Checking path: " + packagePath);
-      
-              if (Directory.Exists(packagePath))
-              {
-                  Debug.Log("Package found in Packages directory");
-      
-                  // Add a label to say that the package is not installed
-                  Label ManualInstallLabel = new Label("Package Manually Installed");
-                  // Set text to 20px
-                  ManualInstallLabel.style.fontSize = 20;
-                  // Center the text
-                  ManualInstallLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-                  // Add the label to the UI
-                  rootVisualElement.Add(ManualInstallLabel);
-      
-                  // Add a space
-                  rootVisualElement.Add(new Label(" "));
-      
-                  // Add text area to tell the user that they are in manual mode
-                  TextElement ManualInstallText = new TextElement();
-                  ManualInstallText.text =
-                    "You are in manual mode, you will need to update the package manually"
-                    + "\nThis mode of operation is intended for development purposes only";
-                  // Set text to 14px
-                  ManualInstallText.style.fontSize = 16;
-                  // Center the text
-                  ManualInstallText.style.unityTextAlign = TextAnchor.MiddleCenter;
-                  // Add the text area to the UI
-                  rootVisualElement.Add(ManualInstallText);
-      
-                  // Add a space
-                  rootVisualElement.Add(new Label(" "));
-      
-                  // Add the current version of the package
-                  string packageVersionManual = getPackageVersion();
-                  // Add the version to the UI
-                  rootVisualElement.Add(new Label("Current Installed Version: " + packageVersionManual));
-                  // Center the text
-                  rootVisualElement.ElementAt(rootVisualElement.childCount - 1).style.unityTextAlign = TextAnchor.MiddleCenter;
-      
-                  return;
-              }
-              else
-              {
-                  Debug.Log("Package not found in Packages directory");
-              }
-          }
-      
-          private string getPackageVersion()
-          {
-              // Implement your logic to get the package version
-              return "1.0.0";
-          }
+        Debug.Log("Package found in Packages directory");
+
+        // Add a label to say that the package is not installed
+        Label ManualInstallLabel = new Label("Package Manually Installed");
+        // Set text to 20px
+        ManualInstallLabel.style.fontSize = 20;
+        // Center the text
+        ManualInstallLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+        // Add the label to the UI
+        rootVisualElement.Add(ManualInstallLabel);
+
+        // Add a space
+        rootVisualElement.Add(new Label(" "));
+
+        // Add text area to tell the user that they are in manual mode
+        TextElement ManualInstallText = new TextElement();
+        ManualInstallText.text =
+          "You are in manual mode, you will need to update the package manually"
+          + "\nThis mode of operation is intended for development purposes only";
+        // Set text to 14px
+        ManualInstallText.style.fontSize = 16;
+        // Center the text
+        ManualInstallText.style.unityTextAlign = TextAnchor.MiddleCenter;
+        // Add the text area to the UI
+        rootVisualElement.Add(ManualInstallText);
+
+        // Add a space
+        rootVisualElement.Add(new Label(" "));
+
+        // Add the current version of the package
+        string packageVersionManual = getPackageVersion();
+        // Add the version to the UI
+        rootVisualElement.Add(new Label("Current Installed Version: " + packageVersionManual));
+        // Center the text
+        rootVisualElement.ElementAt(rootVisualElement.childCount - 1).style.unityTextAlign = TextAnchor.MiddleCenter;
+
+        return;
+      }
+      else
+      {
+        Debug.Log("Package not found in Packages directory");
       }
 #endif
 
