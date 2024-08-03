@@ -1,4 +1,4 @@
-// { "version": "0.50.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.51.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1118,6 +1118,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     public static void DynamicBoneDisabler(GameObject uploadedObject)
     {
+      #if DYNAMICBONE_PACKAGE_EXISTS
       // debug log that the dynamic bone disabler is running
       CoreLogDebug("[Dynamic bone disabler] running");
 
@@ -1164,6 +1165,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // debug log that the dynamic bone disabler has finished
       CoreLogDebug("[Dynamic bone disabler] finished");
+      #endif // DYNAMICBONE_PACKAGE_EXISTS
     }
 
     /// <summary>

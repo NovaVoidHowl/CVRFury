@@ -1,0 +1,15 @@
+{
+  "name": "uk.novavoidhowl.dev.cvrfury.editor.menuoptions",
+  "references": [
+    "uk.novavoidhowl.dev.cvrfury.packagecore",
+    "uk.novavoidhowl.dev.cvrfury.runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": []
+}
