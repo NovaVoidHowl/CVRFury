@@ -452,7 +452,9 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         if(confirm)
         {
           // if the user confirms chanel change, remove the _CVRFury/Editor and _CVRFury/Runtime folders from the assets
-          string projectPath = Application.dataPath+"/..";
+          
+          // remove the "/Assets" from the path
+          string projectPath = Application.dataPath.Substring(0, Application.dataPath.Length - 6);
           
           string editorFolder = Path.Combine(projectPath, Constants.ASSETS_MANAGED_FOLDER, "Editor");
           string runtimeFolder = Path.Combine(projectPath, Constants.ASSETS_MANAGED_FOLDER, "Runtime");
@@ -463,6 +465,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 
           if (Directory.Exists(editorFolder))
           {
+            // debug print that the folder exists
+            Debug.Log("Editor folder exists");
             try
             {
               Directory.Delete(editorFolder, true);
@@ -476,6 +480,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 
           if (Directory.Exists(runtimeFolder))
           {
+            // debug print that the folder exists
+            Debug.Log("Runtime folder exists");
             try
             {
               Directory.Delete(runtimeFolder, true);
