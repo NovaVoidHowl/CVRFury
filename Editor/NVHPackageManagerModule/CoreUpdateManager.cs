@@ -410,6 +410,61 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         selectedRelease = "Latest";
       }
 
+      // if the new channel is different from the current channel, warn the user
+      if (selectedChannel != EditorPrefs.GetString(CurrentChannelKey))
+      {
+        bool confirm = EditorUtility.DisplayDialog(
+          "Channel Change",
+          "You are about to change the channel"
+          + "\nNote you will need to re-install the app components via the"
+          + "\n 'NVH -> CVRFury -> Tool Setup' menu",
+          "Continue",
+          "Cancel"
+        );
+
+        if (!confirm)
+        {
+          return;
+        }
+        
+        if (selectedChannel == "dev")
+        {
+          // if the selected channel is 'Dev', warn the user
+          bool confirmDev = EditorUtility.DisplayDialog(
+            "Dev Channel",
+            "You are about to change to the Dev channel"
+            + "\nThis channel is has the latest bleeding edge features"
+            + "\nand will be highly unstable"
+            + "Are you sure you want to continue?",
+            "Continue",
+            "Cancel"
+          );
+
+          if (!confirmDev)
+          {
+            return;
+          }
+        }  
+
+        if(confirm)
+        {
+          // if the user confirms chanel change, remove the _CVRFury/Editor and _CVRFury/Runtime folders from the assets
+          string editorFolder = Path.Combine(Application.dataPath, Constants.ASSETS_MANAGED_FOLDER, "Editor");
+          string runtimeFolder = Path.Combine(Application.dataPath, Constants.ASSETS_MANAGED_FOLDER, "Runtime");
+
+          if (Directory.Exists(editorFolder))
+          {
+            Directory.Delete(editorFolder, true);
+          }
+
+          if (Directory.Exists(runtimeFolder))
+          {
+            Directory.Delete(runtimeFolder, true);
+          }
+        }
+      }
+
+
       // save the current channel and release
       EditorPrefs.SetString(CurrentChannelKey, selectedChannel);
       EditorPrefs.SetString(CurrentReleaseKey, selectedRelease);
@@ -441,8 +496,15 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       // Update the manifest.json file
       UpdateManifestJson(urlSuffix);
 
-      // update the package
-      Debug.Log("Updating core package");
+      // Display a message box to the user
+      EditorUtility.DisplayDialog(
+        "Package Update",
+        "The package will be updated to the selected release on the next import"
+        + "\nPlease restart Unity to complete the update",
+        "OK"
+      );
+
+      
     }
 
     private void UpdateManifestJson(string urlSuffix)
