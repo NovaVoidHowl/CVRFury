@@ -29,6 +29,9 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
     private bool severComErrorGithubAPI = false;
     private ListRequest listRequest;
     private const string SelectedChannelKey = "SelectedChannel";
+    private const string SelectedReleaseKey = "SelectedRelease";
+    private const string CurrentChannelKey = "CurrentChannel";
+    private const string CurrentReleaseKey = "CurrentRelease";
 
     [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Update Manager", false, 10001)]
     public static void ShowWindow()
@@ -73,13 +76,16 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       rootVisualElement.style.paddingTop = 10;
       rootVisualElement.style.paddingBottom = 10;
 
-#if !NVH_CVRFURY_DEV_PACKAGE_OVERRIDE
-
       bool packageExists = false;
 
       // list folders in the Library\PackageCache
-      DirectoryInfo packageCacheDirInfo = new DirectoryInfo(Path.Combine(Application.dataPath, "..", "Library", "PackageCache"));
-      if (packageCacheDirInfo.Exists && (packageCacheDirInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+      DirectoryInfo packageCacheDirInfo = new DirectoryInfo(
+        Path.Combine(Application.dataPath, "..", "Library", "PackageCache")
+      );
+      if (
+        packageCacheDirInfo.Exists
+        && (packageCacheDirInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory
+      )
       {
         Debug.Log("Package Cache directory found");
 
@@ -99,7 +105,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       {
         Debug.Log("Package Cache directory not found");
       }
-      
+
+#if !NVH_CVRFURY_DEV_PACKAGE_OVERRIDE
       if (!packageExists)
       {
         Debug.Log("Package found in Packages directory");
@@ -238,6 +245,14 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       // add a space
       rootVisualElement.Add(new Label(" "));
 
+      // print the current channel and release
+      string currentChannel = EditorPrefs.GetString(CurrentChannelKey, "Not Set");
+      string currentRelease = EditorPrefs.GetString(CurrentReleaseKey, "Not Set");
+
+      // add the current channel and release to the UI
+      rootVisualElement.Add(new Label("Current Channel: " + currentChannel));
+      rootVisualElement.Add(new Label("Current Release: " + currentRelease));
+
       // Filter the channels to exclude those with the 'hide' property set
       var visibleChannels = channelList.channels.Where(c => !c.hide).ToList();
 
@@ -303,13 +318,75 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       // Add the container to the root visual element
       rootVisualElement.Add(container);
 
+      // get list of releases
+      List<string> releaseNames = releaseContainer.releases.Select(r => r.name).ToList();
+
+      // hide all releases that do not end with the channel name
+      releaseNames = releaseNames.Where(r => r.EndsWith(savedChannel)).ToList();
+
+      // add a latest option to the list of releases
+      releaseNames.Insert(0, "Latest");
+
+      // Load the saved selected release
+      string savedRelease = EditorPrefs.GetString(SelectedReleaseKey, releaseNames.FirstOrDefault());
+
+      // create a horizontal container
+      VisualElement releaseContainerElement = new VisualElement();
+      releaseContainerElement.style.flexDirection = FlexDirection.Row;
+
+      // add dropdown for release selection
+      DropdownField releaseDropdown = new DropdownField("Release", releaseNames, releaseNames.IndexOf(savedRelease));
+      releaseContainerElement.Add(releaseDropdown);
+
+      // Save the selected release when changed
+      releaseDropdown.RegisterValueChangedCallback(evt =>
+      {
+        EditorPrefs.SetString(SelectedReleaseKey, evt.newValue);
+      });
+
+      // add refresh button for releases
+      Button refreshReleasesButton = new Button(() =>
+      {
+        EditorCoroutineUtility.StartCoroutine(FetchReleaseDataFromGithubAPI(), this);
+      })
+      {
+        style =
+        {
+          width = 25,
+          height = 25,
+          paddingLeft = 4,
+          paddingRight = 4,
+          paddingTop = 4,
+          paddingBottom = 4
+        }
+      };
+
+      // use a built-in refresh icon
+      var refreshIconReleases = (Texture2D)EditorGUIUtility.IconContent("Refresh").image;
+      VisualElement iconElementReleases = new VisualElement();
+      iconElementReleases.style.backgroundImage = new StyleBackground(refreshIconReleases);
+      iconElementReleases.style.width = 16;
+      iconElementReleases.style.height = 16;
+      iconElementReleases.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+
+      // add the icon element to the button
+      refreshReleasesButton.Add(iconElementReleases);
+
+      // add the button to the horizontal container
+      releaseContainerElement.Add(refreshReleasesButton);
+
+      // add the horizontal container to the root visual element
+      rootVisualElement.Add(releaseContainerElement);
+
       // add a space
       rootVisualElement.Add(new Label(" "));
 
       // add the update button
       Button updateButton = new Button(() =>
       {
-        updateCorePackage();
+        updateCorePackage(packageExists);
+        // refresh the UI
+        refreshDepMgrUI();
       })
       {
         text = "Update Core Package",
@@ -318,10 +395,68 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       rootVisualElement.Add(updateButton);
     }
 
-    private void updateCorePackage()
+    private void updateCorePackage(bool packageExists)
     {
+      // get the selected channel
+      string selectedChannel = EditorPrefs.GetString(SelectedChannelKey);
+
+      // get the selected release
+      string selectedRelease = EditorPrefs.GetString(SelectedReleaseKey);
+
+      // if the selected release is empty/null, set it to "Latest"
+      if (string.IsNullOrEmpty(selectedRelease))
+      {
+        selectedRelease = "Latest";
+      }
+
+      // save the current channel and release
+      EditorPrefs.SetString(CurrentChannelKey, selectedChannel);
+      EditorPrefs.SetString(CurrentReleaseKey, selectedRelease);
+
+      if (!packageExists)
+      {
+        // not installed in package mode do nothing
+
+        // popup message box to tell the user that the package is in manual mode
+        EditorUtility.DisplayDialog(
+          "Package Not Installed",
+          "The package is not installed in package mode, you will need to update the package manually",
+          "OK"
+        );
+
+        return;
+      }
+      // now we can update the package as it is installed in package mode
+
+      string urlSuffix = selectedRelease;
+
+      // check if the selected release is the latest
+      if (selectedRelease == "Latest")
+      {
+        // in this case we want to set it to the branch name
+        urlSuffix = selectedChannel;
+      }
+
+      // Update the manifest.json file
+      UpdateManifestJson(urlSuffix);
+
       // update the package
       Debug.Log("Updating core package");
+    }
+
+    private void UpdateManifestJson(string urlSuffix)
+    {
+      string manifestPath = Path.Combine(Application.dataPath, "../Packages/manifest.json");
+      string manifestJson = File.ReadAllText(manifestPath);
+
+      JObject manifest = JObject.Parse(manifestJson);
+      JObject dependencies = (JObject)manifest["dependencies"];
+
+      // Update the specific package URL
+      dependencies[Constants.PACKAGE_NAME] = $"{Constants.GITHUB_CLONE_BASE_URL}#{urlSuffix}";
+
+      // Write the updated JSON back to the manifest.json file
+      File.WriteAllText(manifestPath, manifest.ToString());
     }
 
     private IEnumerator FetchReleaseDataFromGithubAPI()
