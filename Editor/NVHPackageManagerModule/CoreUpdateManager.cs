@@ -254,6 +254,9 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       rootVisualElement.Add(new Label("Current Channel: " + currentChannel));
       rootVisualElement.Add(new Label("Current Release: " + currentRelease));
 
+      // add a space
+      rootVisualElement.Add(new Label(" "));
+
       // Filter the channels to exclude those with the 'hide' property set
       var visibleChannels = channelList.channels.Where(c => !c.hide).ToList();
 
@@ -435,7 +438,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             "You are about to change to the Dev channel"
             + "\nThis channel is has the latest bleeding edge features"
             + "\nand will be highly unstable"
-            + "Are you sure you want to continue?",
+            + "\nAre you sure you want to continue?",
             "Continue",
             "Cancel"
           );
@@ -454,12 +457,28 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 
           if (Directory.Exists(editorFolder))
           {
-            Directory.Delete(editorFolder, true);
+            try
+            {
+              Directory.Delete(editorFolder, true);
+            }
+            catch (System.Exception)
+            {
+              // print error message
+              Debug.LogError("Error deleting Editor folder");
+            }
           }
 
           if (Directory.Exists(runtimeFolder))
           {
-            Directory.Delete(runtimeFolder, true);
+            try
+            {
+              Directory.Delete(runtimeFolder, true);
+            }
+            catch (System.Exception)
+            {
+              // print error message
+              Debug.LogError("Error deleting Runtime folder");
+            }
           }
         }
       }
