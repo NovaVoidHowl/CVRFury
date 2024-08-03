@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.editor.menuoptions
 {
@@ -20,7 +21,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.menuoptions
       // Check if the file exists
       if (AssetDatabase.LoadAssetAtPath(path, typeof(Object)) != null)
       {
-        Debug.Log("Dynamic Bone is installed");
+        CoreLog("Dynamic Bone is installed");
 
         // Check if the scripting define symbol DYNAMICBONE_PACKAGE_EXISTS exists
         if (!defineSymbols.Contains("DYNAMICBONE_PACKAGE_EXISTS"))
@@ -32,7 +33,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.menuoptions
       }
       else
       {
-        Debug.Log("Dynamic Bone is not installed");
+        CoreLog("Dynamic Bone is not installed");
 
         // Check if the scripting define symbol DYNAMICBONE_PACKAGE_EXISTS exists
         if (defineSymbols.Contains("DYNAMICBONE_PACKAGE_EXISTS"))
