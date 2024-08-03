@@ -89,7 +89,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         && (packageCacheDirInfo.Attributes & FileAttributes.Directory) == FileAttributes.Directory
       )
       {
-        Debug.Log("Package Cache directory found");
+        CoreLogDebug("Package Cache directory found");
 
         // get the list of directories in the PackageCache directory
         DirectoryInfo[] packageCacheDirs = packageCacheDirInfo.GetDirectories();
@@ -105,13 +105,13 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       }
       else
       {
-        Debug.Log("Package Cache directory not found");
+        CoreLogDebug("Package Cache directory not found");
       }
 
 #if !NVH_CVRFURY_DEV_PACKAGE_OVERRIDE
       if (!packageExists)
       {
-        Debug.Log("Package found in Packages directory");
+        CoreLogDebug("Package found in Packages directory");
 
         // Add a label to say that the package is not installed
         Label ManualInstallLabel = new Label("Package Manually Installed");
@@ -151,7 +151,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       }
       else
       {
-        Debug.Log("Package not found in Packages directory");
+        CoreLogDebug("Package not found in Packages directory");
       }
 #endif
 
@@ -264,7 +264,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       // check if scripting define symbol 'NVH_CVRFURY_DEV_ENABLED' is set
 #if NVH_CVRFURY_DEV_ENABLED
       // debug print that the dev mode is enabled
-      Debug.Log("[CoreUpdateManager]Dev Mode is enabled");
+      CoreLogDebug("[CoreUpdateManager]Dev Mode is enabled");
       // show all channels
       visibleChannels = channelList.channels.ToList();
 #endif
@@ -450,47 +450,51 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           }
         }  
 
-        if(confirm)
+        if (packageExists)
         {
-          // if the user confirms chanel change, remove the _CVRFury/Editor and _CVRFury/Runtime folders from the assets
-          
-          // remove the "/Assets" from the path
-          string projectPath = Application.dataPath.Substring(0, Application.dataPath.Length - 6);
-          
-          string editorFolder = Path.Combine(projectPath, Constants.ASSETS_MANAGED_FOLDER, "Editor");
-          string runtimeFolder = Path.Combine(projectPath, Constants.ASSETS_MANAGED_FOLDER, "Runtime");
-
-          // debug print the paths
-          Debug.Log("Editor Folder: " + editorFolder);
-          Debug.Log("Runtime Folder: " + runtimeFolder);
-
-          if (Directory.Exists(editorFolder))
+          // only do this if the package is installed in package mode
+          if(confirm)
           {
-            // debug print that the folder exists
-            Debug.Log("Editor folder exists");
-            try
-            {
-              Directory.Delete(editorFolder, true);
-            }
-            catch (Exception e)
-            {
-              // print error message
-              Debug.LogError(e);
-            }
-          }
+            // if the user confirms chanel change, remove the _CVRFury/Editor and _CVRFury/Runtime folders from the assets
+            
+            // remove the "/Assets" from the path
+            string projectPath = Application.dataPath.Substring(0, Application.dataPath.Length - 6);
+            
+            string editorFolder = Path.Combine(projectPath, Constants.ASSETS_MANAGED_FOLDER, "Editor");
+            string runtimeFolder = Path.Combine(projectPath, Constants.ASSETS_MANAGED_FOLDER, "Runtime");
 
-          if (Directory.Exists(runtimeFolder))
-          {
-            // debug print that the folder exists
-            Debug.Log("Runtime folder exists");
-            try
+            // debug print the paths
+            CoreLogDebug("Editor Folder: " + editorFolder);
+            CoreLogDebug("Runtime Folder: " + runtimeFolder);
+
+            if (Directory.Exists(editorFolder))
             {
-              Directory.Delete(runtimeFolder, true);
+              // debug print that the folder exists
+              CoreLogDebug("Editor folder exists");
+              try
+              {
+                Directory.Delete(editorFolder, true);
+              }
+              catch (Exception e)
+              {
+                // print error message
+                CoreLogWarning(e);
+              }
             }
-            catch (Exception e)
+
+            if (Directory.Exists(runtimeFolder))
             {
-              // print error message
-              Debug.LogError(e);
+              // debug print that the folder exists
+              CoreLogDebug("Runtime folder exists");
+              try
+              {
+                Directory.Delete(runtimeFolder, true);
+              }
+              catch (Exception e)
+              {
+                // print error message
+                CoreLogWarning(e);
+              }
             }
           }
         }
@@ -567,7 +571,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           || webRequest.result == UnityWebRequest.Result.ProtocolError
         )
         {
-          Debug.LogError(webRequest.error);
+          CoreLogDebug(webRequest.error);
           severComErrorGithubAPI = true;
         }
         else
@@ -585,7 +589,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           // Use the deserialized data
           foreach (var release in releaseContainer.releases)
           {
-            Debug.Log("Release: " + release.name);
+            CoreLogDebug("Release: " + release.name);
           }
         }
       }
@@ -607,7 +611,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           || webRequest.result == UnityWebRequest.Result.ProtocolError
         )
         {
-          Debug.LogError(webRequest.error);
+          CoreLogDebug(webRequest.error);
           severComErrorCVRFuryAPI = true;
         }
         else
@@ -622,7 +626,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           // Process the JSON data as needed
           foreach (var channel in channelList.channels)
           {
-            Debug.Log($"Channel Name: {channel.name}, State: {channel.state}, Hide: {channel.hide}");
+            CoreLogDebug($"Channel Name: {channel.name}, State: {channel.state}, Hide: {channel.hide}");
           }
         }
       }
