@@ -53,6 +53,7 @@
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
+        <li><a href="#core-update-manager">Core Update Manager</a></li>
       </ul>
     </li>
     <li><a href="#feature-support">Feature Support</a></li>
@@ -117,15 +118,21 @@ Note the following should be auto installed to the project by adding this packag
 
 - com.unity.nuget.newtonsoft-json: 3.0.2
 - com.unity.vectorgraphics: 2.0.0-preview.21
+- com.unity.editorcoroutines: 1.0.0
 
 ### Installation
 
 1. In unity open the `Package Manager` window
 2. Click the plus button in the top left of that window and choose the `Add packages from git URL` option
-3. Paste in the git url of this repo `https://github.com/NovaVoidHowl/CVRFury.git`
+3. Paste in the git url of this repo `https://github.com/NovaVoidHowl/CVRFury.git#alpha`
 4. Click the add button
 
 The script should then be ready to use.
+
+### Core Update Manager
+
+Should you want to switch to a different release channel or specific release of the software, you can do this via the menu
+option at `NVH -> CVRFury -> Update Manager`
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -155,48 +162,48 @@ V3 = VRCFury post-1.744.0
 The following table gives a breakdown of what features are supported for import/install.\
 Note at this time there is no native config UI for CVRFury modules yet (save the dev debug interface)
 
-|        Feature         | Data Import Supported | Install Supported | Notes                                                                           |
-| :--------------------: | :-------------------: | :---------------: | :------------------------------------------------------------------------------ |
-|   ObjectToggleAction   |        ✔️ V2        |       ✔️        |                                                                                 |
-|     MaterialAction     |        ✔️ V2        |       ✔️        |                                                                                 |
-|    BlendShapeAction    |        ✔️ V2        |        ❌         |                                                                                 |
-|     FxFloatAction      |        ✔️ V2        |       ❌🔽       |                                                                                 |
-|  AnimationClipAction   |         ❔🔽         |       ❔🔽       |                                                                                 |
-| ShaderInventoryAction  |         ❔🔽         |       ❔🔽       |                                                                                 |
-|  PoiyomiUVTileAction   |         ❔🔽         |       ❔🔽       |                                                                                 |
-| MaterialPropertyAction |         ❔🔽         |       ❔🔽       |                                                                                 |
-|      ScaleAction       |        ✔️ V2        |        ❌         |                                                                                 |
-|  BlockBlinkingAction   |        ✔️ V2        |       ✔️        |                                                                                 |
-|   BlockVisemesAction   |        ✔️ V2        |       ✔️        |                                                                                 |
-| FlipBookBuilderAction  |          ❔           |        ❔         |                                                                                 |
-|                        |                       |                   |                                                                                 |
-|        Blinking        |          ❔           |        ❔         |                                                                                 |
-|       Breathing        |          ❔           |        ❔         |                                                                                 |
-|     FullController     |        ✔️ V2        |       ✔️        | Note: no support for menu section triggered toggles (CVR menu is flat, not a tree) |
-|         Toggle         |         ❌🔽         |       ❌🔽       |                                                                                 |
-|         Puppet         |          ❔           |        ❔         |                                                                                 |
-|      SecurityLock      |         ❌🔽         |       ❌🔽       |                                                                                 |
-|        Talking         |         ❌🔽         |       ❌🔽       |                                                                                 |
-|      Toes Puppet       |         ❌🔽         |       ❌🔽       |                                                                                 |
-|    Advanced Visemes    |          ❔           |        ❔         |                                                                                 |
-|      ArmatureLink      |        ✔️ V2        |       ✔️        |                                                                                 |
-|     BoundingBoxFix     |         ❔🔽         |       ❔🔽       |                                                                                 |
-|    FixWriteDefaults    |         ❔🔽         |       ❔🔽       |                                                                                 |
-|   RemoveHandGestures   |         ❌🔽         |       ❌🔽       |                                                                                 |
-|   AnchorOverrideFix    |         ❔🔽         |       ❔🔽       |                                                                                 |
-|      MoveMenuItem      |         ❔🔽         |       ❔🔽       |                                                                                 |
-|     GestureDriver      |         ❔🔽         |       ❔🔽       |                                                                                 |
-|         Gizmo          |         ❌🔽         |       ❌🔽       |                                                                                 |
-|   DeleteDuringUpload   |        ✔️ V2        |       ✔️        |                                                                                 |
-|     BlendShapeLink     |         ❔🔽         |       ❔🔽       |                                                                                 |
-|        SetIcon         |          🚫          |        🚫        | There are no icons on CVR menus                                                 |
-|  OverrideMenuSettings  |          🚫          |        🚫        | Related to VRC menu structure only                                              |
-|  BlendshapeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                 |
-|        Slot4Fix        |          ❔           |        ❔         |                                                                                 |
-|  DirectTreeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                 |
-|   ShowInFirstPerson    |        ✔️ V2        |       ✔️        |                                                                                 |
-|    MmdCompatibility    |         ❔🔽         |       ❔🔽       |                                                                                 |
-|    Parameter Stream    |          🚫          |       ✔️        | VRC does not have Parameter stream equivalent                                   |
+|        Feature         | Data Import Supported | Install Supported | Notes                                                                              |
+| :--------------------: | :-------------------: | :---------------: | :--------------------------------------------------------------------------------- |
+|   ObjectToggleAction   |         ✔️          |       ✔️        |                                                                                    |
+|     MaterialAction     |         ✔️          |       ✔️        |                                                                                    |
+|    BlendShapeAction    |         ✔️          |        ❌         |                                                                                    |
+|     FxFloatAction      |         ✔️          |       ❌🔽       |                                                                                    |
+|  AnimationClipAction   |         ❔🔽         |       ❔🔽       |                                                                                    |
+| ShaderInventoryAction  |         ❔🔽         |       ❔🔽       |                                                                                    |
+|  PoiyomiUVTileAction   |         ❔🔽         |       ❔🔽       |                                                                                    |
+| MaterialPropertyAction |         ❔🔽         |       ❔🔽       |                                                                                    |
+|      ScaleAction       |         ✔️          |        ❌         |                                                                                    |
+|  BlockBlinkingAction   |         ✔️          |       ✔️        |                                                                                    |
+|   BlockVisemesAction   |         ✔️          |       ✔️        |                                                                                    |
+| FlipBookBuilderAction  |          ❔           |        ❔         |                                                                                    |
+|                        |                       |                   |                                                                                    |
+|        Blinking        |          ❔           |        ❔         |                                                                                    |
+|       Breathing        |          ❔           |        ❔         |                                                                                    |
+|     FullController     |         ✔️          |       ✔️        | Note: no support for menu section triggered toggles (CVR menu is flat, not a tree) |
+|         Toggle         |         ❌🔽         |       ❌🔽       |                                                                                    |
+|         Puppet         |          ❔           |        ❔         |                                                                                    |
+|      SecurityLock      |         ❌🔽         |       ❌🔽       |                                                                                    |
+|        Talking         |         ❌🔽         |       ❌🔽       |                                                                                    |
+|      Toes Puppet       |         ❌🔽         |       ❌🔽       |                                                                                    |
+|    Advanced Visemes    |          ❔           |        ❔         |                                                                                    |
+|      ArmatureLink      |         ✔️          |       ✔️        |                                                                                    |
+|     BoundingBoxFix     |         ❔🔽         |       ❔🔽       |                                                                                    |
+|    FixWriteDefaults    |         ❔🔽         |       ❔🔽       |                                                                                    |
+|   RemoveHandGestures   |         ❌🔽         |       ❌🔽       |                                                                                    |
+|   AnchorOverrideFix    |         ❔🔽         |       ❔🔽       |                                                                                    |
+|      MoveMenuItem      |         ❔🔽         |       ❔🔽       |                                                                                    |
+|     GestureDriver      |         ❔🔽         |       ❔🔽       |                                                                                    |
+|         Gizmo          |         ❌🔽         |       ❌🔽       |                                                                                    |
+|   DeleteDuringUpload   |         ✔️          |       ✔️        |                                                                                    |
+|     BlendShapeLink     |         ❔🔽         |       ❔🔽       |                                                                                    |
+|        SetIcon         |          🚫          |        🚫        | There are no icons on CVR menus                                                    |
+|  OverrideMenuSettings  |          🚫          |        🚫        | Related to VRC menu structure only                                                 |
+|  BlendshapeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                    |
+|        Slot4Fix        |          ❔           |        ❔         |                                                                                    |
+|  DirectTreeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                    |
+|   ShowInFirstPerson    |         ✔️          |       ✔️        |                                                                                    |
+|    MmdCompatibility    |         ❔🔽         |       ❔🔽       |                                                                                    |
+|    Parameter Stream    |          🚫          |       ✔️        | VRC does not have Parameter stream equivalent                                      |
 
 ## Things that are not included
 
@@ -211,20 +218,6 @@ or find a tool that can do them.
 <!-- ROADMAP -->
 
 ## Roadmap
-
-- [x] VRCExpressionParameters Converter and Stub
-
-- [x] VRCExpressionMenu Converter and Stub
-
-- [x] PhysBone Stubber - (just stubs them NOT a converter)
-
-- [x] VRCFury stubs - Datastore v2 (pre version 1.744)
-
-- [x] VRCFury stubs - Datastore v3
-
-- [ ] CVRFury VRCStub to VRC Converter (potential)
-
-- [ ] More to come ......
 
 See the [open issues](https://github.com/NovaVoidHowl/CVRFury/issues) for a full list of proposed features (and known issues).
 
