@@ -37,6 +37,9 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     public static readonly string DOCS_URL = "https://repo.cvrfury.uk";
 
+    public static readonly string CVRFURY_API_BASE_URL = "https://api.cvrfury.uk";
+
+    public static readonly string GITHUB_API_BASE_URL = "https://api.github.com/repos/NovaVoidHowl/CVRFury";
 
     public static readonly ReadOnlyCollection<string> CVRFURY_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
       new List<string>

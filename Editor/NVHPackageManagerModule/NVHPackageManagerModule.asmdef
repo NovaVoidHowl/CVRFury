@@ -3,6 +3,7 @@
   "references": [
     "UnityEngine.CoreModule",
     "UnityEditor.CoreModule",
+    "Unity.EditorCoroutines.Editor",
     "uk.novavoidhowl.dev.cvrfury.packagecore"
   ],
   "includePlatforms": [],
