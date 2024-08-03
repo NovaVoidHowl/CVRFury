@@ -420,8 +420,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         bool confirm = EditorUtility.DisplayDialog(
           "Channel Change",
           "You are about to change the channel"
-          + "\nNote you will need to re-install the app components via the"
-          + "\n 'NVH -> CVRFury -> Tool Setup' menu",
+            + "\nNote you will need to re-install the app components via the"
+            + "\n 'NVH -> CVRFury -> Tool Setup' menu",
           "Continue",
           "Cancel"
         );
@@ -430,16 +430,16 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         {
           return;
         }
-        
+
         if (selectedChannel == "dev")
         {
           // if the selected channel is 'Dev', warn the user
           bool confirmDev = EditorUtility.DisplayDialog(
             "Dev Channel",
             "You are about to change to the Dev channel"
-            + "\nThis channel is has the latest bleeding edge features"
-            + "\nand will be highly unstable"
-            + "\nAre you sure you want to continue?",
+              + "\nThis channel is has the latest bleeding edge features"
+              + "\nand will be highly unstable"
+              + "\nAre you sure you want to continue?",
             "Continue",
             "Cancel"
           );
@@ -448,18 +448,18 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           {
             return;
           }
-        }  
+        }
 
         if (packageExists)
         {
           // only do this if the package is installed in package mode
-          if(confirm)
+          if (confirm)
           {
             // if the user confirms chanel change, remove the _CVRFury/Editor and _CVRFury/Runtime folders from the assets
-            
+
             // remove the "/Assets" from the path
             string projectPath = Application.dataPath.Substring(0, Application.dataPath.Length - 6);
-            
+
             string editorFolder = Path.Combine(projectPath, Constants.ASSETS_MANAGED_FOLDER, "Editor");
             string runtimeFolder = Path.Combine(projectPath, Constants.ASSETS_MANAGED_FOLDER, "Runtime");
 
@@ -500,7 +500,6 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         }
       }
 
-
       // save the current channel and release
       EditorPrefs.SetString(CurrentChannelKey, selectedChannel);
       EditorPrefs.SetString(CurrentReleaseKey, selectedRelease);
@@ -532,15 +531,8 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
       // Update the manifest.json file
       UpdateManifestJson(urlSuffix);
 
-      // Display a message box to the user
-      EditorUtility.DisplayDialog(
-        "Package Update",
-        "The package will be updated to the selected release on the next import"
-        + "\nPlease restart Unity to complete the update",
-        "OK"
-      );
-
-      
+      // Refresh the package manager to apply the changes
+      RefreshPackageManager();
     }
 
     private void UpdateManifestJson(string urlSuffix)
@@ -556,6 +548,27 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 
       // Write the updated JSON back to the manifest.json file
       File.WriteAllText(manifestPath, manifest.ToString());
+    }
+
+    private void RefreshPackageManager()
+    {
+      Client.Resolve();
+      EditorApplication.update += () =>
+      {
+        var request = Client.List(); // Use Client.List() to get the status
+        if (request.IsCompleted)
+        {
+          if (request.Status == StatusCode.Success)
+          {
+            CoreLog("Package Manager resolved successfully.");
+          }
+          else if (request.Status >= StatusCode.Failure)
+          {
+            CoreLogError("Failed to resolve Package Manager: " + request.Error.message);
+          }
+          EditorApplication.update -= null;
+        }
+      };
     }
 
     private IEnumerator FetchReleaseDataFromGithubAPI()
