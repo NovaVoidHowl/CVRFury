@@ -527,6 +527,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
                   // print error message
                   CoreLogWarning(e);
                 }
+              }
             }
           }
         }
