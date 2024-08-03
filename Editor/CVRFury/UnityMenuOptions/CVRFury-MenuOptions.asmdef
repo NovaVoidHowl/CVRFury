@@ -1,10 +1,8 @@
 {
-  "name": "uk.novavoidhowl.dev.cvrfury.nvhpmm",
+  "name": "uk.novavoidhowl.dev.cvrfury.editor.menuoptions",
   "references": [
-    "UnityEngine.CoreModule",
-    "UnityEditor.CoreModule",
-    "Unity.EditorCoroutines.Editor",
-    "uk.novavoidhowl.dev.cvrfury.packagecore"
+    "uk.novavoidhowl.dev.cvrfury.packagecore",
+    "uk.novavoidhowl.dev.cvrfury.runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
