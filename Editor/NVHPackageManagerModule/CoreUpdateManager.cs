@@ -471,10 +471,10 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             {
               Directory.Delete(editorFolder, true);
             }
-            catch (System.Exception)
+            catch (e)
             {
               // print error message
-              Debug.LogError("Error deleting Editor folder");
+              Debug.LogError(e);
             }
           }
 
@@ -486,10 +486,10 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             {
               Directory.Delete(runtimeFolder, true);
             }
-            catch (System.Exception)
+            catch (e)
             {
               // print error message
-              Debug.LogError("Error deleting Runtime folder");
+              Debug.LogError(e);
             }
           }
         }
