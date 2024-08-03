@@ -474,11 +474,28 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
               try
               {
                 Directory.Delete(editorFolder, true);
+                
               }
               catch (Exception e)
               {
                 // print error message
                 CoreLogWarning(e);
+              }
+
+              // remove the related meta file
+              string editorMetaFile = editorFolder + ".meta";
+
+              if (File.Exists(editorMetaFile))
+              {
+                try
+                {
+                  File.Delete(editorMetaFile);
+                }
+                catch (Exception e)
+                {
+                  // print error message
+                  CoreLogWarning(e);
+                }
               }
             }
 
@@ -495,6 +512,21 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
                 // print error message
                 CoreLogWarning(e);
               }
+
+              // remove the related meta file
+              string runtimeMetaFile = runtimeFolder + ".meta";
+
+              if (File.Exists(runtimeMetaFile))
+              {
+                try
+                {
+                  File.Delete(runtimeMetaFile);
+                }
+                catch (Exception e)
+                {
+                  // print error message
+                  CoreLogWarning(e);
+                }
             }
           }
         }
