@@ -112,6 +112,8 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     public GameObject target;
     public bool show;
+    public bool bindToHead = false; // this is so that when imported from VRCFury it will trigger binding to the head
+                                    // by default (normal add via CVRFury will not bind to the head)
   }
 
   [Serializable]

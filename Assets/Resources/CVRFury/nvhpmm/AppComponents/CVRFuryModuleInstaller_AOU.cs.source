@@ -230,6 +230,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // if it doesn't, log an error to the console
         CoreLogError("GameObject " + ((showInFirstPerson)module).target.name + " does not exist");
       }
+
+      // check if the bindToHead bool is true
+      if (((showInFirstPerson)module).bindToHead)
+      {
+        // now we need to move the GameObject to the head of the avatar
+        
+        Animator avatarAnimator = targetAvatar.GetComponent<Animator>();
+        Transform headTransform = avatarAnimator.GetBoneTransform(HumanBodyBones.Head);
+
+        // set the GameObject's parent to the headObject
+        ((showInFirstPerson)module).target.transform.SetParent(headTransform);
+      }
     }
   }
 }

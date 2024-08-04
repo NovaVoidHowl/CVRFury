@@ -1,4 +1,4 @@
-// { "version": "0.2.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
+// { "version": "0.2.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -154,6 +154,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // get the game object that the VRCFury component is attached to (which is the moduleFoundOnObject)
           showInFirstPersonModule.target = moduleFoundOnObject;
+
+          // enable the bindToHead property
+          showInFirstPersonModule.bindToHead = true;
 
           // ---- end armatureLink specific properties ----
 
