@@ -1,4 +1,4 @@
-// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
+// { "version": "0.2.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_SIFP", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -103,7 +103,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // get the list of modules from this DSU
           var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
 
-          // check to see if the DSU already has an armatureLink module
+          // check to see if the DSU already has an showInFirstPerson module
           if (modules.Any(module => module.GetType().Name == "showInFirstPerson"))
           {
             List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
@@ -152,19 +152,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // set the show property to true
           showInFirstPersonModule.show = true;
 
-          // get the game object that the DSU is attached to ( as it has to be on the same game object as the VCRFury component)
-          GameObject DSUGameObject = ((CVRFuryDataStorageUnit)target).gameObject;
+          // get the game object that the VRCFury component is attached to (which is the moduleFoundOnObject)
+          showInFirstPersonModule.target = moduleFoundOnObject;
 
-          // check if the VRCFury component is attached to the DSU game object
-          if (DSUGameObject.GetComponent<VRCFury>() == null)
-          {
-            // print to console that the VRCFury component is not attached to the DSU game object
-            CoreLog("VRCFury component is not attached to the DSU game object");
-            return;
-          }
-
-          // get the game object that the VRCFury component is attached to
-          showInFirstPersonModule.target = DSUGameObject;
+          // enable the bindToHead property
+          showInFirstPersonModule.bindToHead = true;
 
           // ---- end armatureLink specific properties ----
 

@@ -1,4 +1,4 @@
-// { "version": "0.7.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.7.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1064,6 +1064,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // loop through the menus in the module
           foreach (fullControllerModule.MenuEntry menuEntry in (module as fullControllerModule).menus)
           {
+            // check if the menuEntry is null
+            if (menuEntry == null)
+            {
+              // if it is, log an error to the console
+              CoreLogError("menuEntry is null");
+              continue;
+            }
+
+            //check if the menuEntry.menu is null
+            if (menuEntry.menu == null)
+            {
+              // if it is, log an error to the console
+              CoreLogError("menuEntry.menu is null");
+              continue;
+            }
+
             // log the menu's name to the console
             CoreLog("menuEntry.menu.name: " + menuEntry.menu.name);
 
@@ -1307,6 +1323,15 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // loop over the Parameters from the module
         foreach (fullControllerModule.ParamsEntry parameters in (module as fullControllerModule).parameters)
         {
+          // check if the parameters is null
+          if (parameters.parameters == null)
+          {
+            // if it is, log an error to the console
+            CoreLogError("parameters.parameters is null");
+            // continue to the next parameters
+            continue;
+          }
+
           // get the CVRFuryParametersStore from the parameters
           CVRFuryParametersStore parametersStore = parameters.parameters;
 
