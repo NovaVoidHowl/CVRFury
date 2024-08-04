@@ -118,18 +118,87 @@ public partial class CVRFuryMenuStoreEditor : Editor
           true // displayRemoveButton
         )
         {
-          drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Dropdown List Names")
+          drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Dropdown List Names & Values")
         };
 
         reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
         {
           var element = reorderableList.serializedProperty.GetArrayElementAtIndex(index);
+          float valueWidth = rect.width / 8;
+          float nameWidth = 7 * valueWidth;
+
           EditorGUI.PropertyField(
-            new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
+            new Rect(rect.x, rect.y, nameWidth - 4, EditorGUIUtility.singleLineHeight),
             element.FindPropertyRelative("name"),
             GUIContent.none
           );
+
+          EditorGUI.PropertyField(
+            new Rect(rect.x + nameWidth, rect.y, valueWidth, EditorGUIUtility.singleLineHeight),
+            element.FindPropertyRelative("value"),
+            GUIContent.none
+          );
+
+          // Check for duplicate values
+          if (HasDuplicateValue(index))
+          {
+            // Create a GUIContent with an icon and a tooltip
+            GUIContent warningContent = new GUIContent(
+              EditorGUIUtility.IconContent("console.warnicon").image,
+              "Duplicate value detected"
+            );
+
+            // Draw the warning icon with the tooltip
+            GUI.Label(
+              new Rect(rect.x + rect.width - 20, rect.y, 20, EditorGUIUtility.singleLineHeight),
+              warningContent
+            );
+          }
         };
+
+        bool HasDuplicateValue(int currentIndex)
+        {
+          var currentValueProperty = reorderableList.serializedProperty
+            .GetArrayElementAtIndex(currentIndex)
+            .FindPropertyRelative("value");
+
+          for (int i = 0; i < reorderableList.serializedProperty.arraySize; i++)
+          {
+            if (i != currentIndex)
+            {
+              var valueProperty = reorderableList.serializedProperty
+                .GetArrayElementAtIndex(i)
+                .FindPropertyRelative("value");
+
+              if (currentValueProperty.propertyType == valueProperty.propertyType)
+              {
+                switch (currentValueProperty.propertyType)
+                {
+                  case SerializedPropertyType.String:
+                    if (currentValueProperty.stringValue == valueProperty.stringValue)
+                    {
+                      return true;
+                    }
+                    break;
+                  case SerializedPropertyType.Integer:
+                    if (currentValueProperty.intValue == valueProperty.intValue)
+                    {
+                      return true;
+                    }
+                    break;
+                  case SerializedPropertyType.Float:
+                    if (currentValueProperty.floatValue == valueProperty.floatValue)
+                    {
+                      return true;
+                    }
+                    break;
+                  // Add more cases as needed
+                }
+              }
+            }
+          }
+          return false;
+        }
 
         reorderableList.DoList(
           new Rect(
