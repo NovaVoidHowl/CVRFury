@@ -20,7 +20,7 @@
 
 <br />
 <div align="center">
-  <a href="https://repo.cvrfury.uk/">
+  <a href="https://docs.cvrfury.uk/">
     <img src="Assets/Resources/CVRFury/Logos/CVRFuryLogo.png" alt="Logo" width="128" height="64">
   </a>
 
@@ -28,7 +28,7 @@
 
 <p align="center">
     <br />
-    <a href="https://github.com/NovaVoidHowl/CVRFury"><strong>Explore the docs »</strong></a>
+    <a href="https://docs.cvrfury.uk/"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/NovaVoidHowl/CVRFury/issues">Report Bug</a>
@@ -43,54 +43,15 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
-      <a href='#⚠️-warnings-⚠️'>Warnings</a>
-    </li>
-    <li>
       <a href="#about-the-project">About The Project</a>
     </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-        <li><a href="#core-update-manager">Core Update Manager</a></li>
-      </ul>
-    </li>
-    <li><a href="#feature-support">Feature Support</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a href="#contact-and-links">Contact and Links</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
     <li><a href="#project-tools">Project tools</a></li>
   </ol>
 </details>
-
-<!-- WARNINGS -->
-
-## ⚠️ Warnings ⚠️
-
-Due to a breaking change in CCK 3.10 only that or later versions of the CCK are now compatible with this software.
-
-### Post VRCFury 1.744.0 / Datastore V3 support
-
-Datastore V3 compatibility added as of CVRFury 0.124.0-experimental
-
-If you imported a prefab into your scene that was made for a version of VRCFury after 1.744.0, you will need to
-re-convert its VRCFury prefab and re-add it, as if it was there before it's 'content' datastore will be corrupted
-
-> ⓘ \
-Import support of V3 datastore items is currently a work in progress, please see the 'Feature list' section of this
-document for more info.
-
-### ⏳ Long Running Tasks
-
-If you have animations with large numbers of armature bones being animated in them, then expect long run times on the
-ArmatureLink module as it will have to re-write them all.
-TLDR: If its still showing as processing and you can see disk activity, then it is not hung as it may appear to be,
- just let it run, and come back to it in a few minutes  
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ABOUT THE PROJECT -->
 
@@ -98,128 +59,7 @@ TLDR: If its still showing as processing and you can see disk activity, then it 
 
 The aim of this project is to create a tool kit that can process VRCFury supported content for use in ChilloutVR.
 
-Note this project is in a alpha state and not ready for any use yet (though functions listed as such should work now).
-
-______________________________________________________________________
-
-See the [VRCFury Webpage](https://vrcfury.com/) for more info on the project that inspired this one.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- GETTING STARTED -->
-
-## Getting Started
-
-### Prerequisites
-
-Note the following should be auto installed to the project by adding this package
-
-- com.unity.nuget.newtonsoft-json: 3.1.0
-- com.unity.vectorgraphics: 2.0.0-preview.21
-- com.unity.editorcoroutines: 1.0.0
-
-### Installation
-
-1. In unity open the `Package Manager` window
-2. Click the plus button in the top left of that window and choose the `Add packages from git URL` option
-3. Paste in the git url of this repo `https://github.com/NovaVoidHowl/CVRFury.git#alpha`
-4. Click the add button
-
-The script should then be ready to configure via `NVH -> CVRFury -> Tool Setup`.
-> ⓘ \
-Recommendation is to install all app components from the Tool Setup menu to enable all possible features
-
-### Core Update Manager
-
-Should you want to switch to a different release channel or specific release of the software, you can do this via the menu
-option at `NVH -> CVRFury -> Update Manager`
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- Feature Support -->
-
-## Feature Support
-
-### Icon Key
-
-```text
-✔️ = Feature active/supported.
-⚙️ = Implementation/review in progress
-❌ = Feature pending implementation.
-🔼 = High priority.
-🔽 = Low priority.
-❔ = Feature pending review.
-🚫 = Feature will not be supported.
-```
-
-### Data Import supported versions
-
-V2 = VRCFury pre-1.744.0\
-V3 = VRCFury post-1.744.0
-
-### Feature list
-
-The following table gives a breakdown of what features are supported for import/install.\
-Note at this time there is no native config UI for CVRFury modules yet (save the dev debug interface)
-
-|        Feature         | Data Import Supported | Install Supported | Notes                                                                              |
-| :--------------------: | :-------------------: | :---------------: | :--------------------------------------------------------------------------------- |
-|   ObjectToggleAction   |         ✔️          |       ✔️        |                                                                                    |
-|     MaterialAction     |         ✔️          |       ✔️        |                                                                                    |
-|    BlendShapeAction    |         ✔️          |        ❌         |                                                                                    |
-|     FxFloatAction      |         ✔️          |       ❌🔽       |                                                                                    |
-|  AnimationClipAction   |         ❔🔽         |       ❔🔽       |                                                                                    |
-| ShaderInventoryAction  |         ❔🔽         |       ❔🔽       |                                                                                    |
-|  PoiyomiUVTileAction   |         ❔🔽         |       ❔🔽       |                                                                                    |
-| MaterialPropertyAction |         ❔🔽         |       ❔🔽       |                                                                                    |
-|      ScaleAction       |         ✔️          |        ❌         |                                                                                    |
-|  BlockBlinkingAction   |         ✔️          |       ✔️        |                                                                                    |
-|   BlockVisemesAction   |         ✔️          |       ✔️        |                                                                                    |
-| FlipBookBuilderAction  |          ❔           |        ❔         |                                                                                    |
-|                        |                       |                   |                                                                                    |
-|        Blinking        |          ❔           |        ❔         |                                                                                    |
-|       Breathing        |          ❔           |        ❔         |                                                                                    |
-|     FullController     |         ✔️          |       ✔️        | Note: no support for menu section triggered toggles (CVR menu is flat, not a tree) |
-|         Toggle         |         ❌🔽         |       ❌🔽       |                                                                                    |
-|         Puppet         |          ❔           |        ❔         |                                                                                    |
-|      SecurityLock      |         ❌🔽         |       ❌🔽       |                                                                                    |
-|        Talking         |         ❌🔽         |       ❌🔽       |                                                                                    |
-|      Toes Puppet       |         ❌🔽         |       ❌🔽       |                                                                                    |
-|    Advanced Visemes    |          ❔           |        ❔         |                                                                                    |
-|      ArmatureLink      |         ✔️          |       ✔️        |                                                                                    |
-|     BoundingBoxFix     |         ❔🔽         |       ❔🔽       |                                                                                    |
-|    FixWriteDefaults    |         ❔🔽         |       ❔🔽       |                                                                                    |
-|   RemoveHandGestures   |         ❌🔽         |       ❌🔽       |                                                                                    |
-|   AnchorOverrideFix    |         ❔🔽         |       ❔🔽       |                                                                                    |
-|      MoveMenuItem      |         ❔🔽         |       ❔🔽       |                                                                                    |
-|     GestureDriver      |         ❔🔽         |       ❔🔽       |                                                                                    |
-|         Gizmo          |         ❌🔽         |       ❌🔽       |                                                                                    |
-|   DeleteDuringUpload   |         ✔️          |       ✔️        |                                                                                    |
-|     BlendShapeLink     |         ❔🔽         |       ❔🔽       |                                                                                    |
-|        SetIcon         |          🚫          |        🚫        | There are no icons on CVR menus                                                    |
-|  OverrideMenuSettings  |          🚫          |        🚫        | Related to VRC menu structure only                                                 |
-|  BlendshapeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                    |
-|        Slot4Fix        |          ❔           |        ❔         |                                                                                    |
-|  DirectTreeOptimizer   |         ❔🔽         |       ❔🔽       |                                                                                    |
-|   ShowInFirstPerson    |         ✔️          |       ✔️        |                                                                                    |
-|    MmdCompatibility    |         ❔🔽         |       ❔🔽       |                                                                                    |
-|    Parameter Stream    |          🚫          |       ✔️        | VRC does not have Parameter stream equivalent                                      |
-
-## Things that are not included
-
-The following are not features of this project, you will need to handle the following conversions by hand,
-or find a tool that can do them.
-
-- PhysBone to Dynamic Bone conversion
-- PhysBone to Magica Cloth (1 or 2) conversion
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- ROADMAP -->
-
-## Roadmap
-
-See the [open issues](https://github.com/NovaVoidHowl/CVRFury/issues) for a full list of proposed features (and known issues).
+**Please see the [CVRFury docs site](https://docs.cvrfury.uk/) for install/setup guidance and further information**
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -251,11 +91,12 @@ Please see [LICENSE.md](LICENSE.md) for information.
 
 <!-- CONTACT -->
 
-## Contact
+## Contact and Links
 
 [@NovaVoidHowl](https://novavoidhowl.uk/)
 
-Project Link: [https://repo.cvrfury.uk](https://repo.cvrfury.uk)
+Codebase Link: [https://repo.cvrfury.uk](https://repo.cvrfury.uk)\
+Documentation Link [https://docs.cvrfury.uk](https://docs.cvrfury.uk)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
