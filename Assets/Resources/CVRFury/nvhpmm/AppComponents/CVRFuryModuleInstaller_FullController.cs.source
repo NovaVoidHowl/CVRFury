@@ -1,4 +1,4 @@
-// { "version": "0.7.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.7.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -69,27 +69,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // check and see if the module has any controllers
         if ((module as fullControllerModule).controllers.Count > 0)
         {
-          //// path vars section
-
-          // create a folder in the project to store the generated controller
-          // this is based on Constants.ASSETS_MANAGED_FOLDER_GENERATED + AvatarName
-          string generatedItemsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar.name;
-
-          if (!Directory.Exists(generatedItemsFolder))
-          {
-            Directory.CreateDirectory(generatedItemsFolder);
-          }
-
-          //// file paths for the generated controllers/locks etc.
-
-          // create path for temp items
-          string tempItemsPath = generatedItemsFolder + "/temp_items/DSU-" + DSUNumber;
-
-          // ensure the temp items folder exists
-          if (!Directory.Exists(tempItemsPath))
-          {
-            Directory.CreateDirectory(tempItemsPath);
-          }
+          // invoke creation of the generatedItemsFolder and tempItemsPath
+          var (generatedItemsFolder, tempItemsPath) = CVRFuryModuleInstaller.BuildGeneratedItemsFolder(avatar.name, DSUNumber);
 
           // create a new override controller file path based on the generatedItemsFolder
           // called 'overrides_controller_'avatar.name
@@ -130,17 +111,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
 
             #region baseController validation
+            CVRFuryModuleInstaller.RestoreMissingBaseController(advancedAvatarSettings);
             // check if baseController don't exist
             if (baseController == null)
             {
-              // if they don't, log an error to the console
-              CoreLogError("No base controller found, restoring defaults");
               ReportAddErrorLine(buildReportPath, "No base controller found, restoring defaults");
-              // set the  the CCK default animator controller to the controller file at path
-              // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
-              advancedAvatarSettings.baseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
-                "Assets/ABI.CCK/Animations/AvatarAnimator.controller"
-              );
             }
             #endregion
             // so we now have a baseController we can build upon should there not be any built ones
