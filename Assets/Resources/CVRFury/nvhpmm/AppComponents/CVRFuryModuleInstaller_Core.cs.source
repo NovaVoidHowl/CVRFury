@@ -1,4 +1,4 @@
-// { "version": "0.51.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.53.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -19,6 +19,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Animations;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Scripts;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
@@ -84,6 +85,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         case showInFirstPerson:
           processor = new showInFirstPersonProcessor();
+          break;
+        case removeLegacyCVRToggles:
+          processor = new removeLegacyCVRTogglesProcessor();
           break;
 #endif
 #if NVH_CVRFURY_EXISTS_MI_FC
@@ -1118,7 +1122,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     public static void DynamicBoneDisabler(GameObject uploadedObject)
     {
-      #if DYNAMICBONE_PACKAGE_EXISTS
+#if DYNAMICBONE_PACKAGE_EXISTS
       // debug log that the dynamic bone disabler is running
       CoreLogDebug("[Dynamic bone disabler] running");
 
@@ -1165,7 +1169,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // debug log that the dynamic bone disabler has finished
       CoreLogDebug("[Dynamic bone disabler] finished");
-      #endif // DYNAMICBONE_PACKAGE_EXISTS
+#endif // DYNAMICBONE_PACKAGE_EXISTS
     }
 
     /// <summary>
@@ -1768,10 +1772,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // remove the CVRFuryNukeGameObject components from the first part object and all its children (inc disabled)
       var nukeComponentsAvatarArmature = firstPartObject.GetComponentsInChildren<CVRFuryNukeGameObject>(true);
-      
+
       // debug print the name of the first part object
       CoreLogDebug("[Nuke Pruner] Removing nuke components from: " + firstPartObject.name);
-      
+
       foreach (CVRFuryNukeGameObject nukeComponent in nukeComponentsAvatarArmature)
       {
         // debug print the name of the object the component is on
@@ -1791,11 +1795,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get all the source objects from the parent constraints
       foreach (var parentConstraint in parentConstraints)
       {
-          for (int i = 0; i < parentConstraint.sourceCount; i++)
-          {
-              var source = parentConstraint.GetSource(i);
-              parentSourceObjects.Add(source.sourceTransform.gameObject);
-          }
+        for (int i = 0; i < parentConstraint.sourceCount; i++)
+        {
+          var source = parentConstraint.GetSource(i);
+          parentSourceObjects.Add(source.sourceTransform.gameObject);
+        }
       }
       #endregion // Parent Constraint
 
@@ -1809,11 +1813,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get all the source objects from the scale constraints
       foreach (var scaleConstraint in scaleConstraints)
       {
-          for (int i = 0; i < scaleConstraint.sourceCount; i++)
-          {
-              var source = scaleConstraint.GetSource(i);
-              scaleSourceObjects.Add(source.sourceTransform.gameObject);
-          }
+        for (int i = 0; i < scaleConstraint.sourceCount; i++)
+        {
+          var source = scaleConstraint.GetSource(i);
+          scaleSourceObjects.Add(source.sourceTransform.gameObject);
+        }
       }
 
       #endregion // Scale Constraint
@@ -1828,11 +1832,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get all the source objects from the position constraints
       foreach (var positionConstraint in positionConstraints)
       {
-          for (int i = 0; i < positionConstraint.sourceCount; i++)
-          {
-              var source = positionConstraint.GetSource(i);
-              positionSourceObjects.Add(source.sourceTransform.gameObject);
-          }
+        for (int i = 0; i < positionConstraint.sourceCount; i++)
+        {
+          var source = positionConstraint.GetSource(i);
+          positionSourceObjects.Add(source.sourceTransform.gameObject);
+        }
       }
 
       #endregion // Position Constraint
@@ -1849,7 +1853,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // debug print the number of constraint source objects
       CoreLogDebug("[Nuke Pruner] Number of constraint source objects: " + constraintSourceObjects.Count);
-      
+
       // process the source objects
       foreach (var sourceObject in constraintSourceObjects)
       {
@@ -1874,7 +1878,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               UnityEngine.Object.DestroyImmediate(nukeComponent);
             }
           }
-          
         }
       }
 
@@ -2052,7 +2055,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           CoreLogError("[AdjustSkinnedMeshRendererBoundingBox] Error getting updated bounds: " + e.Message);
           return false;
         }
-        
+
         var fullNew = fullBak;
         fullNew.Encapsulate(updatedBounds);
 
@@ -2928,6 +2931,58 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
 #endif
+    }
+
+    /// <summary>
+    /// this function ensures that the generatedItemsFolder exists and creates it if it doesn't
+    /// </summary>
+    public static (string generatedItemsFolder, string tempItemsPath) BuildGeneratedItemsFolder(
+      string avatar_name,
+      int DSUNumber
+    )
+    {
+      // create a folder in the project to store the generated controller
+      // this is based on Constants.ASSETS_MANAGED_FOLDER_GENERATED + AvatarName
+      string generatedItemsFolder = Constants.ASSETS_MANAGED_FOLDER_GENERATED + avatar_name;
+
+      if (!Directory.Exists(generatedItemsFolder))
+      {
+        Directory.CreateDirectory(generatedItemsFolder);
+      }
+
+      //// file paths for the generated controllers/locks etc.
+
+      // create path for temp items
+      string tempItemsPath = generatedItemsFolder + "/temp_items/DSU-" + DSUNumber;
+
+      // ensure the temp items folder exists
+      if (!Directory.Exists(tempItemsPath))
+      {
+        Directory.CreateDirectory(tempItemsPath);
+      }
+
+      return (generatedItemsFolder, tempItemsPath);
+    }
+
+    /// <summary>
+    /// This function restores the default base controller if the base controller is missing
+    /// </summary>
+    public static void RestoreMissingBaseController(CVRAdvancedAvatarSettings advancedAvatarSettings)
+    {
+      // get the baseController from the avatarSettings
+      RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
+
+      // check if baseController don't exist
+      if (baseController == null)
+      {
+        // if they don't, log an error to the console
+        CoreLogError("No base controller found, restoring defaults");
+        // set the  the CCK default animator controller to the controller file at path
+        // /Assets/ABI.CCK/Animations/AvatarAnimator.controller
+        advancedAvatarSettings.baseController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+          "Assets/ABI.CCK/Animations/AvatarAnimator.controller"
+        );
+      }
     }
   }
 
