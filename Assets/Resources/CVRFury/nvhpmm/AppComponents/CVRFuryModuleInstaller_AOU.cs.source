@@ -1,10 +1,12 @@
-// { "version": "0.8.3" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
+// { "version": "0.9.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,6 +14,7 @@ using UnityEngine.SceneManagement;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using uk.novavoidhowl.dev.cvrfury.packagecore;
 using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Scripts;
 using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
@@ -235,12 +238,141 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (((showInFirstPerson)module).bindToHead)
       {
         // now we need to move the GameObject to the head of the avatar
-        
+
         Animator avatarAnimator = targetAvatar.GetComponent<Animator>();
         Transform headTransform = avatarAnimator.GetBoneTransform(HumanBodyBones.Head);
 
         // set the GameObject's parent to the headObject
         ((showInFirstPerson)module).target.transform.SetParent(headTransform);
+      }
+    }
+  }
+
+  public class removeLegacyCVRTogglesProcessor : IModuleProcessor
+  {
+    public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
+    {
+      CoreLogDebug("removeLegacyCVRToggles.ProcessModule() called");
+
+      // log the module's moduleType to the console
+      CoreLog("module.ModuleType: " + module.ModuleType);
+
+      // get the CVRAvatar component on the targetAvatar
+      CVRAvatar avatar = targetAvatar.GetComponent<CVRAvatar>();
+
+      // check if the avatar exists
+      if (avatar != null)
+      {
+        // check if the removeEnabled bool is true
+        if (((removeLegacyCVRToggles)module).removeEnabled)
+        {
+          // invoke creation of the generatedItemsFolder and tempItemsPath (so we can save the generated items)
+          var (generatedItemsFolder, tempItemsPath) = CVRFuryModuleInstaller.BuildGeneratedItemsFolder(
+            avatar.name,
+            DSUNumber
+          );
+
+          // create a new override controller file path based on the generatedItemsFolder
+          // called 'overrides_controller_'avatar.name
+          string overrideControllerPath =
+            generatedItemsFolder + "/overrides_controller_" + avatar.name + ".overrideController";
+
+          // create a new animator controller file path based on the generatedItemsFolder
+          // called 'final_controller_'avatar.name
+          string finalControllerPath = generatedItemsFolder + "/final_controller_" + avatar.name + ".controller";
+
+          // create animatorProcessing lock file path based on the generatedItemsFolder called 'processing.lock'
+          string processingLockPath = generatedItemsFolder + "/processing.lock";
+
+          // create baseControllerImport lock file path based on the generatedItemsFolder
+          // called 'baseControllerImport.lock'
+          string baseControllerImportLockPath = generatedItemsFolder + "/baseControllerImport.lock";
+
+          // enable avatarUsesAdvancedSettings, this is so we can set the
+          avatar.avatarUsesAdvancedSettings = true;
+
+          // get the avatarSettings from the avatar
+          CVRAdvancedAvatarSettings advancedAvatarSettings = avatar.avatarSettings;
+
+          // check if overridesController exists
+          if (advancedAvatarSettings.overrides != null)
+          {
+            // there is already a custom overridesController so we can work from that
+            CoreLogDebug("[removeLegacyCVRTogglesProcessor] overridesController exists");
+            //////////////////////////////////////////////////////////////////////////////////////////
+            //// TODO: Implement the removal of the Toggles Layer from the overridesController
+            //////////////////////////////////////////////////////////////////////////////////////////
+            // check if the processing lock file exists
+            if (File.Exists(processingLockPath))
+            {
+              // other modules have been processed before this one so all the animator overrides etc should be in place
+              // so we can just edit them
+            }
+            else
+            {
+              // create the lock file
+              File.WriteAllText(processingLockPath, string.Empty);
+
+              // first module to be processed so we need to create the overridesController etc.
+            }
+          }
+          else
+          {
+            CoreLogDebug("[removeLegacyCVRTogglesProcessor] overridesController does not exist");
+            // no overridesController exists
+            // ensure the baseController is not null
+            CVRFuryModuleInstaller.RestoreMissingBaseController(advancedAvatarSettings);
+
+            // set the baseControllerImport lock file as we know the baseController is not null
+            File.WriteAllText(baseControllerImportLockPath, string.Empty);
+
+            // get the baseController from the avatarSettings
+            RuntimeAnimatorController baseController = advancedAvatarSettings.baseController;
+
+            // get the path to the baseController
+            string baseControllerPath = AssetDatabase.GetAssetPath(baseController);
+
+            // save a copy of the baseController to the generatedItemsFolder
+            AssetDatabase.CopyAsset(baseControllerPath, finalControllerPath);
+
+            // load the baseController from the generatedItemsFolder
+            RuntimeAnimatorController generatedBaseController =
+              AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(finalControllerPath);
+
+            // remove the Toggles Layer from the baseController
+            RemoveLayerByName(generatedBaseController, "Toggles");
+
+            // create the override file
+            AssetDatabase.CreateAsset(new AnimatorOverrideController(), overrideControllerPath);
+
+            // load the override controller file
+            AnimatorOverrideController CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(
+              overrideControllerPath
+            );
+
+            // set the runtimeAnimatorController to the generatedBaseController
+            CVRFuryOverrides.runtimeAnimatorController = generatedBaseController;
+
+            // create the lock file
+            File.WriteAllText(processingLockPath, string.Empty);
+            // finalise assets writes
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            // set the avatarSettings overrides to the CVRFuryOverrides
+            avatar.overrides = CVRFuryOverrides;
+            advancedAvatarSettings.overrides = CVRFuryOverrides;
+            advancedAvatarSettings.animator = (AnimatorController)generatedBaseController;
+
+            // set the avatarSettings to the advancedAvatarSettings
+            avatar.avatarSettings = advancedAvatarSettings;
+          }
+        }
+      }
+      else
+      {
+        // if it doesn't, log an error to the console
+        CoreLogError("Avatar does not exist");
       }
     }
   }
