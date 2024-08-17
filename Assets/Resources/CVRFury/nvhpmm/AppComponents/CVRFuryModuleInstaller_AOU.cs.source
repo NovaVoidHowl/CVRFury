@@ -1,4 +1,4 @@
-// { "version": "0.9.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
+// { "version": "0.9.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -299,22 +299,79 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           {
             // there is already a custom overridesController so we can work from that
             CoreLogDebug("[removeLegacyCVRTogglesProcessor] overridesController exists");
-            //////////////////////////////////////////////////////////////////////////////////////////
-            //// TODO: Implement the removal of the Toggles Layer from the overridesController
-            //////////////////////////////////////////////////////////////////////////////////////////
+
+            // get the path to the overridesController
+            string overridesControllerPath = AssetDatabase.GetAssetPath(advancedAvatarSettings.overrides);
+            CoreLogDebug("overridesControllerPath: " + overridesControllerPath);
+
+            // load the overridesController from the path
+            AnimatorOverrideController CVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(
+              overridesControllerPath
+            );
+
+            // get the path to the controller from the overridesController
+            string controllerPath = AssetDatabase.GetAssetPath(CVRFuryOverrides.runtimeAnimatorController);
+
+            // load the controller from the path
+            AnimatorController CVRFuryController = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
+
             // check if the processing lock file exists
-            if (File.Exists(processingLockPath))
-            {
-              // other modules have been processed before this one so all the animator overrides etc should be in place
-              // so we can just edit them
-            }
-            else
+            if (!File.Exists(processingLockPath))
             {
               // create the lock file
               File.WriteAllText(processingLockPath, string.Empty);
 
               // first module to be processed so we need to create the overridesController etc.
+
+              // at this point we have a valid overridesController and controller, but we need to copy them to the
+              // generatedItemsFolder then work on them
+
+              // save a copy of the controller to the generatedItemsFolder
+              AssetDatabase.CopyAsset(controllerPath, finalControllerPath);
+
+              // save a copy of the overridesController to the generatedItemsFolder
+              AssetDatabase.CopyAsset(overridesControllerPath, overrideControllerPath);
+
+              // load the overridesController from the generatedItemsFolder
+              AnimatorOverrideController CVRFuryOverridesCopy =
+                AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(overrideControllerPath);
+
+              // load the controller from the generatedItemsFolder
+              AnimatorController CVRFuryControllerCopy = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+                finalControllerPath
+              );
+
+              // link the controller to the overridesController
+              CVRFuryOverridesCopy.runtimeAnimatorController = CVRFuryControllerCopy;
+
+              // link the overridesController to the avatarSettings
+              advancedAvatarSettings.overrides = CVRFuryOverridesCopy;
             }
+
+            // at this point we have a controller and overridesController that we can work on, so we need to do a fresh load of them
+
+            // get the path to the overridesController
+            string newOverridesControllerPath = AssetDatabase.GetAssetPath(advancedAvatarSettings.overrides);
+
+            // load the overridesController from the path
+            AnimatorOverrideController newCVRFuryOverrides = AssetDatabase.LoadAssetAtPath<AnimatorOverrideController>(
+              newOverridesControllerPath
+            );
+
+            // get the path to the controller from the overridesController
+            string newControllerPath = AssetDatabase.GetAssetPath(newCVRFuryOverrides.runtimeAnimatorController);
+
+            // load the controller from the path
+            AnimatorController newCVRFuryController = AssetDatabase.LoadAssetAtPath<AnimatorController>(
+              newControllerPath
+            );
+
+            // remove the Toggles Layer from the controller
+            RemoveLayerByName(newCVRFuryController, "Toggles");
+
+            //finalise assets writes
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
           }
           else
           {
