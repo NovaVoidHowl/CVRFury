@@ -9,6 +9,7 @@ using System.IO;
 // dynamic using statements
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.Animations;
 #endif
 
 namespace uk.novavoidhowl.dev.cvrfury.packagecore
@@ -81,23 +82,61 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
       CoreLogDebugPrintList(entriesList, preMessage);
     }
+
+    public static void RemoveLayerByName(RuntimeAnimatorController controller, string layerName)
+    {
+      // Cast the RuntimeAnimatorController to AnimatorController
+      AnimatorController animatorController = controller as AnimatorController;
+
+      if (animatorController == null)
+      {
+        CoreLogError("The provided controller is not an AnimatorController.");
+        return;
+      }
+
+      // Find the index of the layer with the specified name
+      int layerIndex = -1;
+      for (int i = 0; i < animatorController.layers.Length; i++)
+      {
+        if (animatorController.layers[i].name == layerName)
+        {
+          layerIndex = i;
+          break;
+        }
+      }
+
+      // If the layer was found, remove it
+      if (layerIndex != -1)
+      {
+        Undo.RecordObject(animatorController, "Remove Layer");
+        var layers = animatorController.layers.ToList();
+        layers.RemoveAt(layerIndex);
+        animatorController.layers = layers.ToArray();
+        EditorUtility.SetDirty(animatorController);
+        CoreLog($"Layer '{layerName}' removed from the AnimatorController.");
+      }
+      else
+      {
+        CoreLogWarning($"Layer '{layerName}' not found in the AnimatorController.");
+      }
+    }
 #endif
 
     public static List<GameObject> GetParentObjects(GameObject currentObject, GameObject targetParent)
     {
-        List<GameObject> parentObjects = new List<GameObject>();
+      List<GameObject> parentObjects = new List<GameObject>();
 
-        Transform currentTransform = currentObject.transform;
-        while (currentTransform != null && currentTransform.gameObject != targetParent)
+      Transform currentTransform = currentObject.transform;
+      while (currentTransform != null && currentTransform.gameObject != targetParent)
+      {
+        currentTransform = currentTransform.parent;
+        if (currentTransform != null)
         {
-            currentTransform = currentTransform.parent;
-            if (currentTransform != null)
-            {
-                parentObjects.Add(currentTransform.gameObject);
-            }
+          parentObjects.Add(currentTransform.gameObject);
         }
+      }
 
-        return parentObjects;
+      return parentObjects;
     }
 
     public static string GenerateDebugCopyFilePath(string fullFilePath, string debugSuffix)
