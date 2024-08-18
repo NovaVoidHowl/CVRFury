@@ -13,6 +13,7 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.editor.components
 {
+  [AddComponentMenu("CVRFury/System/GameObject Nuke")]
   [CustomEditor(typeof(CVRFuryNukeGameObject))]
   public class CVRFuryNukeGameObjectEditor : Editor
   {
