@@ -1,4 +1,4 @@
-// { "version": "0.1.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: [], type: "Editor"}
+// { "version": "0.1.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_CORE", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -95,9 +95,11 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // popup a dialog to inform the user
         EditorUtility.DisplayDialog(
           "Import Error",
-          "Only one version of VRCFury is supported for import per DSU"+
-          "\n\n"+
-          "you currently have "+componentVersions.Count+" versions of VRCFury on this gameObject",
+          "Only one version of VRCFury is supported for import per DSU"
+            + "\n\n"
+            + "you currently have "
+            + componentVersions.Count
+            + " versions of VRCFury on this gameObject",
           "OK"
         );
 
@@ -117,22 +119,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // import VRCFury version 3
           importVRCFury(VRCFuryComponents, 3);
           break;
-        default:  // default case
+        default: // default case
           // send a warning to the console
           Debug.LogWarning("VRCFury version " + version + " is not supported for import");
           break;
       }
-      
 
       updateFinaliseUI();
     }
 
     private void importVRCFury(VRCFuryComponent[] furyComponents, int version)
     {
-    
       // list for the feature class names
       // name, FeatureModel instance, moduleFoundOnObject
-      List<Tuple<string, FeatureModel, GameObject>> featureClassInstances = new List<Tuple<string, FeatureModel, GameObject>>();
+      List<Tuple<string, FeatureModel, GameObject>> featureClassInstances =
+        new List<Tuple<string, FeatureModel, GameObject>>();
 
       if (furyComponents != null)
       {
@@ -157,7 +158,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               foreach (FeatureModel feature in config.features)
               {
                 // add the class name and the feature to the featureClassInstances list
-                featureClassInstances.Add(new Tuple<string, FeatureModel, GameObject>(feature.GetType().Name, feature, gameObject));
+                featureClassInstances.Add(
+                  new Tuple<string, FeatureModel, GameObject>(feature.GetType().Name, feature, gameObject)
+                );
               }
             }
             break;
@@ -175,15 +178,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               GameObject gameObject = fury.gameObject;
 
               // add the class name and the feature to the featureClassInstances list
-              featureClassInstances.Add(new Tuple<string, FeatureModel, GameObject>(content.GetType().Name, content, gameObject));
+              featureClassInstances.Add(
+                new Tuple<string, FeatureModel, GameObject>(content.GetType().Name, content, gameObject)
+              );
             }
             break;
-          default:  // default case
+          default: // default case
             // send a warning to the console
             Debug.LogWarning("VRCFury version " + version + " is not supported for import");
             break;
         }
-
       }
       else
       {
@@ -233,6 +237,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_DOU
         importDeleteOnUploadFeature(featureClassInstance, rootVisualElement, positionInList, version);
+#endif
+
+#if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_GIZMO
+        importGizmoFeature(featureClassInstance, rootVisualElement, positionInList, version);
 #endif
 
         //--------------------------------------------------------------------------------------------
