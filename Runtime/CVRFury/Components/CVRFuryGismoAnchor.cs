@@ -4,6 +4,7 @@ using uk.novavoidhowl.dev.cvrfury.packagecore;
 
 namespace uk.novavoidhowl.dev.cvrfury.runtime
 {
+  [AddComponentMenu("CVRFury/Gismo Anchor")]
   [DisallowMultipleComponent]
   public class CVRFuryGismoAnchor : MonoBehaviour
   {
