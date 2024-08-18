@@ -44,7 +44,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         new KeyValuePair<string, int>("FullController", 3),
         new KeyValuePair<string, int>("ArmatureLink", 3),
         new KeyValuePair<string, int>("ShowInFirstPerson", 3),
-        new KeyValuePair<string, int>("DeleteDuringUpload", 2)
+        new KeyValuePair<string, int>("DeleteDuringUpload", 2),
+        new KeyValuePair<string, int>("Gizmo", 3)
       }
     );
     public static readonly ReadOnlyCollection<string> CVR_INCOMPATIBLE_VRCFURY_FEATURES =
@@ -59,7 +60,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "AvatarScale",
         "AvatarScale2",
         "TpsScaleFix",
-        "Gizmo",
         "CrossEyeFix",
         "CrossEyeFix2",
         "OGBIntegration",

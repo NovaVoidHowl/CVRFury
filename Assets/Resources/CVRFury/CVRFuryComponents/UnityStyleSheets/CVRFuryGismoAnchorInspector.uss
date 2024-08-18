@@ -1,0 +1,120 @@
+#CVRFuryGismoAnchorEditor {
+  height: 100%;
+  margin-left: -15px;
+  margin-right: -5px;
+  padding-top: 5px;
+  padding-bottom: 0px;
+}
+
+#CVRFuryGismoAnchorEditor .unity-label {
+  font-size: 13px;
+  padding-bottom: 4px;
+  white-space: normal;
+  -unity-text-align:  middle-center;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+
+#CVRFuryGismoAnchorEditor .dsuControlled {
+  border-left-width: 2px;
+  border-left-color: #00ff00;
+  border-right-width: 2px;
+  border-right-color: #00ff00;
+  border-top-width: 2px;
+  border-top-color: #00ff00;
+  border-bottom-width: 2px;
+  border-bottom-color: #00ff00;
+
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+
+}
+
+#CVRFuryGismoAnchorEditor .buttonContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+#CVRFuryGismoAnchorEditor .unity-button {
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-width: 1px;
+  border-color: #ffffff;
+  margin-left: 6px;
+  margin-right: 6px;
+}
+
+#CVRFuryGismoAnchorEditor .unity-button:hover {
+  background-color: #006600;
+}
+
+#CVRFuryGismoAnchorEditor .propertiesFoldout{
+  padding-top: 10px;
+  padding-bottom: 5px;
+  padding-right: 15px;
+  padding-left: 20px;
+  min-width: 354px;
+}
+
+#CVRFuryGismoAnchorEditor .propertiesFoldout .unity-label{
+
+  -unity-text-align:  middle-left;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+
+.field-container__color,
+.field-container__string,
+.field-container__enum,
+.field-container__float,
+.field-container__vector3{
+    flex-direction: row;
+    margin-bottom: 5px;
+}
+
+.field-label__color,
+.field-label__string,
+.field-label__enum,
+.field-label__float,
+.field-label__vector3{
+    min-width: 110px;
+    max-width: 110px;
+    margin-right: 10px;
+}
+
+.field-input__color,
+.field-input__string,
+.field-input__enum,
+.field-input__float,
+.field-input__vector3{
+    flex-grow: 1;
+}
+
+#field-container__color__Indicator-Color .field-input__color,
+#field-container__color__Pointer-Color .field-input__color {
+    flex-shrink: 1;
+}
+
+.indicatorPropertiesSection,
+.pointerPropertiesSection {
+  border-width: 1px;
+  border-color: #999999;
+  border-radius: 5px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-right: 6px;
+  padding-left: 4px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+
+}

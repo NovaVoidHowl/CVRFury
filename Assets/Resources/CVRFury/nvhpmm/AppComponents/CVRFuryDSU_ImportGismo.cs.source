@@ -1,0 +1,210 @@
+// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_GIZMO", dependencies: [], type: "Editor"}
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.UIElements;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.runtime;
+using ABI.CCK.Components;
+using Newtonsoft.Json.Linq;
+using ABI.CCK.Scripts.Editor;
+using VF.Model.Feature;
+using VF.Component;
+using VF.Model;
+using Action = VF.Model.StateAction.Action;
+using VF.Model.StateAction;
+
+/// <summary>
+/// Gizmo
+/// this is imports the Gizmo features from VRCFury
+/// </summary>
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public partial class CVRFuryDataStorageUnitEditor : Editor
+  {
+    private void importGizmoFeature(
+      Tuple<string, FeatureModel, GameObject> featureClassInstance,
+      VisualElement rootVisualElement,
+      int positionInList,
+      int VRCFuryVersion
+    )
+    {
+      // if the VRCFuryVersion is not on the list of supported versions, return
+      if (!Constants.VRCFURY_IMPORT_SUPPORTED_VERSIONS.Contains(VRCFuryVersion))
+      {
+        return;
+      }
+
+      // Find the feature version for "Gizmo"
+      int importGizmoVersion = Constants.COMPATIBLE_VRCFURY_FEATURES.FirstOrDefault(kvp => kvp.Key == "Gizmo").Value;
+
+      // Check if the version is supported for this feature
+      if (importGizmoVersion < VRCFuryVersion)
+      {
+        return;
+      }
+
+      // get the featureClassName name from the tuple
+      string featureClassName = featureClassInstance.Item1;
+
+      // get the importGizmo feature from the tuple
+      FeatureModel importGizmoFeature = featureClassInstance.Item2;
+
+      // get the moduleFoundOnObject from the tuple
+      GameObject moduleFoundOnObject = featureClassInstance.Item3;
+
+      // check if the feature is of the 'Gizmo' type and if not return. note this is the VRCFury feature
+      // name, naming is not 1-to-1 with the class name
+      if (featureClassName != "Gizmo")
+      {
+        // this console log is for debugging purposes
+        CoreLog("feature at position " + positionInList + " is " + featureClassName + " not of the Gizmo , returning");
+        return;
+      }
+
+      // get the CVRFuryDataStorageUnitDataImportDetailsFeaturesList visualElement
+      var CVRFuryDataStorageUnitDataImportDetailsFeaturesList = rootVisualElement.Q<VisualElement>(
+        "CVRFuryDataStorageUnitDataImportDetailsFeaturesList"
+      );
+
+      var featuresList = CVRFuryDataStorageUnitDataImportDetailsFeaturesList.Children().ToList();
+      var labelAtPosition = featuresList[positionInList] as Label;
+      if (labelAtPosition != null)
+      {
+        // add a white border to the label
+        labelAtPosition.AddToClassList("featureClassNameLabelBorderWhite");
+
+        // edit the label text to include a suffix of the position in the list
+        labelAtPosition.text = labelAtPosition.text + " - (ID " + positionInList + ")";
+
+        // add a click event to the label
+        labelAtPosition.RegisterCallback<ClickEvent>(evt =>
+        {
+          // debug print to say the label was clicked
+          CoreLogDebug("label at position " + positionInList + " was clicked");
+
+          // get the list of modules from this DSU
+          var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
+
+          // get the name of the moduleFoundOnObject
+          string moduleFoundOnObjectName = "Gismo on - " + moduleFoundOnObject.name;
+
+          // list of modules to remove
+          List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
+          // loop over the modules and see if any have the same name as the moduleFoundOnObject
+          foreach (var module in modules)
+          {
+            // if the module name is the same as the moduleFoundOnObject name
+            if (module.name == moduleFoundOnObjectName)
+            {
+              // print to console that the module was found
+              CoreLog("module with name `" + moduleFoundOnObjectName + "` was found");
+
+              // add the module to the modulesToRemove list
+              modulesToRemove.Add(module);
+            }
+          }
+          // loop over the modulesToRemove list and remove the modules
+          foreach (var module in modulesToRemove)
+          {
+            // remove the module from the modules list
+            modules.Remove(module);
+          }
+
+          // cast the feature to the Gizmo type
+          Gizmo VRCFuryGizmo = (Gizmo)importGizmoFeature;
+
+          // create a new CVRFuryGismo module
+          CVRFuryGismo CVRFuryGismoModule = new CVRFuryGismo();
+
+          // set the importedFromVRCFury flag to true
+          CVRFuryGismoModule.importedFromVRCFury = true;
+
+          // set the justImported flag to true
+          CVRFuryGismoModule.justImported = true;
+
+          // set the moduleFoundOnObject variable to the moduleFoundOnObject
+          CVRFuryGismoModule.moduleFoundOnObject = moduleFoundOnObject;
+
+          // set the name of the CVRFuryGismoModule to the name of the moduleFoundOnObject
+          CVRFuryGismoModule.name = moduleFoundOnObjectName;
+
+          // ---- CVRFuryGismoModule specific properties ----
+          // set the target to the game object the VRCFuryGizmo was found on
+          CVRFuryGismoModule.target = moduleFoundOnObject;
+
+          // set the rotation to the rotation of the VRCFuryGizmo
+          CVRFuryGismoModule.rotation = VRCFuryGizmo.rotation;
+
+          // set the indicatorScale to the sphereRadius of the VRCFuryGizmo
+          CVRFuryGismoModule.indicatorScale = VRCFuryGizmo.sphereRadius;
+
+          // set the indicatorType to sphere (this is the only type from VRCFury)
+          CVRFuryGismoModule.indicatorType = CVRFuryGismo.typeOfIndicator.sphere;
+
+          // set the pointerScale to the arrowLength of the VRCFuryGizmo
+          CVRFuryGismoModule.pointerScale = VRCFuryGizmo.arrowLength;
+
+          // set the pointerType to cone (this is the only type from VRCFury)
+          CVRFuryGismoModule.pointerType = CVRFuryGismo.typeOfPointer.cone;
+
+          // set the pointerColor to red (this is the only color from VRCFury)
+          CVRFuryGismoModule.pointerColor = Color.red;
+
+          // set the descriptionText to the text of the VRCFuryGizmo
+          CVRFuryGismoModule.descriptionText = VRCFuryGizmo.text;
+
+          // set the indicatorColor to red (this is the only color from VRCFury)
+          CVRFuryGismoModule.indicatorColor = Color.red;
+
+          // ---- end CVRFuryGismoModule specific properties ----
+
+          // add the CVRFuryGismoModule to the DSU
+          modules.Add(CVRFuryGismoModule);
+
+          // check if the CVRFuryGismoAnchor is already on the moduleFoundOnObject
+          if (moduleFoundOnObject.GetComponent<CVRFuryGismoAnchor>() != null)
+          {
+            // print to console that the CVRFuryGismoAnchor is already on the moduleFoundOnObject
+            CoreLogDebug("CVRFuryGismoAnchor is already on the moduleFoundOnObject");
+            // remove the CVRFuryGismoAnchor from the moduleFoundOnObject
+            DestroyImmediate(moduleFoundOnObject.GetComponent<CVRFuryGismoAnchor>());
+          }
+
+          // add a CVRFuryGismoAnchor to the  CVRFuryGismoModule.target
+          CVRFuryGismoAnchor CVRFuryGismoAnchor = moduleFoundOnObject.AddComponent<CVRFuryGismoAnchor>();
+
+          // copy the CVRFuryGismoModule data to the CVRFuryGismoAnchor moduleData value
+          moduleFoundOnObject.GetComponent<CVRFuryGismoAnchor>().moduleData = CVRFuryGismoModule;
+
+          // get the game object the DSU is on
+          GameObject DSUGameObject = ((CVRFuryDataStorageUnit)target).gameObject;
+
+          // set the sourceDSUGameObject on the CVRFuryGismoAnchor to the DSU game object
+          moduleFoundOnObject.GetComponent<CVRFuryGismoAnchor>().sourceDSUGameObject = DSUGameObject;
+
+          // reload the UI finalise UI
+          updateFinaliseUI();
+        });
+      }
+      else
+      {
+        // print to console that the label is null
+        CoreLog("label at position " + positionInList + " is null");
+      }
+    }
+
+    // class end
+  }
+  // namespace end
+}
+#endif
