@@ -1,4 +1,4 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_GIZMO", dependencies: [], type: "Editor"}
+// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_GIZMO", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -45,9 +45,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
       // Find the feature version for "Gizmo"
-      int importGizmoVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
-        .FirstOrDefault(kvp => kvp.Key == "Gizmo")
-        .Value;
+      int importGizmoVersion = Constants.COMPATIBLE_VRCFURY_FEATURES.FirstOrDefault(kvp => kvp.Key == "Gizmo").Value;
 
       // Check if the version is supported for this feature
       if (importGizmoVersion < VRCFuryVersion)
@@ -69,7 +67,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (featureClassName != "Gizmo")
       {
         // this console log is for debugging purposes
-        CoreLog("feature at position "+positionInList+" is "+featureClassName+" not of the Gizmo , returning");
+        CoreLog("feature at position " + positionInList + " is " + featureClassName + " not of the Gizmo , returning");
         return;
       }
 
@@ -153,8 +151,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // set the indicatorType to sphere (this is the only type from VRCFury)
           CVRFuryGismoModule.indicatorType = CVRFuryGismo.typeOfIndicator.sphere;
 
-          // set the arrowLength to the arrowLength of the VRCFuryGizmo
-          CVRFuryGismoModule.arrowLength = VRCFuryGizmo.arrowLength;
+          // set the pointerScale to the arrowLength of the VRCFuryGizmo
+          CVRFuryGismoModule.pointerScale = VRCFuryGizmo.arrowLength;
+
+          // set the pointerType to cone (this is the only type from VRCFury)
+          CVRFuryGismoModule.pointerType = CVRFuryGismo.typeOfPointer.cone;
+
+          // set the pointerColor to red (this is the only color from VRCFury)
+          CVRFuryGismoModule.pointerColor = Color.red;
 
           // set the descriptionText to the text of the VRCFuryGizmo
           CVRFuryGismoModule.descriptionText = VRCFuryGizmo.text;
@@ -162,23 +166,22 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // set the indicatorColor to red (this is the only color from VRCFury)
           CVRFuryGismoModule.indicatorColor = Color.red;
 
-
           // ---- end CVRFuryGismoModule specific properties ----
 
           // add the CVRFuryGismoModule to the DSU
-          modules.Add(CVRFuryGismoModule); 
+          modules.Add(CVRFuryGismoModule);
 
           // check if the CVRFuryGismoAnchor is already on the moduleFoundOnObject
           if (moduleFoundOnObject.GetComponent<CVRFuryGismoAnchor>() != null)
           {
             // print to console that the CVRFuryGismoAnchor is already on the moduleFoundOnObject
             CoreLogDebug("CVRFuryGismoAnchor is already on the moduleFoundOnObject");
+            // remove the CVRFuryGismoAnchor from the moduleFoundOnObject
+            DestroyImmediate(moduleFoundOnObject.GetComponent<CVRFuryGismoAnchor>());
           }
-          else
-          {
-            // add a CVRFuryGismoAnchor to the  CVRFuryGismoModule.target
-            CVRFuryGismoAnchor CVRFuryGismoAnchor = moduleFoundOnObject.AddComponent<CVRFuryGismoAnchor>();
-          }
+
+          // add a CVRFuryGismoAnchor to the  CVRFuryGismoModule.target
+          CVRFuryGismoAnchor CVRFuryGismoAnchor = moduleFoundOnObject.AddComponent<CVRFuryGismoAnchor>();
 
           // copy the CVRFuryGismoModule data to the CVRFuryGismoAnchor moduleData value
           moduleFoundOnObject.GetComponent<CVRFuryGismoAnchor>().moduleData = CVRFuryGismoModule;
@@ -205,8 +208,3 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   // namespace end
 }
 #endif
-
-
-
-
-

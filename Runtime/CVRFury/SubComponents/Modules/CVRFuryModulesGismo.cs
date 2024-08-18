@@ -23,13 +23,25 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       pyramid = 4
     }
 
+    public enum typeOfPointer
+    {
+      cone = 0,
+      cube = 1,
+      sphere = 2,
+      cylinder = 3,
+      circle = 4,
+      rectangle = 5
+    }
+
     public GameObject target;
 
     public Vector3 rotation;
     public string descriptionText;
     public float indicatorScale;
-    public Color indicatorColor;
-    public float arrowLength;
+    public Color indicatorColor = Color.black;
     public typeOfIndicator indicatorType;
+    public Color pointerColor = Color.black;
+    public float pointerScale;
+    public typeOfPointer pointerType;
   }
 }
