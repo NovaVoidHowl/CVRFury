@@ -2,8 +2,9 @@
   <VisualElement name="scrollViewContainer">
     <ScrollView name="scrollView">
       <VisualElement name="headerContainer">
-        <Label name="titleLabel" text="PhysBones Stubber" />
-        <Label name="descriptionLabel" text="This tool finds and stubs all VRC PhysBones in a prefab." />
+        <Label name="descriptionLabel" text="This tool finds and stubs all following VRC Components in a prefab" />
+        <Label name="descriptionLabel" text=" - PhysBones" />
+        <Label name="descriptionLabel" text=" - PhysBoneColliders" />
       </VisualElement>
       <VisualElement name="prefabFileSelectorContainer">
         <Label name="selectLabel" text="Drag and drop the prefab file you want to process to the box below" />

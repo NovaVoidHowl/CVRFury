@@ -13,22 +13,20 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.processtools
 {
-  public class VRCPhysBoneStubberPrefabConverter : EditorWindow
+  public class VRCComponentStubberConverter : EditorWindow
   {
-  
-    
     // Declare textField as a member variable
     private TextField textField;
 
     // Declare barDelay as a member variable
     private int barDelay = 1000;
 
-    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Conversion Tools/Prefab PhysBone Stubber")]
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Conversion Tools/VRC Component Stubber")]
     public static void ShowWindow()
     {
       // Get existing open window or if none, make a new one:
-      VRCPhysBoneStubberPrefabConverter window = (VRCPhysBoneStubberPrefabConverter)
-        EditorWindow.GetWindow(typeof(VRCPhysBoneStubberPrefabConverter), true, "PhysBone Stubber");
+      VRCComponentStubberConverter window = (VRCComponentStubberConverter)
+        EditorWindow.GetWindow(typeof(VRCComponentStubberConverter), true, "VRC Component Stubber");
       window.maxSize = new Vector2(800, 600);
       window.minSize = new Vector2(500, 300);
       window.Show();
@@ -57,14 +55,14 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
     {
       // load base UXML
       var baseTree = Resources.Load<VisualTreeAsset>(
-        Constants.PROGRAM_DISPLAY_NAME + "/VRCConverters/UnityUXML/PhysBoneStubber"
+        Constants.PROGRAM_DISPLAY_NAME + "/VRCConverters/UnityUXML/VRCComponentStubber"
       );
 
       // Check if the UXML file was loaded
       if (baseTree == null)
       {
         CoreLogError(
-          "Failed to load UXML file at 'UnityUXML/PhysBoneStubber'. Please ensure the file exists at the specified path."
+          "Failed to load UXML file at 'UnityUXML/VRCComponentStubber'. Please ensure the file exists at the specified path."
         );
         // If the UXML file was not loaded add a new label to the root.
         rootVisualElement.Add(new Label("CRITICAL ERROR : UXML could not be loaded."));
@@ -73,14 +71,14 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
 
       // Load and apply the stylesheet
       var stylesheet = Resources.Load<StyleSheet>(
-        Constants.PROGRAM_DISPLAY_NAME + "/VRCConverters/UnityStyleSheets/PhysBoneStubber"
+        Constants.PROGRAM_DISPLAY_NAME + "/VRCConverters/UnityStyleSheets/VRCComponentStubber"
       );
 
       // Check if the StyleSheet was loaded
       if (stylesheet == null)
       {
         CoreLogError(
-          "Failed to load StyleSheet at 'UnityStyleSheets/PhysBoneStubber'. Please ensure the file exists at the specified path."
+          "Failed to load StyleSheet at 'UnityStyleSheets/VRCComponentStubber'. Please ensure the file exists at the specified path."
         );
         // If the StyleSheet was not loaded add a new label to the root.
         rootVisualElement.Add(new Label("CRITICAL ERROR : StyleSheet could not be loaded."));
@@ -139,26 +137,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
           // Set the text of the TextField to the file path
           textField.value = filePath;
 
-          // Now you can use filePath in your code
           CoreLog("File path: " + filePath);
-
-          // get the string from the file at filePath
-          var prefabFileText = File.ReadAllText(filePath);
-
-          // check if the file is null
-          if (string.IsNullOrEmpty(prefabFileText))
-          {
-            // if the file is null
-            // show popup to the user, to inform them that the file could not be loaded
-            EditorUtility.DisplayDialog(
-              "Error",
-              "Chosen file appears to be null. Please select a different file.",
-              "OK"
-            );
-
-            // clear the text field
-            textField.value = "";
-          }
 
           // get the file extension
           var fileExtension = Path.GetExtension(filePath);
@@ -177,6 +156,54 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
             // clear the text field
             textField.value = "";
           }
+
+          // get the string from the file at filePath
+          string prefabFileText = File.ReadAllText(filePath);
+
+          // check if the file is null
+          if (string.IsNullOrEmpty(prefabFileText))
+          {
+            // if the file is null
+            // show popup to the user, to inform them that the file could not be loaded
+            EditorUtility.DisplayDialog(
+              "Error",
+              "Chosen file appears to be null. Please select a different file.",
+              "OK"
+            );
+
+            // clear the text field
+            textField.value = "";
+          }
+
+          // Load the prefab from the file path
+          GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(filePath);
+
+          if (prefab == null)
+          {
+            // Show a popup to the user, to inform them that the prefab could not be loaded
+            EditorUtility.DisplayDialog(
+              "Error",
+              "Chosen file could not be loaded as a prefab. It may be corrupted or invalid.",
+              "OK"
+            );
+            textField.value = "";
+            return;
+          }
+
+          // Check if the prefab contains nested prefabs
+          if (ContainsNestedPrefabs(prefab))
+          {
+            // Show a popup to the user, to inform them that the prefab contains nested prefabs
+            EditorUtility.DisplayDialog(
+              "Error",
+              "The chosen prefab contains nested prefabs.\n\n Conversion of nested prefabs is not supported.",
+              "OK"
+            );
+            textField.value = "";
+            return;
+          }
+
+          
 
           // refresh the UI
           refreshMenuConverterGUI();
@@ -334,14 +361,17 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
         if (prefabFile.ToString().Contains("m_Script:"))
         {
           // if the file has a line starting with 'm_Script:'
-          // check if the m_Script line ends with the value in 'VRCPHYSBONE_M_SCRIPT_IDS'
+          // check if the m_Script line ends with the value in one of the scriptIDs
 
           (bool IDmatch_Bone, string IDString_bone) = checkScriptIDs(prefabFile, Constants.VRCPHYSBONE_M_SCRIPT_IDS);
-          (bool IDmatch_Collider, string IDString_Collider) = checkScriptIDs(prefabFile, Constants.VRCPHYSBONE_COLLIDER_M_SCRIPT_IDS);
-          
+          (bool IDmatch_Collider, string IDString_Collider) = checkScriptIDs(
+            prefabFile,
+            Constants.VRCPHYSBONE_COLLIDER_M_SCRIPT_IDS
+          );
+
           // if we get either or both of the IDs, we can proceed
           bool IDmatch = IDmatch_Bone || IDmatch_Collider;
-          
+
           if (IDmatch)
           {
             // found the file we are looking for file, (it has PhysBones in it)
@@ -419,18 +449,21 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
               progressBar.value = 30;
 
               // replace the line in the file for bones
-              newFileString = newFileString.Replace("m_Script: " + IDString_bone, "m_Script: " + Constants.CVRFURY_PHYSB_M_SCRIPT_ID);
-              
+              newFileString = newFileString.Replace(
+                "m_Script: " + IDString_bone,
+                "m_Script: " + Constants.CVRFURY_PHYSB_M_SCRIPT_ID
+              );
+
               // set the text of the progressLabel to "50% -- Rebinding Script"
               progressLabel.text = "50% -- Rebinding Script";
               // set the value of the progressBar to .5
               progressBar.value = 50;
-              
-              
+
               // replace the line in the file for colliders
-              newFileString = newFileString.Replace("m_Script: " + IDString_Collider, "m_Script: " + Constants.CVRFURY_PHYSB_COLLIDER_M_SCRIPT_ID);
-
-
+              newFileString = newFileString.Replace(
+                "m_Script: " + IDString_Collider,
+                "m_Script: " + Constants.CVRFURY_PHYSB_COLLIDER_M_SCRIPT_ID
+              );
 
               // set the text of the progressLabel to "80% -- Rebinding Script"
               progressLabel.text = "80% -- Rebinding Script";
