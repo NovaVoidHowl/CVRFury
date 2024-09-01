@@ -122,6 +122,29 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     }
 #endif
 
+    public static bool ContainsNestedPrefabs(GameObject prefab)
+    {
+      // Get all child transforms, including inactive ones
+      Transform[] allChildren = prefab.GetComponentsInChildren<Transform>(true);
+
+      foreach (Transform child in allChildren)
+      {
+        // Skip the root object
+        if (child == prefab.transform)
+          continue;
+
+        // Check if the child object is a root of another prefab instance
+        var prefabInstanceHandle = PrefabUtility.GetPrefabInstanceHandle(child.gameObject);
+        if (prefabInstanceHandle != null)
+        {
+          // Debug.Log($"Child: {child.name}, is a nested prefab instance.");
+          return true; // Found a nested prefab
+        }
+      }
+
+      return false; // No nested prefabs found
+    }
+
     public static List<GameObject> GetParentObjects(GameObject currentObject, GameObject targetParent)
     {
       List<GameObject> parentObjects = new List<GameObject>();
