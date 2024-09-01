@@ -506,11 +506,10 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
           }
           else
           {
-            // if the file does not end with 'VRCExpressionMenu_M_SCRIPT_ID'
-            // display an error popup to the user
+            // if the file does not have any VRC Components in it
             EditorUtility.DisplayDialog(
               "Error",
-              "The file you have selected does not appear to have any VRCPhysBones in it.",
+              "The file you have selected does not appear to have any VRC Components in it.",
               "OK"
             );
             // clear the text field
@@ -522,7 +521,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
           // display an error popup to the user
           EditorUtility.DisplayDialog(
             "Error",
-            "The file you have selected does not appear to be a VRCExpressionMenu file.",
+            "The file you have selected does not appear to contain any Components on its GameObjects.",
             "OK"
           );
           // clear the text field
