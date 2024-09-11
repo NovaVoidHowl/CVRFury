@@ -116,6 +116,12 @@ This project makes use of the Animator Controller copying/merging logic.
 Please see <https://github.com/VRLabs/Avatars-3.0-Manager/tree/main> for details
 Licence MIT
 
+### prefabulous-for-conversions
+
+This project makes uses of sections of VRC Constraints to Unity constraints converter logic.
+Please see <https://github.com/hai-vr/prefabulous-for-conversions> for details
+Licence MIT
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- PROJECT TOOLS -->

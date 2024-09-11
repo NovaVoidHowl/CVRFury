@@ -93,7 +93,28 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     };
 
     public const string CVRFURY_ANIMDRIVER_M_SCRIPT_ID = "{fileID: 11500000, guid: 3e00de38bef9e114ca08fe6faa7bb341, type: 3}";
-   
+
+    // this is for the VRC Constraint Stubs
+    public static readonly List<System.Tuple<string, string>> VRC_CONSTRAINT_M_SCRIPT_IDS = new List<System.Tuple<string, string>>
+    {
+      new System.Tuple<string, string>("{fileID: -926596935, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Aim"),
+      new System.Tuple<string, string>("{fileID: -372946275, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "LookAt"),
+      new System.Tuple<string, string>("{fileID: 575728033, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Parent"),
+      new System.Tuple<string, string>("{fileID: 1116338486, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Position"),
+      new System.Tuple<string, string>("{fileID: 1788371120, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Rotation"),
+      new System.Tuple<string, string>("{fileID: 41250163, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Scale")
+    };
+
+    public static readonly List<System.Tuple<string, string>> CVRFURY_CONSTRAINT_M_SCRIPT_IDS = new List<System.Tuple<string, string>>
+    {
+      new System.Tuple<string, string>("{fileID: 11500000, guid: f6dac65aeac6b884dbdeb77a73af9807, type: 3}", "Aim"),
+      new System.Tuple<string, string>("{fileID: 11500000, guid: 5cd6b64f73910994486c46cae54eed36, type: 3}", "LookAt"),
+      new System.Tuple<string, string>("{fileID: 11500000, guid: 84b4ad7d8ffb0b646917aabba3948b3f, type: 3}", "Parent"),
+      new System.Tuple<string, string>("{fileID: 11500000, guid: 3ab8ebf72da2885489d2f5170cb09ac7, type: 3}", "Position"),
+      new System.Tuple<string, string>("{fileID: 11500000, guid: e3ed00e57a6643346947062cae1412e5, type: 3}", "Rotation"),
+      new System.Tuple<string, string>("{fileID: 11500000, guid: 786dfe19af3776244822f542536aefbc, type: 3}", "Scale")
+    };
+
 
   }
 }

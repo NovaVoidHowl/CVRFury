@@ -6,9 +6,9 @@
   },
   "changelogUrl": "https://github.com/NovaVoidHowl/CVRFury/releases",
   "dependencies": {
+    "com.unity.editorcoroutines": "1.0.0",
     "com.unity.nuget.newtonsoft-json": "3.1.0",
-    "com.unity.vectorgraphics": "2.0.0-preview.21",
-    "com.unity.editorcoroutines": "1.0.0"
+    "com.unity.vectorgraphics": "2.0.0-preview.21"
   },
   "description": "The aim of this project is to create a tool kit that can process VRCFury supported content for use in Chillout VR.",
   "displayName": "CVRFury",
@@ -22,5 +22,5 @@
   },
   "unity": "2021.3",
   "unityRelease": "23f1",
-  "version": "0.176.0-alpha"
+  "version": "0.177.0-alpha"
 }
