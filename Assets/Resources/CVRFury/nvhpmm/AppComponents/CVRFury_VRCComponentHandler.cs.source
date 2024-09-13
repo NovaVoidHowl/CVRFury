@@ -1,3 +1,6 @@
+// { "version": "0.0.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_HANDLE", dependencies: [], type: "Editor"}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
 // editor only script to manage the dependencies
 #if UNITY_EDITOR
 using System.IO;
@@ -12,7 +15,9 @@ using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
-namespace uk.novavoidhowl.dev.cvrfury.processtools
+using uk.novavoidhowl.dev.cvrfury.converttools;
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
   public class VRCComponentHandler : EditorWindow
   {
@@ -30,7 +35,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
       VRCComponentHandler window = (VRCComponentHandler)
         EditorWindow.GetWindow(typeof(VRCComponentHandler), true, "VRC Component Handler");
       window.maxSize = new Vector2(800, 600);
-      window.minSize = new Vector2(500, 300);
+      window.minSize = new Vector2(550, 340);
       window.Show();
     }
 
@@ -385,8 +390,22 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
             }
           }
 
+          bool IDmatch_Contact = false;
+          // this is for any of the VRC Contacts (send or receive)
+          foreach (var IDTuple in Constants.VRC_CONTACTS_M_SCRIPT_IDS)
+          {
+            string ID = IDTuple.Item1;
+            (bool IDmatch_contact_trigger, string IDString_contact) = checkScriptIDs(prefabFile, ID);
+
+            if (IDmatch_contact_trigger)
+            {
+              IDmatch_Contact = true;
+              break; // found the ID, so no need to continue
+            }
+          }
+
           // If we get any of the IDs, we can proceed
-          bool IDmatch = IDmatch_Bone || IDmatch_Collider || IDmatch_Constraint;
+          bool IDmatch = IDmatch_Bone || IDmatch_Collider || IDmatch_Constraint || IDmatch_Contact;
 
           if (IDmatch)
           {
@@ -497,6 +516,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
               }
               #endregion // Rebinding - Physbone Collider
 
+              #region Rebinding - VRC Constraints
               // set the text of the progressLabel to "60% -- Rebinding Scripts"
               progressLabel.text = "60% -- Rebinding Scripts";
               // set the value of the progressBar to .6
@@ -522,6 +542,38 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
                   CoreLogError("Failed to find replacement for " + ID);
                 }
               }
+
+              #endregion // Rebinding - VRC Constraints
+
+              #region Rebinding - VRC Contacts
+              
+              progressLabel.text = "70% -- Rebinding Scripts";
+              progressBar.value = 70;
+
+              foreach (var IDTuple in Constants.VRC_CONTACTS_M_SCRIPT_IDS)
+              {
+                string ID = IDTuple.Item1;
+                string TypeOfContact = IDTuple.Item2;
+
+                // Lookup replacement ID
+                var replacementTuple = Constants.CVRFURY_CONTACTS_M_SCRIPT_IDS
+                  .FirstOrDefault(t => t.Item2 == TypeOfContact);
+
+                if (replacementTuple != null)
+                {
+                  string CVRFURY_ID = replacementTuple.Item1;
+                  newFileString = newFileString.Replace("m_Script: " + ID, "m_Script: " + CVRFURY_ID);
+                  CoreLog("Replaced " + ID + " with " + CVRFURY_ID);
+                }
+                else
+                {
+                  CoreLogError("Failed to find replacement for " + ID);
+                }
+              }
+              #endregion // Rebinding - VRC Contacts
+
+
+
 
               // set the text of the progressLabel to "80% -- Rebinding Script"
               progressLabel.text = "80% -- Rebinding Script";
@@ -561,10 +613,25 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
               progressLabel.text = "Phase 2 0% -- Initialising";
               progressBar.value = 0;
 
+              progressLabel.text = "Phase 2 1% -- Replace VRC Constraints";
+              progressBar.value = 1;
+
               CVRFuryXHai.ConvertPrefabBackToUnityConstraints(newFilePath);
 
-              progressLabel.text = "Phase 2 0% -- Replaced VRC Constraints";
-              progressBar.value = 100;
+
+              #if NVH_CVRFURY_EXISTS_VRC_CONTACT_CONVERT
+              progressLabel.text = "Phase 2 10% -- Replace VRC Contact Senders";
+              progressBar.value = 10;
+
+              VRCContactConverter.ConvertSenderToPointer(newFilePath);
+
+              progressLabel.text = "Phase 2 20% -- Replace VRC Contact Receivers";
+              progressBar.value = 20;
+             
+
+              VRCContactConverter.ConvertReceiverToTrigger(newFilePath);
+              #endif
+
 
               // Wait for barDelay
               await Task.Delay(barDelay);
