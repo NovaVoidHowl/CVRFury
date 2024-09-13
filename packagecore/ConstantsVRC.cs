@@ -12,7 +12,9 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "uk.novavoidhowl.dev.vrcstub.VRCAvatarParameterDriver",
         "uk.novavoidhowl.dev.vrcstub.VRCAvatarDescriptor",
         "uk.novavoidhowl.dev.vrcstub.VRCPhysBone",
-        "uk.novavoidhowl.dev.vrcstub.VRCPhysBoneCollider"
+        "uk.novavoidhowl.dev.vrcstub.VRCPhysBoneCollider",
+        "uk.novavoidhowl.dev.vrcstub.VRCContactReceiver",
+        "uk.novavoidhowl.dev.vrcstub.VRCContactSender",
       }
     );
 

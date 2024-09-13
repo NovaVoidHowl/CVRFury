@@ -115,6 +115,19 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       new System.Tuple<string, string>("{fileID: 11500000, guid: 786dfe19af3776244822f542536aefbc, type: 3}", "Scale")
     };
 
+    // this is for the VRC Contacts and Receivers stubs
+    public static readonly List<System.Tuple<string, string>> VRC_CONTACTS_M_SCRIPT_IDS = new List<System.Tuple<string, string>>
+    {
+      new System.Tuple<string, string>("{fileID: -1450912254, guid: 80f1b8067b0760e4bb45023bc2e9de66, type: 3}", "Receiver"),
+      new System.Tuple<string, string>("{fileID: -802764141, guid: 80f1b8067b0760e4bb45023bc2e9de66, type: 3}", "Sender")
+    };
+
+    public static readonly List<System.Tuple<string, string>> CVRFURY_CONTACTS_M_SCRIPT_IDS = new List<System.Tuple<string, string>>
+    {
+      new System.Tuple<string, string>("{fileID: 11500000, guid: 4ed8da5d0f60f2d478b9533305284ff7, type: 3}", "Receiver"),
+      new System.Tuple<string, string>("{fileID: 11500000, guid: d91e5d0cd9b1b27448977ce08e43dafb, type: 3}", "Sender")
+    };
+
 
   }
 }
