@@ -16,7 +16,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       : base("ArmatureLink") { }
 
     public string boneSuffixToStrip; // if not empty, will strip this suffix from the bones of the addon object
-    
+
     // added to allow for more targeting options
     public List<LinkTarget> linkTargets = new List<LinkTarget>();
 
@@ -26,8 +26,8 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public string bonePathOnTargetArmature; // if not empty, will use this bone path on the avatar to link to instead of the armatureBoneToLinkTo
     public HumanBodyBones armatureBoneToLinkTo;
     public List<HumanBodyBones> fallbackBones = new List<HumanBodyBones>();
-    
+
     // end basic mode vars
-   
+
   }
 }

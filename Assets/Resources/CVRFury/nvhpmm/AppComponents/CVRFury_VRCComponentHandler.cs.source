@@ -1,4 +1,4 @@
-// { "version": "0.0.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_HANDLE", dependencies: [], type: "Editor"}
+// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_HANDLE", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 // editor only script to manage the dependencies
@@ -546,7 +546,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               #endregion // Rebinding - VRC Constraints
 
               #region Rebinding - VRC Contacts
-              
+
               progressLabel.text = "70% -- Rebinding Scripts";
               progressBar.value = 70;
 
@@ -627,7 +627,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               progressLabel.text = "Phase 2 20% -- Replace VRC Contact Receivers";
               progressBar.value = 20;
-             
+
 
               VRCContactConverter.ConvertReceiverToTrigger(newFilePath);
               #endif

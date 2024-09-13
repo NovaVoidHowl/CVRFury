@@ -26,7 +26,7 @@ namespace uk.novavoidhowl.dev.vrcstub
 
     protected override VRCConstraintScaleMode ScaleMode => VRCConstraintScaleMode.None;
 
-    
+
   }
 }
 

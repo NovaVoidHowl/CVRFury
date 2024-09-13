@@ -43,7 +43,7 @@ namespace uk.novavoidhowl.dev.vrcstub
       }
     }
   }
-    
+
 
 }
 

@@ -21,6 +21,6 @@ namespace uk.novavoidhowl.dev.vrcstub
 
     protected virtual bool UsesWorldUpTransform => false;
   }
-	
+
 }
 #endif

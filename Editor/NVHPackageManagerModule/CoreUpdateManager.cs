@@ -271,7 +271,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 
       // remove channels that do not have 'state' set to 'enabled'
       visibleChannels = visibleChannels.Where(c => c.state == "enabled").ToList();
-      
+
       // Convert the filtered list to a list of names
       var channelNames = visibleChannels.ConvertAll(c => c.name);
 

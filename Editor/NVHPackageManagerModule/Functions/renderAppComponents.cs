@@ -38,7 +38,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public partial class ToolSetup : EditorWindow
   {
-    
+
     private VisualElement renderAppComponents(string scriptingDefines)
     {
       // create a new section root element

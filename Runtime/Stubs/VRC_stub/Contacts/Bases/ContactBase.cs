@@ -47,7 +47,7 @@ namespace uk.novavoidhowl.dev.vrcstub
     #endregion // Private Methods
 
     public abstract bool IsReceiver();
-    
+
   }
 }
 

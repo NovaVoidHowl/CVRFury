@@ -1,4 +1,4 @@
-// { "version": "0.5.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.5.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1102,7 +1102,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // 2. the ones that start from the level of the DSUObject, note that they may not match the DSUObject name
       //
       // ON TOP OF THAT, there sometimes the rebind is on the DSUObject itself
-      // this is a special case and needs a custom handler 
+      // this is a special case and needs a custom handler
       // (note its not recommended to do when making a prefab, but people may do it anyway)
 
       // get name of DSUObject
@@ -1307,7 +1307,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   // now this has to be relative to the avatar as that is where the all processed animation clips have to
                   // be relative to, but what we currently have is the full path from the root of the scene, so we need to
                   // strip off the targetAvatar's path from the start of the newPath
-                  
+
                   // remove the targetAvatar's path from the start of the newPath
                   newPath = newPath.Replace(targetAvatarPath, "");
                   // ensure there is no leading slash

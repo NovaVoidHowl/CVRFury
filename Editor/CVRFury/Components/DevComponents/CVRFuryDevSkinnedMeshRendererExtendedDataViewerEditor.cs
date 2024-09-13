@@ -274,18 +274,18 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       // Set the text of the Foldout to the bone name
       var boneFoldout = new Foldout { text = bone.name };
       boneFoldout.style.marginLeft = depth; // Set the indent level based on the depth
-    
+
       // Calculate the color based on the depth
       int baseColor = 000;
       int colorValue = Math.Max(0, baseColor + depth * 10);
       Color32 color32 = new Color32((byte)colorValue, (byte)colorValue, (byte)colorValue, 255);
       Color color = color32;
-      boneFoldout.style.backgroundColor = new StyleColor(color);    
+      boneFoldout.style.backgroundColor = new StyleColor(color);
 
       // Create a VisualElement to hold the Label and the Button
       var boneElement = new VisualElement();
       boneElement.AddToClassList("bone-element"); // Add a class to the VisualElement
-    
+
       // Create a Button with the icon and add it to the VisualElement
       var boneIcon = new Button();
       var iconTexture = EditorGUIUtility.IconContent("GameObject Icon").image as Texture2D;
@@ -293,20 +293,20 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       boneIcon.clicked += () => EditorGUIUtility.PingObject(bone.gameObject); // Ping the bone in the hierarchy when the icon is clicked
       boneIcon.AddToClassList("bone-icon"); // Add a class to the Button
       boneElement.Add(boneIcon);
-    
+
       // Add the VisualElement to the Foldout
       boneFoldout.Add(boneElement);
-    
+
       // Recursively add child bones
       foreach (Transform child in bone)
       {
         var childFoldout = BuildTreeView(child, depth + 1);
         boneFoldout.Add(childFoldout);
       }
-    
+
       // Add the bone foldout to the tree view
       this.Add(boneFoldout);
-    
+
       return boneFoldout;
     }
   }

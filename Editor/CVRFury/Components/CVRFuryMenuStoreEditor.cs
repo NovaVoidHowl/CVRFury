@@ -222,8 +222,8 @@ public partial class CVRFuryMenuStoreEditor : Editor
     {
       autoButtonContent = new(autoIcon, "Unlink/Link Name to Machine");
     }
-    
-    
+
+
 
     // Create a GUIStyle to set the size of the image
     GUIStyle buttonStyle = new GUIStyle();

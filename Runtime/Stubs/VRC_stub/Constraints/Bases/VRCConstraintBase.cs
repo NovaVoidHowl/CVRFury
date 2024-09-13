@@ -54,7 +54,7 @@ namespace uk.novavoidhowl.dev.vrcstub
     protected abstract VRCConstraintScaleMode ScaleMode { get; }
 
     #region Private Methods
-    
+
     private void OnEnable()
     {
       // added to force unity to add the enabled/disabled checkbox and thus the Enabled/m_Enabled attribute
@@ -68,6 +68,6 @@ namespace uk.novavoidhowl.dev.vrcstub
     #endregion // Private Methods
   }
 }
-	
+
 
 #endif

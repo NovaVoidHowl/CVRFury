@@ -26,7 +26,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
       // set the name of the root element to allow styling
       rootVisualElement.name = "CVRFuryNukeGameObjectEditor";
-     
+
       // Load and apply the stylesheet
       var stylesheet = Resources.Load<StyleSheet>(
         Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryComponents/UnityStyleSheets/CVRFuryNukeGameObjectInspector"
@@ -45,10 +45,10 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
       // apply stylesheet
       rootVisualElement.styleSheets.Add(stylesheet);
-     
-     
-     
-     
+
+
+
+
       // get the DSUNumber
       var DSUNumber = serializedObject.FindProperty("DSUNumber");
 

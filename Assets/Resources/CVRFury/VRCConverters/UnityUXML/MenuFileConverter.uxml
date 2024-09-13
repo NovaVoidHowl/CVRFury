@@ -18,7 +18,7 @@
         <VisualElement name="menuFileSelectorHolder">
         </VisualElement>
       </VisualElement>
-    
+
       <VisualElement name="parameterFilesContainer">
         <Label name="stepLabel" text="Step 2" />
         <Label name="parameterFilesLabel" text="CVRFury Parameter files
@@ -26,7 +26,7 @@
         <VisualElement name="parameterFilesList">
         </VisualElement>
       </VisualElement>
-      
+
       <VisualElement name="controlsContainer">
         <VisualElement name="convertButtonContainer">
           <Button name="convertButton" text="Convert" />

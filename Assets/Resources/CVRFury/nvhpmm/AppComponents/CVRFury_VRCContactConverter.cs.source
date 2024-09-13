@@ -1,4 +1,4 @@
-// { "version": "0.0.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_CONTACT_CONVERT", dependencies: [], type: "Editor"}
+// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_CONTACT_CONVERT", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 
@@ -113,7 +113,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // destroy the sender
         Object.DestroyImmediate(sender);
-        
+
       }
 
 
@@ -210,7 +210,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // set the areaSize (vector3) of the trigger to a one hundredth the size of the collider radius
         trigger.areaSize = new Vector3(receiver.radius / 100, receiver.radius / 100, receiver.radius / 100);
-        
+
 
         // set useAdvancedTrigger to true
         trigger.useAdvancedTrigger = true;
@@ -345,7 +345,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 
       }
-      
+
     }
   }
 }

@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
-  
+
   /// <summary>
   /// A struct to hold a pair of an object and a state to set it to.
   /// </summary>
@@ -29,7 +29,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public string machineName;
     public List<DropdownParameterPair> pairs = new List<DropdownParameterPair>();
   }
-  
+
   [System.Serializable]
   public class DropdownParameterPair{
     public string name;
