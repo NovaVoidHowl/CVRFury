@@ -37,7 +37,7 @@ using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.packagecore;
 
-namespace uk.novavoidhowl.dev.cvrfury.processtools
+namespace uk.novavoidhowl.dev.cvrfury.converttools
 {
   public static class CVRFuryXHai
   {
@@ -70,7 +70,12 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
       CoreLogDebug($"Found {foundConstraints.Length} constraints in {pathToPrefab}");
 
       if (foundConstraints.Length == 0)
+      {
+        // Destroy the instantiated prefab instance
+        Object.DestroyImmediate(instance);
+        // No constraints found, nothing to do
         return;
+      }
 
       foreach (var fromConstraint in foundConstraints)
       {
