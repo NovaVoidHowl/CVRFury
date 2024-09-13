@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace uk.novavoidhowl.dev.vrcstub
 {
+  [HelpURL("")]
   [AddComponentMenu("")] // hide from add component menu
   public sealed class VRCRotationConstraint : VRCRotationConstraintBase
   {
