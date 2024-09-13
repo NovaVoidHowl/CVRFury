@@ -22,7 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
+// editor only script to manage the dependencies
+#if UNITY_EDITOR
 
 using System;
 using System.Collections.Generic;
@@ -374,3 +375,5 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
     #endregion  // Supporting Functions
   }
 }
+
+#endif

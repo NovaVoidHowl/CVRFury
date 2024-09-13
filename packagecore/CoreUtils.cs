@@ -123,7 +123,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         CoreLogWarning($"Layer '{layerName}' not found in the AnimatorController.");
       }
     }
-#endif
+
 
     public static bool ContainsNestedPrefabs(GameObject prefab)
     {
@@ -147,6 +147,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
       return false; // No nested prefabs found
     }
+    #endif
 
     public static List<GameObject> GetParentObjects(GameObject currentObject, GameObject targetParent)
     {
