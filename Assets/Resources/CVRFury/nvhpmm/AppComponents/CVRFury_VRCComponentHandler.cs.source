@@ -1,8 +1,6 @@
-// { "version": "0.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_HANDLE", dependencies: [], type: "Editor"}
-// #if UNITY_EDITOR && CVR_CCK_EXISTS
+// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_HANDLE", dependencies: [], type: "Editor"}
+#if UNITY_EDITOR && CVR_CCK_EXISTS
 
-// editor only script to manage the dependencies
-#if UNITY_EDITOR
 using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -114,7 +112,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       var prefabFileDropArea = rootVisualElement.Q<VisualElement>("prefabFileDropArea");
 
       // Create a new TextField
-      var newTextField = new TextField("Source Parameters File");
+      var newTextField = new TextField("Source Prefab File");
 
       // If textField is not null, set the value of newTextField to the value of textField
       if (textField != null)
