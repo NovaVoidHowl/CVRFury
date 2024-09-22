@@ -475,29 +475,47 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                 parametersFileData.parameters.Length
               ];
 
-              //divide 30 by the number of parameters (to get the value of each step)
-              float stepValue = 30 / parametersFileData.parameters.Length;
-
-              for (int i = 0; i < parametersFileData.parameters.Length; i++)
+              // check if the number of parameters is 0
+              if (parametersFileData.parameters.Length == 0)
               {
-                newCVRFuryParametersStore.parameters[i] = new CVRFuryParametersStore.Parameter
-                {
-                  name = parametersFileData.parameters[i].name,
-                  // set the type of the parameter to match the type of the parameter in the VRCExpressionParameters file
-                  valueType = parametersFileData.parameters[i].valueType switch
-                  {
-                    VRCExpressionParameters.ValueType.Bool => CVRFuryParametersStore.ValueType.Bool,
-                    VRCExpressionParameters.ValueType.Float => CVRFuryParametersStore.ValueType.Float,
-                    VRCExpressionParameters.ValueType.Int => CVRFuryParametersStore.ValueType.Int,
-                    _ => CVRFuryParametersStore.ValueType.Float
-                  },
-                  defaultValue = parametersFileData.parameters[i].defaultValue
-                };
+                // if the number of parameters is 0
+                // display an error popup to the user
+                EditorUtility.DisplayDialog(
+                  "Error",
+                  "The file you have selected to convert does not contain any parameters.\n\n" +
+                  "An empty CVRFury parameter file will be created.",
+                  "OK"
+                );
 
-                // set the text of the progressLabel
-                progressLabel.text = (60 + (stepValue * i)) + "% -- Data Processing";
-                // set the value of the progressBar to to 60 + (stepValue * i)
-                progressBar.value = 60 + (stepValue * i);
+                
+              }
+              else
+              {
+
+                //divide 30 by the number of parameters (to get the value of each step)
+                float stepValue = 30 / parametersFileData.parameters.Length;
+
+                for (int i = 0; i < parametersFileData.parameters.Length; i++)
+                {
+                  newCVRFuryParametersStore.parameters[i] = new CVRFuryParametersStore.Parameter
+                  {
+                    name = parametersFileData.parameters[i].name,
+                    // set the type of the parameter to match the type of the parameter in the VRCExpressionParameters file
+                    valueType = parametersFileData.parameters[i].valueType switch
+                    {
+                      VRCExpressionParameters.ValueType.Bool => CVRFuryParametersStore.ValueType.Bool,
+                      VRCExpressionParameters.ValueType.Float => CVRFuryParametersStore.ValueType.Float,
+                      VRCExpressionParameters.ValueType.Int => CVRFuryParametersStore.ValueType.Int,
+                      _ => CVRFuryParametersStore.ValueType.Float
+                    },
+                    defaultValue = parametersFileData.parameters[i].defaultValue
+                  };
+
+                  // set the text of the progressLabel
+                  progressLabel.text = (60 + (stepValue * i)) + "% -- Data Processing";
+                  // set the value of the progressBar to to 60 + (stepValue * i)
+                  progressBar.value = 60 + (stepValue * i);
+                }
               }
 
               // set the text of the progressLabel

@@ -641,124 +641,120 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
               // get the number of controls in the menuToImport
               var controlCount = menuToImport.controls.Count;
 
-              // divide 30 by the number of controls
-              var controlStep = 30 / controlCount;
-
               // create CVRFuryMenuStore to store the converted menu
               CVRFuryMenuStore convertedMenu = ScriptableObject.CreateInstance<CVRFuryMenuStore>();
 
-              // list to hold parameter names and machine names for dropdowns that need to be created
-              List<DropdownParameter> dropdownsParameterList = new List<DropdownParameter>();
-
-              // for each control in the menuToImport
-              foreach (var control in menuToImport.controls)
+              // check that there are controls in the menu
+              if (controlCount == 0)
               {
-                // set the text of the progressLabel
-                progressLabel.text = "65% -- Processing Controls\n\n" + controlCount + " controls remaining";
-                // set the value of the progressBar
-                progressBar.value += controlStep;
+                // if there are no controls in the menu
+                // display a popup to the user
+                EditorUtility.DisplayDialog(
+                  "Error",
+                  "The file you have selected to convert has no controls.\n\n"+
+                  "A empty CVRFury menu will be created.",
+                  "OK"
+                );
 
-                // get the type of the control
-                ControlType controlType = control.type;
+               
+              }
+              else
+              {
+                // divide 30 by the number of controls
+                var controlStep = 30 / controlCount;
 
-                // NOTES:
-                // as of CCK 3.10 both name and parameter are exposed in the inspector, so now we should save both bits
+                
 
+                // list to hold parameter names and machine names for dropdowns that need to be created
+                List<DropdownParameter> dropdownsParameterList = new List<DropdownParameter>();
 
-                // case statement to handle the different control types
-                switch (controlType)
+                // for each control in the menuToImport
+                foreach (var control in menuToImport.controls)
                 {
-                  case ControlType.Button:
-                  // if the control is a button
-                  // there is not really an analogue for this in CVR, best we can do for this is a toggle
-                  //break; //this break is disabled to allow the toggle to be created
-                  case ControlType.Toggle:
+                  // set the text of the progressLabel
+                  progressLabel.text = "65% -- Processing Controls\n\n" + controlCount + " controls remaining";
+                  // set the value of the progressBar
+                  progressBar.value += controlStep;
 
-                    // first we need to check what type the related parameter is
-                    // if the parameter is a bool, then we can use a toggle in CVR
-                    // if the parameter is not a bool, then we need to store it off to be made into a dropdown
+                  // get the type of the control
+                  ControlType controlType = control.type;
 
-                    // get the parameter of the control and see if its in the parameterNamesAndTypes list
-                    string machineName = GetCVRFuryMenuSectionMachineName(control);
-                    // check if the parameter is in the parameterNamesAndTypes list
-                    var parameter = parameterNamesAndTypes.Find(x => x.Item1 == machineName);
+                  // NOTES:
+                  // as of CCK 3.10 both name and parameter are exposed in the inspector, so now we should save both bits
 
-                    // check if the parameter is null
-                    if (parameter == null)
-                    {
-                      // this happens when there is no parameters file, or the parameter is not in the file
-                      // most commonly the case when people are putting dummy buttons in the menu as credits etc.
 
-                      // TODO : add a way of handling this better, that just skipping the control
-                      // maybe a credits holding class to store these off to, and then display them in a different way
-                      // likely will need a mod for CVR to support this
+                  // case statement to handle the different control types
+                  switch (controlType)
+                  {
+                    case ControlType.Button:
+                    // if the control is a button
+                    // there is not really an analogue for this in CVR, best we can do for this is a toggle
+                    //break; //this break is disabled to allow the toggle to be created
+                    case ControlType.Toggle:
 
-                      // send a warning to the console and continue
-                      CoreLog("Parameter " + machineName + " not found in the parameters file, and will be skipped");
-                      continue;
-                    }
+                      // first we need to check what type the related parameter is
+                      // if the parameter is a bool, then we can use a toggle in CVR
+                      // if the parameter is not a bool, then we need to store it off to be made into a dropdown
 
-                    // now we are safe to get the type of the parameter
+                      // get the parameter of the control and see if its in the parameterNamesAndTypes list
+                      string machineName = GetCVRFuryMenuSectionMachineName(control);
+                      // check if the parameter is in the parameterNamesAndTypes list
+                      var parameter = parameterNamesAndTypes.Find(x => x.Item1 == machineName);
 
-                    // get the type of the parameter
-                    var parameterType = parameter.Item2;
-
-                    // if the parameterType is a bool carry on and make a toggle
-                    if (parameterType == CVRFuryParametersStore.ValueType.Bool)
-                    {
-                      // create a new toggleParameter
-                      toggleParameter newToggle = new toggleParameter();
-
-                      // set the name of the new toggle
-                      newToggle.name = control.name.Trim();
-
-                      // set the machineName of the new toggle
-                      newToggle.MachineName = machineName;
-
-                      // set the default state of the new toggle to the value of the control
-                      newToggle.defaultState = control.value == 1f ? 1 : 0;
-
-                      // set the generateType of the new toggle to bool
-                      newToggle.generateType = toggleParameter.GenerateType.Bool;
-
-                      // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
-                      newToggle.forceMachineName = true;
-
-                      // add the new toggle to the convertedMenu
-                      convertedMenu.menuItems.Add(newToggle);
-                    }
-                    else
-                    {
-                      // if the parameterType is not a bool, then we need to store it off to be made into a dropdown
-                      // send a warning to the console
-                      CoreLog("Parameter " + machineName + " is not a bool, will be made into a dropdown");
-
-                      // check if dropdownsToCreate has any items in it
-                      if (dropdownsParameterList.Count == 0)
+                      // check if the parameter is null
+                      if (parameter == null)
                       {
-                        // if dropdownsToCreate is empty, create a new DropdownParameter
-                        dropdownsParameterList.Add(
-                          new DropdownParameter
-                          {
-                            machineName = machineName,
-                            pairs = new List<DropdownParameterPair>
-                            {
-                              new DropdownParameterPair { name = control.name.Trim(), value = control.value }
-                            }
-                          }
-                        );
+                        // this happens when there is no parameters file, or the parameter is not in the file
+                        // most commonly the case when people are putting dummy buttons in the menu as credits etc.
+
+                        // TODO : add a way of handling this better, that just skipping the control
+                        // maybe a credits holding class to store these off to, and then display them in a different way
+                        // likely will need a mod for CVR to support this
+
+                        // send a warning to the console and continue
+                        CoreLog("Parameter " + machineName + " not found in the parameters file, and will be skipped");
+                        continue;
+                      }
+
+                      // now we are safe to get the type of the parameter
+
+                      // get the type of the parameter
+                      var parameterType = parameter.Item2;
+
+                      // if the parameterType is a bool carry on and make a toggle
+                      if (parameterType == CVRFuryParametersStore.ValueType.Bool)
+                      {
+                        // create a new toggleParameter
+                        toggleParameter newToggle = new toggleParameter();
+
+                        // set the name of the new toggle
+                        newToggle.name = control.name.Trim();
+
+                        // set the machineName of the new toggle
+                        newToggle.MachineName = machineName;
+
+                        // set the default state of the new toggle to the value of the control
+                        newToggle.defaultState = control.value == 1f ? 1 : 0;
+
+                        // set the generateType of the new toggle to bool
+                        newToggle.generateType = toggleParameter.GenerateType.Bool;
+
+                        // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
+                        newToggle.forceMachineName = true;
+
+                        // add the new toggle to the convertedMenu
+                        convertedMenu.menuItems.Add(newToggle);
                       }
                       else
                       {
-                        // if dropdownsToCreate is not empty, add the parameter to the existing DropdownParameter
+                        // if the parameterType is not a bool, then we need to store it off to be made into a dropdown
+                        // send a warning to the console
+                        CoreLog("Parameter " + machineName + " is not a bool, will be made into a dropdown");
 
-                        // check and see if the machineName is already in the list
-                        var existingDropdown = dropdownsParameterList.Find(x => x.machineName == machineName);
-
-                        // if the machineName is not in the list
-                        if (existingDropdown == null)
+                        // check if dropdownsToCreate has any items in it
+                        if (dropdownsParameterList.Count == 0)
                         {
-                          // create a new DropdownParameter
+                          // if dropdownsToCreate is empty, create a new DropdownParameter
                           dropdownsParameterList.Add(
                             new DropdownParameter
                             {
@@ -772,173 +768,196 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                         }
                         else
                         {
-                          // if the machineName is in the list
-                          // add the parameter to the existing DropdownParameter
-                          existingDropdown.pairs.Add(
-                            new DropdownParameterPair { name = control.name.Trim(), value = control.value }
-                          );
+                          // if dropdownsToCreate is not empty, add the parameter to the existing DropdownParameter
+
+                          // check and see if the machineName is already in the list
+                          var existingDropdown = dropdownsParameterList.Find(x => x.machineName == machineName);
+
+                          // if the machineName is not in the list
+                          if (existingDropdown == null)
+                          {
+                            // create a new DropdownParameter
+                            dropdownsParameterList.Add(
+                              new DropdownParameter
+                              {
+                                machineName = machineName,
+                                pairs = new List<DropdownParameterPair>
+                                {
+                                  new DropdownParameterPair { name = control.name.Trim(), value = control.value }
+                                }
+                              }
+                            );
+                          }
+                          else
+                          {
+                            // if the machineName is in the list
+                            // add the parameter to the existing DropdownParameter
+                            existingDropdown.pairs.Add(
+                              new DropdownParameterPair { name = control.name.Trim(), value = control.value }
+                            );
+                          }
                         }
                       }
-                    }
 
-                    break;
+                      break;
 
-                  case ControlType.SubMenu:
-                    // there is not really an analogue for this in CVR
-                    // there is a mod that has a sub menu but it is not a standard CVR feature
-                    // so for now not supported, maybe in the future
-                    ////////////////
-                    // TODO: add support for SubMenu
-                    ////////////////
-                    // send a warning to the console
-                    CoreLog("SubMenu not supported, please add / up vote a feature request on the GitHub page");
-                    break;
-
-                  case ControlType.TwoAxisPuppet:
-                    // Two axis puppet maps to a 2D joystick in CVR
-
-                    // create a new twoDJoystickParameter
-                    twoDJoystickParameter newJoystick = new twoDJoystickParameter();
-
-                    // note that twoDJoystickParameter has two parameters, that have a fixed name structure
-                    // comprised of the name and a suffix of '-x' or '-y', you can't change the suffix
-                    // so we need to see how much of the name we can use, likely will need to re-code animator
-                    // parameters to match the name of the control
-
-                    // get the name of the control
-                    string controlName = control.name;
-
-                    // get the subParameters of the control, as these will always be in use for a TwoAxisPuppet
-                    var subParameters = control.subParameters;
-
-                    // there should only be two subParameters, one for the x axis and one for the y axis.
-                    // get a count of the subParameters
-                    int subParameterCount = subParameters.Length;
-
-                    // if there is anything other than two subParameters,
-                    if (subParameterCount != 2)
-                    {
+                    case ControlType.SubMenu:
+                      // there is not really an analogue for this in CVR
+                      // there is a mod that has a sub menu but it is not a standard CVR feature
+                      // so for now not supported, maybe in the future
+                      ////////////////
+                      // TODO: add support for SubMenu
+                      ////////////////
                       // send a warning to the console
-                      CoreLog("TwoAxisPuppet control has " + subParameterCount + " subParameters, expected 2");
+                      CoreLog("SubMenu not supported, please add / up vote a feature request on the GitHub page");
+                      break;
 
-                      // and display a popup to the user
-                      EditorUtility.DisplayDialog(
-                        "Warning",
-                        "Control "
-                          + control.name
-                          + " has "
-                          + subParameterCount
-                          + " subParameters, expected 2\n"
-                          + "Please check the source file and try again",
-                        "OK"
-                      );
-                    }
-                    else
-                    {
-                      // ok so looks like we have the right number of subParameters
+                    case ControlType.TwoAxisPuppet:
+                      // Two axis puppet maps to a 2D joystick in CVR
 
-                      // get the first subParameter
-                      var subParameter1 = subParameters[0];
-                      // get the second subParameter
-                      var subParameter2 = subParameters[1];
+                      // create a new twoDJoystickParameter
+                      twoDJoystickParameter newJoystick = new twoDJoystickParameter();
 
-                      // get the common prefix of the two subParameter names
-                      string commonPrefix = GetCommonPrefix(subParameter1.name, subParameter2.name);
+                      // note that twoDJoystickParameter has two parameters, that have a fixed name structure
+                      // comprised of the name and a suffix of '-x' or '-y', you can't change the suffix
+                      // so we need to see how much of the name we can use, likely will need to re-code animator
+                      // parameters to match the name of the control
+
+                      // get the name of the control
+                      string controlName = control.name;
+
+                      // get the subParameters of the control, as these will always be in use for a TwoAxisPuppet
+                      var subParameters = control.subParameters;
+
+                      // there should only be two subParameters, one for the x axis and one for the y axis.
+                      // get a count of the subParameters
+                      int subParameterCount = subParameters.Length;
+
+                      // if there is anything other than two subParameters,
+                      if (subParameterCount != 2)
+                      {
+                        // send a warning to the console
+                        CoreLog("TwoAxisPuppet control has " + subParameterCount + " subParameters, expected 2");
+
+                        // and display a popup to the user
+                        EditorUtility.DisplayDialog(
+                          "Warning",
+                          "Control "
+                            + control.name
+                            + " has "
+                            + subParameterCount
+                            + " subParameters, expected 2\n"
+                            + "Please check the source file and try again",
+                          "OK"
+                        );
+                      }
+                      else
+                      {
+                        // ok so looks like we have the right number of subParameters
+
+                        // get the first subParameter
+                        var subParameter1 = subParameters[0];
+                        // get the second subParameter
+                        var subParameter2 = subParameters[1];
+
+                        // get the common prefix of the two subParameter names
+                        string commonPrefix = GetCommonPrefix(subParameter1.name, subParameter2.name);
+
+                        // set the machineName of the new toggle
+                        newJoystick.MachineName = commonPrefix;
+
+                        // the value of the control is the default value of the the VRC menu open value, is bool
+                        // so we can ignore that as it does not exist in CVR
+
+                        // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
+                        newJoystick.forceMachineName = true;
+
+                        // rest of the values should be taken care of by the defaults in the class
+
+                        // add the new joystick to the convertedMenu
+                        convertedMenu.menuItems.Add(newJoystick);
+                      }
+                      break;
+
+                    case ControlType.FourAxisPuppet:
+
+                      // Never seen this in use in VRC so not sure what it does
+                      // will look at mapping if found in a prefab in the future
+                      // send a warning to the console
+                      CoreLog("FourAxisPuppet not supported, please add / up vote a feature request on the GitHub page");
+
+                      ////////////////
+                      // TODO: add support for FourAxisPuppet
+                      ////////////////
+                      break;
+
+                    case ControlType.RadialPuppet:
+                      // this maps to a slider in CVR
+                      // create a new sliderParameter
+                      sliderParameter newSlider = new sliderParameter();
+
+                      // set the name of the new toggle
+                      newSlider.name = control.name.Trim();
 
                       // set the machineName of the new toggle
-                      newJoystick.MachineName = commonPrefix;
+                      newSlider.MachineName = GetCVRFuryMenuSectionMachineName(control);
 
                       // the value of the control is the default value of the the VRC menu open value, is bool
                       // so we can ignore that as it does not exist in CVR
 
                       // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
-                      newJoystick.forceMachineName = true;
+                      newSlider.forceMachineName = true;
 
-                      // rest of the values should be taken care of by the defaults in the class
+                      // add the new slider to the convertedMenu
+                      convertedMenu.menuItems.Add(newSlider);
 
-                      // add the new joystick to the convertedMenu
-                      convertedMenu.menuItems.Add(newJoystick);
-                    }
-                    break;
+                      break;
 
-                  case ControlType.FourAxisPuppet:
-
-                    // Never seen this in use in VRC so not sure what it does
-                    // will look at mapping if found in a prefab in the future
-                    // send a warning to the console
-                    CoreLog("FourAxisPuppet not supported, please add / up vote a feature request on the GitHub page");
-
-                    ////////////////
-                    // TODO: add support for FourAxisPuppet
-                    ////////////////
-                    break;
-
-                  case ControlType.RadialPuppet:
-                    // this maps to a slider in CVR
-                    // create a new sliderParameter
-                    sliderParameter newSlider = new sliderParameter();
-
-                    // set the name of the new toggle
-                    newSlider.name = control.name.Trim();
-
-                    // set the machineName of the new toggle
-                    newSlider.MachineName = GetCVRFuryMenuSectionMachineName(control);
-
-                    // the value of the control is the default value of the the VRC menu open value, is bool
-                    // so we can ignore that as it does not exist in CVR
-
-                    // set the forceMachineName of the new toggle to true as we want to use the name as the machineName
-                    newSlider.forceMachineName = true;
-
-                    // add the new slider to the convertedMenu
-                    convertedMenu.menuItems.Add(newSlider);
-
-                    break;
-
-                  default:
-                    // write warning to console about unhandled control type
-                    CoreLog("Unhandled control type: " + controlType.ToString());
-                    break;
+                    default:
+                      // write warning to console about unhandled control type
+                      CoreLog("Unhandled control type: " + controlType.ToString());
+                      break;
+                  }
                 }
-              }
 
-              #endregion
+                #endregion
 
-              #region stage 2.5 - process dropdowns
+                #region stage 2.5 - process dropdowns
 
-              // print all the dropdowns to the console
-              foreach (var dropdown in dropdownsParameterList)
-              {
-                // print the machineName of the dropdown
-                CoreLog("Dropdown MachineName: " + dropdown.machineName);
-
-                // print all the pairs in the dropdown
-                foreach (var pair in dropdown.pairs)
+                // print all the dropdowns to the console
+                foreach (var dropdown in dropdownsParameterList)
                 {
-                  // print the name and value of the pair
-                  CoreLog("Dropdown Pair Name: " + pair.name + " Value: " + pair.value);
+                  // print the machineName of the dropdown
+                  CoreLog("Dropdown MachineName: " + dropdown.machineName);
+
+                  // print all the pairs in the dropdown
+                  foreach (var pair in dropdown.pairs)
+                  {
+                    // print the name and value of the pair
+                    CoreLog("Dropdown Pair Name: " + pair.name + " Value: " + pair.value);
+                  }
+
+                  // create a new dropdownParameter
+                  dropdownParameter newDropdown = new dropdownParameter();
+
+                  // set the name of the new dropdown
+                  newDropdown.name = dropdown.machineName;
+
+                  // set the machineName of the new dropdown
+                  newDropdown.MachineName = dropdown.machineName;
+
+                  // set the forceMachineName of the new dropdown to true as we want to use the name as the machineName
+                  newDropdown.forceMachineName = true;
+
+                  // set the dropdownList of the new dropdown to the pairs of the dropdown
+                  newDropdown.dropdownList = dropdown.pairs;
+
+                  // add the new dropdown to the convertedMenu
+                  convertedMenu.menuItems.Add(newDropdown);
                 }
 
-                // create a new dropdownParameter
-                dropdownParameter newDropdown = new dropdownParameter();
-
-                // set the name of the new dropdown
-                newDropdown.name = dropdown.machineName;
-
-                // set the machineName of the new dropdown
-                newDropdown.MachineName = dropdown.machineName;
-
-                // set the forceMachineName of the new dropdown to true as we want to use the name as the machineName
-                newDropdown.forceMachineName = true;
-
-                // set the dropdownList of the new dropdown to the pairs of the dropdown
-                newDropdown.dropdownList = dropdown.pairs;
-
-                // add the new dropdown to the convertedMenu
-                convertedMenu.menuItems.Add(newDropdown);
+                #endregion
               }
-
-              #endregion
 
               #region stage 3 - write the converted menu to a new file
 
