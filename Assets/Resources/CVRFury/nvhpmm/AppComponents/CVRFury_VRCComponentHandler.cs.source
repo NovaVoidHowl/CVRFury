@@ -1,4 +1,4 @@
-// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_HANDLE", dependencies: [], type: "Editor"}
+// { "version": "0.0.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_HANDLE", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using System.IO;
@@ -368,8 +368,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // if the file has a line starting with 'm_Script:'
           // check if the m_Script line ends with the value in one of the scriptIDs
 
-          (bool IDmatch_Bone, string IDString_bone) = checkScriptIDs(prefabFile, Constants.VRCPHYSBONE_M_SCRIPT_IDS);
-          (bool IDmatch_Collider, string IDString_Collider) = checkScriptIDs(
+          (bool IDmatch_Bone, string IDString_bone) = await checkScriptIDs(prefabFile, Constants.VRCPHYSBONE_M_SCRIPT_IDS);
+          (bool IDmatch_Collider, string IDString_Collider) = await checkScriptIDs(
             prefabFile,
             Constants.VRCPHYSBONE_COLLIDER_M_SCRIPT_IDS
           );
@@ -379,7 +379,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           foreach (var IDTuple in Constants.VRC_CONSTRAINT_M_SCRIPT_IDS)
           {
             string ID = IDTuple.Item1;
-            (bool IDmatch_Constraint_trigger, string IDString_Constraint) = checkScriptIDs(prefabFile, ID);
+            (bool IDmatch_Constraint_trigger, string IDString_Constraint) = await checkScriptIDs(prefabFile, ID);
 
             if (IDmatch_Constraint_trigger)
             {
@@ -393,7 +393,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           foreach (var IDTuple in Constants.VRC_CONTACTS_M_SCRIPT_IDS)
           {
             string ID = IDTuple.Item1;
-            (bool IDmatch_contact_trigger, string IDString_contact) = checkScriptIDs(prefabFile, ID);
+            (bool IDmatch_contact_trigger, string IDString_contact) = await checkScriptIDs(prefabFile, ID);
 
             if (IDmatch_contact_trigger)
             {
@@ -614,20 +614,64 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               progressLabel.text = "Phase 2 1% -- Replace VRC Constraints";
               progressBar.value = 1;
 
-              CVRFuryXHai.ConvertPrefabBackToUnityConstraints(newFilePath);
+              // Run ConvertPrefabBackToUnityConstraints on the main thread and await its completion
+              string lockFilePath = newFilePath+"_ConvertPrefabBackToUnityConstraints.lock";
+              // ensure there is no lock file
+              if (File.Exists(lockFilePath))
+              {
+                  File.Delete(lockFilePath);
+                  File.Delete(lockFilePath+".meta");
+              }
+              await RunOnMainThread(() => CVRFuryXHai.ConvertPrefabBackToUnityConstraints(newFilePath));
+              CoreLogDebug("Completed: ConvertPrefabBackToUnityConstraints");
+              await WaitForLockFileToBeDeleted(lockFilePath);
 
+
+              // Save the prefab
+              AssetDatabase.SaveAssets();
+              AssetDatabase.Refresh();
 
               #if NVH_CVRFURY_EXISTS_VRC_CONTACT_CONVERT
               progressLabel.text = "Phase 2 10% -- Replace VRC Contact Senders";
               progressBar.value = 10;
 
-              VRCContactConverter.ConvertSenderToPointer(newFilePath);
+              // Run ConvertSenderToPointer on the main thread and await its completion
+              lockFilePath = newFilePath+"_ConvertSenderToPointer.lock";
+              // ensure there is no lock file
+              if (File.Exists(lockFilePath))
+              {
+                  File.Delete(lockFilePath);
+                  File.Delete(lockFilePath+".meta");
+              }
+              await RunOnMainThread(() => VRCContactConverter.ConvertSenderToPointer(newFilePath));
+              CoreLogDebug("Completed: ConvertSenderToPointer");
+              await WaitForLockFileToBeDeleted(lockFilePath);
+
+
+              // Save the prefab
+              AssetDatabase.SaveAssets();
+              AssetDatabase.Refresh();
+
 
               progressLabel.text = "Phase 2 20% -- Replace VRC Contact Receivers";
               progressBar.value = 20;
 
+              // Run ConvertReceiverToTrigger on the main thread and await its completion
+              lockFilePath = newFilePath+"_ConvertReceiverToTrigger.lock";
+              // ensure there is no lock file
+              if (File.Exists(lockFilePath))
+              {
+                  File.Delete(lockFilePath);
+                  File.Delete(lockFilePath+".meta");
+              }
+              await RunOnMainThread(() => VRCContactConverter.ConvertReceiverToTrigger(newFilePath));
+              CoreLogDebug("Completed: ConvertReceiverToTrigger");
+              await WaitForLockFileToBeDeleted(lockFilePath);
 
-              VRCContactConverter.ConvertReceiverToTrigger(newFilePath);
+              // Save the prefab
+              AssetDatabase.SaveAssets();
+              AssetDatabase.Refresh();
+
               #endif
 
 
@@ -694,8 +738,42 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     // support functions -----------------------------------------------------------------------------------------------
 
+
+    private async Task WaitForLockFileToBeDeleted(string lockFilePath, int timeout = 10000, int pollInterval = 100)
+    {
+        var startTime = System.DateTime.Now;
+        while ((System.DateTime.Now - startTime).TotalMilliseconds < timeout)
+        {
+            if (!File.Exists(lockFilePath))
+            {
+                return;
+            }
+            await Task.Delay(pollInterval);
+        }
+        throw new System.TimeoutException($"Timeout waiting for lock file {lockFilePath} to be deleted.");
+    }
+
+    private static Task RunOnMainThread(System.Action action)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        EditorApplication.delayCall += () =>
+        {
+            try
+            {
+                action();
+                tcs.SetResult(true);
+            }
+            catch (System.Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        };
+        return tcs.Task;
+    }
+
+
     // function to check if string content contains a given id list
-    public (bool, string) checkScriptIDs(string prefabFileString, List<string> scriptIDs)
+    public Task<(bool, string)> checkScriptIDs(string prefabFileString, List<string> scriptIDs)
     {
       // output vars
       bool IDmatch = false;
@@ -724,13 +802,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
       // return the output vars
-      return (IDmatch, IDString);
+      return Task.FromResult((IDmatch, IDString));
     }
     // overload function to check if string content contains a given id
-    public (bool, string) checkScriptIDs(string prefabFileString, string scriptID)
+    public async Task<(bool, string)> checkScriptIDs(string prefabFileString, string scriptID)
     {
         // call the original method with a single string converted to a list
-        return checkScriptIDs(prefabFileString, new List<string> { scriptID });
+        return await checkScriptIDs(prefabFileString, new List<string> { scriptID });
     }
   }
 }

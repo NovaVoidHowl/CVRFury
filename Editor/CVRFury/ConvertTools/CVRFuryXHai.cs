@@ -28,6 +28,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -44,6 +45,10 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
   {
     public static void ConvertPrefabBackToUnityConstraints(string pathToPrefab)
     {
+      // processing lock file
+      string lockFilePath = pathToPrefab+"_ConvertPrefabBackToUnityConstraints.lock";
+      File.Create(lockFilePath).Dispose();
+
       // Load the prefab
       var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(pathToPrefab);
       // Check the prefab is not null
@@ -179,11 +184,37 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
         Object.DestroyImmediate(foundConstraint);
       }
 
-      // Save the modified prefab
-      PrefabUtility.SaveAsPrefabAsset(instance, pathToPrefab);
+      // mark the prefab as dirty
+      EditorUtility.SetDirty(instance);
+
+      // Force Asset Database to save and refresh
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+
+      // Apply changes to the prefab instance
+      PrefabUtility.ApplyPrefabInstance(instance, InteractionMode.UserAction);
+
+      // nuke the prefab's .meta file
+      File.Delete(pathToPrefab+".meta");
+
+      // Force Asset Database to save and refresh
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+      // Add a small delay to ensure the save operation is complete
+      System.Threading.Thread.Sleep(100);
+
 
       // Destroy the instantiated prefab instance
       Object.DestroyImmediate(instance);
+
+      // remove the lock file
+      File.Delete(lockFilePath);
+      // remove the meta file
+      File.Delete(lockFilePath+".meta");
+
+      CoreLogDebug($"Locked file removed: {lockFilePath}");
     }
 
     #region Supporting Structs
