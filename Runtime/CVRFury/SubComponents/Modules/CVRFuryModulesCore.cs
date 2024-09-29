@@ -82,9 +82,9 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     // targets
     public HumanBodyBones humanBodyBone = HumanBodyBones.Hips;
-    
+
     public GameObject targetGameObject = null;
-    
+
     // path addons for after the target
     public string offset = "";
 

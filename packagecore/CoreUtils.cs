@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -10,6 +11,8 @@ using System.IO;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Animations;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
 #endif
 
 namespace uk.novavoidhowl.dev.cvrfury.packagecore
@@ -120,7 +123,31 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         CoreLogWarning($"Layer '{layerName}' not found in the AnimatorController.");
       }
     }
-#endif
+
+
+    public static bool ContainsNestedPrefabs(GameObject prefab)
+    {
+      // Get all child transforms, including inactive ones
+      Transform[] allChildren = prefab.GetComponentsInChildren<Transform>(true);
+
+      foreach (Transform child in allChildren)
+      {
+        // Skip the root object
+        if (child == prefab.transform)
+          continue;
+
+        // Check if the child object is a root of another prefab instance
+        var prefabInstanceHandle = PrefabUtility.GetPrefabInstanceHandle(child.gameObject);
+        if (prefabInstanceHandle != null)
+        {
+          // Debug.Log($"Child: {child.name}, is a nested prefab instance.");
+          return true; // Found a nested prefab
+        }
+      }
+
+      return false; // No nested prefabs found
+    }
+    #endif
 
     public static List<GameObject> GetParentObjects(GameObject currentObject, GameObject targetParent)
     {
@@ -295,6 +322,38 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       {
         return false;
       }
+    }
+
+    // Top bar for the components in the inspector
+
+    public static VisualElement CreateComponentTopBar(String title)
+    {
+      // Create a new VisualElement
+      var topBar = new VisualElement();
+
+      // Set the name of the topBar to allow styling
+      topBar.name = "topBar";
+      // allow clicking through
+      topBar.pickingMode = PickingMode.Ignore;
+
+      // create a visual element for the topBar content
+      var topBarContent = new VisualElement();
+
+      // Set the name of the topBarContent to allow styling
+      topBarContent.name = "topBarContent";
+      // allow clicking through
+      topBarContent.pickingMode = PickingMode.Ignore;
+
+      // Add the topBarContent to the topBar
+      topBar.Add(topBarContent);
+
+      // Add a label to the topBar to show the component type
+      var label = new Label(title);
+      label.pickingMode = PickingMode.Ignore; // allow clicking through
+      label.style.unityFontStyleAndWeight = FontStyle.Bold; // Make the label text bold
+      topBarContent.Add(label);
+
+      return topBar;
     }
 
 #endif

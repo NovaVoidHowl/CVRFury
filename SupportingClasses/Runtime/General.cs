@@ -10,5 +10,5 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime
       // remove any spaces from the name
       return name.Replace(" ", "");
     }
-  } 
+  }
 }

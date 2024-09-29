@@ -1,4 +1,4 @@
-// { "version": "0.9.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
+// { "version": "0.10.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AOU", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -184,9 +184,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   {
     public void ProcessModule(CVRFuryModule module, GameObject targetAvatar, int DSUNumber, GameObject DSUObject)
     {
+      // get the avatar name
+      string avatarName = targetAvatar.name;
+
+      string reportFilePath = CVRFuryModuleInstaller.generateReportFile(avatarName, DSUNumber, "deleteOnUpload");
+
       // Implementation for deleteOnUploadAction
       // console print to say this function is being called
       CoreLogDebug("deleteOnUploadAction.ProcessModule() called");
+      //log to the report file
+      CVRFuryModuleInstaller.AddReportLine(reportFilePath, "deleteOnUploadAction.ProcessModule() called");
 
       // log the module's moduleType to the console
       CoreLog("module.ModuleType: " + module.ModuleType);
@@ -194,13 +201,21 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // check if the GameObject exists
       if (((deleteOnUpload)module).target != null)
       {
-        // destroy the GameObject
-        GameObject.Destroy(((deleteOnUpload)module).target);
+        // get full path of the GameObject
+        string fullPath = GetGameObjectPath(((deleteOnUpload)module).target);
+
+        // destroy the GameObject (and all its children, note this has to be done with DestroyImmediate)
+        UnityEngine.Object.DestroyImmediate(((deleteOnUpload)module).target);
+        // log path of deleted object to report file
+        CVRFuryModuleInstaller.AddReportLine(reportFilePath, "Deleted object: " + fullPath);
       }
       else
       {
         // if it doesn't, log an error to the console
         CoreLogError("GameObject " + ((deleteOnUpload)module).target.name + " does not exist");
+        // log error to report file
+        CVRFuryModuleInstaller.AddReportLine(reportFilePath,
+                                             "GameObject " + ((deleteOnUpload)module).target.name + " does not exist");
       }
     }
   }

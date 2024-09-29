@@ -389,7 +389,7 @@ namespace uk.novavoidhowl.dev.cvrfury.processtools
 
             // set the VRCFuryPrefabName to the name of the prefab file without the extension
             cvrFuryDataStorageUnit.VRCFuryPrefabName = Path.GetFileNameWithoutExtension(filePath);
-            
+
 
             // Disconnect the instance from the original prefab
             PrefabUtility.UnpackPrefabInstance(instance, PrefabUnpackMode.Completely, InteractionMode.UserAction);

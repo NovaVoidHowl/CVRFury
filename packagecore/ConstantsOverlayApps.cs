@@ -29,7 +29,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       );
 
     // https://wiki.ovrtoolkit.co.uk/#/OSC?id=xsoverlay-osc-parameters
-    
+
     public static readonly ReadOnlyCollection<string> ALWAYS_GLOBAL_PARAMETERS_FROM_WLXOVERLAY_S =
       new ReadOnlyCollection<string>(
         new List<string>

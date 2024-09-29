@@ -90,7 +90,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           InputLookX = 1110,
           InputLookY = 1111,
           InputJump = 1120,
-                                      
+
           SeedOwner = 90000,
           SeedInstance = 90001,
       }

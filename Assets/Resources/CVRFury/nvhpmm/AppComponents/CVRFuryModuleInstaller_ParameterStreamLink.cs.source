@@ -1,4 +1,4 @@
-// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_PARAM_STREAM", dependencies: [], type: "Editor"}
+// { "version": "0.0.6" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_PARAM_STREAM", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using System.Collections;
@@ -108,10 +108,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             else
             {
               // there are no entries in parameterStream.Entries, so we can just add the entry
-              
+
               // note that entry is a CVRFuryParameterStreamEntry object, and we need to convert it
               // to a CVRParameterStreamEntry object
-              
+
               // Create a new CVRParameterStreamEntry object
               CVRParameterStreamEntry newEntry = new CVRParameterStreamEntry();
 
@@ -125,7 +125,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // Add the new entry to the parameterStream.Entries list
               parameterStream.entries.Add(newEntry);
-                
+
             }
 
           }

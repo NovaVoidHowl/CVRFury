@@ -64,7 +64,7 @@
   margin-bottom: 10px;
   border-bottom-width: 1px;
   border-bottom-color: #afafaf;
-  
+
 }
 
 #componentTypeVisualElement{

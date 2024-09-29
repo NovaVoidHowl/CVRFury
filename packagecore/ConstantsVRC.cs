@@ -12,7 +12,9 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "uk.novavoidhowl.dev.vrcstub.VRCAvatarParameterDriver",
         "uk.novavoidhowl.dev.vrcstub.VRCAvatarDescriptor",
         "uk.novavoidhowl.dev.vrcstub.VRCPhysBone",
-        "uk.novavoidhowl.dev.vrcstub.VRCPhysBoneCollider"
+        "uk.novavoidhowl.dev.vrcstub.VRCPhysBoneCollider",
+        "uk.novavoidhowl.dev.vrcstub.VRCContactReceiver",
+        "uk.novavoidhowl.dev.vrcstub.VRCContactSender",
       }
     );
 
@@ -76,7 +78,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         {
           CVR = "#IsLocal",
           NeedsParameterStream = true,
-          ParameterStreamPairs = 
+          ParameterStreamPairs =
             new List<CRVParameterStreamPair> {
               new CRVParameterStreamPair {
                 TargetParmName = "#DeviceMode",
@@ -97,7 +99,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         {
           CVR = "Viseme",
           NeedsParameterStream = true,
-          ParameterStreamPairs = 
+          ParameterStreamPairs =
             new List<CRVParameterStreamPair> {
               new CRVParameterStreamPair {
                 TargetParmName = "Viseme",
@@ -136,7 +138,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       //   {
       //     CVR = "GestureLeft",
       //     NeedsParameterStream = true,
-      //     ParameterStreamPairs = 
+      //     ParameterStreamPairs =
       //       new List<CRVParameterStreamPair> {
       //         new CRVParameterStreamPair {
       //           TargetParmName = "GestureLeft",
@@ -155,7 +157,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       //   {
       //     CVR = "GestureRight",
       //     NeedsParameterStream = true,
-      //     ParameterStreamPairs = 
+      //     ParameterStreamPairs =
       //       new List<CRVParameterStreamPair> {
       //         new CRVParameterStreamPair {
       //           TargetParmName = "GestureRight",
@@ -244,7 +246,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         {
           CVR = "Upright",
           NeedsParameterStream = true,
-          ParameterStreamPairs = 
+          ParameterStreamPairs =
             new List<CRVParameterStreamPair> {
               new CRVParameterStreamPair {
                 TargetParmName = "Upright",
@@ -555,7 +557,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         {
           CVR = "MuteSelf",
           NeedsParameterStream = true,
-          ParameterStreamPairs = 
+          ParameterStreamPairs =
             new List<CRVParameterStreamPair> {
               new CRVParameterStreamPair {
                 TargetParmName = "MuteSelf",
@@ -618,7 +620,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public string CVR { get; set; }
     public bool NeedsParameterStream { get; set; }
     public List<CRVParameterStreamPair> ParameterStreamPairs { get; set; }
-    public bool NeedsAnimator { get; set; } 
+    public bool NeedsAnimator { get; set; }
     public bool NeedsMod { get; set; }
     public string ModURL { get; set; }
     public bool Supported { get; set; }

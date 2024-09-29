@@ -1,0 +1,426 @@
+// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_CONTACT_CONVERT", dependencies: [], type: "Editor"}
+// #if UNITY_EDITOR && CVR_CCK_EXISTS
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.IO;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Animations;
+using Object = UnityEngine.Object;
+
+using ABI.CCK.Scripts.Editor;
+using ABI.CCK.Scripts;
+using ABI.CCK.Components;
+
+using uk.novavoidhowl.dev.vrcstub;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using uk.novavoidhowl.dev.cvrfury.packagecore;
+
+
+
+namespace uk.novavoidhowl.dev.cvrfury.deployable
+{
+  public static class VRCContactConverter
+  {
+    public static void ConvertSenderToPointer(string pathToPrefab)
+    {
+      // Lock file processing
+      string lockFilePath = pathToPrefab+"_ConvertSenderToPointer.lock";
+      File.Create(lockFilePath).Dispose();
+
+      CoreLogDebug($"Converting VRCContactSender to CVRPointer on {pathToPrefab}");
+      // Load the prefab
+      var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(pathToPrefab);
+      // Check the prefab is not null
+      if (prefab == null)
+      {
+        CoreLogDebug($"Could not load prefab at path {pathToPrefab}");
+        return;
+      }
+      // Create an instance of the prefab
+      var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+
+      // Check the instance is not null
+      if (instance == null)
+      {
+        CoreLogDebug($"Could not instantiate prefab at path {pathToPrefab}");
+        return;
+      }
+
+      // Get the VRCContactSender components on the instance
+      var senders = instance.GetComponentsInChildren<VRCContactSender>(true);
+
+      // Check there are VRCContactSender components
+      if (senders.Length == 0)
+      {
+        // Destroy the instance
+        Object.DestroyImmediate(instance);
+        return;
+      }
+
+      int senderCounter = 0;
+      // for each VRCContactSender component
+      foreach (var sender in senders)
+      {
+        senderCounter++;
+        CoreLogDebug($"Converting VRCContactSender to CVRPointer for {sender.gameObject.name}, {senderCounter}\n"+
+                     $"shapeType: {sender.shapeType}\n"+
+                     $"position: {sender.position}\n"+
+                     $"rotation: {sender.rotation}\n"+
+                     $"radius: {sender.radius}\n"+
+                     $"height: {sender.height}\n"+
+                     $"collisionTags: {string.Join(", ", sender.collisionTags)}");
+
+        // get the game object the sender is attached to
+        var senderGameObject = sender.gameObject;
+        // add an empty game object to the sender game object
+        var pointerGameObject = new GameObject($"Pointer{senderCounter}");
+        // put the pointerGameObject under the senderGameObject
+        pointerGameObject.transform.SetParent(senderGameObject.transform, false);
+
+        // case to handel the sender.shapeType enum
+        switch (sender.shapeType)
+        {
+          case ContactBase.ShapeType.Sphere:
+            // create a sphere collider
+            var sphereCollider = pointerGameObject.AddComponent<SphereCollider>();
+            // set the radius of the sphere collider
+            sphereCollider.radius = sender.radius;
+            // set the collider to trigger
+            sphereCollider.isTrigger = true;
+            // apply position offset to the pointerGameObject
+            pointerGameObject.transform.position = sender.position;
+            break;
+          case ContactBase.ShapeType.Capsule:
+            // create a capsule collider
+            var capsuleCollider = pointerGameObject.AddComponent<CapsuleCollider>();
+            // set the radius of the capsule collider
+            capsuleCollider.radius = sender.radius;
+            // set the height of the capsule collider
+            capsuleCollider.height = sender.height;
+            // set the direction of the capsule collider
+            capsuleCollider.direction = 1;
+            // set the collider to trigger
+            capsuleCollider.isTrigger = true;
+            // apply position offset to the pointerGameObject
+            pointerGameObject.transform.position = sender.position;
+            // apply rotation offset to the pointerGameObject
+            pointerGameObject.transform.rotation = sender.rotation;
+            break;
+          default:
+            CoreLogError($"Unknown shape type {sender.shapeType}");
+            break;
+        }
+
+        // for each collision tag in the sender
+        foreach (var collisionTag in sender.collisionTags)
+        {
+          // add a CVRPointer component to the pointerGameObject
+          var pointer = pointerGameObject.AddComponent<CVRPointer>();
+          // set the type of the pointer
+          pointer.type = collisionTag;
+        }
+
+        // destroy the sender
+        Object.DestroyImmediate(sender);
+
+      }
+
+      // mark the prefab as dirty
+      EditorUtility.SetDirty(instance);
+
+      // Force Asset Database to save and refresh
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+      // Apply changes to the prefab instance
+      PrefabUtility.ApplyPrefabInstance(instance, InteractionMode.UserAction);
+      CoreLogDebug($"Converted VRCContactSender to CVRPointer for {pathToPrefab}");
+
+      // nuke the prefab's .meta file
+      File.Delete(pathToPrefab+".meta");
+
+      // Force Asset Database to save and refresh
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+      // Add a small delay to ensure the save operation is complete
+      System.Threading.Thread.Sleep(100);
+
+      // Destroy the instance
+      Object.DestroyImmediate(instance);
+
+      // Delete the lock file
+      File.Delete(lockFilePath);
+      // remove meta file
+      File.Delete(lockFilePath+".meta");
+
+      CoreLogDebug($"Lock file removed: {lockFilePath}");
+
+    }
+
+    public static void ConvertReceiverToTrigger(string pathToPrefab)
+    {
+      // Lock file processing
+      string lockFilePath = pathToPrefab+"_ConvertReceiverToTrigger.lock";
+      File.Create(lockFilePath).Dispose();
+
+      CoreLogDebug($"Converting VRCContactReceiver to CVRAdvancedAvatarSettingsTrigger for {pathToPrefab}");
+      // Load the prefab
+      var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(pathToPrefab);
+      // Check the prefab is not null
+      if (prefab == null)
+      {
+        CoreLogDebug($"Could not load prefab at path {pathToPrefab}");
+        return;
+      }
+      // Create an instance of the prefab
+      var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+
+      // Check the instance is not null
+      if (instance == null)
+      {
+        CoreLogDebug($"Could not instantiate prefab at path {pathToPrefab}");
+        return;
+      }
+
+      // Get the VRCContactReceiver components on the instance
+      var receivers = instance.GetComponentsInChildren<VRCContactReceiver>(true);
+
+      // Check there are VRCContactReceiver components
+      if (receivers.Length == 0)
+      {
+        // Destroy the instance
+        Object.DestroyImmediate(instance);
+        return;
+      }
+
+      int receiverCounter = 0;
+      // for each VRCContactReceiver component
+      foreach (var receiver in receivers)
+      {
+        bool okToRemoveReceiver = true;
+
+        receiverCounter++;
+        CoreLogDebug($"Converting VRCContactReceiver to CVRAdvancedAvatarSettingsTrigger for {receiver.gameObject.name}, {receiverCounter}\n"+
+                     $"shapeType: {receiver.shapeType}\n"+
+                     $"position: {receiver.position}\n"+
+                     $"rotation: {receiver.rotation}\n"+
+                     $"radius: {receiver.radius}\n"+
+                     $"height: {receiver.height}\n"+
+                     $"collisionTags: {string.Join(", ", receiver.collisionTags)}\n"+
+                     $"receiverType: {receiver.receiverType}\n"+
+                     $"parameter: {receiver.parameter}\n"+
+                     $"allowSelf: {receiver.allowSelf}\n"+
+                     $"allowOthers: {receiver.allowOthers}");
+
+        // get the game object the receiver is attached to
+        var receiverGameObject = receiver.gameObject;
+        // add an empty game object to the receiver game object
+        var triggerGameObject = new GameObject($"Trigger{receiverCounter}");
+        // put the triggerGameObject under the receiverGameObject
+        triggerGameObject.transform.SetParent(receiverGameObject.transform, false);
+
+        // case to handel the receiver.shapeType enum
+        switch (receiver.shapeType)
+        {
+          case ContactBase.ShapeType.Sphere:
+            // create a sphere collider
+            var sphereCollider = triggerGameObject.AddComponent<SphereCollider>();
+            // set the radius of the sphere collider
+            sphereCollider.radius = receiver.radius;
+            // set the collider to trigger
+            sphereCollider.isTrigger = true;
+            // apply position offset to the triggerGameObject
+            triggerGameObject.transform.position = receiver.position;
+            break;
+          case ContactBase.ShapeType.Capsule:
+            // create a capsule collider
+            var capsuleCollider = triggerGameObject.AddComponent<CapsuleCollider>();
+            // set the radius of the capsule collider
+            capsuleCollider.radius = receiver.radius;
+            // set the height of the capsule collider
+            capsuleCollider.height = receiver.height;
+            // set the direction of the capsule collider
+            capsuleCollider.direction = 1;
+            // set the collider to trigger
+            capsuleCollider.isTrigger = true;
+            // apply position offset to the triggerGameObject
+            triggerGameObject.transform.position = receiver.position;
+            // apply rotation offset to the triggerGameObject
+            triggerGameObject.transform.rotation = receiver.rotation;
+            break;
+          default:
+            CoreLogError($"Unknown shape type {receiver.shapeType}");
+            break;
+        }
+
+        // add a CVRTrigger component to the triggerGameObject
+        var trigger = triggerGameObject.AddComponent<CVRAdvancedAvatarSettingsTrigger>();
+
+        // set the areaSize (vector3) of the trigger to a one hundredth the size of the collider radius
+        trigger.areaSize = new Vector3(receiver.radius / 100, receiver.radius / 100, receiver.radius / 100);
+
+
+        // set useAdvancedTrigger to true
+        trigger.useAdvancedTrigger = true;
+
+        // set isLocalInteractable to match allowSelf from the receiver
+        trigger.isLocalInteractable = receiver.allowSelf;
+
+        // set isNetworkInteractable to match allowOthers from the receiver
+        trigger.isNetworkInteractable = receiver.allowOthers;
+
+        //set allowParticleInteraction to false (VRC has no concept of particle interaction with avatar triggers)
+        trigger.allowParticleInteraction = false;
+
+        // Create a temporary list to collect collision tags
+        var tempAllowedTypes = new List<string>();
+
+        // for each collision tag in the receiver add it to the temporary list
+        foreach (var collisionTag in receiver.collisionTags)
+        {
+            tempAllowedTypes.Add(collisionTag);
+        }
+
+        // Assign the list as an array to allowedTypes
+        trigger.allowedTypes = tempAllowedTypes.ToArray();
+
+
+        // switch for receiverType
+        switch (receiver.receiverType)
+        {
+          case VRCContactReceiver.ReceiverType.Constant:
+            // create new CVRAdvancedAvatarSettingsTriggerTask for onEnter
+            var Constant_onEnterTask = new CVRAdvancedAvatarSettingsTriggerTask();
+            // create new CVRAdvancedAvatarSettingsTriggerTask for onExit
+            var Constant_onExitTask = new CVRAdvancedAvatarSettingsTriggerTask();
+
+            // the above will be used to set the parameter to 1 when the pointer enters and 0 when it exits
+            // this matches the behaviour of the VRCContactReceiver in Constant mode
+
+            // set the updateMethod of both to Override
+            Constant_onEnterTask.updateMethod = CVRAdvancedAvatarSettingsTriggerTask.UpdateMethod.Override;
+            Constant_onExitTask.updateMethod = CVRAdvancedAvatarSettingsTriggerTask.UpdateMethod.Override;
+
+            // set the settingName of both to the name of the parameter
+            Constant_onEnterTask.settingName = receiver.parameter;
+            Constant_onExitTask.settingName = receiver.parameter;
+
+            // set the settingValue of onEnter to 1 onEnter and 0 onExit
+            Constant_onEnterTask.settingValue = 1;
+            Constant_onExitTask.settingValue = 0;
+
+            // set the delay of both to 0
+            Constant_onEnterTask.delay = 0;
+            Constant_onExitTask.delay = 0;
+
+            // set the holdTime of both to 0
+            Constant_onEnterTask.holdTime = 0;
+            Constant_onExitTask.holdTime = 0;
+
+            // add the onEnterTask to the enterTasks list in the trigger
+            trigger.enterTasks.Add(Constant_onEnterTask);
+
+            // add the onExitTask to the exitTasks list in the trigger
+            trigger.exitTasks.Add(Constant_onExitTask);
+            break;
+          case VRCContactReceiver.ReceiverType.OnEnter:
+            // create new CVRAdvancedAvatarSettingsTriggerTask for onEnter
+            var OnEnter_onEnterTask = new CVRAdvancedAvatarSettingsTriggerTask();
+            // create new CVRAdvancedAvatarSettingsTriggerTask for onEnter but delayed by 1/2 a second
+            // (to create a pulse effect)
+            var OnEnter_onEnterDelayed = new CVRAdvancedAvatarSettingsTriggerTask();
+
+            // the above will be used to set the parameter to 1 when the pointer enters and 0 when it exits
+            // this matches the behaviour of the VRCContactReceiver in OnEnter mode as close as possible, as CVRTriggers
+            // have no native concept of velocity
+
+            // set the updateMethod of both to Override
+            OnEnter_onEnterTask.updateMethod = CVRAdvancedAvatarSettingsTriggerTask.UpdateMethod.Override;
+            OnEnter_onEnterDelayed.updateMethod = CVRAdvancedAvatarSettingsTriggerTask.UpdateMethod.Override;
+
+            // set the settingName of both to the name of the parameter
+            OnEnter_onEnterTask.settingName = receiver.parameter;
+            OnEnter_onEnterDelayed.settingName = receiver.parameter;
+
+            // set the settingValue of onEnter to 1 onEnter and 0 onExit
+            OnEnter_onEnterTask.settingValue = 1;
+            OnEnter_onEnterDelayed.settingValue = 0;
+
+            // set the delay of both to 0
+            OnEnter_onEnterTask.delay = 0;
+            OnEnter_onEnterDelayed.delay = 0.5f;
+
+            // set the holdTime of both to 0
+            OnEnter_onEnterTask.holdTime = 0;
+            OnEnter_onEnterDelayed.holdTime = 0;
+
+            // add the onEnterTask to the enterTasks list in the trigger
+            trigger.enterTasks.Add(OnEnter_onEnterTask);
+            trigger.enterTasks.Add(OnEnter_onEnterDelayed);
+            break;
+
+          case VRCContactReceiver.ReceiverType.Proximity:
+            // show warning popup that proximity mode is not supported
+            EditorUtility.DisplayDialog("Warning",
+                                        "Proximity mode is not currently supported"
+                                        + "\nthis trigger will not be converted",
+                                        "OK");
+
+            okToRemoveReceiver = false; // prevent component being removed so user can review the data
+            //TODO:
+            // not sure on this one as CVR proximity/distance uses xyz and you can only have one at once
+            break;
+          default:
+            CoreLogError($"Unknown receiver type {receiver.receiverType}");
+            break;
+        }
+
+
+        if(okToRemoveReceiver)
+        {
+          // destroy the receiver component
+          Object.DestroyImmediate(receiver);
+        }
+
+      }
+
+      // mark the prefab as dirty
+      EditorUtility.SetDirty(instance);
+
+      // Force Asset Database to save and refresh
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+      // Apply changes to the prefab instance
+      PrefabUtility.ApplyPrefabInstance(instance, InteractionMode.UserAction);
+      CoreLogDebug($"Converted VRCContactReceiver to CVRAdvancedAvatarSettingsTrigger for {pathToPrefab}");
+
+      // nuke the prefab's .meta file
+      File.Delete(pathToPrefab+".meta");
+
+      // Force Asset Database to save and refresh
+      AssetDatabase.SaveAssets();
+      AssetDatabase.Refresh();
+
+      // Add a small delay to ensure the save operation is complete
+      System.Threading.Thread.Sleep(100);
+
+      // Destroy the instance
+      Object.DestroyImmediate(instance);
+
+      // Delete the lock file
+      File.Delete(lockFilePath);
+      // remove meta file
+      File.Delete(lockFilePath+".meta");
+
+      CoreLogDebug($"Lock file removed: {lockFilePath}");
+
+    }
+  }
+}

@@ -44,7 +44,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         new KeyValuePair<string, int>("FullController", 3),
         new KeyValuePair<string, int>("ArmatureLink", 3),
         new KeyValuePair<string, int>("ShowInFirstPerson", 3),
-        new KeyValuePair<string, int>("DeleteDuringUpload", 2),
+        new KeyValuePair<string, int>("DeleteDuringUpload", 3),
         new KeyValuePair<string, int>("Gizmo", 3)
       }
     );
