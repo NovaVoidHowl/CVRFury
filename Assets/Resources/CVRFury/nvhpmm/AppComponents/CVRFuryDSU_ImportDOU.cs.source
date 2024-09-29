@@ -1,4 +1,4 @@
-// { "version": "0.2.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: [], type: "Editor"}
+// { "version": "0.4.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_DOU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -103,21 +103,33 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // get the list of modules from this DSU
           var modules = ((CVRFuryDataStorageUnit)target).modules.modules;
 
-          // check to see if the DSU already has an armatureLink module
+          // check to see if the DSU already has an deleteOnUpload module
           if (modules.Any(module => module.GetType().Name == "deleteOnUpload"))
           {
             List<CVRFuryModule> modulesToRemove = new List<CVRFuryModule>();
 
-            // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
-            // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+            // // check all the modules of that type to see if they have the 'importedFromVRCFury' bool set
+            // // to true and 'justImported' bool is not set to true, if any are found, add them to the remove list
+            // foreach (var module in modules.Where(module => module.GetType().Name == "deleteOnUpload"))
+            // {
+            //   var deleteOnUploadModuleInstance = module as deleteOnUpload;
+            //   if (deleteOnUploadModuleInstance.importedFromVRCFury && !deleteOnUploadModuleInstance.justImported)
+            //   {
+            //     modulesToRemove.Add(module);
+            //   }
+            // }
+
+            // check to see if the module is targeting the same object as the one we are importing
+            // if it is, remove it from the remove list
             foreach (var module in modules.Where(module => module.GetType().Name == "deleteOnUpload"))
             {
-              var armatureLinkModuleInstance = module as armatureLink;
-              if (armatureLinkModuleInstance.importedFromVRCFury && !armatureLinkModuleInstance.justImported)
+              var deleteOnUploadModuleInstance = module as deleteOnUpload;
+              if (deleteOnUploadModuleInstance.target == moduleFoundOnObject)
               {
                 modulesToRemove.Add(module);
               }
             }
+
 
             // process the remove list
             foreach (var module in modulesToRemove)
@@ -139,30 +151,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           deleteOnUploadModule.justImported = true;
 
           // ---- deleteOnUploadModule specific properties ----
-          // when converting from VRCFury to CVRFury, it should be noted that:
-          // - the 'target' property of the CVRFury module is going to be the game object that the VRCFury component is
-          //   attached to.
+          // in this case the module found on and delete target will be the same object, as the VRCFury delete component
+          // always has to be on the thing it is deleting, and that is true of v2 and v3 data stores
 
-          // get the game object that the DSU is attached to ( as it has to be on the same game object as the VCRFury component)
-          GameObject DSUGameObject = ((CVRFuryDataStorageUnit)target).gameObject;
-
-          // check if the VRCFury component is attached to the DSU game object
-          if (DSUGameObject.GetComponent<VRCFury>() == null)
-          {
-            // print to console that the VRCFury component is not attached to the DSU game object
-            CoreLog("VRCFury component is not attached to the DSU game object");
-            return;
-          }
-
+          
           // get the game object that the VRCFury component is attached to
-          deleteOnUploadModule.target = DSUGameObject;
+          deleteOnUploadModule.target = moduleFoundOnObject;
 
           // set the moduleFoundOnObject to the moduleFoundOnObject
           deleteOnUploadModule.moduleFoundOnObject = moduleFoundOnObject;
 
-          // ---- end armatureLink specific properties ----
+          // ---- end deleteOnUploadModule specific properties ----
 
-          // add the armatureLinkModule to the DSU
+          // add the deleteOnUploadModule to the DSU
           modules.Add(deleteOnUploadModule);
 
           // reload the UI finalise UI
