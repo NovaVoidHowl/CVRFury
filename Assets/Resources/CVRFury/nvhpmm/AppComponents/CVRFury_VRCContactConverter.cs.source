@@ -1,4 +1,4 @@
-// { "version": "0.0.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_CONTACT_CONVERT", dependencies: [], type: "Editor"}
+// { "version": "0.0.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_CONTACT_CONVERT", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 
@@ -59,6 +59,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // Destroy the instance
         Object.DestroyImmediate(instance);
+        // remove lock file
+        File.Delete(lockFilePath);
         return;
       }
 
@@ -196,6 +198,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       {
         // Destroy the instance
         Object.DestroyImmediate(instance);
+        // remove lock file
+        File.Delete(lockFilePath);
         return;
       }
 
@@ -366,15 +370,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             break;
 
           case VRCContactReceiver.ReceiverType.Proximity:
-            // show warning popup that proximity mode is not supported
-            EditorUtility.DisplayDialog("Warning",
-                                        "Proximity mode is not currently supported"
-                                        + "\nthis trigger will not be converted",
-                                        "OK");
+            // create new CVRAdvancedAvatarSettingsTriggerTask for OnStay
+            var Proximity_onStayTask = new CVRAdvancedAvatarSettingsTriggerTaskStay();
+            // set the updateMethod to Set From Distance
+            Proximity_onStayTask.updateMethod = CVRAdvancedAvatarSettingsTriggerTaskStay.UpdateMethod.SetFromDistance;
+            // set the settingName to the name of the parameter
+            Proximity_onStayTask.settingName = receiver.parameter;
+            // set the MinValue to 1
+            Proximity_onStayTask.minValue = 1;
+            // set the MaxValue to 0
+            Proximity_onStayTask.maxValue = 0;
+            // add the onStayTask to the stayTasks list in the trigger
+            trigger.stayTasks.Add(Proximity_onStayTask);
 
-            okToRemoveReceiver = false; // prevent component being removed so user can review the data
-            //TODO:
-            // not sure on this one as CVR proximity/distance uses xyz and you can only have one at once
             break;
           default:
             CoreLogError($"Unknown receiver type {receiver.receiverType}");

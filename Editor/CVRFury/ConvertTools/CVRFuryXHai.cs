@@ -79,6 +79,8 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
       {
         // Destroy the instantiated prefab instance
         Object.DestroyImmediate(instance);
+        // remove the lock file
+        File.Delete(lockFilePath);
         // No constraints found, nothing to do
         return;
       }
