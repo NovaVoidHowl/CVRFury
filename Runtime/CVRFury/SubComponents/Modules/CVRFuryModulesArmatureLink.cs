@@ -16,6 +16,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       : base("ArmatureLink") { }
 
     public string boneSuffixToStrip; // if not empty, will strip this suffix from the bones of the addon object
+    // note in VRC Fury this is also used to strip prefixes too
 
     // added to allow for more targeting options
     public List<LinkTarget> linkTargets = new List<LinkTarget>();
