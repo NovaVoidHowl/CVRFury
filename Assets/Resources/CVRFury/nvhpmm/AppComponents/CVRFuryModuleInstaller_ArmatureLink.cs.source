@@ -1,4 +1,4 @@
-// { "version": "0.5.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.7.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -407,6 +407,100 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // create a list of the names of the bones in the addon's armature for comparison
       List<string> addonBoneNamesList = addonBoneNames.Select(b => b.name).ToList();
 
+      // bool to say if prefix/postfix stripping has been done
+      bool boneSuffixPrefixStripped = false;
+      // list for bone names pre-strip
+      List<string> addonBoneNamesListPreStrip = addonBoneNamesList;
+
+      // check if armatureLink.boneSuffixPrefixToStrip is not null or empty, if it is we need to strip the suffix from the
+      // addonBoneNamesList entries, note this can be for prefix or suffix (TODO: var really needs to be renamed)
+      if (!string.IsNullOrEmpty(armatureLinkModule.boneSuffixPrefixToStrip))
+      {
+        // temp list to edit the addonBoneNamesList
+        List<string> tempAddonBoneNamesList = new List<string>();
+
+        // loop over the addonBoneNamesList and strip the suffix/prefix from the names
+        foreach (string addonBoneName in addonBoneNamesList)
+        {
+          // check if the addonBoneName contains the boneSuffixPrefixToStrip
+          if (addonBoneName.Contains(armatureLinkModule.boneSuffixPrefixToStrip))
+          {
+            // set the boneSuffixPrefixStripped to true
+            boneSuffixPrefixStripped = true;
+
+            // strip the boneSuffixPrefixToStrip from the addonBoneName
+            string strippedAddonBoneName = addonBoneName.Replace(armatureLinkModule.boneSuffixPrefixToStrip, "");
+
+            // add the strippedAddonBoneName to the tempAddonBoneNamesList
+            tempAddonBoneNamesList.Add(strippedAddonBoneName);
+          }
+          else
+          {
+            // add the addonBoneName to the tempAddonBoneNamesList
+            tempAddonBoneNamesList.Add(addonBoneName);
+          }
+        }
+
+        // if boneSuffixPrefixStripped = true then copy addonBoneNamesList to addonBoneNamesListPreStrip
+        if (boneSuffixPrefixStripped)
+        {
+          //  copy addonBoneNamesList to addonBoneNamesListPreStrip
+          addonBoneNamesListPreStrip = addonBoneNamesList;
+
+          // set the addonBoneNamesList to the tempAddonBoneNamesList
+          addonBoneNamesList = tempAddonBoneNamesList;
+
+          // go over the game objects under the DSUObject and using the addonBoneNamesListPreStrip and addonBoneNamesList
+          // rename the game objects to match the addonBoneNamesList, to get rid of the suffix/prefixs
+          // get list of all the game objects under the DSUObject
+          List<GameObject> gameObjectsUnderDSUObject = DSUObject.GetComponentsInChildren<Transform>().Select(t => t.gameObject).ToList();
+
+          // for each entry in addonBoneNamesListPreStrip find the counterpart in addonBoneNamesList (they will have the same index)
+          // and rename the related game object from gameObjectsUnderDSUObject to match the addonBoneNamesList entry
+          for (int i = 0; i < addonBoneNamesListPreStrip.Count; i++)
+          {
+            // get the addonBoneNamesListPreStrip entry
+            string addonBoneNamePreStrip = addonBoneNamesListPreStrip[i];
+
+            // get the addonBoneNamesList entry
+            string addonBoneName = addonBoneNamesList[i];
+
+            // get the game object that matches the addonBoneNamePreStrip
+            GameObject gameObject = gameObjectsUnderDSUObject.FirstOrDefault(g => g.name == addonBoneNamePreStrip);
+
+            // if the gameObject is not null then rename it to the addonBoneName
+            if (gameObject != null)
+            {
+              // rename the gameObject to the addonBoneName
+              gameObject.name = addonBoneName;
+            }
+          }
+
+          // regenerate addonBones as it will now have changed
+          addonBones = armatureRoot.GetComponentsInChildren<Transform>();
+
+          // regenerate addonBoneNames as it will now have changed
+          addonBoneNames = new List<BoneData>();
+          foreach (Transform bone in addonBones)
+          {
+            addonBoneNames.Add(new BoneData { name = bone.name, parentName = bone.parent != null ? bone.parent.name : "" });
+          }
+          // ensure that any 'bone' in the addonBones list whose name matches that of the armatureRoot is removed
+          addonBoneNames.RemoveAll(b => b.name == armatureRoot.name);
+          
+        }
+
+        // debug print the addonBoneNamesList after stripping the suffix
+        StringBuilder addonBoneNamesListStringBuilder = new StringBuilder();
+        foreach (string addonBoneName in addonBoneNamesList)
+        {
+          addonBoneNamesListStringBuilder.Append(addonBoneName + "\n");
+        }
+        CoreLogDebug(
+          "[ArmatureLink] addonBoneNamesList after stripping suffix:\n" + addonBoneNamesListStringBuilder.ToString()
+        );
+      }
+
       // create a list of the bones that are in the addon's armature but not in the avatar's armature
       List<string> missingBones = addonBoneNamesList.Except(avatarBoneNames).ToList();
 
@@ -528,7 +622,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           differentBones.Add(commonBoneName);
         }
 
-        // put the addon bone back to its original parent
+        // put the addon bone back to its original parent, if this fails then log a error to the console
+        if (addonBoneParent == null)
+        {
+          // log as a critical error to the console, as this should not happen
+          CoreLogCritical("Parent bone not found for: " + commonBoneName);
+        }
         addonBone.SetParent(addonBoneParent, true);
       }
 

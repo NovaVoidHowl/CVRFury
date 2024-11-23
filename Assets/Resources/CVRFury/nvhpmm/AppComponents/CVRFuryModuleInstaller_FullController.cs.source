@@ -1,4 +1,4 @@
-// { "version": "0.7.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.8.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -339,8 +339,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                     globalParamFound = true;
                   }
 
-                  // process the parameter if it is not a global parameter
-                  if (!globalParamFound)
+                  // process the parameter if it is not a global parameter, and not in verbatimMode
+                  if (!globalParamFound && !(module as fullControllerModule).verbatimMode)
                   {
                     if (parametersPairToRename == null)
                     {
@@ -615,122 +615,63 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               DSUObjectPath = DSUObjectPath.Substring(targetAvatar.name.Length + 1);
               #endregion
 
-              // section to handle manual clip curve path rewrites
-              #region rebind animation clips - Manual
-              // this has to happen before prefab related rebinds, as it is intended to be used for
-              // to get edit animation clip paths to match the prefab base
 
-              // debug print to say we are rebinding animation clips
-              CoreLog("Rebinding animation clips - Manual");
 
-              // counter for the number of rewrites done
-              int rewritesDone = 0;
+            // based on verbatimMode do not re-write animation clip paths
+            if (!(module as fullControllerModule).verbatimMode)
+            {
+                // section to handle manual clip curve path rewrites
+                #region rebind animation clips - Manual
+                // this has to happen before prefab related rebinds, as it is intended to be used for
+                // to get edit animation clip paths to match the prefab base
 
-              // print the binding rewrites to the console in one go
-              StringBuilder bindingRewritesDebug = new StringBuilder();
-              foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
-              {
-                bindingRewritesDebug.Append(
-                  "rewrite.from: "
-                    + rewrite.from
-                    + "\n rewrite.to: "
-                    + rewrite.to
-                    + "\n rewrite.delete: "
-                    + rewrite.delete
-                    + "\n\n"
-                );
-              }
-              CoreLogDebug("[FullController][manual rewrites] bindingRewrites: \n" + bindingRewritesDebug.ToString());
+                // debug print to say we are rebinding animation clips
+                CoreLog("Rebinding animation clips - Manual");
 
-              // check and see if the module has any binding rewrites
-              if ((module as fullControllerModule).rewriteBindings.Count > 0)
-              {
-                // loop through the binding rewrites in the module
-                foreach (
-                  fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings
-                )
+                // counter for the number of rewrites done
+                int rewritesDone = 0;
+
+                // print the binding rewrites to the console in one go
+                StringBuilder bindingRewritesDebug = new StringBuilder();
+                foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
                 {
-                  // generate a guid for the temp clips
-                  System.Guid tempClipGUID = System.Guid.NewGuid();
-
-                  // log the binding rewrite's name to the console
-                  CoreLog(
-                    "rewrite count ID: "
-                      + rewritesDone
-                      + "\nrewrite.from: "
+                  bindingRewritesDebug.Append(
+                    "rewrite.from: "
                       + rewrite.from
                       + "\n rewrite.to: "
                       + rewrite.to
                       + "\n rewrite.delete: "
                       + rewrite.delete
+                      + "\n\n"
                   );
+                }
+                CoreLogDebug("[FullController][manual rewrites] bindingRewrites: \n" + bindingRewritesDebug.ToString());
 
-                  // get the animation clips from the source controller
-                  AnimationClip[] mrSourceClips = tempSourceAnimatorController.animationClips;
-
-                  // loop through the layers
-                  for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+                // check and see if the module has any binding rewrites
+                if ((module as fullControllerModule).rewriteBindings.Count > 0)
+                {
+                  // loop through the binding rewrites in the module
+                  foreach (
+                    fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings
+                  )
                   {
-                    var layer = tempSourceAnimatorController.layers[i];
-                    var stateMachine = layer.stateMachine;
+                    // generate a guid for the temp clips
+                    System.Guid tempClipGUID = System.Guid.NewGuid();
 
-                    // loop through the states
-                    for (int j = 0; j < stateMachine.states.Length; j++)
-                    {
-                      var state = stateMachine.states[j].state;
+                    // log the binding rewrite's name to the console
+                    CoreLog(
+                      "rewrite count ID: "
+                        + rewritesDone
+                        + "\nrewrite.from: "
+                        + rewrite.from
+                        + "\n rewrite.to: "
+                        + rewrite.to
+                        + "\n rewrite.delete: "
+                        + rewrite.delete
+                    );
 
-                      // check if the state's motion is a blend tree
-                      if (state.motion is BlendTree blendTree)
-                      {
-                        // get the clips from the blend tree
-                        var blendTreeClips = GetClipsFromBlendTree(blendTree);
-
-                        // add the clips to the source clips
-                        mrSourceClips = mrSourceClips.Concat(blendTreeClips).ToArray();
-                      }
-                      else if (state.motion is AnimationClip clip)
-                      {
-                        // add the clip to the source clips
-                        mrSourceClips = mrSourceClips.Append(clip).ToArray();
-                      }
-                    }
-                  }
-
-                  // loop through the animation clips
-                  foreach (AnimationClip clip in mrSourceClips)
-                  {
-                    // get the clip's path
-                    string clipPath = AssetDatabase.GetAssetPath(clip);
-
-                    //get the filename of the clip, excluding the path and extension
-                    string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
-
-                    // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
-                    if (clipFileName.Contains("_clip_gen_pre_"))
-                    {
-                      clipFileName = clipFileName.Substring(0, clipFileName.IndexOf("_clip_gen_pre_"));
-                    }
-
-                    // generate a temp clip path
-                    string tempClipPath =
-                      tempItemsPath
-                      + "/"
-                      + clipFileName
-                      + "_clip_gen_pre_mrw_"
-                      + rewritesDone
-                      + "_"
-                      + tempClipGUID
-                      + ".anim";
-
-                    // check if a temp clip already exists
-                    AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
-                    if (tempClip == null)
-                    {
-                      // copy the clip to the temp clip
-                      AssetDatabase.CopyAsset(clipPath, tempClipPath);
-                      // load the temp clip
-                      tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
-                    }
+                    // get the animation clips from the source controller
+                    AnimationClip[] mrSourceClips = tempSourceAnimatorController.animationClips;
 
                     // loop through the layers
                     for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
@@ -743,178 +684,164 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                       {
                         var state = stateMachine.states[j].state;
 
-                        // if the state's motion is the original clip, replace it with the temp clip
-                        if (state.motion == clip)
+                        // check if the state's motion is a blend tree
+                        if (state.motion is BlendTree blendTree)
                         {
-                          if (rewrite.delete)
-                          {
-                            rewrite.to = "";
-                          }
+                          // get the clips from the blend tree
+                          var blendTreeClips = GetClipsFromBlendTree(blendTree);
 
-                          // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
-                          tempClip = rewriteAnimationClipCurvePaths(tempClip, rewrite.from, rewrite.to);
-
-                          // mark the tempClip as dirty
-                          EditorUtility.SetDirty(tempClip);
-
-                          // set the file path as dirty
-                          AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
-
-                          // save the temp clip
-                          AssetDatabase.SaveAssets();
-
-                          state.motion = tempClip;
+                          // add the clips to the source clips
+                          mrSourceClips = mrSourceClips.Concat(blendTreeClips).ToArray();
                         }
-                        // if the state's motion is a blend tree, check its children
-                        else if (state.motion is BlendTree blendTree)
+                        else if (state.motion is AnimationClip clip)
                         {
-                          ReplaceClipInBlendTree(blendTree, clip, tempClip, tempClipPath, rewrite);
+                          // add the clip to the source clips
+                          mrSourceClips = mrSourceClips.Append(clip).ToArray();
                         }
                       }
                     }
 
-                    // save the temp source controller
-                    AssetDatabase.SaveAssets();
+                    // loop through the animation clips
+                    foreach (AnimationClip clip in mrSourceClips)
+                    {
+                      // get the clip's path
+                      string clipPath = AssetDatabase.GetAssetPath(clip);
+
+                      //get the filename of the clip, excluding the path and extension
+                      string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
+
+                      // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
+                      if (clipFileName.Contains("_clip_gen_pre_"))
+                      {
+                        clipFileName = clipFileName.Substring(0, clipFileName.IndexOf("_clip_gen_pre_"));
+                      }
+
+                      // generate a temp clip path
+                      string tempClipPath =
+                        tempItemsPath
+                        + "/"
+                        + clipFileName
+                        + "_clip_gen_pre_mrw_"
+                        + rewritesDone
+                        + "_"
+                        + tempClipGUID
+                        + ".anim";
+
+                      // check if a temp clip already exists
+                      AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+                      if (tempClip == null)
+                      {
+                        // copy the clip to the temp clip
+                        AssetDatabase.CopyAsset(clipPath, tempClipPath);
+                        // load the temp clip
+                        tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+                      }
+
+                      // loop through the layers
+                      for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+                      {
+                        var layer = tempSourceAnimatorController.layers[i];
+                        var stateMachine = layer.stateMachine;
+
+                        // loop through the states
+                        for (int j = 0; j < stateMachine.states.Length; j++)
+                        {
+                          var state = stateMachine.states[j].state;
+
+                          // if the state's motion is the original clip, replace it with the temp clip
+                          if (state.motion == clip)
+                          {
+                            if (rewrite.delete)
+                            {
+                              rewrite.to = "";
+                            }
+
+                            // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
+                            tempClip = rewriteAnimationClipCurvePaths(tempClip, rewrite.from, rewrite.to);
+
+                            // mark the tempClip as dirty
+                            EditorUtility.SetDirty(tempClip);
+
+                            // set the file path as dirty
+                            AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
+
+                            // save the temp clip
+                            AssetDatabase.SaveAssets();
+
+                            state.motion = tempClip;
+                          }
+                          // if the state's motion is a blend tree, check its children
+                          else if (state.motion is BlendTree blendTree)
+                          {
+                            ReplaceClipInBlendTree(blendTree, clip, tempClip, tempClipPath, rewrite);
+                          }
+                        }
+                      }
+
+                      // save the temp source controller
+                      AssetDatabase.SaveAssets();
+                    }
+                    // update the rewritesDone counter
+                    rewritesDone++;
                   }
-                  // update the rewritesDone counter
-                  rewritesDone++;
+                  // refresh the asset database after all the clips have been processed
+                  AssetDatabase.Refresh();
                 }
-                // refresh the asset database after all the clips have been processed
-                AssetDatabase.Refresh();
-              }
 
-              // loop over all files in the tempItemsPath and debug print their paths in one go
-              string[] tempItemsFiles = Directory.GetFiles(tempItemsPath + "/");
-              // order the files by Alphabetical order
-              System.Array.Sort(tempItemsFiles);
+                // loop over all files in the tempItemsPath and debug print their paths in one go
+                string[] tempItemsFiles = Directory.GetFiles(tempItemsPath + "/");
+                // order the files by Alphabetical order
+                System.Array.Sort(tempItemsFiles);
 
-              // debug print to say we are checking the files in the tempItemsPath
-              StringBuilder tempItemsFilesDebug = new StringBuilder();
-              foreach (string file in tempItemsFiles)
-              {
-                tempItemsFilesDebug.Append(file + "\n");
-              }
-              CoreLogDebug(
-                "[FullController][manual rewrites] Files in tempItemsPath: \n" + tempItemsFilesDebug.ToString()
-              );
-
-              #endregion
-
-
-              #region rebind animation clips - Prefab Instance
-              // rebind prefab name to current name in hierarchy, this needs to be done so that the created animation
-              // clips link correctly to the prefab instances
-
-              // get the DSU component from the DSUObject
-              CVRFuryDataStorageUnit DSUComponent = DSUObject.GetComponent<CVRFuryDataStorageUnit>();
-
-              // get the base bind name from the DSUObject, this is the default behaviour if no armatureLink module is
-              // present, as that module can override this
-              string animationBaseBindName = DSUObject.name;
-
-              // bool to track if the armatureLink module is present
-              bool armatureLinkModulePresent = false;
-
-              // check if the modules of the DSUComponent  and see if there is a armatureLink type module present
-              if (DSUComponent.modules.modules.Any(m => m.ModuleType == "armatureLink"))
-              {
-                // get the armatureLink from the DSUComponent
-                armatureLink armatureLinkModule =
-                  DSUComponent.modules.modules.First(m => m.ModuleType == "armatureLink") as armatureLink;
-
-                // get the addonObjectToLink from it
-                GameObject addonObjectToLink = armatureLinkModule.addonObjectToLink;
-
-                // overwrite the animationBaseBindName with the name of the addonObjectToLink
-                animationBaseBindName = addonObjectToLink.name;
-
-                // set the armatureLinkModulePresent to true
-                armatureLinkModulePresent = true;
-              }
-
-              // debug print to say we are re-binding animation clips
-              CoreLog("Rebinding animation clips - Prefab Instance");
-
-              // get the animation clips from the source controller
-              AnimationClip[] pfSourceClips = tempSourceAnimatorController.animationClips;
-
-              // loop through the layers
-              for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
-              {
-                var layer = tempSourceAnimatorController.layers[i];
-                var stateMachine = layer.stateMachine;
-
-                // loop through the states
-                for (int j = 0; j < stateMachine.states.Length; j++)
+                // debug print to say we are checking the files in the tempItemsPath
+                StringBuilder tempItemsFilesDebug = new StringBuilder();
+                foreach (string file in tempItemsFiles)
                 {
-                  var state = stateMachine.states[j].state;
-
-                  // check if the state's motion is a blend tree
-                  if (state.motion is BlendTree blendTree)
-                  {
-                    // get the clips from the blend tree
-                    var blendTreeClips = GetClipsFromBlendTree(blendTree);
-
-                    // add the clips to the source clips
-                    pfSourceClips = pfSourceClips.Concat(blendTreeClips).ToArray();
-                  }
-                  else if (state.motion is AnimationClip clip)
-                  {
-                    // add the clip to the source clips
-                    pfSourceClips = pfSourceClips.Append(clip).ToArray();
-                  }
+                  tempItemsFilesDebug.Append(file + "\n");
                 }
-              }
+                CoreLogDebug(
+                  "[FullController][manual rewrites] Files in tempItemsPath: \n" + tempItemsFilesDebug.ToString()
+                );
 
-              // debug print the pfSourceClips in one debug console print
-              StringBuilder sourceClipsDebug = new StringBuilder();
-              foreach (AnimationClip clip in pfSourceClips)
-              {
-                sourceClipsDebug.Append(clip.name + "\n");
-              }
-              CoreLogDebug(
-                "[FullController][prefab rewrites] pfSourceClips pre-dedupe: \n" + sourceClipsDebug.ToString()
-              );
+                #endregion
 
-              // dedupe the pfSourceClips list
-              pfSourceClips = pfSourceClips.Distinct().ToArray();
 
-              // debug print the pfSourceClips in one debug console print
-              sourceClipsDebug.Clear();
-              foreach (AnimationClip clip in pfSourceClips)
-              {
-                sourceClipsDebug.Append(clip.name + "\n");
-              }
-              CoreLogDebug(
-                "[FullController][prefab rewrites] pfSourceClips post-dedupe: \n" + sourceClipsDebug.ToString()
-              );
+                #region rebind animation clips - Prefab Instance
+                // rebind prefab name to current name in hierarchy, this needs to be done so that the created animation
+                // clips link correctly to the prefab instances
 
-              // loop through the animation clips
-              foreach (AnimationClip clip in pfSourceClips)
-              {
-                // get the clip's path
-                string clipPath = AssetDatabase.GetAssetPath(clip);
+                // get the DSU component from the DSUObject
+                CVRFuryDataStorageUnit DSUComponent = DSUObject.GetComponent<CVRFuryDataStorageUnit>();
 
-                //get the filename of the clip, excluding the path and extension
-                string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
+                // get the base bind name from the DSUObject, this is the default behaviour if no armatureLink module is
+                // present, as that module can override this
+                string animationBaseBindName = DSUObject.name;
 
-                // generate a guid for the temp clip
-                System.Guid tempClipGUID = System.Guid.NewGuid();
+                // bool to track if the armatureLink module is present
+                bool armatureLinkModulePresent = false;
 
-                // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
-                if (clipFileName.Contains("_clip_gen_pre_"))
+                // check if the modules of the DSUComponent  and see if there is a armatureLink type module present
+                if (DSUComponent.modules.modules.Any(m => m.ModuleType == "armatureLink"))
                 {
-                  clipFileName = clipFileName.Substring(0, clipFileName.IndexOf("_clip_gen_pre_"));
+                  // get the armatureLink from the DSUComponent
+                  armatureLink armatureLinkModule =
+                    DSUComponent.modules.modules.First(m => m.ModuleType == "armatureLink") as armatureLink;
+
+                  // get the addonObjectToLink from it
+                  GameObject addonObjectToLink = armatureLinkModule.addonObjectToLink;
+
+                  // overwrite the animationBaseBindName with the name of the addonObjectToLink
+                  animationBaseBindName = addonObjectToLink.name;
+
+                  // set the armatureLinkModulePresent to true
+                  armatureLinkModulePresent = true;
                 }
 
-                // generate a temp clip path
-                string tempClipPath = tempItemsPath + "/" + clipFileName + "_clip_gen_" + tempClipGUID + ".anim";
+                // debug print to say we are re-binding animation clips
+                CoreLog("Rebinding animation clips - Prefab Instance");
 
-                // copy the clip to the temp clip
-                AssetDatabase.CopyAsset(clipPath, tempClipPath);
-
-                // load the temp clip
-                AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+                // get the animation clips from the source controller
+                AnimationClip[] pfSourceClips = tempSourceAnimatorController.animationClips;
 
                 // loop through the layers
                 for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
@@ -927,61 +854,145 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                   {
                     var state = stateMachine.states[j].state;
 
-                    // if the state's motion is the original clip, replace it with the temp clip
-                    if (state.motion == clip)
+                    // check if the state's motion is a blend tree
+                    if (state.motion is BlendTree blendTree)
                     {
-                      // need to choose rewrite mode now, based on the armatureLinkModulePresent
-                      if (armatureLinkModulePresent)
-                      {
-                        // armature link module is present, so no need to rewrite the paths as they will have been
-                        // setup ready for the armatureLink module to handle
-                      }
-                      else
-                      {
-                        // no armatureLink module present, so we need to use the DSUObjectPath + animationBaseBindName
+                      // get the clips from the blend tree
+                      var blendTreeClips = GetClipsFromBlendTree(blendTree);
 
-                        // check if the animationBaseBindName and the DSUObjectPath match (if they do, we don't need to rewrite the paths)
-                        if (animationBaseBindName != DSUObjectPath)
-                        {
-                          // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
-                          tempClip = rewriteAnimationClipCurvePaths(tempClip, animationBaseBindName, DSUObjectPath);
-
-                          // mark the tempClip as dirty
-                          EditorUtility.SetDirty(tempClip);
-
-                          // set the file path as dirty
-                          AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
-
-                          // save the temp clip
-                          AssetDatabase.SaveAssets();
-                        }
-                      }
-
-                      state.motion = tempClip;
+                      // add the clips to the source clips
+                      pfSourceClips = pfSourceClips.Concat(blendTreeClips).ToArray();
                     }
-                    // if the state's motion is a blend tree, check its children
-                    else if (state.motion is BlendTree blendTree)
+                    else if (state.motion is AnimationClip clip)
                     {
-                      ReplaceClipInBlendTree(
-                        blendTree,
-                        clip,
-                        tempClip,
-                        tempClipPath,
-                        new fullControllerModule.BindingRewrite { from = animationBaseBindName, to = DSUObjectPath }
-                      );
+                      // add the clip to the source clips
+                      pfSourceClips = pfSourceClips.Append(clip).ToArray();
                     }
                   }
                 }
 
-                // save the temp source controller
-                AssetDatabase.SaveAssets();
-              }
+                // debug print the pfSourceClips in one debug console print
+                StringBuilder sourceClipsDebug = new StringBuilder();
+                foreach (AnimationClip clip in pfSourceClips)
+                {
+                  sourceClipsDebug.Append(clip.name + "\n");
+                }
+                CoreLogDebug(
+                  "[FullController][prefab rewrites] pfSourceClips pre-dedupe: \n" + sourceClipsDebug.ToString()
+                );
 
-              // refresh the asset database after all the clips have been processed
-              AssetDatabase.Refresh();
+                // dedupe the pfSourceClips list
+                pfSourceClips = pfSourceClips.Distinct().ToArray();
 
-              #endregion
+                // debug print the pfSourceClips in one debug console print
+                sourceClipsDebug.Clear();
+                foreach (AnimationClip clip in pfSourceClips)
+                {
+                  sourceClipsDebug.Append(clip.name + "\n");
+                }
+                CoreLogDebug(
+                  "[FullController][prefab rewrites] pfSourceClips post-dedupe: \n" + sourceClipsDebug.ToString()
+                );
 
+                // loop through the animation clips
+                foreach (AnimationClip clip in pfSourceClips)
+                {
+                  // get the clip's path
+                  string clipPath = AssetDatabase.GetAssetPath(clip);
+
+                  //get the filename of the clip, excluding the path and extension
+                  string clipFileName = Path.GetFileNameWithoutExtension(clipPath);
+
+                  // generate a guid for the temp clip
+                  System.Guid tempClipGUID = System.Guid.NewGuid();
+
+                  // if the clipFileName has '_clip_gen_pre_' in it then remove all the text from that point onwards
+                  if (clipFileName.Contains("_clip_gen_pre_"))
+                  {
+                    clipFileName = clipFileName.Substring(0, clipFileName.IndexOf("_clip_gen_pre_"));
+                  }
+
+                  // generate a temp clip path
+                  string tempClipPath = tempItemsPath + "/" + clipFileName + "_clip_gen_" + tempClipGUID + ".anim";
+
+                  // copy the clip to the temp clip
+                  AssetDatabase.CopyAsset(clipPath, tempClipPath);
+
+                  // load the temp clip
+                  AnimationClip tempClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(tempClipPath);
+
+                  // loop through the layers
+                  for (int i = 0; i < tempSourceAnimatorController.layers.Length; i++)
+                  {
+                    var layer = tempSourceAnimatorController.layers[i];
+                    var stateMachine = layer.stateMachine;
+
+                    // loop through the states
+                    for (int j = 0; j < stateMachine.states.Length; j++)
+                    {
+                      var state = stateMachine.states[j].state;
+
+                      // if the state's motion is the original clip, replace it with the temp clip
+                      if (state.motion == clip)
+                      {
+                        // need to choose rewrite mode now, based on the armatureLinkModulePresent
+                        if (armatureLinkModulePresent)
+                        {
+                          // armature link module is present, so no need to rewrite the paths as they will have been
+                          // setup ready for the armatureLink module to handle
+                        }
+                        else
+                        {
+                          // no armatureLink module present, so we need to use the DSUObjectPath + animationBaseBindName
+
+                          // check if the animationBaseBindName and the DSUObjectPath match (if they do, we don't need to rewrite the paths)
+                          if (animationBaseBindName != DSUObjectPath)
+                          {
+                            // use the rewriteAnimationClipCurvePaths function to rewrite the animation clip curve paths
+                            tempClip = rewriteAnimationClipCurvePaths(tempClip, animationBaseBindName, DSUObjectPath);
+
+                            // mark the tempClip as dirty
+                            EditorUtility.SetDirty(tempClip);
+
+                            // set the file path as dirty
+                            AssetDatabase.WriteImportSettingsIfDirty(tempClipPath);
+
+                            // save the temp clip
+                            AssetDatabase.SaveAssets();
+                          }
+                        }
+
+                        state.motion = tempClip;
+                      }
+                      // if the state's motion is a blend tree, check its children
+                      else if (state.motion is BlendTree blendTree)
+                      {
+                        ReplaceClipInBlendTree(
+                          blendTree,
+                          clip,
+                          tempClip,
+                          tempClipPath,
+                          new fullControllerModule.BindingRewrite { from = animationBaseBindName, to = DSUObjectPath }
+                        );
+                      }
+                    }
+                  }
+
+                  // save the temp source controller
+                  AssetDatabase.SaveAssets();
+                }
+
+                // refresh the asset database after all the clips have been processed
+                AssetDatabase.Refresh();
+
+                #endregion
+
+            }
+            else
+            {
+              // debug print to say we are in verbatim mode
+              CoreLog("[FullController] Verbatim mode, animation clips not path rewritten");
+            }
 
               // merge the source into the final controller, renaming the parameters that are not global
               // again direct merge to the target controller (CVRFuryFinalController)
