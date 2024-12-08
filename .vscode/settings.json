@@ -1,8 +1,8 @@
 {
-  "cSpell.enableFiletypes": [
-    "UnityUSS",
-    "UnityUXML"
-  ],
+  "cSpell.enabledFileTypes": {
+    "UnityUSS": true,
+    "UnityUXML": true
+  },
   "cSpell.words": [
     "ARMATURELINK",
     "ARMATURELINKMODULE",
@@ -90,6 +90,5 @@
   "editor.rulers": [
     120
   ],
-  "editor.tabSize": 2,
-  "vscord.enabled": true
+  "editor.tabSize": 2
 }
