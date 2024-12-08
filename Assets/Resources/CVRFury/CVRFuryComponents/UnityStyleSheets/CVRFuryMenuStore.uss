@@ -33,3 +33,94 @@
 .spacer {
   height: 10px;
 }
+
+.stores-container {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #303030;
+  border-radius: 12px 12px 0px 0px;
+  border-width: 1px;
+  border-color: #404040;
+}
+
+.stores-header {
+  font-size: 12px;
+  -unity-font-style: bold;
+  margin-bottom: 5px;
+  -unity-text-align: middle-center;
+}
+
+.unity-list-view {
+  height: auto;
+  min-height: 10px;
+  background-color: var(--unity-colors-default-background);
+}
+
+/* Remove any width constraints that might be affecting positioning */
+.unity-object-field {
+  margin: 2px;
+  width: auto;
+  position: relative; /* Ensure absolute positioning works correctly */
+}
+
+.unity-object-field:hover {
+  background-color: var(--unity-colors-highlight-background-hover);
+}
+
+.unity-object-field__warning {
+  position: absolute;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+}
+
+.unity-list-view__item {
+  height: 20px;
+  min-height: 20px;
+  padding-top: 6px;
+}
+
+.unity-object-field-display {
+  height: 18px;
+  min-height: 18px;
+}
+
+.unity-object-field-display__icon {
+  width: 16px;
+  height: 16px;
+  margin: 1px;
+}
+
+.unity-object-field-display__label {
+  font-size: 11px;
+  -unity-text-align: middle-left;
+  padding-left: 4px;
+}
+
+.unity-object-field__selector {
+  width: 18px;
+  height: 18px;
+}
+
+/* Ensure the object field input doesn't resize for the warning */
+.unity-object-field__input {
+  height: 18px;
+  min-height: 18px;
+  width: auto;
+}
+
+.warning-container {
+  position: absolute;
+  right: 24px; /* Position over the field, before the selector */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  z-index: 999; /* Ensure it's above other elements */
+  pointer-events: none; /* Allow clicking through */
+}
+
+.warning-icon {
+  width: 16px;
+  height: 16px;
+}

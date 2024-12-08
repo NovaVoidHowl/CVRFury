@@ -25,6 +25,8 @@ public partial class CVRFuryMenuStoreEditor : Editor
   private Button pullDefaultsButton;
   private Button pushDefaultsButton;
 
+  private bool isUpdating = false;
+
   private void OnEnable()
   {
     SerializedProperty items = serializedObject.FindProperty("menuItems");
@@ -200,23 +202,18 @@ public partial class CVRFuryMenuStoreEditor : Editor
     rootVisualElement = new VisualElement();
     rootVisualElement.AddToClassList("cvr-fury-inspector");
 
-    // Load and apply the stylesheet
+    // Load stylesheet
     var stylesheet = Resources.Load<StyleSheet>(
       Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryComponents/UnityStyleSheets/CVRFuryMenuStore"
     );
 
-    // Check if the StyleSheet was loaded
     if (stylesheet == null)
     {
-      CoreLogError(
-        "Failed to load StyleSheet at 'UnityStyleSheets/CVRFuryDataStorageUnitInspector'. Please ensure the file exists at the specified path."
-      );
-      // If the StyleSheet was not loaded add a new label to the root.
+      CoreLogError("Failed to load StyleSheet");
       rootVisualElement.Add(new Label("CRITICAL ERROR : StyleSheet could not be loaded."));
       return rootVisualElement;
     }
 
-    // Apply the StyleSheet
     rootVisualElement.styleSheets.Add(stylesheet);
 
     // Create button container
@@ -236,56 +233,134 @@ public partial class CVRFuryMenuStoreEditor : Editor
     };
     pushDefaultsButton.AddToClassList("cvr-fury-button");
 
-    // Create IMGUI container for lists
+    // Create Related Parameters Stores container
+    var storesContainer = new VisualElement();
+    storesContainer.AddToClassList("stores-container");
+
+    var storesHeader = new Label("Related Parameters Stores");
+    storesHeader.AddToClassList("stores-header");
+    storesContainer.Add(storesHeader);
+
+    // Create ListView for stores
+    var storesList = new ListView();
+    storesList.makeItem = () => new ObjectField();
+    storesList.bindItem = (element, index) =>
+    {
+      var field = element as ObjectField;
+      field.objectType = typeof(CVRFuryParametersStore);
+
+      var relatedStores = serializedObject.FindProperty("relatedParametersStores");
+      if (index < relatedStores.arraySize)
+      {
+        var storeProperty = relatedStores.GetArrayElementAtIndex(index);
+        field.value = storeProperty.objectReferenceValue;
+
+        // Find existing warning container and remove it
+        var existingWarningContainer = field.Q<VisualElement>("warning-container");
+        if (existingWarningContainer != null)
+        {
+          field.Remove(existingWarningContainer);
+        }
+
+        field.RegisterValueChangedCallback(evt =>
+        {
+          if (isUpdating)
+            return;
+
+          isUpdating = true;
+          storeProperty.objectReferenceValue = evt.newValue;
+          serializedObject.ApplyModifiedProperties();
+
+          // Refresh conflict detection
+          CheckForConflicts();
+
+          // Force UI refresh
+          EditorApplication.delayCall += () =>
+          {
+            storesList.Rebuild();
+            isUpdating = false;
+          };
+        });
+
+        // Add warning icon if conflicting
+        if (conflictingStoresIndices.Contains(index))
+        {
+          var warningContainer = new VisualElement { name = "warning-container" };
+          var warningIcon = new Image { image = EditorGUIUtility.IconContent("console.warnicon").image };
+          warningIcon.tooltip = "Conflicting default state values detected";
+          warningIcon.AddToClassList("warning-icon");
+          warningContainer.Add(warningIcon);
+          field.Add(warningContainer);
+        }
+      }
+    };
+
+    // Get array size and set itemsSource
+    var relatedStores = serializedObject.FindProperty("relatedParametersStores");
+    storesList.itemsSource = Enumerable.Range(0, relatedStores.arraySize).ToList();
+
+    // Add list manipulation buttons
+    var listControls = new VisualElement();
+    listControls.style.flexDirection = FlexDirection.Row;
+
+    var addButton = new Button(() =>
+    {
+      relatedStores.arraySize++;
+      storesList.itemsSource = Enumerable.Range(0, relatedStores.arraySize).ToList();
+      serializedObject.ApplyModifiedProperties();
+      storesList.Rebuild(); // Force refresh
+    })
+    {
+      text = "+"
+    };
+
+    var removeButton = new Button(() =>
+    {
+      if (relatedStores.arraySize > 0)
+      {
+        relatedStores.arraySize--;
+        storesList.itemsSource = Enumerable.Range(0, relatedStores.arraySize).ToList();
+        serializedObject.ApplyModifiedProperties();
+        storesList.Rebuild(); // Force refresh
+      }
+    })
+    {
+      text = "-"
+    };
+
+    listControls.Add(addButton);
+    listControls.Add(removeButton);
+
+    storesContainer.Add(storesList);
+    storesContainer.Add(listControls);
+
+    // Create IMGUI container for remaining list
     var imguiContainer = new IMGUIContainer(() =>
     {
       serializedObject.Update();
-
-      // Check list state
-      var relatedStores = serializedObject.FindProperty("relatedParametersStores");
-      bool isRelatedParametersStoresEmpty = relatedStores.arraySize == 0;
-
-      // Check for empty slots
-      bool hasEmptySlots = false;
-      if (!isRelatedParametersStoresEmpty)
-      {
-        for (int i = 0; i < relatedStores.arraySize; i++)
-        {
-          var element = relatedStores.GetArrayElementAtIndex(i);
-          if (element.objectReferenceValue == null)
-          {
-            hasEmptySlots = true;
-            break;
-          }
-        }
-      }
-
-      // Force conflict check before drawing lists
-      bool hasConflicts = CheckForConflicts();
-
-      // Update button states within IMGUI update cycle
-      // Disable both buttons if there are empty slots or the list is empty
-      bool shouldEnableButtons = !isRelatedParametersStoresEmpty && !hasEmptySlots;
-      pullDefaultsButton?.SetEnabled(shouldEnableButtons && !hasConflicts);
-      pushDefaultsButton?.SetEnabled(shouldEnableButtons);
-
-      EditorGUILayout.Space();
-      relatedParametersStoresList.DoLayoutList();
-      EditorGUILayout.Space();
       list.DoLayoutList();
-
       serializedObject.ApplyModifiedProperties();
     });
 
-    // Add buttons to container
+    // Add elements to root
     buttonContainer.Add(pullDefaultsButton);
     buttonContainer.Add(new VisualElement() { name = "spacer" });
     buttonContainer.Add(pushDefaultsButton);
 
-    // Add containers to root
     rootVisualElement.Add(buttonContainer);
     rootVisualElement.Add(new VisualElement() { name = "spacer" });
+    rootVisualElement.Add(storesContainer);
+    rootVisualElement.Add(new VisualElement() { name = "spacer" });
     rootVisualElement.Add(imguiContainer);
+
+    // Add USS styles for new elements
+    var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
+      "Assets/Resources/CVRFury/CVRFuryComponents/UnityStyleSheets/CVRFuryMenuStore.uss"
+    );
+    if (styleSheet != null)
+    {
+      rootVisualElement.styleSheets.Add(styleSheet);
+    }
 
     return rootVisualElement;
   }
