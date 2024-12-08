@@ -33,7 +33,6 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     // intrinsically set to false if forceMachineName is true
     public bool nameLinkedToMachineName = true;
 
-
     [SerializeField]
     private string menuParameterType;
 
@@ -146,6 +145,5 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   //   InputVector2 -- not added as its not clear what this would be used for
   //   InputVector3 -- not added as its not clear what this would be used for
 
-  // Supporting classes -------------------------------------------------------------------------------------------------
-
+  // Supporting classes ------------------------------------------------------------------------------------------------
 }
