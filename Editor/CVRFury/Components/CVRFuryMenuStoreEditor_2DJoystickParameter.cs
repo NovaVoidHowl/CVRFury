@@ -149,7 +149,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
         defaultYValueProperty.floatValue = EditorGUI.Slider(
           new Rect(
             rect.x,
-            rect.y +9.1f * EditorGUIUtility.singleLineHeight,
+            rect.y + 9.1f * EditorGUIUtility.singleLineHeight,
             rect.width,
             EditorGUIUtility.singleLineHeight
           ),
