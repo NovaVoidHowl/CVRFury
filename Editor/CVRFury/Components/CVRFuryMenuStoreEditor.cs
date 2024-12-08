@@ -244,22 +244,67 @@ public partial class CVRFuryMenuStoreEditor : Editor
     // Create ListView for stores
     var storesList = new ListView();
     storesList.makeItem = () => new ObjectField();
+    storesList.AddToClassList("stores-list");
+    storesList.fixedItemHeight = 26; // Keep the fixed item height
+    storesList.style.minHeight = 24; // Minimum height for at least one item
+
+    // In bindItem callback:
     storesList.bindItem = (element, index) =>
     {
       var field = element as ObjectField;
       field.objectType = typeof(CVRFuryParametersStore);
+      field.SetEnabled(true);
+      field.AddToClassList("parameter-field");
 
+      var objectFieldInput = field.Q(className: "unity-object-field__input");
+
+      var objectSelector = field.Q(className: "unity-object-field__selector");
       var relatedStores = serializedObject.FindProperty("relatedParametersStores");
       if (index < relatedStores.arraySize)
       {
         var storeProperty = relatedStores.GetArrayElementAtIndex(index);
         field.value = storeProperty.objectReferenceValue;
 
-        // Find existing warning container and remove it
-        var existingWarningContainer = field.Q<VisualElement>("warning-container");
-        if (existingWarningContainer != null)
+        // Always hide the picker
+        if (objectSelector != null)
         {
-          field.Remove(existingWarningContainer);
+          objectSelector.style.display = DisplayStyle.None;
+        }
+
+        if (storeProperty.objectReferenceValue == null)
+        {
+          field.AddToClassList("empty-slot");
+
+          // Keep object icon space but make it invisible
+          var objectIcon = field.Q(className: "unity-object-field__object");
+          if (objectIcon != null)
+          {
+            objectIcon.style.opacity = 0;
+            objectIcon.style.display = DisplayStyle.Flex;
+          }
+
+          // Ensure input area remains visible and interactive
+          var input = field.Q(className: "unity-object-field__input");
+          if (input != null)
+          {
+            input.style.display = DisplayStyle.Flex;
+            input.style.opacity = 1;
+            input.style.minHeight = 20;
+            input.style.flexGrow = 1;
+            input.style.flexShrink = 0;
+          }
+
+          ClearWarningIcons(field);
+        }
+        else
+        {
+          field.RemoveFromClassList("empty-slot");
+          var objectIcon = field.Q(className: "unity-object-field__object");
+          if (objectIcon != null)
+          {
+            objectIcon.style.opacity = 1;
+            objectIcon.style.display = DisplayStyle.Flex;
+          }
         }
 
         field.RegisterValueChangedCallback(evt =>
@@ -268,36 +313,78 @@ public partial class CVRFuryMenuStoreEditor : Editor
             return;
 
           isUpdating = true;
+
           storeProperty.objectReferenceValue = evt.newValue;
           serializedObject.ApplyModifiedProperties();
 
-          // Refresh conflict detection
           CheckForConflicts();
+          UpdateButtonStates();
 
-          // Force UI refresh
           EditorApplication.delayCall += () =>
           {
-            storesList.Rebuild();
-            isUpdating = false;
+            if (this != null)
+            {
+              UpdateStoreFieldUI(field, index);
+              storesList.Rebuild();
+              isUpdating = false;
+            }
           };
         });
 
-        // Add warning icon if conflicting
-        if (conflictingStoresIndices.Contains(index))
-        {
-          var warningContainer = new VisualElement { name = "warning-container" };
-          var warningIcon = new Image { image = EditorGUIUtility.IconContent("console.warnicon").image };
-          warningIcon.tooltip = "Conflicting default state values detected";
-          warningIcon.AddToClassList("warning-icon");
-          warningContainer.Add(warningIcon);
-          field.Add(warningContainer);
-        }
+        UpdateStoreFieldUI(field, index);
       }
     };
-
     // Get array size and set itemsSource
     var relatedStores = serializedObject.FindProperty("relatedParametersStores");
     storesList.itemsSource = Enumerable.Range(0, relatedStores.arraySize).ToList();
+
+    // Now add drag and drop functionality to the header
+    storesHeader.RegisterCallback<DragEnterEvent>(
+      (evt) =>
+      {
+        // Accept the drag operation if any of the dragged objects is a CVRFuryParametersStore
+        if (DragAndDrop.objectReferences.Any(obj => obj is CVRFuryParametersStore))
+        {
+          DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+          evt.StopPropagation();
+        }
+      }
+    );
+
+    storesHeader.RegisterCallback<DragUpdatedEvent>(
+      (evt) =>
+      {
+        // Keep showing the copy cursor while dragging over the area
+        if (DragAndDrop.objectReferences.Any(obj => obj is CVRFuryParametersStore))
+        {
+          DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+          evt.StopPropagation();
+        }
+      }
+    );
+
+    storesHeader.RegisterCallback<DragPerformEvent>(
+      (evt) =>
+      {
+        foreach (var draggedObject in DragAndDrop.objectReferences)
+        {
+          if (draggedObject is CVRFuryParametersStore store)
+          {
+            var relatedStores = serializedObject.FindProperty("relatedParametersStores");
+            relatedStores.arraySize++;
+            var newElement = relatedStores.GetArrayElementAtIndex(relatedStores.arraySize - 1);
+            newElement.objectReferenceValue = store;
+            serializedObject.ApplyModifiedProperties();
+
+            // Update the list
+            storesList.itemsSource = Enumerable.Range(0, relatedStores.arraySize).ToList();
+            storesList.Rebuild();
+            UpdateButtonStates();
+          }
+        }
+        evt.StopPropagation();
+      }
+    );
 
     // Add list manipulation buttons
     var listControls = new VisualElement();
@@ -309,6 +396,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
       storesList.itemsSource = Enumerable.Range(0, relatedStores.arraySize).ToList();
       serializedObject.ApplyModifiedProperties();
       storesList.Rebuild(); // Force refresh
+      UpdateButtonStates();
     })
     {
       text = "+"
@@ -319,9 +407,18 @@ public partial class CVRFuryMenuStoreEditor : Editor
       if (relatedStores.arraySize > 0)
       {
         relatedStores.arraySize--;
-        storesList.itemsSource = Enumerable.Range(0, relatedStores.arraySize).ToList();
         serializedObject.ApplyModifiedProperties();
-        storesList.Rebuild(); // Force refresh
+
+        // Recheck conflicts after removal
+        CheckForConflicts();
+
+        // Update the list
+        storesList.itemsSource = Enumerable.Range(0, relatedStores.arraySize).ToList();
+        storesList.Rebuild();
+
+        // Force the inspector to repaint
+        EditorUtility.SetDirty(target);
+        UpdateButtonStates();
       }
     })
     {
@@ -362,6 +459,9 @@ public partial class CVRFuryMenuStoreEditor : Editor
       rootVisualElement.styleSheets.Add(styleSheet);
     }
 
+    // Initialize button states
+    UpdateButtonStates();
+
     return rootVisualElement;
   }
 
@@ -386,51 +486,37 @@ public partial class CVRFuryMenuStoreEditor : Editor
   private bool CheckForConflicts()
   {
     var store = target as CVRFuryMenuStore;
-    if (store == null || store.relatedParametersStores == null)
-    {
+    if (store?.relatedParametersStores == null)
       return false;
-    }
 
-    // Check for null entries in the list
-    bool hasEmptySlots = store.relatedParametersStores.Any(x => x == null);
-    if (hasEmptySlots)
-    {
-      return true; // Treat empty slots as a conflict to disable buttons
-    }
+    if (store.relatedParametersStores.Any(x => x == null))
+      return true;
 
     conflictingStoresIndices.Clear();
-    Dictionary<string, float> defaultValues = new Dictionary<string, float>();
+    var defaultValues = new Dictionary<string, float>();
 
     for (int i = 0; i < store.relatedParametersStores.Count; i++)
     {
       var parameterStore = store.relatedParametersStores[i];
-      if (parameterStore == null || parameterStore.parameters == null)
-      {
+      if (parameterStore?.parameters == null)
         continue;
-      }
 
-      foreach (var parameter in parameterStore.parameters)
+      foreach (var parameter in parameterStore.parameters.Where(p => p != null && !string.IsNullOrEmpty(p.name)))
       {
-        if (parameter == null || string.IsNullOrEmpty(parameter.name))
+        if (
+          defaultValues.TryGetValue(parameter.name, out float existingValue)
+          && !Mathf.Approximately(existingValue, parameter.defaultValue)
+        )
         {
-          continue;
+          conflictingStoresIndices.Add(i);
+          break;
         }
-
-        if (defaultValues.ContainsKey(parameter.name))
-        {
-          if (defaultValues[parameter.name] != parameter.defaultValue)
-          {
-            conflictingStoresIndices.Add(i);
-          }
-        }
-        else
-        {
-          defaultValues[parameter.name] = parameter.defaultValue;
-        }
+        defaultValues[parameter.name] = parameter.defaultValue;
       }
     }
 
-    return conflictingStoresIndices.Count > 0 || hasEmptySlots;
+    UpdateButtonStates();
+    return conflictingStoresIndices.Count > 0;
   }
 
   private void PullDefaultValues()
@@ -636,6 +722,129 @@ public partial class CVRFuryMenuStoreEditor : Editor
     }
 
     serializedObject.ApplyModifiedProperties();
+  }
+
+  private float CalculateParameterHeight(string shortTypeName, bool foldoutState)
+  {
+    if (!foldoutState)
+      return EditorGUIUtility.singleLineHeight;
+
+    var heightMap = new Dictionary<string, float>
+    {
+      ["toggleParameter"] = CalculateToggleParameterBlockHeight(),
+      ["dropdownParameter"] = CalculateDropdownParameterBlockHeight(),
+      ["sliderParameter"] = CalculateSliderParameterBlockHeight(),
+      ["twoDJoystickParameter"] = CalculateTwoDJoystickParameterBlockHeight(),
+      ["threeDJoystickParameter"] = CalculateThreeDJoystickParameterBlockHeight()
+    };
+
+    return heightMap.TryGetValue(shortTypeName, out float height)
+      ? height + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing
+      : EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+  }
+
+  private void UpdateUI(ObjectField field, int index)
+  {
+    if (!this)
+      return;
+
+    field.Query<VisualElement>("warning-container").ForEach(c => c.RemoveFromHierarchy());
+
+    if (field.value != null && conflictingStoresIndices.Contains(index))
+    {
+      var warningContainer = CreateWarningContainer();
+      field.Add(warningContainer);
+    }
+  }
+
+  private VisualElement CreateWarningContainer()
+  {
+    var container = new VisualElement { name = "warning-container" };
+    container.style.position = Position.Absolute;
+    container.style.right = 4;
+    container.style.top = 2;
+    container.style.width = 16;
+    container.style.height = 16;
+    container.style.backgroundColor = Color.clear;
+    container.pickingMode = PickingMode.Ignore;
+
+    var warningIcon = new Image
+    {
+      image = EditorGUIUtility.IconContent("console.warnicon").image,
+      tooltip = "Conflicting default state values detected"
+    };
+    warningIcon.style.width = 16;
+    warningIcon.style.height = 16;
+
+    container.Add(warningIcon);
+    return container;
+  }
+
+  private void ClearWarningIcons(VisualElement element)
+  {
+    var existingWarningContainers = element.Query<VisualElement>("warning-container").ToList();
+    foreach (var container in existingWarningContainers)
+    {
+      container.RemoveFromHierarchy();
+    }
+  }
+
+  private void UpdateStoreFieldUI(ObjectField field, int index)
+  {
+    ClearWarningIcons(field);
+    field.RemoveFromClassList("warning-state");
+
+    var storeProperty = serializedObject.FindProperty("relatedParametersStores").GetArrayElementAtIndex(index);
+    if (storeProperty.objectReferenceValue != null && conflictingStoresIndices.Contains(index))
+    {
+      field.Add(CreateWarningContainer());
+      field.AddToClassList("warning-state");
+    }
+
+    UpdateButtonStates();
+  }
+
+  private void UpdateButtonStates()
+  {
+    if (pullDefaultsButton == null || pushDefaultsButton == null)
+      return;
+
+    var store = target as CVRFuryMenuStore;
+    bool hasNoStores = store?.relatedParametersStores == null || store.relatedParametersStores.Count == 0;
+    bool hasEmptySlots = store?.relatedParametersStores?.Any(x => x == null) ?? true;
+    bool hasConflicts = conflictingStoresIndices.Count > 0;
+
+    // Disable both buttons if there are no stores or empty slots
+    if (hasNoStores)
+    {
+      pullDefaultsButton.SetEnabled(false);
+      pushDefaultsButton.SetEnabled(false);
+      pullDefaultsButton.tooltip = "Cannot copy defaults when there are no stores";
+      pushDefaultsButton.tooltip = "Cannot push defaults when there are no stores";
+    }
+    else if (hasEmptySlots)
+    {
+      pullDefaultsButton.SetEnabled(false);
+      pushDefaultsButton.SetEnabled(false);
+      pullDefaultsButton.tooltip = "Cannot copy defaults when there are empty slots";
+      pushDefaultsButton.tooltip = "Cannot push defaults when there are empty slots";
+    }
+    // If no empty slots but has conflicts, only disable the pull button
+    else if (hasConflicts)
+    {
+      pullDefaultsButton.SetEnabled(false);
+      pushDefaultsButton.SetEnabled(true);
+      pullDefaultsButton.tooltip = "Cannot copy defaults when there are conflicting values";
+      pushDefaultsButton.tooltip = "";
+    }
+    // Everything is good
+    else
+    {
+      pullDefaultsButton.SetEnabled(true);
+      pushDefaultsButton.SetEnabled(true);
+      pullDefaultsButton.tooltip = "";
+      pushDefaultsButton.tooltip = "";
+    }
   }
 }
 #endif
