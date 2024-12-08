@@ -12,6 +12,9 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   [CreateAssetMenu(fileName = "NewCVRFuryMenuStore", menuName = "CVRFury/Menu Store")]
   public class CVRFuryMenuStore : ScriptableObject
   {
+    [SerializeField]
+    public List<CVRFuryParametersStore> relatedParametersStores = new List<CVRFuryParametersStore>();
+
     [SerializeReference]
     public List<menuParameter> menuItems = new List<menuParameter>();
   }

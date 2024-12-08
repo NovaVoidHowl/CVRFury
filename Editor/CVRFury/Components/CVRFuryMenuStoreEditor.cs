@@ -14,11 +14,14 @@ using uk.novavoidhowl.dev.cvrfury.runtime;
 public partial class CVRFuryMenuStoreEditor : Editor
 {
   private ReorderableList list;
+  private ReorderableList relatedParametersStoresList;
   private List<Type> menuTypes;
+  private List<int> conflictingStoresIndices = new List<int>();
 
   private void OnEnable()
   {
     SerializedProperty items = serializedObject.FindProperty("menuItems");
+    SerializedProperty relatedParametersStores = serializedObject.FindProperty("relatedParametersStores");
 
     menuTypes = GetDerivedTypes<menuParameter>();
 
@@ -159,6 +162,29 @@ public partial class CVRFuryMenuStoreEditor : Editor
         ReorderableList.defaultBehaviours.DoRemoveButton(l);
       }
     };
+    relatedParametersStoresList = new ReorderableList(serializedObject, relatedParametersStores, true, true, true, true)
+    {
+      drawHeaderCallback = (Rect rect) =>
+      {
+        EditorGUI.LabelField(rect, "Related Parameters Stores");
+      },
+      drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
+      {
+        var element = relatedParametersStoresList.serializedProperty.GetArrayElementAtIndex(index);
+        EditorGUI.PropertyField(rect, element, GUIContent.none);
+        if (conflictingStoresIndices.Contains(index))
+        {
+          GUIContent warningContent = new GUIContent(
+            EditorGUIUtility.IconContent("console.warnicon").image,
+            "Conflicting default state values detected"
+          );
+          GUI.Label(
+            new Rect(rect.x + rect.width - 40, rect.y + 2, 20, EditorGUIUtility.singleLineHeight),
+            warningContent
+          );
+        }
+      }
+    };
   }
 
   void clickHandler(object target)
@@ -175,7 +201,143 @@ public partial class CVRFuryMenuStoreEditor : Editor
   public override void OnInspectorGUI()
   {
     serializedObject.Update();
+
+    // Check if the relatedParametersStores list is empty
+    bool isRelatedParametersStoresEmpty = serializedObject.FindProperty("relatedParametersStores").arraySize == 0;
+
+    // Check for conflicts in the relatedParametersStores
+    bool hasConflicts = CheckForConflicts();
+
+    // Disable the buttons if the relatedParametersStores list is empty or if there are conflicts
+    EditorGUI.BeginDisabledGroup(isRelatedParametersStoresEmpty || hasConflicts);
+
+    if (GUILayout.Button("Copy Default State(s) from Related Parameters Stores"))
+    {
+      PullDefaultValues();
+    }
+
+    EditorGUI.EndDisabledGroup();
+
+    EditorGUILayout.Space();
+
+    if (GUILayout.Button("Push Default State Values to Related Parameters Stores"))
+    {
+      PushDefaultValues();
+    }
+
+    EditorGUILayout.Space();
+    EditorGUILayout.Space();
+
+    relatedParametersStoresList.DoLayoutList();
+    EditorGUILayout.Space();
     list.DoLayoutList();
+
+    serializedObject.ApplyModifiedProperties();
+  }
+
+  private bool CheckForConflicts()
+  {
+    CVRFuryMenuStore store = (CVRFuryMenuStore)target;
+    conflictingStoresIndices.Clear();
+    Dictionary<string, float> defaultValues = new Dictionary<string, float>();
+
+    for (int i = 0; i < store.relatedParametersStores.Count; i++)
+    {
+      var parameterStore = store.relatedParametersStores[i];
+      foreach (var parameter in parameterStore.parameters)
+      {
+        if (defaultValues.ContainsKey(parameter.name))
+        {
+          if (defaultValues[parameter.name] != parameter.defaultValue)
+          {
+            conflictingStoresIndices.Add(i);
+          }
+        }
+        else
+        {
+          defaultValues[parameter.name] = parameter.defaultValue;
+        }
+      }
+    }
+
+    return conflictingStoresIndices.Count > 0;
+  }
+
+  private void PullDefaultValues()
+  {
+    CVRFuryMenuStore store = (CVRFuryMenuStore)target;
+
+    foreach (var parameterStore in store.relatedParametersStores)
+    {
+      foreach (var parameter in parameterStore.parameters)
+      {
+        var menuItem = store.menuItems.FirstOrDefault(item => item.MachineName == parameter.name);
+        if (menuItem != null)
+        {
+          switch (parameter.valueType)
+          {
+            case CVRFuryParametersStore.ValueType.Float:
+              if (menuItem is sliderParameter slider)
+              {
+                slider.defaultValue = parameter.defaultValue;
+              }
+              break;
+            case CVRFuryParametersStore.ValueType.Int:
+              if (menuItem is dropdownParameter dropdown)
+              {
+                dropdown.defaultIndex = parameter.defaultValue;
+              }
+              break;
+            case CVRFuryParametersStore.ValueType.Bool:
+              if (menuItem is toggleParameter toggle)
+              {
+                toggle.defaultState = parameter.defaultValue;
+              }
+              break;
+          }
+        }
+      }
+    }
+
+    serializedObject.ApplyModifiedProperties();
+  }
+
+  private void PushDefaultValues()
+  {
+    CVRFuryMenuStore store = (CVRFuryMenuStore)target;
+
+    foreach (var parameterStore in store.relatedParametersStores)
+    {
+      foreach (var parameter in parameterStore.parameters)
+      {
+        var menuItem = store.menuItems.FirstOrDefault(item => item.MachineName == parameter.name);
+        if (menuItem != null)
+        {
+          switch (parameter.valueType)
+          {
+            case CVRFuryParametersStore.ValueType.Float:
+              if (menuItem is sliderParameter slider)
+              {
+                parameter.defaultValue = slider.defaultValue;
+              }
+              break;
+            case CVRFuryParametersStore.ValueType.Int:
+              if (menuItem is dropdownParameter dropdown)
+              {
+                parameter.defaultValue = dropdown.defaultIndex;
+              }
+              break;
+            case CVRFuryParametersStore.ValueType.Bool:
+              if (menuItem is toggleParameter toggle)
+              {
+                parameter.defaultValue = toggle.defaultState;
+              }
+              break;
+          }
+        }
+      }
+    }
+
     serializedObject.ApplyModifiedProperties();
   }
 
@@ -222,8 +384,6 @@ public partial class CVRFuryMenuStoreEditor : Editor
     {
       autoButtonContent = new(autoIcon, "Unlink/Link Name to Machine");
     }
-
-
 
     // Create a GUIStyle to set the size of the image
     GUIStyle buttonStyle = new GUIStyle();
@@ -297,19 +457,15 @@ public partial class CVRFuryMenuStoreEditor : Editor
     }
   }
 
-    private void legacyMachineNameFieldUpdate(
-    SerializedProperty nameProperty,
-    SerializedProperty machineNameProperty
-    )
+  private void legacyMachineNameFieldUpdate(SerializedProperty nameProperty, SerializedProperty machineNameProperty)
+  {
+    // if the value of machineNameProperty is empty, then set the value of machineNameProperty to the value of nameProperty
+    if (machineNameProperty.stringValue == "")
     {
-      // if the value of machineNameProperty is empty, then set the value of machineNameProperty to the value of nameProperty
-      if (machineNameProperty.stringValue == "")
-      {
-        machineNameProperty.stringValue = nameProperty.stringValue;
-      }
-
-      // save the changes
-      serializedObject.ApplyModifiedProperties();
+      machineNameProperty.stringValue = nameProperty.stringValue;
     }
+
+    serializedObject.ApplyModifiedProperties();
+  }
 }
 #endif
