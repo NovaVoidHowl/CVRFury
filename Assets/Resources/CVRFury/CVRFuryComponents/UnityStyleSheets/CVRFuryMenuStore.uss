@@ -1,0 +1,35 @@
+.cvr-fury-buttons-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 10px;
+}
+
+.cvr-fury-button {
+  margin: 5px;
+  padding: 8px;
+  background-color: #444444;
+  border-width: 1px;
+  border-color: #646464;
+  border-radius: 3px;
+  -unity-text-align: middle-center;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.cvr-fury-button:hover {
+  background-color: #555555;
+}
+
+.cvr-fury-button:active {
+  background-color: #333333;
+}
+
+.cvr-fury-button:disabled {
+  opacity: 0.5;
+  background-color: #3a3a3a;
+}
+
+.spacer {
+  height: 10px;
+}

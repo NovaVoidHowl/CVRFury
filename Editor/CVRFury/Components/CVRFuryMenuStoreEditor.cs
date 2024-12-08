@@ -9,6 +9,8 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 using uk.novavoidhowl.dev.cvrfury.runtime;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 
 [CustomEditor(typeof(CVRFuryMenuStore))]
 public partial class CVRFuryMenuStoreEditor : Editor
@@ -17,6 +19,11 @@ public partial class CVRFuryMenuStoreEditor : Editor
   private ReorderableList relatedParametersStoresList;
   private List<Type> menuTypes;
   private List<int> conflictingStoresIndices = new List<int>();
+
+  // UIToolkit elements
+  private VisualElement rootVisualElement;
+  private Button pullDefaultsButton;
+  private Button pushDefaultsButton;
 
   private void OnEnable()
   {
@@ -187,6 +194,109 @@ public partial class CVRFuryMenuStoreEditor : Editor
     };
   }
 
+  public override VisualElement CreateInspectorGUI()
+  {
+    // Create root container
+    rootVisualElement = new VisualElement();
+    rootVisualElement.AddToClassList("cvr-fury-inspector");
+
+    // Load and apply the stylesheet
+    var stylesheet = Resources.Load<StyleSheet>(
+      Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryComponents/UnityStyleSheets/CVRFuryMenuStore"
+    );
+
+    // Check if the StyleSheet was loaded
+    if (stylesheet == null)
+    {
+      CoreLogError(
+        "Failed to load StyleSheet at 'UnityStyleSheets/CVRFuryDataStorageUnitInspector'. Please ensure the file exists at the specified path."
+      );
+      // If the StyleSheet was not loaded add a new label to the root.
+      rootVisualElement.Add(new Label("CRITICAL ERROR : StyleSheet could not be loaded."));
+      return rootVisualElement;
+    }
+
+    // Apply the StyleSheet
+    rootVisualElement.styleSheets.Add(stylesheet);
+
+    // Create button container
+    var buttonContainer = new VisualElement();
+    buttonContainer.AddToClassList("cvr-fury-buttons-container");
+
+    // Create buttons
+    pullDefaultsButton = new Button(() => PullDefaultValues())
+    {
+      text = "Copy Default State(s) from Related Parameters Stores"
+    };
+    pullDefaultsButton.AddToClassList("cvr-fury-button");
+
+    pushDefaultsButton = new Button(() => PushDefaultValues())
+    {
+      text = "Push Default State Values to Related Parameters Stores"
+    };
+    pushDefaultsButton.AddToClassList("cvr-fury-button");
+
+    // Create IMGUI container for lists
+    var imguiContainer = new IMGUIContainer(() =>
+    {
+      serializedObject.Update();
+
+      // Check list state
+      var relatedStores = serializedObject.FindProperty("relatedParametersStores");
+      bool isRelatedParametersStoresEmpty = relatedStores.arraySize == 0;
+
+      // Check for empty slots
+      bool hasEmptySlots = false;
+      if (!isRelatedParametersStoresEmpty)
+      {
+        for (int i = 0; i < relatedStores.arraySize; i++)
+        {
+          var element = relatedStores.GetArrayElementAtIndex(i);
+          if (element.objectReferenceValue == null)
+          {
+            hasEmptySlots = true;
+            break;
+          }
+        }
+      }
+
+      // Force conflict check before drawing lists
+      bool hasConflicts = CheckForConflicts();
+
+      // Update button states within IMGUI update cycle
+      // Disable both buttons if there are empty slots or the list is empty
+      bool shouldEnableButtons = !isRelatedParametersStoresEmpty && !hasEmptySlots;
+      pullDefaultsButton?.SetEnabled(shouldEnableButtons && !hasConflicts);
+      pushDefaultsButton?.SetEnabled(shouldEnableButtons);
+
+      EditorGUILayout.Space();
+      relatedParametersStoresList.DoLayoutList();
+      EditorGUILayout.Space();
+      list.DoLayoutList();
+
+      serializedObject.ApplyModifiedProperties();
+    });
+
+    // Add buttons to container
+    buttonContainer.Add(pullDefaultsButton);
+    buttonContainer.Add(new VisualElement() { name = "spacer" });
+    buttonContainer.Add(pushDefaultsButton);
+
+    // Add containers to root
+    rootVisualElement.Add(buttonContainer);
+    rootVisualElement.Add(new VisualElement() { name = "spacer" });
+    rootVisualElement.Add(imguiContainer);
+
+    return rootVisualElement;
+  }
+
+  // Remove button state updates from OnInspectorGUI since they're now handled in IMGUIContainer
+  public override void OnInspectorGUI()
+  {
+    serializedObject.Update();
+    serializedObject.ApplyModifiedProperties();
+  }
+
   void clickHandler(object target)
   {
     var menuType = (Type)target;
@@ -198,54 +308,39 @@ public partial class CVRFuryMenuStoreEditor : Editor
     serializedObject.ApplyModifiedProperties();
   }
 
-  public override void OnInspectorGUI()
-  {
-    serializedObject.Update();
-
-    // Check if the relatedParametersStores list is empty
-    bool isRelatedParametersStoresEmpty = serializedObject.FindProperty("relatedParametersStores").arraySize == 0;
-
-    // Check for conflicts in the relatedParametersStores
-    bool hasConflicts = CheckForConflicts();
-
-    // Disable the buttons if the relatedParametersStores list is empty or if there are conflicts
-    EditorGUI.BeginDisabledGroup(isRelatedParametersStoresEmpty || hasConflicts);
-
-    if (GUILayout.Button("Copy Default State(s) from Related Parameters Stores"))
-    {
-      PullDefaultValues();
-    }
-
-    EditorGUI.EndDisabledGroup();
-
-    EditorGUILayout.Space();
-
-    if (GUILayout.Button("Push Default State Values to Related Parameters Stores"))
-    {
-      PushDefaultValues();
-    }
-
-    EditorGUILayout.Space();
-    EditorGUILayout.Space();
-
-    relatedParametersStoresList.DoLayoutList();
-    EditorGUILayout.Space();
-    list.DoLayoutList();
-
-    serializedObject.ApplyModifiedProperties();
-  }
-
   private bool CheckForConflicts()
   {
-    CVRFuryMenuStore store = (CVRFuryMenuStore)target;
+    var store = target as CVRFuryMenuStore;
+    if (store == null || store.relatedParametersStores == null)
+    {
+      return false;
+    }
+
+    // Check for null entries in the list
+    bool hasEmptySlots = store.relatedParametersStores.Any(x => x == null);
+    if (hasEmptySlots)
+    {
+      return true; // Treat empty slots as a conflict to disable buttons
+    }
+
     conflictingStoresIndices.Clear();
     Dictionary<string, float> defaultValues = new Dictionary<string, float>();
 
     for (int i = 0; i < store.relatedParametersStores.Count; i++)
     {
       var parameterStore = store.relatedParametersStores[i];
+      if (parameterStore == null || parameterStore.parameters == null)
+      {
+        continue;
+      }
+
       foreach (var parameter in parameterStore.parameters)
       {
+        if (parameter == null || string.IsNullOrEmpty(parameter.name))
+        {
+          continue;
+        }
+
         if (defaultValues.ContainsKey(parameter.name))
         {
           if (defaultValues[parameter.name] != parameter.defaultValue)
@@ -260,7 +355,7 @@ public partial class CVRFuryMenuStoreEditor : Editor
       }
     }
 
-    return conflictingStoresIndices.Count > 0;
+    return conflictingStoresIndices.Count > 0 || hasEmptySlots;
   }
 
   private void PullDefaultValues()
