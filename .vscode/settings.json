@@ -78,7 +78,8 @@
     "vrchat",
     "VRCPHYSBONE",
     "VRCSDK",
-    "vrcstub"
+    "vrcstub",
+    "warnicon"
   ],
   "colorize.hide_current_line_decorations": false,
   "colorize.languages": [
