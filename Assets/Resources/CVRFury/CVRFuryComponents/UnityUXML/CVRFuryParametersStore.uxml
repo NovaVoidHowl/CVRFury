@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement name="root-container">
+      <ui:VisualElement name="message-banner" class="message-banner-container">
+      </ui:VisualElement>
+
+        <!-- Button Controls -->
+        <ui:VisualElement name="button-container" class="cvr-fury-buttons-container">
+            <ui:Button name="import-parameters-button" text="Sync Parameters from Controllers" class="cvr-fury-button"/>
+            <ui:Button name="copy-defaults-button" text="Copy Defaults from Controllers" class="cvr-fury-button"/>
+            <ui:Button name="push-defaults-button" text="Push Defaults to Controllers" class="cvr-fury-button"/>
+        </ui:VisualElement>
+
+        <!-- Spacer -->
+        <ui:VisualElement name="spacer"/>
+
+        <!-- Controllers Section -->
+        <ui:VisualElement name="controllers-container" class="stores-container">
+            <ui:Label text="Related Animation Controllers" name="stores-header" class="stores-header"/>
+            <ui:ListView name="controllers-list" class="stores-list" fixed-item-height="26" style="min-height: 24px"/>
+            <ui:VisualElement name="list-controls" style="flex-direction: row;">
+                <ui:Button name="add-controller-button" text="+"/>
+                <ui:Button name="remove-controller-button" text="-"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Spacer -->
+        <ui:VisualElement name="spacer"/>
+        
+        <!-- Parameters Section -->
+        <ui:VisualElement name="parameters-container" class="stores-container">
+            <ui:Label text="Parameters" name="parameters-header" class="stores-header"/>
+            <ui:ListView name="parameters-list" class="stores-list" fixed-item-height="26" style="min-height: 24px"/>
+            <ui:VisualElement name="parameters-controls" style="flex-direction: row; justify-content: space-between;">
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Button name="add-parameter-button" text="+"/>
+                    <ui:Button name="remove-parameter-button" text="-"/>
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Button name="sort-alpha-button" text="Sort A-Z" class="sort-button"/>
+                    <ui:Button name="sort-za-button" text="Sort Z-A" class="sort-button"/>
+                    <ui:Button name="sort-type-button" text="Sort by Type" class="sort-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</UXML>

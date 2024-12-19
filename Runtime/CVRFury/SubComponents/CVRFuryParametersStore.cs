@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace uk.novavoidhowl.dev.cvrfury.runtime
@@ -9,6 +10,9 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   [CreateAssetMenu(fileName = "NewCVRFuryParametersStore", menuName = "CVRFury/Parameters Store")]
   public class CVRFuryParametersStore : ScriptableObject
   {
+    [SerializeField]
+    public List<RuntimeAnimatorController> relatedAnimationControllers = new List<RuntimeAnimatorController>();
+
     [Serializable]
     public class Parameter
     {
