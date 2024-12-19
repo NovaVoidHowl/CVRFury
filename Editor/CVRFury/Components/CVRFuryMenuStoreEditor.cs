@@ -451,8 +451,8 @@ public partial class CVRFuryMenuStoreEditor : Editor
     rootVisualElement.Add(imguiContainer);
 
     // Add USS styles for new elements
-    var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
-      "Assets/Resources/CVRFury/CVRFuryComponents/UnityStyleSheets/CVRFuryMenuStore.uss"
+    var styleSheet = Resources.Load<StyleSheet>(
+      Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryComponents/UnityStyleSheets/CVRFuryMenuStore"
     );
     if (styleSheet != null)
     {
