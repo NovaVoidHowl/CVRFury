@@ -11,78 +11,81 @@ using UnityEngine.UIElements;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
-public partial class CVRFuryMenuStoreEditor : Editor
+namespace uk.novavoidhowl.dev.cvrfury.editor.components
 {
-  // all ToggleParameter related UI code is in this file
-
-  private float CalculateToggleParameterBlockHeight()
+  public partial class CVRFuryMenuStoreEditor : Editor
   {
-    float height = 0;
+    // all ToggleParameter related UI code is in this file
 
-    height += 4.2f * EditorGUIUtility.singleLineHeight;
-
-    return height;
-  }
-
-  private void DrawToggleParameterFields(string shortTypeName, SerializedProperty element, Rect rect)
-  {
-    if (shortTypeName == "toggleParameter")
+    private float CalculateToggleParameterBlockHeight()
     {
-      SerializedProperty defaultStateProperty = element.FindPropertyRelative("defaultState");
-      SerializedProperty generateTypeProperty = element.FindPropertyRelative("generateType");
+      float height = 0;
 
-      // Find the 'name' property
-      SerializedProperty nameProperty = element.FindPropertyRelative("name");
-      // find the 'MachineName' property
-      SerializedProperty machineNameProperty = element.FindPropertyRelative("MachineName");
+      height += 4.2f * EditorGUIUtility.singleLineHeight;
 
-      // find the 'forceMachineName' property
-      SerializedProperty forceMachineNameProperty = element.FindPropertyRelative("forceMachineName");
+      return height;
+    }
 
-      // find the 'nameLinkedToMachineName' property
-      SerializedProperty nameLinkedToMachineNameProperty = element.FindPropertyRelative("nameLinkedToMachineName");
-
-      // Legacy content fixer: auto generate the machine name based on the name property
-      legacyMachineNameFieldUpdate(nameProperty, machineNameProperty);
-
-      // if the 'forceMachineName' property is true, then set the 'nameLinkedToMachineName' property to false
-      if (forceMachineNameProperty.boolValue)
+    private void DrawToggleParameterFields(string shortTypeName, SerializedProperty element, Rect rect)
+    {
+      if (shortTypeName == "toggleParameter")
       {
-        nameLinkedToMachineNameProperty.boolValue = false;
-      }
+        SerializedProperty defaultStateProperty = element.FindPropertyRelative("defaultState");
+        SerializedProperty generateTypeProperty = element.FindPropertyRelative("generateType");
 
-      // if the nameLinkedToMachineNameProperty value is true, then use the TranslateMenuNameToParameterName function to generate a machine name
-      if (nameLinkedToMachineNameProperty.boolValue)
-      {
-        machineNameProperty.stringValue = TranslateMenuNameToParameterName(
-          nameProperty.stringValue,
-          forceMachineNameProperty.boolValue
-        );
-      }
+        // Find the 'name' property
+        SerializedProperty nameProperty = element.FindPropertyRelative("name");
+        // find the 'MachineName' property
+        SerializedProperty machineNameProperty = element.FindPropertyRelative("MachineName");
 
-      renderMachineNameField(nameLinkedToMachineNameProperty, machineNameProperty, forceMachineNameProperty, rect);
+        // find the 'forceMachineName' property
+        SerializedProperty forceMachineNameProperty = element.FindPropertyRelative("forceMachineName");
 
-      if (defaultStateProperty != null && generateTypeProperty != null)
-      {
-        EditorGUI.PropertyField(
-          new Rect(
-            rect.x,
-            rect.y + 3.1f * EditorGUIUtility.singleLineHeight,
-            rect.width,
-            EditorGUIUtility.singleLineHeight
-          ),
-          defaultStateProperty
-        );
-        EditorGUI.PropertyField(
-          new Rect(
-            rect.x,
-            rect.y + 4.1f * EditorGUIUtility.singleLineHeight,
-            rect.width,
-            EditorGUIUtility.singleLineHeight
-          ),
-          generateTypeProperty,
-          new GUIContent("Animator Parameter Type")
-        );
+        // find the 'nameLinkedToMachineName' property
+        SerializedProperty nameLinkedToMachineNameProperty = element.FindPropertyRelative("nameLinkedToMachineName");
+
+        // Legacy content fixer: auto generate the machine name based on the name property
+        legacyMachineNameFieldUpdate(nameProperty, machineNameProperty);
+
+        // if the 'forceMachineName' property is true, then set the 'nameLinkedToMachineName' property to false
+        if (forceMachineNameProperty.boolValue)
+        {
+          nameLinkedToMachineNameProperty.boolValue = false;
+        }
+
+        // if the nameLinkedToMachineNameProperty value is true, then use the TranslateMenuNameToParameterName function to generate a machine name
+        if (nameLinkedToMachineNameProperty.boolValue)
+        {
+          machineNameProperty.stringValue = TranslateMenuNameToParameterName(
+            nameProperty.stringValue,
+            forceMachineNameProperty.boolValue
+          );
+        }
+
+        renderMachineNameField(nameLinkedToMachineNameProperty, machineNameProperty, forceMachineNameProperty, rect);
+
+        if (defaultStateProperty != null && generateTypeProperty != null)
+        {
+          EditorGUI.PropertyField(
+            new Rect(
+              rect.x,
+              rect.y + 3.1f * EditorGUIUtility.singleLineHeight,
+              rect.width,
+              EditorGUIUtility.singleLineHeight
+            ),
+            defaultStateProperty
+          );
+          EditorGUI.PropertyField(
+            new Rect(
+              rect.x,
+              rect.y + 4.1f * EditorGUIUtility.singleLineHeight,
+              rect.width,
+              EditorGUIUtility.singleLineHeight
+            ),
+            generateTypeProperty,
+            new GUIContent("Animator Parameter Type")
+          );
+        }
       }
     }
   }

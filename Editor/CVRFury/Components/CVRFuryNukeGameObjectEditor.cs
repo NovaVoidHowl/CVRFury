@@ -46,9 +46,6 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       // apply stylesheet
       rootVisualElement.styleSheets.Add(stylesheet);
 
-
-
-
       // get the DSUNumber
       var DSUNumber = serializedObject.FindProperty("DSUNumber");
 
@@ -67,8 +64,10 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       }
 
       // add label to say that this component should not be added manually
-      var warningLabel = new Label("This component should not be added manually."
-                                   +"\n It is used to tag gameObjects for purge during the cleanup phase of CVRFury.");
+      var warningLabel = new Label(
+        "This component should not be added manually."
+          + "\n It is used to tag gameObjects for purge during the cleanup phase of CVRFury."
+      );
       rootVisualElement.Add(warningLabel);
       // add a label to say what the related DSU is
       var DSUNumberLabel = new Label("Related DSU Number: " + DSUNumber.intValue);
