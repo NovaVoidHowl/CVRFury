@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -318,3 +319,5 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     }
   }
 }
+
+#endif // UNITY_EDITOR
