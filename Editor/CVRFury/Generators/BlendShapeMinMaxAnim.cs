@@ -312,7 +312,7 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
 
       // create the keyframes
       Keyframe[] keyframesMin = new Keyframe[1];
-      keyframesMin[0] = new Keyframe(0, 100);
+      keyframesMin[0] = new Keyframe(0, 0);
 
       Keyframe[] keyframesMax = new Keyframe[1];
       keyframesMax[0] = new Keyframe(0, 100);
