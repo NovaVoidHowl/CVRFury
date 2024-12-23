@@ -1001,7 +1001,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
         // Dictionary to store conflicts
         var conflicts = new Dictionary<string, List<(int, AnimatorControllerParameterType)>>();
 
-        // Check for conflicts
+        // First pass: collect all parameter types
         for (int i = 0; i < store.relatedAnimationControllers.Count; i++)
         {
           var controller = store.relatedAnimationControllers[i] as AnimatorController;
@@ -1010,31 +1010,50 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
           foreach (var parameter in controller.parameters)
           {
-            if (parameterTypes.TryGetValue(parameter.name, out var existingType))
+            if (!parameterTypes.ContainsKey(parameter.name))
             {
-              if (existingType != parameter.type)
+              parameterTypes[parameter.name] = parameter.type;
+            }
+          }
+        }
+
+        // Second pass: check for conflicts
+        for (int i = 0; i < store.relatedAnimationControllers.Count; i++)
+        {
+          var controller = store.relatedAnimationControllers[i] as AnimatorController;
+          if (controller == null)
+            continue;
+
+          foreach (var parameter in controller.parameters)
+          {
+            if (parameterTypes.TryGetValue(parameter.name, out var expectedType))
+            {
+              if (expectedType != parameter.type)
               {
-                conflictingControllerIndices.Add(i);
+                // Add both the current controller and the first controller that defined this parameter
                 if (!conflicts.ContainsKey(parameter.name))
                 {
                   conflicts[parameter.name] = new List<(int, AnimatorControllerParameterType)>();
-                  // Add the first controller that defined this parameter
-                  var firstIndex = store.relatedAnimationControllers.FindIndex(
-                    c => c is AnimatorController ac && ac.parameters.Any(p => p.name == parameter.name)
-                  );
-                  if (firstIndex >= 0)
+                  // Find all controllers that have this parameter
+                  for (int j = 0; j < store.relatedAnimationControllers.Count; j++)
                   {
-                    var firstController = store.relatedAnimationControllers[firstIndex] as AnimatorController;
-                    var firstType = firstController.parameters.First(p => p.name == parameter.name).type;
-                    conflicts[parameter.name].Add((firstIndex, firstType));
+                    var otherController = store.relatedAnimationControllers[j] as AnimatorController;
+                    if (otherController != null)
+                    {
+                      var param = otherController.parameters.FirstOrDefault(p => p.name == parameter.name);
+                      if (param != null)
+                      {
+                        conflicts[parameter.name].Add((j, param.type));
+                        // Add to conflicting indices if not already added
+                        if (!conflictingControllerIndices.Contains(j))
+                        {
+                          conflictingControllerIndices.Add(j);
+                        }
+                      }
+                    }
                   }
                 }
-                conflicts[parameter.name].Add((i, parameter.type));
               }
-            }
-            else
-            {
-              parameterTypes[parameter.name] = parameter.type;
             }
           }
         }
