@@ -1,0 +1,15 @@
+.root-container {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.objects-container {
+    margin-bottom: 0px;
+    padding: 10px;
+    background-color: #303030;
+    border-radius: 6px 6px 0px 0px;
+    border-width: 1px 1px 0px 1px;
+    border-color: #404040;
+}

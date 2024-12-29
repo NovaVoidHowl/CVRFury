@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements">
+  <ui:VisualElement class="root-container">
+    <ui:VisualElement name="objectsContainer" class="objects-container">
+      <editor:ObjectField name="rootGameObjectField" label="Root Game Object" />
+      <editor:ObjectField name="meshRendererField" label="Mesh Renderer" />
+    </ui:VisualElement>
+    
+    <ui:VisualElement name="paramContainer" class="param-container">
+      <ui:VisualElement name="paramTypeContainer" />
+      <editor:FloatField name="minValueField" label="Min Value" />
+      <editor:FloatField name="maxValueField" label="Max Value" />
+    </ui:VisualElement>
+    
+    <ui:VisualElement class="path-container">
+      <ui:TextField name="animationPathField" label="Animation Path" />
+      <ui:TextField name="animationNameField" label="Animation Name" />
+    </ui:VisualElement>
+    
+    <ui:Button name="generateButton" text="Generate" class="generate-button" />
+  </ui:VisualElement>
+</UXML>
