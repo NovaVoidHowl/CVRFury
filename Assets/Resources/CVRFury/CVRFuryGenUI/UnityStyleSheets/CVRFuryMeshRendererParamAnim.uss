@@ -13,3 +13,48 @@
     border-width: 1px 1px 0px 1px;
     border-color: #404040;
 }
+
+.renderer-container {
+    margin-bottom: 5px;
+}
+
+.renderer-container > * {
+    margin-bottom: 2px;
+}
+
+#parameterFilterField {
+    margin-bottom: 0px;
+    margin-top: 5px;
+    margin-left: 8px;
+    margin-right: 8px;
+    padding: 5px 5px 0px 5px;
+}
+
+.warning-label {
+    color: rgb(255, 179, 0);
+    margin: 5px 10px;
+    -unity-font-style: bold;
+}
+
+.dropdown-container {
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 4px 0px 4px 0px;
+}
+
+.dropdown-container > * {
+    flex: 1;
+    margin-right: 5px;
+}
+
+.dropdown-container > *:last-child {
+    margin-right: 0;
+}
+
+#maxValueField {
+    margin-bottom: 8px;
+}
+
+#animationNameField {
+    margin-bottom: 8px;
+}

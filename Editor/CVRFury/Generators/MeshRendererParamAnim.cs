@@ -20,7 +20,8 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     private const string LAST_PATH_PREF_KEY = "MeshRendererParamAnim_LastPath";
 
     private ObjectField rootGameObjectField;
-    private ObjectField meshRendererField;
+    private ObjectField rendererField;
+    private PopupField<string> rendererTypePopup;
     private PopupField<string> paramTypePopup;
     private FloatField minValueField;
     private FloatField maxValueField;
@@ -29,9 +30,12 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     private Button generateButton;
     private PopupField<string> parameterPopup;
     private Dictionary<string, string> parameterTypes = new Dictionary<string, string>();
+    private TextField parameterFilterField;
+    private List<string> allParameters = new List<string>();
+    private Label warningLabel;
 
     private GameObject rootGameObject;
-    private MeshRenderer meshRenderer;
+    private Component renderer; // Changed from MeshRenderer to Component
     private string paramType;
     private string paramName;
     private float minValue;
@@ -71,21 +75,24 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
 
       // Get references to UI elements
       rootGameObjectField = rootVisualElement.Q<ObjectField>("rootGameObjectField");
-      meshRendererField = rootVisualElement.Q<ObjectField>("meshRendererField");
-      var paramContainer = rootVisualElement.Q<VisualElement>("paramContainer");
+      rendererField = rootVisualElement.Q<ObjectField>("meshRendererField");
       minValueField = rootVisualElement.Q<FloatField>("minValueField");
       maxValueField = rootVisualElement.Q<FloatField>("maxValueField");
       animationNameField = rootVisualElement.Q<TextField>("animationNameField");
       animationPathField = rootVisualElement.Q<TextField>("animationPathField");
       generateButton = rootVisualElement.Q<Button>("generateButton");
+      parameterFilterField = rootVisualElement.Q<TextField>("parameterFilterField");
+      warningLabel = rootVisualElement.Q<Label>("warningLabel");
 
       // Initialize parameter popup with empty list
       parameterPopup = new PopupField<string>("Parameter", new List<string> { "No parameters available" }, 0);
-      paramContainer.Add(parameterPopup);
+      var parameterPopupContainer = rootVisualElement.Q<VisualElement>("parameterPopupContainer");
+      parameterPopupContainer.Add(parameterPopup);
 
-      // Create parameter type popup (will be updated based on selection)
+      // Create parameter type popup
       paramTypePopup = new PopupField<string>("Type", new List<string> { "Bool", "Int", "Float" }, 0);
-      paramContainer.Add(paramTypePopup);
+      var paramTypePopupContainer = rootVisualElement.Q<VisualElement>("paramTypePopupContainer");
+      paramTypePopupContainer.Add(paramTypePopup);
 
       paramTypePopup.RegisterValueChangedCallback(evt =>
       {
@@ -96,19 +103,40 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
 
       // Setup fields
       rootGameObjectField.objectType = typeof(GameObject);
-      meshRendererField.objectType = typeof(MeshRenderer);
+
+      // Setup renderer type selection
+      rendererTypePopup = new PopupField<string>(
+        "Renderer Type",
+        new List<string> { "MeshRenderer", "SkinnedMeshRenderer" },
+        0
+      );
+      rootVisualElement.Q<VisualElement>("rendererContainer").Add(rendererTypePopup);
+
+      // Update renderer field type based on selection
+      rendererTypePopup.RegisterValueChangedCallback(evt =>
+      {
+        rendererField.objectType = evt.newValue == "MeshRenderer" ? typeof(MeshRenderer) : typeof(SkinnedMeshRenderer);
+        renderer = null;
+        rendererField.value = null;
+        RefreshParameters();
+        UpdateControlStates();
+      });
+
+      // Initialize renderer field
+      rendererField.objectType = typeof(MeshRenderer);
+
+      // Update renderer field callback
+      rendererField.RegisterValueChangedCallback(evt =>
+      {
+        renderer = evt.newValue as Component;
+        RefreshParameters();
+        UpdateControlStates();
+      });
 
       // Register callbacks
       rootGameObjectField.RegisterValueChangedCallback(evt =>
       {
         rootGameObject = evt.newValue as GameObject;
-        UpdateControlStates();
-      });
-
-      meshRendererField.RegisterValueChangedCallback(evt =>
-      {
-        meshRenderer = evt.newValue as MeshRenderer;
-        RefreshParameters();
         UpdateControlStates();
       });
 
@@ -142,9 +170,31 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
         UpdateControlStates();
       });
 
+      // Add filter callback
+      parameterFilterField.RegisterValueChangedCallback(evt =>
+      {
+        FilterParameters(evt.newValue);
+      });
+
       // Load saved path
       animationPath = EditorPrefs.GetString(LAST_PATH_PREF_KEY, "Assets");
       animationPathField.value = animationPath;
+
+      // Get reference to warning label
+      warningLabel = rootVisualElement.Q<Label>("warningLabel");
+
+      // Add value change callbacks for min/max fields
+      minValueField.RegisterValueChangedCallback(evt =>
+      {
+        minValue = evt.newValue;
+        UpdateWarningVisibility();
+      });
+
+      maxValueField.RegisterValueChangedCallback(evt =>
+      {
+        maxValue = evt.newValue;
+        UpdateWarningVisibility();
+      });
 
       UpdateControlStates();
     }
@@ -176,11 +226,24 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     private void RefreshParameters()
     {
       parameterTypes.Clear();
+      allParameters.Clear(); // Clear all parameters
       var parameters = new List<string>();
 
-      if (meshRenderer != null && meshRenderer.sharedMaterial != null)
+      Material material = null;
+      if (renderer != null)
       {
-        Material material = meshRenderer.sharedMaterial;
+        if (renderer is MeshRenderer meshRenderer)
+        {
+          material = meshRenderer.sharedMaterial;
+        }
+        else if (renderer is SkinnedMeshRenderer skinnedMeshRenderer)
+        {
+          material = skinnedMeshRenderer.sharedMaterial;
+        }
+      }
+
+      if (material != null)
+      {
         Shader shader = material.shader;
 
         // Get all properties from the material's shader
@@ -235,14 +298,42 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
         }
       }
 
-      // Update parameter popup
+      // After gathering parameters, store them in allParameters
+      allParameters = parameters;
+
+      // Update the parameter popup with all parameters (or filtered if there's a filter)
+      if (!string.IsNullOrEmpty(parameterFilterField?.value))
+      {
+        FilterParameters(parameterFilterField.value);
+      }
+      else
+      {
+        UpdateParameterPopup(allParameters);
+      }
+    }
+
+    private void FilterParameters(string filterText)
+    {
+      if (string.IsNullOrEmpty(filterText))
+      {
+        UpdateParameterPopup(allParameters);
+        return;
+      }
+
+      var filteredParams = allParameters.Where(p => p.ToLower().Contains(filterText.ToLower())).ToList();
+
+      UpdateParameterPopup(filteredParams);
+    }
+
+    private void UpdateParameterPopup(List<string> parameters)
+    {
       if (parameters.Count > 0)
       {
         var newParameterPopup = new PopupField<string>("Parameter", parameters, 0);
-        var paramContainer = rootVisualElement.Q<VisualElement>("paramContainer");
-        paramContainer.Remove(parameterPopup);
+        var parameterPopupContainer = rootVisualElement.Q<VisualElement>("parameterPopupContainer");
+        parameterPopupContainer.Clear();
         parameterPopup = newParameterPopup;
-        paramContainer.Add(parameterPopup);
+        parameterPopupContainer.Add(parameterPopup);
 
         // Register callback for new popup
         parameterPopup.RegisterValueChangedCallback(evt =>
@@ -273,16 +364,18 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
       }
       else
       {
-        var newParameterPopup = new PopupField<string>(
-          "Parameter",
-          new List<string> { "No material parameters available" },
-          0
-        );
-        var paramContainer = rootVisualElement.Q<VisualElement>("paramContainer");
-        paramContainer.Remove(parameterPopup);
+        var newParameterPopup = new PopupField<string>("Parameter", new List<string> { "No matching parameters" }, 0);
+        var parameterPopupContainer = rootVisualElement.Q<VisualElement>("parameterPopupContainer");
+        parameterPopupContainer.Clear();
         parameterPopup = newParameterPopup;
-        paramContainer.Add(parameterPopup);
+        parameterPopupContainer.Add(parameterPopup);
       }
+    }
+
+    private void UpdateWarningVisibility()
+    {
+      warningLabel.style.display =
+        (paramType != "Bool" && Mathf.Approximately(minValue, maxValue)) ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
     private void UpdateMinMaxFieldVisibility()
@@ -291,6 +384,7 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
       {
         minValueField.style.display = DisplayStyle.None;
         maxValueField.style.display = DisplayStyle.None;
+        warningLabel.style.display = DisplayStyle.None;
         minValue = 0;
         maxValue = 1;
       }
@@ -298,6 +392,7 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
       {
         minValueField.style.display = DisplayStyle.Flex;
         maxValueField.style.display = DisplayStyle.Flex;
+        UpdateWarningVisibility();
         minValue = minValueField.value;
         maxValue = maxValueField.value;
       }
@@ -307,7 +402,7 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     {
       bool hasRequiredFields =
         rootGameObject != null
-        && meshRenderer != null
+        && renderer != null
         && !string.IsNullOrEmpty(paramName)
         && !string.IsNullOrEmpty(animationPathField.value)
         && !string.IsNullOrEmpty(animationNameField.value);
@@ -320,7 +415,7 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
         Debug.Log(
           $"Generate button disabled because:\n"
             + $"rootGameObject: {rootGameObject != null}\n"
-            + $"meshRenderer: {meshRenderer != null}\n"
+            + $"renderer: {renderer != null}\n"
             + $"paramName: {!string.IsNullOrEmpty(paramName)}\n"
             + $"animationPath: {!string.IsNullOrEmpty(animationPathField.value)}\n"
             + $"animationName: {!string.IsNullOrEmpty(animationNameField.value)}"
@@ -343,9 +438,9 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
         return false;
       }
 
-      if (meshRenderer == null)
+      if (renderer == null)
       {
-        EditorUtility.DisplayDialog("Error", "Mesh Renderer is required", "OK");
+        EditorUtility.DisplayDialog("Error", "Renderer is required", "OK");
         return false;
       }
 
@@ -361,6 +456,18 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
         return false;
       }
 
+      if (paramType != "Bool" && Mathf.Approximately(minValue, maxValue))
+      {
+        bool proceed = EditorUtility.DisplayDialog(
+          "Warning",
+          "Min and Max values are the same. This will create identical animations. Do you want to proceed?",
+          "Yes",
+          "No"
+        );
+        if (!proceed)
+          return false;
+      }
+
       return true;
     }
 
@@ -372,10 +479,10 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
         Directory.CreateDirectory(animationPath);
       }
 
-      // Get relative path from root to mesh renderer
-      string meshRendererPath = GetGameObjectPath(meshRenderer.gameObject);
+      // Get relative path from root to renderer
+      string rendererPath = GetGameObjectPath(renderer.gameObject);
       string rootPath = GetGameObjectPath(rootGameObject);
-      string relativePath = meshRendererPath.Replace(rootPath, "").TrimStart('/');
+      string relativePath = rendererPath.Replace(rootPath, "").TrimStart('/');
 
       // Create animation clips
       AnimationClip minClip = new AnimationClip();
@@ -393,10 +500,10 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
         maxClip.name = $"{animationName}_max";
       }
 
-      // Create curve binding
+      // Create curve binding with correct type
       EditorCurveBinding binding = new EditorCurveBinding
       {
-        type = typeof(MeshRenderer),
+        type = renderer is MeshRenderer ? typeof(MeshRenderer) : typeof(SkinnedMeshRenderer),
         path = relativePath,
         propertyName = paramName
       };
