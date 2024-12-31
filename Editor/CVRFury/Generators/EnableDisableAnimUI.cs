@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 
 using System.IO;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -13,7 +12,7 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.generator
 {
-  public class EnableDisableAnim : EditorWindow
+  public class EnableDisableAnimUI : EditorWindow
   {
     private const string LAST_PATH_PREF_KEY = "EnableDisableAnim_LastPath";
 
@@ -28,12 +27,47 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     private string animationName;
     private string animationPath;
 
-    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Generation Tools/Enable-Disable Animation")]
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Generation Tools/Animation Clip/GameObject Enable Disable")]
     public static void ShowWindow()
     {
-      var window = GetWindow<EnableDisableAnim>();
+      ShowWindowWithPath("Assets");
+    }
+
+    [MenuItem("Assets/Create/CVRFury/Animation Clips/Enable-Disable Animation", false, 2)]
+    private static void ShowWindowFromContext()
+    {
+      string path = "Assets";
+      Object selected = Selection.activeObject;
+      if (selected != null)
+      {
+        path = AssetDatabase.GetAssetPath(selected);
+        if (!Directory.Exists(path))
+        {
+          path = Path.GetDirectoryName(path);
+        }
+        Debug.Log($"Selected path: {path}");
+      }
+      ShowWindowWithPath(path);
+    }
+
+    private static void ShowWindowWithPath(string path)
+    {
+      var window = GetWindow<EnableDisableAnimUI>();
+      if (window == null)
+      {
+        Debug.LogError("Failed to create window");
+        return;
+      }
       window.titleContent = new GUIContent("Enable-Disable Animation");
       window.minSize = new Vector2(400, 200);
+
+      window.animationPath = path;
+      EditorPrefs.SetString(LAST_PATH_PREF_KEY, path);
+
+      if (window.animationPathField != null)
+      {
+        window.animationPathField.value = path;
+      }
     }
 
     private void CreateGUI()
@@ -103,8 +137,11 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
 
       generateButton.clicked += ValidateAndGenerate;
 
-      // Load saved path
-      animationPath = EditorPrefs.GetString(LAST_PATH_PREF_KEY, "Assets");
+      // Load saved path or use the one set by ShowWindowWithPath
+      if (string.IsNullOrEmpty(animationPath))
+      {
+        animationPath = EditorPrefs.GetString(LAST_PATH_PREF_KEY, "Assets");
+      }
       animationPathField.value = animationPath;
 
       UpdateControlStates();
@@ -157,80 +194,24 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
 
     private void Generate()
     {
-      // Check and create directory if needed
-      if (!Directory.Exists(animationPath))
+      string errorMessage;
+      bool success = EnableDisableAnimCreator.CreateAnimations(
+        targetGameObject,
+        rootGameObject,
+        animationName,
+        animationPath,
+        out errorMessage
+      );
+
+      if (success)
       {
-        try
-        {
-          Directory.CreateDirectory(animationPath);
-        }
-        catch (System.Exception ex)
-        {
-          EditorUtility.DisplayDialog("Error", $"Failed to create directory: {ex.Message}", "OK");
-          return;
-        }
+        EditorUtility.DisplayDialog("Success", "Animation clips generated successfully", "OK");
       }
-
-      // Create the animation clips
-      AnimationClip enableClip = new AnimationClip();
-      AnimationClip disableClip = new AnimationClip();
-
-      enableClip.name = $"{animationName}_enable";
-      disableClip.name = $"{animationName}_disable";
-
-      // Get relative path between root and target
-      string targetPath = GetGameObjectPath(targetGameObject);
-      string rootPath = GetGameObjectPath(rootGameObject);
-
-      // Get the path segments
-      string[] targetSegments = targetPath.Split('/');
-      string[] rootSegments = rootPath.Split('/');
-
-      // Build relative path starting after root object
-      List<string> relativeSegments = new List<string>();
-      bool foundRoot = false;
-
-      foreach (string segment in targetSegments)
+      else
       {
-        if (foundRoot)
-        {
-          relativeSegments.Add(segment);
-        }
-        else if (segment == rootSegments[rootSegments.Length - 1])
-        {
-          foundRoot = true;
-        }
+        EditorUtility.DisplayDialog("Error", errorMessage, "OK");
       }
-
-      string relativePath = string.Join("/", relativeSegments);
-
-      // Create curve bindings
-      EditorCurveBinding curveBinding = new EditorCurveBinding
-      {
-        path = relativePath,
-        propertyName = "m_IsActive",
-        type = typeof(GameObject)
-      };
-
-      // Create keyframes
-      AnimationCurve enableCurve = new AnimationCurve(new Keyframe(0, 1));
-      AnimationCurve disableCurve = new AnimationCurve(new Keyframe(0, 0));
-
-      AnimationUtility.SetEditorCurve(enableClip, curveBinding, enableCurve);
-      AnimationUtility.SetEditorCurve(disableClip, curveBinding, disableCurve);
-
-      // Save the clips
-      string enablePath = Path.Combine(animationPath, $"{enableClip.name}.anim").Replace("\\", "/");
-      string disablePath = Path.Combine(animationPath, $"{disableClip.name}.anim").Replace("\\", "/");
-
-      AssetDatabase.CreateAsset(enableClip, enablePath);
-      AssetDatabase.CreateAsset(disableClip, disablePath);
-
-      AssetDatabase.Refresh();
-
-      EditorUtility.DisplayDialog("Success", "Animation clips generated successfully", "OK");
     }
   }
 }
-
 #endif

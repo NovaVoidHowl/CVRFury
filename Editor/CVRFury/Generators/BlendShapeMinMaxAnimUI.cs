@@ -18,7 +18,7 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.generator
 {
-  public class BlendShapeMinMaxAnim : EditorWindow
+  public class BlendShapeMinMaxAnimUI : EditorWindow
   {
     private const string LAST_PATH_PREF_KEY = "BlendShapeMinMaxAnim_LastPath";
 
@@ -39,12 +39,44 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     private string animationPath;
     private string[] blendShapeNames;
 
-    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Generation Tools/Min-Max BlendShape Animation")]
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Generation Tools/Animation Clip/Min-Max BlendShape")]
     public static void ShowWindow()
     {
-      var window = GetWindow<BlendShapeMinMaxAnim>();
+      ShowWindowWithPath("Assets");
+    }
+
+    [MenuItem("Assets/Create/CVRFury/Animation Clips/Min-Max BlendShape Animation", false, 1)]
+    private static void ShowWindowFromContext()
+    {
+      // Get the path from the selected folder
+      string path = "Assets";
+      Object selected = Selection.activeObject;
+      if (selected != null)
+      {
+        path = AssetDatabase.GetAssetPath(selected);
+        if (!Directory.Exists(path))
+        {
+          path = Path.GetDirectoryName(path);
+        }
+      }
+      ShowWindowWithPath(path);
+    }
+
+    private static void ShowWindowWithPath(string path)
+    {
+      var window = GetWindow<BlendShapeMinMaxAnimUI>();
       window.titleContent = new GUIContent("Min-Max BlendShape Animation");
       window.minSize = new Vector2(400, 250);
+
+      // Set the initial path
+      window.animationPath = path;
+      EditorPrefs.SetString(LAST_PATH_PREF_KEY, path);
+
+      // If the window is already created, update the path field
+      if (window.animationPathField != null)
+      {
+        window.animationPathField.value = path;
+      }
     }
 
     private void CreateGUI()
@@ -126,8 +158,11 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
       });
       generateButton.clicked += ValidateAndGenerate;
 
-      // Load saved path
-      animationPath = EditorPrefs.GetString(LAST_PATH_PREF_KEY, "Assets");
+      // Load saved path or use the one set by ShowWindowWithPath
+      if (string.IsNullOrEmpty(animationPath))
+      {
+        animationPath = EditorPrefs.GetString(LAST_PATH_PREF_KEY, "Assets");
+      }
       animationPathField.value = animationPath;
 
       // Initial state refresh/load
@@ -254,90 +289,25 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
 
     private void Generate()
     {
-      // First check and create directory if needed
-      string finalPath = animationPath;
-      if (!Directory.Exists(finalPath))
+      string errorMessage;
+      bool success = BlendShapeMinMaxAnimCreator.CreateAnimations(
+        rootGameObject,
+        meshRenderer,
+        blendShapeName,
+        animationName,
+        animationPath,
+        out errorMessage
+      );
+
+      if (success)
       {
-        try
-        {
-          Directory.CreateDirectory(finalPath);
-        }
-        catch (System.Exception ex)
-        {
-          EditorUtility.DisplayDialog("Error", $"Failed to create directory: {ex.Message}", "OK");
-          return;
-        }
+        EditorUtility.DisplayDialog("Success", "Animation clips generated", "OK");
       }
-
-      // get the blendshape index
-      int blendShapeIndex = meshRenderer.sharedMesh.GetBlendShapeIndex(blendShapeName);
-
-      if (blendShapeIndex == -1)
+      else
       {
-        EditorUtility.DisplayDialog("Error", "BlendShape not found", "OK");
-        return;
+        EditorUtility.DisplayDialog("Error", errorMessage, "OK");
       }
-
-      // create the animation clip
-      AnimationClip animationClipMin = new AnimationClip();
-      AnimationClip animationClipMax = new AnimationClip();
-
-      // set the animation clip name
-      animationClipMin.name = animationName + "_min";
-      animationClipMax.name = animationName + "_max";
-
-      // get game object paths
-      string meshRendererGameObjectPath = GetGameObjectPath(meshRenderer.gameObject);
-      string rootGameObjectPath = GetGameObjectPath(rootGameObject);
-
-      // remove the root game object path from the mesh renderer game object path
-      string relativePath = meshRendererGameObjectPath.Replace(rootGameObjectPath, "");
-
-      // if present, remove the leading slash
-      if (relativePath.StartsWith("/"))
-      {
-        relativePath = relativePath.Substring(1);
-      }
-
-      // create the curve bindings
-      EditorCurveBinding curveBindingMin = new EditorCurveBinding();
-      curveBindingMin.type = typeof(SkinnedMeshRenderer);
-      curveBindingMin.path = relativePath;
-      curveBindingMin.propertyName = "blendShape." + blendShapeName;
-
-      EditorCurveBinding curveBindingMax = new EditorCurveBinding();
-      curveBindingMax.type = typeof(SkinnedMeshRenderer);
-      curveBindingMax.path = relativePath;
-      curveBindingMax.propertyName = "blendShape." + blendShapeName;
-
-      // create the keyframes
-      Keyframe[] keyframesMin = new Keyframe[1];
-      keyframesMin[0] = new Keyframe(0, 0);
-
-      Keyframe[] keyframesMax = new Keyframe[1];
-      keyframesMax[0] = new Keyframe(0, 100);
-
-      // create the animation curves
-      AnimationCurve curveMin = new AnimationCurve(keyframesMin);
-      AnimationCurve curveMax = new AnimationCurve(keyframesMax);
-
-      // set the curve bindings and curves
-      AnimationUtility.SetEditorCurve(animationClipMin, curveBindingMin, curveMin);
-      AnimationUtility.SetEditorCurve(animationClipMax, curveBindingMax, curveMax);
-
-      // Fix the path concatenation when saving
-      string minPath = Path.Combine(finalPath, $"{animationClipMin.name}.anim").Replace("\\", "/");
-      string maxPath = Path.Combine(finalPath, $"{animationClipMax.name}.anim").Replace("\\", "/");
-
-      // save the animation clips
-      AssetDatabase.CreateAsset(animationClipMin, minPath);
-      AssetDatabase.CreateAsset(animationClipMax, maxPath);
-
-      // refresh the asset database
-      AssetDatabase.Refresh();
-
-      EditorUtility.DisplayDialog("Success", "Animation clips generated", "OK");
     }
   }
 }
-#endif // UNITY_EDITOR
+#endif

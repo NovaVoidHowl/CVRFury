@@ -58,3 +58,29 @@
 #animationNameField {
     margin-bottom: 8px;
 }
+
+.generate-button {
+    margin: 5px;
+    padding: 8px;
+    background-color: #444444;
+    border-width: 1px;
+    border-color: #646464;
+    border-radius: 3px;
+    -unity-text-align: middle-center;
+    font-size: 12px;
+    transition: background-color 0.2s;
+    height: 30px;
+}
+
+.generate-button:hover {
+    background-color: #555555;
+}
+
+.generate-button:active {
+    background-color: #333333;
+}
+
+.generate-button:disabled {
+    opacity: 0.5;
+    background-color: #3a3a3a;
+}

@@ -15,7 +15,7 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.generator
 {
-  public class MeshRendererParamAnim : EditorWindow
+  public class MeshRendererParamAnimUI : EditorWindow
   {
     private const string LAST_PATH_PREF_KEY = "MeshRendererParamAnim_LastPath";
 
@@ -43,12 +43,47 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     private string animationName;
     private string animationPath;
 
-    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Generation Tools/Mesh Renderer Parameter Animation")]
+    [MenuItem("NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Generation Tools/Animation Clip/Mesh Renderer Parameter")]
     public static void ShowWindow()
     {
-      var window = GetWindow<MeshRendererParamAnim>();
+      ShowWindowWithPath("Assets");
+    }
+
+    [MenuItem("Assets/Create/CVRFury/Animation Clips/Mesh Renderer Parameter Animation", false, 1)]
+    private static void ShowWindowFromContext()
+    {
+      string path = "Assets";
+      Object selected = Selection.activeObject;
+      if (selected != null)
+      {
+        path = AssetDatabase.GetAssetPath(selected);
+        if (!Directory.Exists(path))
+        {
+          path = Path.GetDirectoryName(path);
+        }
+        Debug.Log($"Selected path: {path}");
+      }
+      ShowWindowWithPath(path);
+    }
+
+    private static void ShowWindowWithPath(string path)
+    {
+      var window = GetWindow<MeshRendererParamAnimUI>();
+      if (window == null)
+      {
+        Debug.LogError("Failed to create window");
+        return;
+      }
       window.titleContent = new GUIContent("Mesh Renderer Parameter Animation");
       window.minSize = new Vector2(400, 300);
+
+      window.animationPath = path;
+      EditorPrefs.SetString(LAST_PATH_PREF_KEY, path);
+
+      if (window.animationPathField != null)
+      {
+        window.animationPathField.value = path;
+      }
     }
 
     private void CreateGUI()
@@ -176,8 +211,11 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
         FilterParameters(evt.newValue);
       });
 
-      // Load saved path
-      animationPath = EditorPrefs.GetString(LAST_PATH_PREF_KEY, "Assets");
+      // Load saved path or use the one set by ShowWindowWithPath
+      if (string.IsNullOrEmpty(animationPath))
+      {
+        animationPath = EditorPrefs.GetString(LAST_PATH_PREF_KEY, "Assets");
+      }
       animationPathField.value = animationPath;
 
       // Get reference to warning label
@@ -427,7 +465,27 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
     {
       if (!ValidateInputs())
         return;
-      Generate();
+
+      var config = new MeshRendererParamAnimCreator.AnimationConfig
+      {
+        rootGameObject = rootGameObject,
+        renderer = renderer,
+        paramName = paramName,
+        paramType = paramType,
+        minValue = minValue,
+        maxValue = maxValue,
+        animationName = animationNameField.value,
+        animationPath = animationPath
+      };
+
+      if (MeshRendererParamAnimCreator.GenerateAnimations(config))
+      {
+        EditorUtility.DisplayDialog("Success", "Animation clips generated successfully", "OK");
+      }
+      else
+      {
+        EditorUtility.DisplayDialog("Error", "Failed to generate animation clips", "OK");
+      }
     }
 
     private bool ValidateInputs()
@@ -469,74 +527,6 @@ namespace uk.novavoidhowl.dev.cvrfury.generator
       }
 
       return true;
-    }
-
-    private void Generate()
-    {
-      // Create directory if needed
-      if (!Directory.Exists(animationPath))
-      {
-        Directory.CreateDirectory(animationPath);
-      }
-
-      // Get relative path from root to renderer
-      string rendererPath = GetGameObjectPath(renderer.gameObject);
-      string rootPath = GetGameObjectPath(rootGameObject);
-      string relativePath = rendererPath.Replace(rootPath, "").TrimStart('/');
-
-      // Create animation clips
-      AnimationClip minClip = new AnimationClip();
-      AnimationClip maxClip = new AnimationClip();
-
-      // Set clip names based on parameter type
-      if (paramType == "Bool")
-      {
-        minClip.name = $"{animationName}_false";
-        maxClip.name = $"{animationName}_true";
-      }
-      else
-      {
-        minClip.name = $"{animationName}_min";
-        maxClip.name = $"{animationName}_max";
-      }
-
-      // Create curve binding with correct type
-      EditorCurveBinding binding = new EditorCurveBinding
-      {
-        type = renderer is MeshRenderer ? typeof(MeshRenderer) : typeof(SkinnedMeshRenderer),
-        path = relativePath,
-        propertyName = paramName
-      };
-
-      // Create curves based on parameter type
-      switch (paramType)
-      {
-        case "Bool":
-          AnimationCurve minBoolCurve = AnimationCurve.Constant(0, 0, 0);
-          AnimationCurve maxBoolCurve = AnimationCurve.Constant(0, 0, 1);
-          AnimationUtility.SetEditorCurve(minClip, binding, minBoolCurve);
-          AnimationUtility.SetEditorCurve(maxClip, binding, maxBoolCurve);
-          break;
-
-        case "Int":
-        case "Float":
-          AnimationCurve minCurve = AnimationCurve.Constant(0, 0, minValue);
-          AnimationCurve maxCurve = AnimationCurve.Constant(0, 0, maxValue);
-          AnimationUtility.SetEditorCurve(minClip, binding, minCurve);
-          AnimationUtility.SetEditorCurve(maxClip, binding, maxCurve);
-          break;
-      }
-
-      // Save animation clips
-      string minPath = Path.Combine(animationPath, $"{minClip.name}.anim").Replace("\\", "/");
-      string maxPath = Path.Combine(animationPath, $"{maxClip.name}.anim").Replace("\\", "/");
-
-      AssetDatabase.CreateAsset(minClip, minPath);
-      AssetDatabase.CreateAsset(maxClip, maxPath);
-      AssetDatabase.SaveAssets();
-      AssetDatabase.Refresh();
-
-      EditorUtility.DisplayDialog("Success", "Animation clips generated successfully", "OK");
     }
   }
 }
