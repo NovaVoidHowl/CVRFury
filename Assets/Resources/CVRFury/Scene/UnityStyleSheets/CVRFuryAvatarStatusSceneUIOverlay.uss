@@ -1,0 +1,23 @@
+.overlay-container {
+    position: absolute;
+    width: 400px;
+    min-height: 30px;
+    padding: 4px;
+    background-color: rgba(40, 40, 40, 0.9);
+    border-radius: 3px;
+    border-width: 1px;
+}
+
+.border-red {
+    border-color: rgb(255, 0, 0);
+}
+
+.border-green {
+    border-color: rgb(0, 255, 0);
+}
+
+Label {
+    color: rgb(210, 210, 210);
+    margin: 2px;
+    -unity-text-align: middle-left;
+}
