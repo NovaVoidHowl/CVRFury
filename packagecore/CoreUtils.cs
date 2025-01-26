@@ -20,9 +20,16 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
   public static class CoreUtils
   {
 #if UNITY_EDITOR
+
     public static void CoreLog(object message)
     {
       Debug.Log($"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] {message.ToString()}");
+    }
+
+    // alias CoreLogMessage to the above CoreLog
+    public static void CoreLogMessage(object message)
+    {
+      CoreLog(message);
     }
 
     public static void CoreLogError(object message)
@@ -124,7 +131,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
     }
 
-
     public static bool ContainsNestedPrefabs(GameObject prefab)
     {
       // Get all child transforms, including inactive ones
@@ -147,7 +153,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
       return false; // No nested prefabs found
     }
-    #endif
+#endif
 
     public static List<GameObject> GetParentObjects(GameObject currentObject, GameObject targetParent)
     {
