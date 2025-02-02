@@ -230,7 +230,6 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
         UpdateOverlayPosition(sceneView);
       }
 
-      // Rest of the existing update code...
       // Update position every frame to ensure it stays centered
       if (uiAttached)
       {
@@ -280,7 +279,7 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
           if (dsuCountLabel != null)
           {
             int dsuCount = CountComponentsByNameInChildren(avatarRoot, "CVRFuryDataStorageUnit");
-            dsuCountLabel.text = $"DSUs: {dsuCount}";
+            dsuCountLabel.text = $"CVRFury DSUs: {dsuCount}";
           }
         }
       }

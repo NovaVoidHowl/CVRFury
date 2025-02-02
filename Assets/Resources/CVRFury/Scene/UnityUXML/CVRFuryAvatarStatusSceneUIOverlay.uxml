@@ -7,7 +7,7 @@
         <engine:Label name="object-name" text="Selected Avatar: None"/>
         <engine:Box name="component-counter" style="flex-direction: row;">
             <engine:Label name="object-vrcfury-count" text="VRCFury Components: N/A"/>
-            <engine:Label name="object-dsu-count" text="DSUs: N/A"/>
+            <engine:Label name="object-dsu-count" text="CVRFury DSUs: N/A"/>
         </engine:Box>
     </engine:Box>
 </engine:UXML>
