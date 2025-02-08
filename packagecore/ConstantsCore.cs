@@ -14,6 +14,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public const string APP_COLOUR_DBG = "#B7FF00";
     public const string DEBUG_PRINT_EDITOR_PREF = "CVRFURY_DEBUG";
     public const string AVATAR_OVERLAY_STATE_PREF = "AVATAR_OVERLAY_STATE";
+    public const string HIERARCHY_ICONS_STATE_PREF = "HIERARCHY_ICONS_STATE";
     public const string CLEANUP_DISABLE_PREF = "CVRFURY_CLEANUP_DISABLE";
 
     public const string SCRIPTING_DEFINE_SYMBOL = "NVH_CVRFURY_EXISTS";

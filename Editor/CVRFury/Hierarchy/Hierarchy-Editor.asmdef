@@ -1,0 +1,20 @@
+{
+    "name": "uk.novavoidhowl.dev.cvrfury.hierarchy",
+    "references": [
+      "VRCFury",
+      "uk.novavoidhowl.dev.cvrfury.packagecore",
+      "uk.novavoidhowl.dev.vrcstub",
+      "uk.novavoidhowl.dev.cvrfury.runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}
