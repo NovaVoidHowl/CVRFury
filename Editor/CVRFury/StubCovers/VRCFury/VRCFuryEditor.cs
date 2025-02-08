@@ -187,6 +187,32 @@ namespace uk.novavoidhowl.dev.cvrfury
 
             // set the text of the title to the contentClassNameBanner
             title.text = "Unsupported VRCFury Feature";
+
+            // Show and configure the action button
+            SetActionButtonVisible(true, "Remove Unsupported Feature");
+            var removeButton = rootVisualElement.Q<Button>("VRCFuryStubCoverActionButton");
+            if (removeButton != null)
+            {
+              removeButton.clicked += () =>
+              {
+                // Get the VRCFury component
+                var vrcFury = target as VRCFury;
+                // Cache the gameObject reference before destroying the component
+                var gameObject = vrcFury.gameObject;
+
+                // Record the object for undo
+                Undo.DestroyObjectImmediate(vrcFury);
+
+                // Mark the parent object as dirty after component removal
+                if (gameObject != null)
+                {
+                  EditorUtility.SetDirty(gameObject);
+                }
+              };
+            }
+
+            // add the unsupportedVisualElement to the rootVisualElement
+            rootVisualElement.Add(unsupportedVisualElement);
           }
         }
       }
@@ -421,6 +447,18 @@ namespace uk.novavoidhowl.dev.cvrfury
           }
         }
       }
+      // After loading the UXML tree, get reference to the action button
+      var actionButton = rootVisualElement.Q<Button>("VRCFuryStubCoverActionButton");
+
+      if (actionButton != null)
+      {
+        // Set up click handler
+        actionButton.clicked += () =>
+        {
+          // Handle button click here
+          Debug.Log("Action button clicked");
+        };
+      }
       // subscribe to the CVRFuryDevModeEnabler component
       devModeSubscribe();
       // Call UpdateUI after creating the UI
@@ -637,7 +675,19 @@ namespace uk.novavoidhowl.dev.cvrfury
       }
     }
 
-
+    // Add this helper method to show/hide the button
+    private void SetActionButtonVisible(bool visible, string buttonText = "")
+    {
+      var actionButton = rootVisualElement?.Q<Button>("VRCFuryStubCoverActionButton");
+      if (actionButton != null)
+      {
+        actionButton.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        if (!string.IsNullOrEmpty(buttonText))
+        {
+          actionButton.text = buttonText;
+        }
+      }
+    }
   }
 }
 #endif

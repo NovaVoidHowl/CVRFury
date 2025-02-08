@@ -4,6 +4,7 @@
       <Label name="VRCFuryStubCoverTitle" text="VRCFury Component" />
       <Label name="VRCFuryStubCoverContent1" text="This is a VRCFury Component" />
       <Label name="VRCFuryStubCoverContent2" text="It stores data so please leave it here" />
+      <Button name="VRCFuryStubCoverActionButton" text=""/>
     </VisualElement>
   </VisualElement>
 </UXML>

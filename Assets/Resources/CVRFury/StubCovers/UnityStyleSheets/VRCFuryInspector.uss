@@ -99,6 +99,11 @@
   margin-right: -10px;
 }
 
+#VRCFuryStubCoverActionButton {
+  display: none;
+  font-size: 14px;
+  padding: 4px;
+}
 
 .version-label {
   position: absolute;
