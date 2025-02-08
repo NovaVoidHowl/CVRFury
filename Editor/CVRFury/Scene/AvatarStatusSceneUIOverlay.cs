@@ -20,32 +20,92 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
     private VisualElement componentCounterBox;
     private bool uiInitialized = false;
     private bool uiAttached = false;
+    private double playModeExitTime;
+    private const double UI_RESTORE_DELAY = 1.0; // 1 second delay
 
     static SceneUIOverlay()
     {
       EditorApplication.delayCall += () =>
       {
-        instance = new SceneUIOverlay();
-        SceneView.duringSceneGui += instance.OnSceneGUI;
-        EditorApplication.quitting += OnEditorQuitting;
-        SceneView.beforeSceneGui += instance.OnBeforeSceneGui;
+        if (instance == null && !EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+          instance = new SceneUIOverlay();
+          SceneView.duringSceneGui += instance.OnSceneGUI;
+          EditorApplication.quitting += OnEditorQuitting;
+          SceneView.beforeSceneGui += instance.OnBeforeSceneGui;
+          EditorApplication.update += OnEditorUpdate;
+          EditorApplication.hierarchyChanged += OnHierarchyChanged;
+        }
       };
+
+      EditorApplication.playModeStateChanged += PlayModeStateChanged;
+    }
+
+    private static void OnEditorUpdate()
+    {
+      if (instance != null && !EditorApplication.isPlayingOrWillChangePlaymode)
+      {
+        if (EditorApplication.timeSinceStartup >= instance.playModeExitTime + UI_RESTORE_DELAY)
+        {
+          if (!instance.uiAttached)
+          {
+            instance.ForceUIRefresh();
+          }
+        }
+      }
+    }
+
+    private static void OnHierarchyChanged()
+    {
+      if (!EditorApplication.isPlayingOrWillChangePlaymode && instance != null)
+      {
+        instance.ForceUIRefresh();
+      }
+    }
+
+    private static void PlayModeStateChanged(PlayModeStateChange state)
+    {
+      switch (state)
+      {
+        case PlayModeStateChange.ExitingEditMode:
+          if (instance != null)
+          {
+            instance.SafeRemoveUI();
+          }
+          break;
+
+        case PlayModeStateChange.EnteredEditMode:
+          EditorApplication.delayCall += () =>
+          {
+            if (instance == null)
+            {
+              instance = new SceneUIOverlay();
+              SceneView.duringSceneGui += instance.OnSceneGUI;
+              SceneView.beforeSceneGui += instance.OnBeforeSceneGui;
+            }
+            instance.playModeExitTime = EditorApplication.timeSinceStartup;
+            instance.ForceUIRefresh();
+            foreach (SceneView sceneView in SceneView.sceneViews)
+            {
+              sceneView.Repaint();
+            }
+          };
+          break;
+      }
     }
 
     private static void OnEditorQuitting()
     {
+      EditorApplication.update -= OnEditorUpdate;
+      EditorApplication.hierarchyChanged -= OnHierarchyChanged;
+      EditorApplication.playModeStateChanged -= PlayModeStateChanged;
       SceneView.duringSceneGui -= instance.OnSceneGUI;
       SceneView.beforeSceneGui -= instance.OnBeforeSceneGui;
     }
 
     private SceneUIOverlay()
     {
-      // Ensure we create UI on the main thread
-      if (EditorApplication.isPlaying)
-      {
-        CreateUI();
-      }
-      else
+      if (!EditorApplication.isPlayingOrWillChangePlaymode)
       {
         EditorApplication.delayCall += CreateUI;
       }
@@ -53,9 +113,8 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
 
     private void CreateUI()
     {
-      if (uiInitialized)
+      if (uiInitialized || EditorApplication.isPlayingOrWillChangePlaymode)
       {
-        CoreLogDebug("UI already initialized");
         return;
       }
 
@@ -146,6 +205,11 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
 
     private void OnBeforeSceneGui(SceneView sceneView)
     {
+      if (EditorApplication.isPlayingOrWillChangePlaymode)
+      {
+        return;
+      }
+
       // Reset attachment flag if UI is not in hierarchy
       if (rootVisualElement != null)
       {
@@ -191,10 +255,15 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
 
     private void OnSceneGUI(SceneView sceneView)
     {
-      if (!uiInitialized)
+      if (!uiInitialized || EditorApplication.isPlayingOrWillChangePlaymode)
       {
-        CoreLogDebugWarning("UI not ready");
         return;
+      }
+
+      // Check if this scene view is focused and needs UI refresh
+      if (EditorWindow.focusedWindow == sceneView && !uiAttached)
+      {
+        ForceUIRefresh();
       }
 
       // Check if overlay is enabled
@@ -304,6 +373,139 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
         UpdateOverlayPosition(SceneView.lastActiveSceneView);
       }
     }
+
+    private void ForceUIRefresh()
+    {
+      if (EditorApplication.isPlayingOrWillChangePlaymode)
+      {
+        return;
+      }
+
+      try
+      {
+        SafeRemoveUI();
+        CreateUI();
+
+        if (uiInitialized && rootVisualElement != null)
+        {
+          foreach (SceneView sceneView in SceneView.sceneViews)
+          {
+            if (sceneView != null)
+            {
+              ForceReattachUI(sceneView);
+              sceneView.Repaint();
+            }
+          }
+        }
+      }
+      catch (System.Exception e)
+      {
+        CoreLogError($"Error during UI refresh: {e.Message}");
+      }
+    }
+
+    private void SafeRemoveUI()
+    {
+      try
+      {
+        if (rootVisualElement != null)
+        {
+          // Remove event handlers first
+          if (rootVisualElement.parent != null)
+          {
+            rootVisualElement.parent.UnregisterCallback<GeometryChangedEvent>(OnWindowResize);
+          }
+
+          rootVisualElement.RemoveFromHierarchy();
+          rootVisualElement = null;
+        }
+        uiAttached = false;
+        uiInitialized = false;
+      }
+      catch (System.Exception e)
+      {
+        CoreLogError($"Error during UI removal: {e.Message}");
+      }
+    }
+
+    private void ForceReattachUI(SceneView sceneView)
+    {
+      if (sceneView == null || EditorApplication.isPlayingOrWillChangePlaymode)
+      {
+        return;
+      }
+
+      try
+      {
+        if (!uiInitialized || rootVisualElement == null)
+        {
+          CreateUI();
+        }
+
+        if (!uiInitialized || rootVisualElement == null)
+        {
+          return;
+        }
+
+        // Clean up existing UI first
+        SafeRemoveUI();
+
+        // Create new UI elements
+        CreateUI();
+
+        if (uiInitialized && rootVisualElement != null)
+        {
+          bool overlayEnabled = EditorPrefs.GetBool(Constants.AVATAR_OVERLAY_STATE_PREF, true);
+          if (overlayEnabled && sceneView.rootVisualElement != null)
+          {
+            sceneView.rootVisualElement.Add(rootVisualElement);
+            sceneView.rootVisualElement.RegisterCallback<GeometryChangedEvent>(OnWindowResize);
+            rootVisualElement.style.display = DisplayStyle.Flex;
+            uiAttached = true;
+            UpdateOverlayPosition(sceneView);
+            sceneView.Repaint();
+          }
+        }
+      }
+      catch (System.Exception e)
+      {
+        CoreLogError($"Error during UI reattachment: {e.Message}");
+        SafeRemoveUI();
+      }
+    }
+
+    public static void HandleOverlayToggle()
+    {
+      try
+      {
+        bool currentValue = EditorPrefs.GetBool(Constants.AVATAR_OVERLAY_STATE_PREF, true);
+        EditorPrefs.SetBool(Constants.AVATAR_OVERLAY_STATE_PREF, !currentValue);
+
+        if (instance != null)
+        {
+          if (currentValue) // If we're turning it off
+          {
+            instance.SafeRemoveUI();
+          }
+          else // If we're turning it on
+          {
+            EditorApplication.delayCall += () =>
+            {
+              if (instance != null)
+              {
+                instance.CreateUI();
+                instance.ForceUIRefresh();
+                SceneView.RepaintAll();
+              }
+            };
+          }
+        }
+      }
+      catch (System.Exception e)
+      {
+        CoreLogError($"Error during overlay toggle: {e.Message}");
+      }
+    }
   }
 
   public class UIOverlayOptionMenu
@@ -314,9 +516,7 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
     [MenuItem(MENU_PATH, false, -100)]
     private static void ToggleAvatarInfoOverlay()
     {
-      // Toggle the value, using true as the default
-      bool currentValue = EditorPrefs.GetBool(EDITOR_PREFS_KEY, true);
-      EditorPrefs.SetBool(EDITOR_PREFS_KEY, !currentValue);
+      SceneUIOverlay.HandleOverlayToggle();
     }
 
     [MenuItem(MENU_PATH, true, -100)]
