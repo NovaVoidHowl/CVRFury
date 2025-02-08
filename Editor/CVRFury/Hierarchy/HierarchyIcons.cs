@@ -21,25 +21,26 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
   {
     private static Dictionary<int, bool> gameObjectIssueCache = new Dictionary<int, bool>();
     private static bool isInitialized = false;
-    private static HashSet<int> dirtyObjects = new HashSet<int>();
-    private static GUIContent iconContent;
-    private static System.DateTime lastRepaintTime;
+    private static GUIContent overlayIconContent;
+    private static float iconSize = 16f;
+    private static Dictionary<VRCFury, SerializedObject> serializedObjectCache =
+      new Dictionary<VRCFury, SerializedObject>();
+    private static readonly int MaxCacheSize = 100; // Prevent unbounded growth
 
     static HierarchyIcons()
     {
-      // Ensure we're not in play mode or compiling
-      if (!EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isCompiling)
+      EditorApplication.delayCall += () =>
       {
-        Debug.Log("[CVRFury] HierarchyIcons constructor called");
-        EditorApplication.delayCall += () =>
+        if (
+          !EditorApplication.isPlayingOrWillChangePlaymode
+          && !EditorApplication.isCompiling
+          && EditorPrefs.GetBool(HierarchyIconsConstants.EDITOR_PREFS_KEY, true)
+        )
         {
-          if (EditorPrefs.GetBool(HierarchyIconsConstants.EDITOR_PREFS_KEY, true))
-          {
-            Initialize();
-            EditorApplication.RepaintHierarchyWindow();
-          }
-        };
-      }
+          Initialize();
+          EditorApplication.RepaintHierarchyWindow();
+        }
+      };
     }
 
     public static void Initialize()
@@ -49,10 +50,10 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
 
       CoreLogDebug("Initializing Hierarchy Icons");
 
-      iconContent = EditorGUIUtility.IconContent("console.warnicon");
-      if (iconContent != null)
+      overlayIconContent = EditorGUIUtility.IconContent("console.warnicon");
+      if (overlayIconContent != null)
       {
-        iconContent.tooltip = "VRCFury Issue";
+        overlayIconContent.tooltip = "VRCFury Issue";
       }
 
       EditorApplication.hierarchyWindowItemOnGUI += DrawHierarchyItem;
@@ -81,8 +82,18 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       Undo.postprocessModifications -= OnComponentModified;
       Selection.selectionChanged -= OnSelectionChanged;
 
+      // Clear the SerializedObject cache
+      foreach (var serializedObj in serializedObjectCache.Values)
+      {
+        if (serializedObj != null)
+        {
+          serializedObj.Dispose();
+        }
+      }
+      serializedObjectCache.Clear();
+
       gameObjectIssueCache.Clear();
-      iconContent = null;
+      overlayIconContent = null;
       isInitialized = false;
       CoreLogDebug("Hierarchy Icons Cleaned Up");
     }
@@ -141,20 +152,18 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       if (gameObject == null)
         return;
 
-      dirtyObjects.Add(gameObject.GetInstanceID());
+      // Clear cache entries for this object and its parents
+      var instanceID = gameObject.GetInstanceID();
+      gameObjectIssueCache.Remove(instanceID);
 
-      Transform parent = gameObject.transform.parent;
+      var parent = gameObject.transform.parent;
       while (parent != null)
       {
-        dirtyObjects.Add(parent.gameObject.GetInstanceID());
+        gameObjectIssueCache.Remove(parent.gameObject.GetInstanceID());
         parent = parent.parent;
       }
 
-      if ((System.DateTime.Now - lastRepaintTime).TotalMilliseconds > 250)
-      {
-        lastRepaintTime = System.DateTime.Now;
-        EditorApplication.delayCall += () => EditorApplication.RepaintHierarchyWindow();
-      }
+      EditorApplication.RepaintHierarchyWindow();
     }
 
     private static void DrawHierarchyItem(int instanceID, Rect selectionRect)
@@ -162,21 +171,18 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       try
       {
         if (
-          !EditorPrefs.GetBool(HierarchyIconsConstants.EDITOR_PREFS_KEY, true)
+          !isInitialized
           || EditorApplication.isPlaying
-          || iconContent == null
+          || !EditorPrefs.GetBool(HierarchyIconsConstants.EDITOR_PREFS_KEY, true)
+          || Event.current.type != EventType.Repaint
         )
-          return;
-
-        if (Event.current.type != EventType.Repaint)
           return;
 
         GameObject gameObject = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
         if (gameObject == null)
           return;
 
-        bool hasIssues = false;
-        if (!gameObjectIssueCache.TryGetValue(instanceID, out hasIssues))
+        if (!gameObjectIssueCache.TryGetValue(instanceID, out bool hasIssues))
         {
           hasIssues = CheckForIssues(gameObject);
           gameObjectIssueCache[instanceID] = hasIssues;
@@ -184,8 +190,7 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
 
         if (hasIssues)
         {
-          var iconRect = new Rect(selectionRect.xMax - 16f, selectionRect.y, 16f, 16f);
-          GUI.Label(iconRect, iconContent);
+          GUI.Label(new Rect(selectionRect.xMax - iconSize, selectionRect.y, iconSize, iconSize), overlayIconContent);
         }
       }
       catch (System.Exception e)
@@ -196,9 +201,6 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
 
     private static bool CheckForIssues(GameObject gameObject)
     {
-      if (gameObject == null)
-        return false;
-
       var vrcFuryComponents = gameObject.GetComponents<VRCFury>();
       if (vrcFuryComponents == null || vrcFuryComponents.Length == 0)
         return false;
@@ -208,9 +210,26 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
         if (vrcFury == null)
           continue;
 
-        SerializedObject serializedObject = new SerializedObject(vrcFury);
-        int version = serializedObject.FindProperty("version").intValue;
+        SerializedObject serializedObject;
+        if (!serializedObjectCache.TryGetValue(vrcFury, out serializedObject))
+        {
+          // Manage cache size
+          if (serializedObjectCache.Count >= MaxCacheSize)
+          {
+            var oldestEntry = serializedObjectCache.First();
+            oldestEntry.Value.Dispose();
+            serializedObjectCache.Remove(oldestEntry.Key);
+          }
 
+          serializedObject = new SerializedObject(vrcFury);
+          serializedObjectCache[vrcFury] = serializedObject;
+        }
+        else
+        {
+          serializedObject.Update(); // Refresh the serialized object
+        }
+
+        var version = serializedObject.FindProperty("version").intValue;
         if (version > Constants.MAX_VRCFURY_VERSION_DATA)
           return true;
 
@@ -220,7 +239,7 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
           if (contentProperty == null || string.IsNullOrEmpty(contentProperty.managedReferenceFullTypename))
             return true;
 
-          string contentClassName = contentProperty.managedReferenceFullTypename.Split('.').Last();
+          var contentClassName = contentProperty.managedReferenceFullTypename.Split('.').Last();
           if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
             return true;
         }
