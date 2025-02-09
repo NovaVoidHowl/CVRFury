@@ -1,4 +1,4 @@
-// { "version": "1.0.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
+// { "version": "1.0.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -164,33 +164,48 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private void devModeSubscribe()
     {
-      if (
-        target is CVRFuryDataStorageUnit cvrFuryDataStorageUnit
-        && cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null
-      )
+      // Exit if target is null
+      if (target == null)
+        return;
+
+      var cvrFuryDataStorageUnit = target as CVRFuryDataStorageUnit;
+      if (cvrFuryDataStorageUnit == null)
+        return;
+
+      var gameObject = cvrFuryDataStorageUnit.gameObject;
+      if (gameObject == null)
+        return;
+
+      var devModeEnabler = gameObject.GetComponent<CVRFuryDevModeEnabler>();
+      if (devModeEnabler != null)
       {
-        var CVRFuryDevModeEnabler = cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>();
-        CVRFuryDevModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
-        devModeEnabled = CVRFuryDevModeEnabler.DevModeEnabled;
+        if (devModeEnabler.OnDevModeChanged == null)
+        {
+          devModeEnabler.OnDevModeChanged = new CVRFuryDevModeEnabler.BoolEvent();
+        }
+        devModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
+        devModeEnabled = devModeEnabler.DevModeEnabled;
       }
     }
 
     private void OnDisable()
     {
-      // check if target is null
+      // Exit if target is null
       if (target == null)
-      {
-        // if target is null, return
         return;
-      }
 
-      if (
-        target is CVRFuryDataStorageUnit cvrFuryDataStorageUnit
-        && cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null
-      )
+      var cvrFuryDataStorageUnit = target as CVRFuryDataStorageUnit;
+      if (cvrFuryDataStorageUnit == null)
+        return;
+
+      var gameObject = cvrFuryDataStorageUnit.gameObject;
+      if (gameObject == null)
+        return;
+
+      var devModeEnabler = gameObject.GetComponent<CVRFuryDevModeEnabler>();
+      if (devModeEnabler != null && devModeEnabler.OnDevModeChanged != null)
       {
-        var CVRFuryDevModeEnabler = cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>();
-        CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+        devModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
       }
     }
 

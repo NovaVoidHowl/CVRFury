@@ -1,0 +1,54 @@
+.cvr-fury-inspector{
+  background-color: #444444;
+  margin-left: -15px;
+  margin-right: -10px;
+}
+
+#CVRFuryDevModeEnablerBase {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+#content {
+    padding-left: 5px;
+    padding-right: 10px;
+    background-color: rgb(60, 60, 60);
+    border-radius: 5px;
+    width: 98%;
+}
+
+#devModeToggle {
+    margin: 5px;
+}
+
+#devModeToggle .unity-toggle__input {
+    margin-right: 8px;
+}
+
+#devModeToggle:hover {
+    background-color: rgb(60, 60, 60);
+}
+
+#devModeButton {
+    height: 30px;
+    margin: 5px;
+    border-radius: 4px;
+    width: 100%;
+}
+
+#devModeButton.enabled {
+    background-color: rgb(0, 150, 0);
+    color: white;
+}
+
+#devModeButton:hover {
+    background-color: rgb(60, 60, 60);
+}
+
+#devModeButton.enabled:hover {
+    background-color: rgb(0, 130, 0);
+}

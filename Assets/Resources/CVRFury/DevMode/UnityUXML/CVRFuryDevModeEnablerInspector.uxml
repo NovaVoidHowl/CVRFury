@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:engine="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements"
+>
+    <engine:VisualElement name="CVRFuryDevModeEnablerBase">
+        <engine:VisualElement name="content">
+            <engine:Button name="devModeButton" text="Enable Dev Mode" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>
