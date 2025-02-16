@@ -535,19 +535,23 @@ namespace uk.novavoidhowl.dev.cvrfury
     {
       devModeEnabled = newValue;
 
-      derivedClasses = GetClassesDerivedFromAbstractClass(typeof(FeatureModel));
-
-      // remove the blocklisted features from the derivedClasses list
-      derivedClasses.RemoveAll(type => Constants.BLOCK_LISTED_VRCFURY_FEATURES.Contains(type.Name));
-
       if (rootVisualElement == null)
-      {
-        // if the rootVisualElement is null, return
         return;
+
+      // First, handle cleanup of any existing error elements
+      var errorElements = rootVisualElement.Query<VisualElement>("errorVisualElement").ToList();
+      foreach (var errorElement in errorElements)
+      {
+        rootVisualElement.Remove(errorElement);
       }
+
+      derivedClasses = GetClassesDerivedFromAbstractClass(typeof(FeatureModel));
+      derivedClasses.RemoveAll(type => Constants.BLOCK_LISTED_VRCFURY_FEATURES.Contains(type.Name));
 
       if (devModeEnabled)
       {
+        // Dev mode UI setup
+        // ...existing dev mode UI code...
         // load the devMode uss from resources
         var devModeStyleSheet = Resources.Load<StyleSheet>(
           Constants.PROGRAM_DISPLAY_NAME + "/DevMode/UnityStyleSheets/VRCFuryInspector-Dev"
@@ -654,22 +658,249 @@ namespace uk.novavoidhowl.dev.cvrfury
       }
       else
       {
-        // devmode not enabled so do a cleanup of the devmode elements
-
-        // find and remove all instances of the devModeTagVisualElement
+        // Clean up dev mode elements
         var devModeTagVisualElements = rootVisualElement.Query<VisualElement>("devModeTag").ToList();
-        foreach (var devModeTagVisualElement in devModeTagVisualElements)
+        foreach (var element in devModeTagVisualElements)
         {
-          rootVisualElement.Remove(devModeTagVisualElement);
+          rootVisualElement.Remove(element);
         }
 
-        // find and remove all instances of the defaultEditorContainer
         var defaultEditorContainers = rootVisualElement.Query<VisualElement>("defaultEditorContainer").ToList();
-        foreach (var defaultEditorContainer in defaultEditorContainers)
+        foreach (var container in defaultEditorContainers)
         {
-          rootVisualElement.Remove(defaultEditorContainer);
+          rootVisualElement.Remove(container);
+        }
+
+        // Re-run the compatibility checks
+        if (serializedObject != null)
+        {
+          int version = serializedObject.FindProperty("version").intValue;
+          // Re-run your existing compatibility check code here
+          // This is the code block that checks versions and adds error elements
+          // Copy the compatibility check logic from your CreateInspectorGUI method
+          if (version > Constants.MAX_VRCFURY_VERSION_DATA)
+          {
+            // create a new visual element of the error type
+            var errorVisualElement = new VisualElement();
+
+            // set the name of the errorVisualElement to allow styling
+            errorVisualElement.name = "errorVisualElement";
+
+            // add the errorVisualElement to the rootVisualElement
+            rootVisualElement.Add(errorVisualElement);
+
+            // if it is, add a warning to the rootVisualElement
+            var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Data Store Version");
+            warningTitleLabel.AddToClassList("warning-title");
+            errorVisualElement.Add(warningTitleLabel);
+            errorVisualElement.Add(
+              new Label(
+                "This VRCFury component is not compatible with" + " the currently installed version of CVRFury."
+              )
+            );
+            errorVisualElement.Add(
+              new Label(
+                "Note the converted copy of prefab will likely have a corrupted datastore now so please delete it"
+              )
+            );
+            errorVisualElement.Add(
+              new Label(
+                "Please check that it was not made with a version later than " + Constants.MAX_VRCFURY_DATA_USER_VERSION
+              )
+            );
+            errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+            // add button to open the documentation
+            var openDocumentationButton = new Button(() =>
+            {
+              Application.OpenURL(Constants.DOCS_URL);
+            });
+            openDocumentationButton.text = "Open Documentation";
+            errorVisualElement.Add(openDocumentationButton);
+          }
+          else if (version > Constants.MAX_VRCFURY_VERSION_IMPORT)
+          {
+            // if the version is v3 we need to check what type of component is in the 'content' variable
+            if (version == 3)
+            {
+              // get the content property from the serializedObject
+              var contentProperty = serializedObject.FindProperty("content");
+
+              // get the type of the content property
+              var contentType = contentProperty.managedReferenceFullTypename;
+
+              // check if the content is null/empty if it is show an error saying the component is corrupted
+              if (string.IsNullOrEmpty(contentType))
+              {
+                // create a new visual element of the error type
+                var errorVisualElement = new VisualElement();
+
+                // set the name of the errorVisualElement to allow styling
+                errorVisualElement.name = "errorVisualElement";
+
+                // add the errorVisualElement to the rootVisualElement
+                rootVisualElement.Add(errorVisualElement);
+
+                // if it is, add a warning to the rootVisualElement
+                var warningTitleLabel = new Label("WARNING: Corrupted VRCFury Component");
+                warningTitleLabel.AddToClassList("warning-title");
+                errorVisualElement.Add(warningTitleLabel);
+                errorVisualElement.Add(new Label("This VRCFury component is corrupted and cannot be loaded."));
+              }
+              else
+              {
+                // ok so now we have a valid content type, we need to check what it is
+
+                // get the last part of the content type string (short class name)
+                var contentClassName = contentType.Split('.').Last();
+
+                // debug log the content type
+                CoreLogDebug("Content Type class: " + contentClassName);
+
+                // check if tthe contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
+                if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
+                {
+                  // ok this is a feature we don't support at all (not just a version issue)
+                  // create a new visual element for the unsupported feature
+                }
+                else
+                {
+                  // only render detail errors on supported features
+
+                  // compare the contentClassName to the COMPATIBLE_VRCFURY_FEATURES KeyValuePair list to see if it is compatible
+                  // first check if the contentClassName is in the COMPATIBLE_VRCFURY_FEATURES list
+                  if (Constants.COMPATIBLE_VRCFURY_FEATURES.Any(x => x.Key == contentClassName))
+                  {
+                    // get the version from the COMPATIBLE_VRCFURY_FEATURES list
+                    var compatibleVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+                      .First(x => x.Key == contentClassName)
+                      .Value;
+
+                    // check if the version is compatible
+                    if (version > compatibleVersion)
+                    {
+                      // create a new visual element of the error type
+                      var errorVisualElement = new VisualElement();
+
+                      // set the name of the errorVisualElement to allow styling
+                      errorVisualElement.name = "errorVisualElement";
+
+                      // add the errorVisualElement to the rootVisualElement
+                      rootVisualElement.Add(errorVisualElement);
+
+                      // if it is, add a warning to the rootVisualElement
+                      var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                      warningTitleLabel.AddToClassList("warning-title");
+                      errorVisualElement.Add(warningTitleLabel);
+                      errorVisualElement.Add(
+                        new Label(
+                          "This VRCFury component is not import compatible with"
+                            + " the currently installed version of CVRFury."
+                        )
+                      );
+                      errorVisualElement.Add(
+                        new Label(
+                          "Please check that it was not made with a version later than "
+                            + Constants.MAX_VRCFURY_IMPORT_USER_VERSION
+                        )
+                      );
+                      errorVisualElement.Add(
+                        new Label(
+                          "Note you can review the data store of this component by setting the inspector to debug mode."
+                        )
+                      );
+                      errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+                      // add button to open the documentation
+                      var openDocumentationButton = new Button(() =>
+                      {
+                        Application.OpenURL(Constants.DOCS_URL);
+                      });
+                      openDocumentationButton.text = "Open Documentation";
+                      errorVisualElement.Add(openDocumentationButton);
+                    }
+                  }
+                  else
+                  {
+                    // error as the contentClassName is not in the COMPATIBLE_VRCFURY_FEATURES list, could be its new
+                    // feature that is not supported yet. need to display a warning
+                    // create a new visual element of the error type
+                    var errorVisualElement = new VisualElement();
+
+                    // set the name of the errorVisualElement to allow styling
+                    errorVisualElement.name = "errorVisualElement";
+
+                    // add the errorVisualElement to the rootVisualElement
+                    rootVisualElement.Add(errorVisualElement);
+
+                    // if it is, add a warning to the rootVisualElement
+                    var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                    warningTitleLabel.AddToClassList("warning-title");
+                    errorVisualElement.Add(warningTitleLabel);
+                    errorVisualElement.Add(
+                      new Label(
+                        "This VRCFury component '"
+                          + contentClassName
+                          + "' is not import compatible with"
+                          + " the currently installed version of CVRFury."
+                      )
+                    );
+                    errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+                    // add button to open the documentation
+                    var openDocumentationButton = new Button(() =>
+                    {
+                      Application.OpenURL(Constants.DOCS_URL);
+                    });
+                    openDocumentationButton.text = "Open Documentation";
+                    errorVisualElement.Add(openDocumentationButton);
+                  }
+                }
+              }
+            }
+            else
+            {
+              // create a new visual element of the error type
+              var errorVisualElement = new VisualElement();
+
+              // set the name of the errorVisualElement to allow styling
+              errorVisualElement.name = "errorVisualElement";
+
+              // add the errorVisualElement to the rootVisualElement
+              rootVisualElement.Add(errorVisualElement);
+
+              // if it is, add a warning to the rootVisualElement
+              var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+              warningTitleLabel.AddToClassList("warning-title");
+              errorVisualElement.Add(warningTitleLabel);
+              errorVisualElement.Add(
+                new Label(
+                  "This VRCFury component is not import compatible with"
+                    + " the currently installed version of CVRFury."
+                )
+              );
+              errorVisualElement.Add(
+                new Label(
+                  "Please check that it was not made with a version later than "
+                    + Constants.MAX_VRCFURY_IMPORT_USER_VERSION
+                )
+              );
+              errorVisualElement.Add(
+                new Label(
+                  "Note you can review the data store of this component by setting the inspector to debug mode."
+                )
+              );
+              errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+              // add button to open the documentation
+              var openDocumentationButton = new Button(() =>
+              {
+                Application.OpenURL(Constants.DOCS_URL);
+              });
+              openDocumentationButton.text = "Open Documentation";
+              errorVisualElement.Add(openDocumentationButton);
+            }
+          }
         }
       }
+
+      rootVisualElement.MarkDirtyRepaint();
       Repaint();
     }
 
