@@ -47,7 +47,6 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
         }
       }
     }
-
   }
 
   [Serializable]
