@@ -935,10 +935,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       return types;
     }
 
-    private static void SetComponentTopBarV3(
-      VisualElement componentTypeVisualElement,
-      SerializedObject serializedObject
-    )
+    private void SetComponentTopBarV3(VisualElement componentTypeVisualElement, SerializedObject serializedObject)
     {
       /// get the content property from the serializedObject
       var contentProperty = serializedObject.FindProperty("content");
@@ -952,12 +949,85 @@ namespace uk.novavoidhowl.dev.cvrfury
         // get the last part of the content type string (short class name)
         var contentClassName = contentType.Split('.').Last();
 
-        // ok we have the content class name, now we can add a banner to show the
-        // user what type of component it is
-
         // render the component type banner
         componentTypeVisualElement.Add(CreateComponentTopBar("VRCFury Datastore  |  " + contentClassName));
+
+        // If this is a Toggle component, add the action count summary to the main component body
+        if (contentClassName == "Toggle")
+        {
+          // Create the summary after all the default content
+          var summaryContainer = AddActionCountSummary(contentProperty);
+          if (summaryContainer != null)
+          {
+            rootVisualElement.Add(summaryContainer);
+          }
+        }
       }
+    }
+
+    private VisualElement AddActionCountSummary(SerializedProperty contentProperty)
+    {
+      // Get the state property from the toggle
+      var stateProperty = contentProperty.FindPropertyRelative("state");
+      if (stateProperty == null)
+        return null;
+
+      // Get the actions list
+      var actionsProperty = stateProperty.FindPropertyRelative("actions");
+      if (actionsProperty == null)
+        return null;
+
+      // Create a dictionary to store counts of each action type
+      Dictionary<string, int> actionCounts = new Dictionary<string, int>();
+
+      // Count each type of action
+      for (int i = 0; i < actionsProperty.arraySize; i++)
+      {
+        var actionProperty = actionsProperty.GetArrayElementAtIndex(i);
+        string actionType = actionProperty.managedReferenceFullTypename?.Split('.').Last();
+        if (!string.IsNullOrEmpty(actionType))
+        {
+          if (!actionCounts.ContainsKey(actionType))
+          {
+            actionCounts[actionType] = 0;
+          }
+          actionCounts[actionType]++;
+        }
+      }
+
+      // If we have any actions, create the summary section
+      if (actionCounts.Count > 0)
+      {
+        // Create container
+        var container = new VisualElement();
+        container.name = "actionSummaryContainer";
+        container.AddToClassList("action-summary-container");
+        container.style.flexGrow = 1;
+        container.style.flexDirection = FlexDirection.Column;
+
+        // Add header
+        var header = new Label("Action Types Summary:");
+        header.AddToClassList("action-summary-header");
+        container.Add(header);
+
+        // Add counts for each action type
+        foreach (var kvp in actionCounts.OrderBy(x => x.Key))
+        {
+          var countLabel = new Label($"{kvp.Key}: {kvp.Value}");
+          countLabel.AddToClassList("action-count-label");
+          container.Add(countLabel);
+        }
+
+        // Add total count
+        var totalCount = actionCounts.Values.Sum();
+        var totalLabel = new Label($"Total Actions: {totalCount}");
+        totalLabel.AddToClassList("action-total-label");
+        container.Add(totalLabel);
+
+        return container;
+      }
+
+      return null;
     }
 
     // Add this helper method to show/hide the button
