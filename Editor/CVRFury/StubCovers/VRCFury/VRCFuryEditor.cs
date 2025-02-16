@@ -474,23 +474,60 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private void devModeSubscribe()
     {
-      if (target is VRCFury vrcFury && vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      try
       {
+        if (target == null || !target)
+          return;
+
+        VRCFury vrcFury = target as VRCFury;
+        if (vrcFury == null || !vrcFury || vrcFury.gameObject == null)
+          return;
+
         var CVRFuryDevModeEnabler = vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>();
-        CVRFuryDevModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
+        if (CVRFuryDevModeEnabler == null)
+        {
+          devModeEnabled = false;
+          return;
+        }
+
+        // Ensure the event is initialized
+        if (CVRFuryDevModeEnabler.OnDevModeChanged == null)
+        {
+          CVRFuryDevModeEnabler.OnDevModeChanged = new CVRFuryDevModeEnabler.BoolEvent();
+        }
+
+        // Get current state before changing subscriptions
         devModeEnabled = CVRFuryDevModeEnabler.DevModeEnabled;
+
+        // Remove any existing subscription
+        CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+
+        // Add new subscription
+        CVRFuryDevModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
+      }
+      catch (System.Exception e)
+      {
+        Debug.LogWarning($"DevMode subscription warning: {e.Message}");
+        devModeEnabled = false;
       }
     }
 
     private void OnDisable()
     {
-      if (target is VRCFury vrcFury && vrcFury != null)
+      try
       {
-        var CVRFuryDevModeEnabler = vrcFury.gameObject?.GetComponent<CVRFuryDevModeEnabler>();
-        if (CVRFuryDevModeEnabler != null)
+        if (target is VRCFury vrcFury && vrcFury != null && vrcFury.gameObject != null)
         {
-          CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+          var CVRFuryDevModeEnabler = vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>();
+          if (CVRFuryDevModeEnabler != null && CVRFuryDevModeEnabler.OnDevModeChanged != null)
+          {
+            CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+          }
         }
+      }
+      catch (System.Exception e)
+      {
+        Debug.LogWarning($"DevMode cleanup warning: {e.Message}");
       }
     }
 

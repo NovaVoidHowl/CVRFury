@@ -27,6 +27,14 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       }
     }
 
+    void OnEnable()
+    {
+      if (OnDevModeChanged == null)
+      {
+        OnDevModeChanged = new BoolEvent();
+      }
+    }
+
     [SerializeField]
     private bool devModeEnabled;
     public bool DevModeEnabled
