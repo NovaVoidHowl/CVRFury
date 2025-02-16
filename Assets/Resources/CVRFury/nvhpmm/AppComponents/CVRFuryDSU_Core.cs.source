@@ -1,4 +1,4 @@
-// { "version": "1.0.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
+// { "version": "1.1.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -10,6 +10,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using DoNotShowOnListAttribute = uk.novavoidhowl.dev.cvrfury.packagecore.DoNotShowOnListAttribute;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime;
@@ -308,7 +309,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           List<Type> moduleTypes = Assembly
             .GetAssembly(typeof(CVRFuryModule))
             .GetTypes()
-            .Where(t => t.IsSubclassOf(typeof(CVRFuryModule)) && !t.IsAbstract)
+            .Where(
+              t =>
+                t.IsSubclassOf(typeof(CVRFuryModule))
+                && !t.IsAbstract
+                && !t.IsDefined(typeof(DoNotShowOnListAttribute), false)
+            )
             .ToList();
 
           // Convert the types to their string names for the dropdown
