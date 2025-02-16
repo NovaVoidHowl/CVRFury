@@ -538,29 +538,52 @@ namespace uk.novavoidhowl.dev.cvrfury
       if (rootVisualElement == null)
         return;
 
-      // First, handle cleanup of any existing error elements
+      // Initialize derived classes for feature adder
+      derivedClasses = GetClassesDerivedFromAbstractClass(typeof(FeatureModel));
+      derivedClasses.RemoveAll(type => Constants.BLOCK_LISTED_VRCFURY_FEATURES.Contains(type.Name));
+
+      // First, handle cleanup of existing elements
       var errorElements = rootVisualElement.Query<VisualElement>("errorVisualElement").ToList();
       foreach (var errorElement in errorElements)
       {
         rootVisualElement.Remove(errorElement);
       }
 
-      derivedClasses = GetClassesDerivedFromAbstractClass(typeof(FeatureModel));
-      derivedClasses.RemoveAll(type => Constants.BLOCK_LISTED_VRCFURY_FEATURES.Contains(type.Name));
+      var existingIncompatTag = rootVisualElement.Q<VisualElement>("incompatibilityTag");
+      if (existingIncompatTag != null)
+      {
+        rootVisualElement.Remove(existingIncompatTag);
+      }
+
+      // Check for incompatibility
+      bool isIncompatible = false;
+      if (serializedObject != null)
+      {
+        int version = serializedObject.FindProperty("version").intValue;
+        isIncompatible =
+          version > Constants.MAX_VRCFURY_VERSION_DATA
+          || (version > Constants.MAX_VRCFURY_VERSION_IMPORT && version <= Constants.MAX_VRCFURY_VERSION_DATA);
+      }
 
       if (devModeEnabled)
       {
-        // Dev mode UI setup
-        // ...existing dev mode UI code...
-        // load the devMode uss from resources
+        // Load and apply dev mode stylesheet
         var devModeStyleSheet = Resources.Load<StyleSheet>(
           Constants.PROGRAM_DISPLAY_NAME + "/DevMode/UnityStyleSheets/VRCFuryInspector-Dev"
         );
 
+        // Add incompatibility tag if needed
+        if (isIncompatible)
+        {
+          var incompatTag = new VisualElement();
+          incompatTag.name = "incompatibilityTag";
+          incompatTag.Add(new Label("Incompatible Component"));
+          rootVisualElement.Add(incompatTag);
+        }
+
         // check if there is already a devModeTag VisualElement
         var devModeTagVisualElementExists = rootVisualElement.Q<VisualElement>("devModeTag");
 
-        // if there is not already a devModeTag VisualElement
         if (devModeTagVisualElementExists == null)
         {
           // apply the devModeStyleSheet to the rootVisualElement
@@ -568,15 +591,9 @@ namespace uk.novavoidhowl.dev.cvrfury
 
           // create a new VisualElement
           var devModeTagVisualElement = new VisualElement();
-
-          // set the name of the devModeTagVisualElement to allow styling
           devModeTagVisualElement.name = "devModeTag";
-
-          // add the devModeTagVisualElement to the rootVisualElement
-          rootVisualElement.Add(devModeTagVisualElement);
-
-          // set the text of the devModeTagVisualElement to 'Dev Mode Enabled'
           devModeTagVisualElement.Add(new Label("Dev Mode Enabled"));
+          rootVisualElement.Add(devModeTagVisualElement);
         }
 
         // check if there is already a defaultEditorContainer VisualElement
