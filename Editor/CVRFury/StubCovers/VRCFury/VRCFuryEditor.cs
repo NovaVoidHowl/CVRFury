@@ -560,9 +560,49 @@ namespace uk.novavoidhowl.dev.cvrfury
       if (serializedObject != null)
       {
         int version = serializedObject.FindProperty("version").intValue;
-        isIncompatible =
-          version > Constants.MAX_VRCFURY_VERSION_DATA
-          || (version > Constants.MAX_VRCFURY_VERSION_IMPORT && version <= Constants.MAX_VRCFURY_VERSION_DATA);
+        if (version > Constants.MAX_VRCFURY_VERSION_DATA)
+        {
+          isIncompatible = true;
+        }
+        else if (version > Constants.MAX_VRCFURY_VERSION_IMPORT && version <= Constants.MAX_VRCFURY_VERSION_DATA)
+        {
+          // For version 3, we need to check the content type
+          if (version == 3)
+          {
+            var contentProperty = serializedObject.FindProperty("content");
+            if (contentProperty != null)
+            {
+              var contentType = contentProperty.managedReferenceFullTypename;
+              if (!string.IsNullOrEmpty(contentType))
+              {
+                var contentClassName = contentType.Split('.').Last();
+                if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
+                {
+                  isIncompatible = true;
+                }
+                else if (Constants.COMPATIBLE_VRCFURY_FEATURES.Any(x => x.Key == contentClassName))
+                {
+                  var compatibleVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+                    .First(x => x.Key == contentClassName)
+                    .Value;
+                  isIncompatible = version > compatibleVersion;
+                }
+                else
+                {
+                  isIncompatible = true; // Unknown feature type
+                }
+              }
+              else
+              {
+                isIncompatible = true; // Corrupted component
+              }
+            }
+          }
+          else
+          {
+            isIncompatible = true;
+          }
+        }
       }
 
       if (devModeEnabled)
@@ -572,7 +612,7 @@ namespace uk.novavoidhowl.dev.cvrfury
           Constants.PROGRAM_DISPLAY_NAME + "/DevMode/UnityStyleSheets/VRCFuryInspector-Dev"
         );
 
-        // Add incompatibility tag if needed
+        // Add incompatibility tag only if the component is actually incompatible
         if (isIncompatible)
         {
           var incompatTag = new VisualElement();
