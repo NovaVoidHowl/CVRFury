@@ -1,4 +1,4 @@
-// { "version": "1.1.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
+// { "version": "1.1.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -108,43 +108,42 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the gameObject this component is attached to
       var DSUgameObject = ((CVRFuryDataStorageUnit)target).gameObject;
 
-      // get the parent of the DSUgameObject
-      var DSUparent = DSUgameObject.transform.parent;
+      // Start from this object's transform and traverse up
+      Transform currentTransform = DSUgameObject.transform;
+      CVRAvatar avatarComponent = null;
 
-      // check if the parent is null
-      if (DSUparent == null)
+      // Keep checking upwards until we either find a CVRAvatar or reach the root
+      while (currentTransform != null)
       {
-        // if the parent is null do nothing, as the DSU object is likely in the root of the scene
+        avatarComponent = currentTransform.GetComponent<CVRAvatar>();
+        if (avatarComponent != null)
+          break;
+        currentTransform = currentTransform.parent;
       }
-      else
+
+      // If we found a CVRAvatar component anywhere in the hierarchy
+      if (avatarComponent != null)
       {
-        // if the parent is not null,
+        // get the CVRFuryDataStorageUnitStatusAvatarLinkButton Button VisualElement
+        var CVRFuryDataStorageUnitStatusAvatarLinkButton = rootVisualElement.Q<Button>(
+          "CVRFuryDataStorageUnitStatusAvatarLinkButton"
+        );
+        // make the CVRFuryDataStorageUnitStatusAvatarLinkButton Button VisualElement visible
+        CVRFuryDataStorageUnitStatusAvatarLinkButton.style.display = DisplayStyle.Flex;
 
-        // check if the parent has a CVRAvatar component
-        if (DSUparent.GetComponent<CVRAvatar>() != null)
+        // set the button to select the gameObject the CVRAvatar component is attached to
+        CVRFuryDataStorageUnitStatusAvatarLinkButton.clickable.clicked += () =>
         {
-          // if the parent has a CVRAvatar component,
-          // get the CVRFuryDataStorageUnitStatusAvatarLinkButton Button VisualElement
-          var CVRFuryDataStorageUnitStatusAvatarLinkButton = rootVisualElement.Q<Button>(
-            "CVRFuryDataStorageUnitStatusAvatarLinkButton"
-          );
-          // make the CVRFuryDataStorageUnitStatusAvatarLinkButton Button VisualElement visible
-          CVRFuryDataStorageUnitStatusAvatarLinkButton.style.display = DisplayStyle.Flex;
+          Selection.activeGameObject = avatarComponent.gameObject;
+        };
 
-          // set the button to select the gameObject the CVRAvatar component is attached to
-          CVRFuryDataStorageUnitStatusAvatarLinkButton.clickable.clicked += () =>
-          {
-            Selection.activeGameObject = DSUparent.gameObject;
-          };
+        // get the CVRFuryDataStorageUnitStatusAvatarLinkContent Label VisualElement
+        var CVRFuryDataStorageUnitStatusAvatarLinkContent = rootVisualElement.Q<Label>(
+          "CVRFuryDataStorageUnitStatusAvatarLinkContent"
+        );
 
-          // get the CVRFuryDataStorageUnitStatusAvatarLinkContent Label VisualElement
-          var CVRFuryDataStorageUnitStatusAvatarLinkContent = rootVisualElement.Q<Label>(
-            "CVRFuryDataStorageUnitStatusAvatarLinkContent"
-          );
-
-          // set the text of the CVRFuryDataStorageUnitStatusAvatarLinkContent Label VisualElement to 'Active'
-          CVRFuryDataStorageUnitStatusAvatarLinkContent.text = "Active";
-        }
+        // set the text of the CVRFuryDataStorageUnitStatusAvatarLinkContent Label VisualElement to 'Active'
+        CVRFuryDataStorageUnitStatusAvatarLinkContent.text = "Active";
       }
 
       // Apply the StyleSheet
