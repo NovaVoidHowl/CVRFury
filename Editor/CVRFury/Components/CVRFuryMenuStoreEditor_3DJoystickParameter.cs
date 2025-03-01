@@ -78,9 +78,9 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
         // Create a string that contains the information you want to display
         string info =
-          $" {nameProperty.stringValue}{xValuePostfixProperty.stringValue},"
-          + $" {nameProperty.stringValue}{yValuePostfixProperty.stringValue},"
-          + $" {nameProperty.stringValue}{zValuePostfixProperty.stringValue}";
+          $" {machineNameProperty.stringValue}{xValuePostfixProperty.stringValue},"
+          + $" {machineNameProperty.stringValue}{yValuePostfixProperty.stringValue},"
+          + $" {machineNameProperty.stringValue}{zValuePostfixProperty.stringValue}";
 
         // Display the 'Parameters:' label using EditorGUI.PrefixLabel
         EditorGUI.PrefixLabel(
