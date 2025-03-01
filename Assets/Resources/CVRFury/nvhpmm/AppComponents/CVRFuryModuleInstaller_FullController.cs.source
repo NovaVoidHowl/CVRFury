@@ -1,10 +1,12 @@
-// { "version": "0.8.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.8.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Text;
 using System.Linq;
 using System.IO;
 using UnityEditor;
@@ -24,9 +26,6 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using static uk.novavoidhowl.dev.cvrfury.deployable.ReportBuilderSupport;
 using static uk.novavoidhowl.dev.cvrfury.supporting_classes.editor.Animation;
 using static uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime.General;
-
-// temp using for testing
-using System.Text;
 
 /// <summary>
 /// fullController Module
@@ -70,7 +69,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         if ((module as fullControllerModule).controllers.Count > 0)
         {
           // invoke creation of the generatedItemsFolder and tempItemsPath
-          var (generatedItemsFolder, tempItemsPath) = CVRFuryModuleInstaller.BuildGeneratedItemsFolder(avatar.name, DSUNumber);
+          var (generatedItemsFolder, tempItemsPath) = CVRFuryModuleInstaller.BuildGeneratedItemsFolder(
+            avatar.name,
+            DSUNumber
+          );
 
           // create a new override controller file path based on the generatedItemsFolder
           // called 'overrides_controller_'avatar.name
@@ -617,9 +619,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
 
 
-            // based on verbatimMode do not re-write animation clip paths
-            if (!(module as fullControllerModule).verbatimMode)
-            {
+              // based on verbatimMode do not re-write animation clip paths
+              if (!(module as fullControllerModule).verbatimMode)
+              {
                 // section to handle manual clip curve path rewrites
                 #region rebind animation clips - Manual
                 // this has to happen before prefab related rebinds, as it is intended to be used for
@@ -633,7 +635,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                 // print the binding rewrites to the console in one go
                 StringBuilder bindingRewritesDebug = new StringBuilder();
-                foreach (fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings)
+                foreach (
+                  fullControllerModule.BindingRewrite rewrite in (module as fullControllerModule).rewriteBindings
+                )
                 {
                   bindingRewritesDebug.Append(
                     "rewrite.from: "
@@ -667,7 +671,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                         + "\n rewrite.to: "
                         + rewrite.to
                         + "\n rewrite.delete: "
-                        + rewrite.delete
                     );
 
                     // get the animation clips from the source controller
@@ -986,13 +989,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
                 AssetDatabase.Refresh();
 
                 #endregion
-
-            }
-            else
-            {
-              // debug print to say we are in verbatim mode
-              CoreLog("[FullController] Verbatim mode, animation clips not path rewritten");
-            }
+              }
+              else
+              {
+                // debug print to say we are in verbatim mode
+                CoreLog("[FullController] Verbatim mode, animation clips not path rewritten");
+              }
 
               // merge the source into the final controller, renaming the parameters that are not global
               // again direct merge to the target controller (CVRFuryFinalController)
@@ -1222,6 +1224,53 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     #region supporting functions
     // general functions
 
+    private Tuple<bool, string> checkGlobalParameterSuffixed(
+      string parameterName,
+      Dictionary<string, string> perModuleParametersPairToRename
+    )
+    {
+      CoreLogDebug("[checkGlobalParameterSuffixed] input parameterName: " + parameterName);
+      // this function is for checking if a variable used in 2/3D Joysticks is a global parameter
+      // the suffixes that get applied to the base variable machine name are: -x, -y, -z
+      // so we need to check the global parameters list to see if the base variable + any of the suffixes is in the list
+      // if it is then we know it is a global parameter
+
+      bool parmToBeReplaced = false;
+      string newParameterName = "";
+      CoreLogDebug(
+        "[checkGlobalParameterSuffixed] newParameterName before processing (should be blank): ["
+          + newParameterName
+          + "]"
+      );
+
+      // Check if any of the parameter name + suffix combinations exist in the dictionary
+      if (perModuleParametersPairToRename.ContainsKey(parameterName + "-x"))
+      {
+        parmToBeReplaced = true;
+        newParameterName = perModuleParametersPairToRename[parameterName + "-x"];
+        // Remove the -x suffix from the new name
+        newParameterName = newParameterName.Substring(0, newParameterName.Length - 2);
+      }
+      else if (perModuleParametersPairToRename.ContainsKey(parameterName + "-y"))
+      {
+        parmToBeReplaced = true;
+        newParameterName = perModuleParametersPairToRename[parameterName + "-y"];
+        // Remove the -y suffix from the new name
+        newParameterName = newParameterName.Substring(0, newParameterName.Length - 2);
+      }
+      else if (perModuleParametersPairToRename.ContainsKey(parameterName + "-z"))
+      {
+        parmToBeReplaced = true;
+        newParameterName = perModuleParametersPairToRename[parameterName + "-z"];
+        // Remove the -z suffix from the new name
+        newParameterName = newParameterName.Substring(0, newParameterName.Length - 2);
+      }
+
+      CoreLogDebug(
+        "[checkGlobalParameterSuffixed] newParameterName after processing (can be blank): [" + newParameterName + "]"
+      );
+      return Tuple.Create(parmToBeReplaced, newParameterName);
+    }
 
     private AnimatorDriverTask.ParameterType getParamType(CVRFuryModule module, string paramName)
     {
@@ -1725,6 +1774,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         twoDJoystickParam.MachineName
       );
 
+      var (isGlobalParam, newName) = checkGlobalParameterSuffixed(
+        twoDJoystickParam.MachineName,
+        perModuleParametersPairToRename
+      );
+
+      if (isGlobalParam)
+      {
+        // if the parameter is a global parameter, set the machineName to the new name
+        twoDJoystickEntry.machineName = newName;
+      }
+
       // create a new CVRAdvancesAvatarSettingJoystick2D
       CVRAdvancesAvatarSettingJoystick2D twoDJoystickSetting = new CVRAdvancesAvatarSettingJoystick2D();
 
@@ -1769,6 +1829,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         perModuleParametersPairToRename,
         threeDJoystickParam.MachineName
       );
+
+      var (isGlobalParam, newName) = checkGlobalParameterSuffixed(
+        threeDJoystickParam.MachineName,
+        perModuleParametersPairToRename
+      );
+
+      if (isGlobalParam)
+      {
+        // if the parameter is a global parameter, set the machineName to the new name
+        threeDJoystickEntry.machineName = newName;
+      }
 
       // create a new CVRAdvancesAvatarSettingJoystick3D
       CVRAdvancesAvatarSettingJoystick3D threeDJoystickSetting = new CVRAdvancesAvatarSettingJoystick3D();
