@@ -87,7 +87,6 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     // path addons for after the target
     public string offset = "";
-
   }
 
   [Serializable]
@@ -106,7 +105,5 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     proximity = 2 // uses the LinkTarget list and will use the closest target to the addon object
   }
 
-
   #endregion // supporting classes/enums
-
 }

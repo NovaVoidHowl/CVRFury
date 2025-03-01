@@ -12,6 +12,9 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   [CreateAssetMenu(fileName = "NewCVRFuryMenuStore", menuName = "CVRFury/Menu Store")]
   public class CVRFuryMenuStore : ScriptableObject
   {
+    [SerializeField]
+    public List<CVRFuryParametersStore> relatedParametersStores = new List<CVRFuryParametersStore>();
+
     [SerializeReference]
     public List<menuParameter> menuItems = new List<menuParameter>();
   }
@@ -32,7 +35,6 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     // echo of what you get in the CCK menu items, if true then name and machine name are kept in sync
     // intrinsically set to false if forceMachineName is true
     public bool nameLinkedToMachineName = true;
-
 
     [SerializeField]
     private string menuParameterType;
@@ -146,6 +148,5 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   //   InputVector2 -- not added as its not clear what this would be used for
   //   InputVector3 -- not added as its not clear what this would be used for
 
-  // Supporting classes -------------------------------------------------------------------------------------------------
-
+  // Supporting classes ------------------------------------------------------------------------------------------------
 }

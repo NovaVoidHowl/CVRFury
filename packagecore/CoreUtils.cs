@@ -20,9 +20,16 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
   public static class CoreUtils
   {
 #if UNITY_EDITOR
+
     public static void CoreLog(object message)
     {
       Debug.Log($"[<color={Constants.APP_COLOUR}>{Constants.PROGRAM_DISPLAY_NAME}</color>] {message.ToString()}");
+    }
+
+    // alias CoreLogMessage to the above CoreLog
+    public static void CoreLogMessage(object message)
+    {
+      CoreLog(message);
     }
 
     public static void CoreLogError(object message)
@@ -124,9 +131,18 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       }
     }
 
-
     public static bool ContainsNestedPrefabs(GameObject prefab)
     {
+      // First check if the root object is actually a prefab
+      PrefabAssetType rootPrefabType = PrefabUtility.GetPrefabAssetType(prefab);
+      if (rootPrefabType == PrefabAssetType.NotAPrefab)
+      {
+        return false;
+      }
+
+      // Get the root prefab instance handle
+      GameObject rootPrefabInstance = PrefabUtility.GetOutermostPrefabInstanceRoot(prefab);
+
       // Get all child transforms, including inactive ones
       Transform[] allChildren = prefab.GetComponentsInChildren<Transform>(true);
 
@@ -136,18 +152,24 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         if (child == prefab.transform)
           continue;
 
-        // Check if the child object is a root of another prefab instance
-        var prefabInstanceHandle = PrefabUtility.GetPrefabInstanceHandle(child.gameObject);
-        if (prefabInstanceHandle != null)
+        // Get the nearest prefab instance root for this child
+        GameObject childPrefabInstance = PrefabUtility.GetOutermostPrefabInstanceRoot(child.gameObject);
+
+        // If this child has a different prefab instance root than the main prefab,
+        // and it's a proper prefab (not a model prefab), then it's a nested prefab
+        if (
+          childPrefabInstance != null
+          && childPrefabInstance != rootPrefabInstance
+          && PrefabUtility.GetPrefabAssetType(childPrefabInstance) != PrefabAssetType.Model
+        )
         {
-          // Debug.Log($"Child: {child.name}, is a nested prefab instance.");
-          return true; // Found a nested prefab
+          return true;
         }
       }
 
-      return false; // No nested prefabs found
+      return false;
     }
-    #endif
+#endif
 
     public static List<GameObject> GetParentObjects(GameObject currentObject, GameObject targetParent)
     {

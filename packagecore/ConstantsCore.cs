@@ -8,11 +8,13 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
   {
     public const string PROGRAM_DISPLAY_NAME = "CVRFury";
     public const string APP_COLOUR = "#0080FF";
-    public const string  APP_COLOUR_WARN = "#FFFF00";
+    public const string APP_COLOUR_WARN = "#FFFF00";
     public const string APP_COLOUR_ERROR = "#FF8000";
     public const string APP_COLOUR_CRIT = "#FF0000";
     public const string APP_COLOUR_DBG = "#B7FF00";
     public const string DEBUG_PRINT_EDITOR_PREF = "CVRFURY_DEBUG";
+    public const string AVATAR_OVERLAY_STATE_PREF = "AVATAR_OVERLAY_STATE";
+    public const string HIERARCHY_ICONS_STATE_PREF = "HIERARCHY_ICONS_STATE";
     public const string CLEANUP_DISABLE_PREF = "CVRFURY_CLEANUP_DISABLE";
 
     public const string SCRIPTING_DEFINE_SYMBOL = "NVH_CVRFURY_EXISTS";
@@ -55,36 +57,33 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDynamicBoneConfig",
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDSUInfoUnit",
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryGismoAnchor",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryAvatarColliderInfoUnit",
       }
     );
     public static readonly ReadOnlyCollection<string> CVRFURY_DEP_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
-      new List<string>
-      {
-        "uk.novavoidhowl.dev.cvrfury.deployable.CVRFuryMagicaCloth2Config"
-      }
+      new List<string> { "uk.novavoidhowl.dev.cvrfury.deployable.CVRFuryMagicaCloth2Config" }
     );
+
     // list of components that are not to be considered as a something to be removed from the list of components
     // preventing the adding of the nuke component
     public static readonly ReadOnlyCollection<string> CVRFURY_NUKE_FILTER = new ReadOnlyCollection<string>(
-      new List<string>
-      {
-        "uk.novavoidhowl.dev.cvrfury.deployable.CVRFuryMagicaCloth2Config"
-      }
+      new List<string> { "uk.novavoidhowl.dev.cvrfury.deployable.CVRFuryMagicaCloth2Config" }
     );
 
     public static readonly List<string> VRCPHYSBONE_M_SCRIPT_IDS = new List<string>
     {
       "{fileID: 1661641543, guid: 2a2c05204084d904aa4945ccff20d8e5, type: 3}"
     };
-    public const string CVRFURY_PHYSB_M_SCRIPT_ID = "{fileID: 11500000, guid: 475333861f76b9b43af5db2ad0c0c67d, type: 3}";
+    public const string CVRFURY_PHYSB_M_SCRIPT_ID =
+      "{fileID: 11500000, guid: 475333861f76b9b43af5db2ad0c0c67d, type: 3}";
 
     // this is for VRC Phys Bone collider stub
     public static readonly List<string> VRCPHYSBONE_COLLIDER_M_SCRIPT_IDS = new List<string>
     {
       "{fileID: -1631200402, guid: 2a2c05204084d904aa4945ccff20d8e5, type: 3}"
     };
-    public const string CVRFURY_PHYSB_COLLIDER_M_SCRIPT_ID = "{fileID: 11500000, guid: 96a8a4da017c3114ca7e873916be4265, type: 3}";
-
+    public const string CVRFURY_PHYSB_COLLIDER_M_SCRIPT_ID =
+      "{fileID: 11500000, guid: 96a8a4da017c3114ca7e873916be4265, type: 3}";
 
     // this is for the VRC Animator Driver Stub
     public static readonly List<string> ANIMATOR_DRIVER_M_SCRIPT_IDS = new List<string>
@@ -92,42 +91,80 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       "{fileID: -706344726, guid: 67cc4cb7839cd3741b63733d5adf0442, type: 3}"
     };
 
-    public const string CVRFURY_ANIMDRIVER_M_SCRIPT_ID = "{fileID: 11500000, guid: 3e00de38bef9e114ca08fe6faa7bb341, type: 3}";
+    public const string CVRFURY_ANIMDRIVER_M_SCRIPT_ID =
+      "{fileID: 11500000, guid: 3e00de38bef9e114ca08fe6faa7bb341, type: 3}";
 
     // this is for the VRC Constraint Stubs
-    public static readonly List<System.Tuple<string, string>> VRC_CONSTRAINT_M_SCRIPT_IDS = new List<System.Tuple<string, string>>
+    public static readonly List<System.Tuple<string, string>> VRC_CONSTRAINT_M_SCRIPT_IDS = new List<System.Tuple<
+      string,
+      string
+    >>
     {
       new System.Tuple<string, string>("{fileID: -926596935, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Aim"),
-      new System.Tuple<string, string>("{fileID: -372946275, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "LookAt"),
-      new System.Tuple<string, string>("{fileID: 575728033, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Parent"),
-      new System.Tuple<string, string>("{fileID: 1116338486, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Position"),
-      new System.Tuple<string, string>("{fileID: 1788371120, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Rotation"),
+      new System.Tuple<string, string>(
+        "{fileID: -372946275, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}",
+        "LookAt"
+      ),
+      new System.Tuple<string, string>(
+        "{fileID: 575728033, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}",
+        "Parent"
+      ),
+      new System.Tuple<string, string>(
+        "{fileID: 1116338486, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}",
+        "Position"
+      ),
+      new System.Tuple<string, string>(
+        "{fileID: 1788371120, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}",
+        "Rotation"
+      ),
       new System.Tuple<string, string>("{fileID: 41250163, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}", "Scale")
     };
 
-    public static readonly List<System.Tuple<string, string>> CVRFURY_CONSTRAINT_M_SCRIPT_IDS = new List<System.Tuple<string, string>>
+    public static readonly List<System.Tuple<string, string>> CVRFURY_CONSTRAINT_M_SCRIPT_IDS = new List<System.Tuple<
+      string,
+      string
+    >>
     {
       new System.Tuple<string, string>("{fileID: 11500000, guid: f6dac65aeac6b884dbdeb77a73af9807, type: 3}", "Aim"),
       new System.Tuple<string, string>("{fileID: 11500000, guid: 5cd6b64f73910994486c46cae54eed36, type: 3}", "LookAt"),
       new System.Tuple<string, string>("{fileID: 11500000, guid: 84b4ad7d8ffb0b646917aabba3948b3f, type: 3}", "Parent"),
-      new System.Tuple<string, string>("{fileID: 11500000, guid: 3ab8ebf72da2885489d2f5170cb09ac7, type: 3}", "Position"),
-      new System.Tuple<string, string>("{fileID: 11500000, guid: e3ed00e57a6643346947062cae1412e5, type: 3}", "Rotation"),
+      new System.Tuple<string, string>(
+        "{fileID: 11500000, guid: 3ab8ebf72da2885489d2f5170cb09ac7, type: 3}",
+        "Position"
+      ),
+      new System.Tuple<string, string>(
+        "{fileID: 11500000, guid: e3ed00e57a6643346947062cae1412e5, type: 3}",
+        "Rotation"
+      ),
       new System.Tuple<string, string>("{fileID: 11500000, guid: 786dfe19af3776244822f542536aefbc, type: 3}", "Scale")
     };
 
     // this is for the VRC Contacts and Receivers stubs
-    public static readonly List<System.Tuple<string, string>> VRC_CONTACTS_M_SCRIPT_IDS = new List<System.Tuple<string, string>>
+    public static readonly List<System.Tuple<string, string>> VRC_CONTACTS_M_SCRIPT_IDS = new List<System.Tuple<
+      string,
+      string
+    >>
     {
-      new System.Tuple<string, string>("{fileID: -1450912254, guid: 80f1b8067b0760e4bb45023bc2e9de66, type: 3}", "Receiver"),
-      new System.Tuple<string, string>("{fileID: -802764141, guid: 80f1b8067b0760e4bb45023bc2e9de66, type: 3}", "Sender")
+      new System.Tuple<string, string>(
+        "{fileID: -1450912254, guid: 80f1b8067b0760e4bb45023bc2e9de66, type: 3}",
+        "Receiver"
+      ),
+      new System.Tuple<string, string>(
+        "{fileID: -802764141, guid: 80f1b8067b0760e4bb45023bc2e9de66, type: 3}",
+        "Sender"
+      )
     };
 
-    public static readonly List<System.Tuple<string, string>> CVRFURY_CONTACTS_M_SCRIPT_IDS = new List<System.Tuple<string, string>>
+    public static readonly List<System.Tuple<string, string>> CVRFURY_CONTACTS_M_SCRIPT_IDS = new List<System.Tuple<
+      string,
+      string
+    >>
     {
-      new System.Tuple<string, string>("{fileID: 11500000, guid: 4ed8da5d0f60f2d478b9533305284ff7, type: 3}", "Receiver"),
+      new System.Tuple<string, string>(
+        "{fileID: 11500000, guid: 4ed8da5d0f60f2d478b9533305284ff7, type: 3}",
+        "Receiver"
+      ),
       new System.Tuple<string, string>("{fileID: 11500000, guid: d91e5d0cd9b1b27448977ce08e43dafb, type: 3}", "Sender")
     };
-
-
   }
 }

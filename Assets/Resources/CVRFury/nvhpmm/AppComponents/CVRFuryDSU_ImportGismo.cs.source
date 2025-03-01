@@ -1,4 +1,4 @@
-// { "version": "0.0.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_GIZMO", dependencies: [], type: "Editor"}
+// { "version": "0.0.6" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_COMP_DSU_IMPORT_GIZMO", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -67,7 +67,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       if (featureClassName != "Gizmo")
       {
         // this console log is for debugging purposes
-        CoreLog("feature at position " + positionInList + " is " + featureClassName + " not of the Gizmo , returning");
+        // CoreLog("feature at position " + positionInList + " is " + featureClassName + " not of the Gizmo , returning");
         return;
       }
 

@@ -651,19 +651,15 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                 // display a popup to the user
                 EditorUtility.DisplayDialog(
                   "Error",
-                  "The file you have selected to convert has no controls.\n\n"+
-                  "A empty CVRFury menu will be created.",
+                  "The file you have selected to convert has no controls.\n\n"
+                    + "A empty CVRFury menu will be created.",
                   "OK"
                 );
-
-               
               }
               else
               {
                 // divide 30 by the number of controls
                 var controlStep = 30 / controlCount;
-
-                
 
                 // list to hold parameter names and machine names for dropdowns that need to be created
                 List<DropdownParameter> dropdownsParameterList = new List<DropdownParameter>();
@@ -884,7 +880,9 @@ namespace uk.novavoidhowl.dev.cvrfury.converttools
                       // Never seen this in use in VRC so not sure what it does
                       // will look at mapping if found in a prefab in the future
                       // send a warning to the console
-                      CoreLog("FourAxisPuppet not supported, please add / up vote a feature request on the GitHub page");
+                      CoreLog(
+                        "FourAxisPuppet not supported, please add / up vote a feature request on the GitHub page"
+                      );
 
                       ////////////////
                       // TODO: add support for FourAxisPuppet

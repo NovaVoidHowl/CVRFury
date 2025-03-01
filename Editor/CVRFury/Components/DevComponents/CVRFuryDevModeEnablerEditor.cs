@@ -16,86 +16,121 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
   [CustomEditor(typeof(CVRFuryDevModeEnabler))]
   public class CVRFuryDevModeEnablerEditor : Editor
   {
-    private CVRFuryDevModeEnabler devModeEnabler;
-    private bool devModeEnabled;
-    private VisualElement rootVisualElement;
+    private VisualElement rootElement;
+    private Toggle devModeToggle;
+    private Button devModeButton;
+
+    private void UpdateButtonState(bool isEnabled)
+    {
+      if (devModeButton != null)
+      {
+        if (isEnabled)
+        {
+          devModeButton.AddToClassList("enabled");
+          devModeButton.text = "Disable Dev Mode";
+        }
+        else
+        {
+          devModeButton.RemoveFromClassList("enabled");
+          devModeButton.text = "Enable Dev Mode";
+        }
+      }
+    }
 
     public override VisualElement CreateInspectorGUI()
     {
-      // Create the root VisualElement
-      rootVisualElement = new VisualElement();
+      rootElement = new VisualElement();
 
-      // set the name of the root element to allow styling
-      rootVisualElement.name = "CVRFuryDevModeEnablerEditor";
+      // set the class of the root element to allow styling
+      rootElement.AddToClassList("cvr-fury-inspector");
+
+      // load base UXML
+      var baseTree = Resources.Load<VisualTreeAsset>(
+        Constants.PROGRAM_DISPLAY_NAME + "/DevMode/UnityUXML/CVRFuryDevModeEnablerInspector"
+      );
 
       // Load and apply the stylesheet
       var stylesheet = Resources.Load<StyleSheet>(
-        Constants.PROGRAM_DISPLAY_NAME + "/CVRFuryComponents/UnityStyleSheets/CVRFuryDevModeEnablerInspector"
+        Constants.PROGRAM_DISPLAY_NAME + "/DevMode/UnityStyleSheets/CVRFuryDevModeEnablerInspector"
       );
 
-      // Check if the StyleSheet was loaded
-      if (stylesheet == null)
+      if (baseTree == null || stylesheet == null)
       {
-        CoreLogError(
-          "Failed to load StyleSheet at 'UnityStyleSheets/CVRFuryDevModeEnablerInspector'. Please ensure the file exists at the specified path."
-        );
-        // If the StyleSheet was not loaded add a new label to the root.
-        rootVisualElement.Add(new Label("CRITICAL ERROR : StyleSheet could not be loaded."));
-        return rootVisualElement;
+        CoreLogError("Failed to load UXML or StyleSheet. Creating fallback UI.");
+        CreateFallbackUI();
+        return rootElement;
       }
 
-      // apply stylesheet
-      rootVisualElement.styleSheets.Add(stylesheet);
+      // Apply the StyleSheet
+      rootElement.styleSheets.Add(stylesheet);
 
-      // add toggle to control DevModeEnabled
-      var devModeEnabledToggle = new Toggle("Dev Mode Enabled");
-      devModeEnabledToggle.value = devModeEnabler.DevModeEnabled;
-      devModeEnabledToggle.RegisterValueChangedCallback(evt =>
+      // Instantiate the UXML tree
+      var ToolSetup = baseTree.Instantiate();
+
+      // Create a temporary list to hold the children
+      List<VisualElement> children = new List<VisualElement>(ToolSetup.Children());
+
+      // Add the children of the instantiated UXML to the root
+      foreach (var child in children)
       {
-        devModeEnabler.DevModeEnabled = evt.newValue;
+        rootElement.Add(child);
+      }
+
+      // Get the button and set up its behavior
+      devModeButton = rootElement.Q<Button>("devModeButton");
+      if (devModeButton != null)
+      {
+        var currentState = serializedObject.FindProperty("devModeEnabled").boolValue;
+        UpdateButtonState(currentState);
+
+        devModeButton.clicked += () =>
+        {
+          var component = target as CVRFuryDevModeEnabler;
+          if (component != null)
+          {
+            component.DevModeEnabled = !component.DevModeEnabled;
+            UpdateButtonState(component.DevModeEnabled);
+            EditorUtility.SetDirty(target);
+          }
+        };
+      }
+
+      return rootElement;
+    }
+
+    private void CreateFallbackUI()
+    {
+      // Simple fallback UI when UXML/USS fails to load
+      devModeToggle = new Toggle("Dev Mode") { value = serializedObject.FindProperty("devModeEnabled").boolValue };
+
+      devModeToggle.RegisterValueChangedCallback(evt =>
+      {
+        var component = target as CVRFuryDevModeEnabler;
+        if (component != null)
+        {
+          component.DevModeEnabled = evt.newValue;
+          EditorUtility.SetDirty(target);
+        }
       });
-      rootVisualElement.Add(devModeEnabledToggle);
 
-      // Call UpdateUI after creating the UI
-      UpdateUI(devModeEnabler.DevModeEnabled);
+      rootElement.Add(devModeToggle);
 
-      // return the root element
-      return rootVisualElement;
-    }
+      devModeButton = new Button();
+      var currentState = serializedObject.FindProperty("devModeEnabled").boolValue;
+      UpdateButtonState(currentState);
 
-    private void OnEnable()
-    {
-      devModeEnabler = (CVRFuryDevModeEnabler)target;
-      devModeEnabled = devModeEnabler.DevModeEnabled;
-      devModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
-    }
-
-    private void OnDisable()
-    {
-      devModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
-    }
-
-    void UpdateUI(bool newValue)
-    {
-      devModeEnabled = newValue;
-      var toggle = rootVisualElement.Q<Toggle>("Dev Mode Enabled");
-      if (toggle != null)
+      devModeButton.clicked += () =>
       {
-        toggle.value = newValue;
-      }
+        var component = target as CVRFuryDevModeEnabler;
+        if (component != null)
+        {
+          component.DevModeEnabled = !component.DevModeEnabled;
+          UpdateButtonState(component.DevModeEnabled);
+          EditorUtility.SetDirty(target);
+        }
+      };
 
-      // if dev mode is enabled set the root element background color to green
-      if (devModeEnabled)
-      {
-        // set the background color to #009900
-        rootVisualElement.style.backgroundColor = new StyleColor(new Color(0, 0.6f, 0));
-      }
-      else
-      {
-        // remove the background color
-        rootVisualElement.style.backgroundColor = new StyleColor(new Color(0, 0, 0, 0));
-      }
-      Repaint();
+      rootElement.Add(devModeButton);
     }
   }
 }

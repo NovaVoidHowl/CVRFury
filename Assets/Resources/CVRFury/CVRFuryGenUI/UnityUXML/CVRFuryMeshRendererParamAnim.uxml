@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements">
+  <ui:VisualElement class="root-container">
+    <ui:VisualElement name="objectsContainer" class="objects-container">
+      <editor:ObjectField name="rootGameObjectField" label="Root Game Object" />
+      <ui:VisualElement name="rendererContainer" class="renderer-container" />
+      <editor:ObjectField name="meshRendererField" label="Renderer" />
+    </ui:VisualElement>
+    <ui:TextField name="parameterFilterField" label="Filter Parameters" />
+    <ui:VisualElement name="paramContainer" class="param-container">
+      <ui:VisualElement name="dropdownContainer" class="dropdown-container">
+        <ui:VisualElement name="parameterPopupContainer" />
+        <ui:VisualElement name="paramTypePopupContainer" />
+      </ui:VisualElement>
+      <ui:Label name="warningLabel" text="Warning: Min and Max values are the same!" class="warning-label" style="display: none;" />
+      <editor:FloatField name="minValueField" label="Min Value" />
+      <editor:FloatField name="maxValueField" label="Max Value" />      
+    </ui:VisualElement>
+    <ui:VisualElement class="path-container">
+      <ui:TextField name="animationPathField" label="Animation Path" />
+      <ui:TextField name="animationNameField" label="Animation Name" />
+    </ui:VisualElement>
+    <ui:Button name="generateButton" text="Generate" class="generate-button" />
+  </ui:VisualElement>
+</UXML>

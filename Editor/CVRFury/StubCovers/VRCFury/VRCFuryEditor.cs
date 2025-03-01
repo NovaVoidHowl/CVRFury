@@ -187,6 +187,32 @@ namespace uk.novavoidhowl.dev.cvrfury
 
             // set the text of the title to the contentClassNameBanner
             title.text = "Unsupported VRCFury Feature";
+
+            // Show and configure the action button
+            SetActionButtonVisible(true, "Remove Unsupported Feature");
+            var removeButton = rootVisualElement.Q<Button>("VRCFuryStubCoverActionButton");
+            if (removeButton != null)
+            {
+              removeButton.clicked += () =>
+              {
+                // Get the VRCFury component
+                var vrcFury = target as VRCFury;
+                // Cache the gameObject reference before destroying the component
+                var gameObject = vrcFury.gameObject;
+
+                // Record the object for undo
+                Undo.DestroyObjectImmediate(vrcFury);
+
+                // Mark the parent object as dirty after component removal
+                if (gameObject != null)
+                {
+                  EditorUtility.SetDirty(gameObject);
+                }
+              };
+            }
+
+            // add the unsupportedVisualElement to the rootVisualElement
+            rootVisualElement.Add(unsupportedVisualElement);
           }
         }
       }
@@ -421,6 +447,18 @@ namespace uk.novavoidhowl.dev.cvrfury
           }
         }
       }
+      // After loading the UXML tree, get reference to the action button
+      var actionButton = rootVisualElement.Q<Button>("VRCFuryStubCoverActionButton");
+
+      if (actionButton != null)
+      {
+        // Set up click handler
+        actionButton.clicked += () =>
+        {
+          // Handle button click here
+          Debug.Log("Action button clicked");
+        };
+      }
       // subscribe to the CVRFuryDevModeEnabler component
       devModeSubscribe();
       // Call UpdateUI after creating the UI
@@ -436,23 +474,60 @@ namespace uk.novavoidhowl.dev.cvrfury
 
     private void devModeSubscribe()
     {
-      if (target is VRCFury vrcFury && vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      try
       {
+        if (target == null || !target)
+          return;
+
+        VRCFury vrcFury = target as VRCFury;
+        if (vrcFury == null || !vrcFury || vrcFury.gameObject == null)
+          return;
+
         var CVRFuryDevModeEnabler = vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>();
-        CVRFuryDevModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
+        if (CVRFuryDevModeEnabler == null)
+        {
+          devModeEnabled = false;
+          return;
+        }
+
+        // Ensure the event is initialized
+        if (CVRFuryDevModeEnabler.OnDevModeChanged == null)
+        {
+          CVRFuryDevModeEnabler.OnDevModeChanged = new CVRFuryDevModeEnabler.BoolEvent();
+        }
+
+        // Get current state before changing subscriptions
         devModeEnabled = CVRFuryDevModeEnabler.DevModeEnabled;
+
+        // Remove any existing subscription
+        CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+
+        // Add new subscription
+        CVRFuryDevModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
+      }
+      catch (System.Exception e)
+      {
+        Debug.LogWarning($"DevMode subscription warning: {e.Message}");
+        devModeEnabled = false;
       }
     }
 
     private void OnDisable()
     {
-      if (target is VRCFury vrcFury && vrcFury != null)
+      try
       {
-        var CVRFuryDevModeEnabler = vrcFury.gameObject?.GetComponent<CVRFuryDevModeEnabler>();
-        if (CVRFuryDevModeEnabler != null)
+        if (target is VRCFury vrcFury && vrcFury != null && vrcFury.gameObject != null)
         {
-          CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+          var CVRFuryDevModeEnabler = vrcFury.gameObject.GetComponent<CVRFuryDevModeEnabler>();
+          if (CVRFuryDevModeEnabler != null && CVRFuryDevModeEnabler.OnDevModeChanged != null)
+          {
+            CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+          }
         }
+      }
+      catch (System.Exception e)
+      {
+        Debug.LogWarning($"DevMode cleanup warning: {e.Message}");
       }
     }
 
@@ -460,28 +535,95 @@ namespace uk.novavoidhowl.dev.cvrfury
     {
       devModeEnabled = newValue;
 
-      derivedClasses = GetClassesDerivedFromAbstractClass(typeof(FeatureModel));
+      if (rootVisualElement == null)
+        return;
 
-      // remove the blocklisted features from the derivedClasses list
+      // Initialize derived classes for feature adder
+      derivedClasses = GetClassesDerivedFromAbstractClass(typeof(FeatureModel));
       derivedClasses.RemoveAll(type => Constants.BLOCK_LISTED_VRCFURY_FEATURES.Contains(type.Name));
 
-      if (rootVisualElement == null)
+      // First, handle cleanup of existing elements
+      var errorElements = rootVisualElement.Query<VisualElement>("errorVisualElement").ToList();
+      foreach (var errorElement in errorElements)
       {
-        // if the rootVisualElement is null, return
-        return;
+        rootVisualElement.Remove(errorElement);
+      }
+
+      var existingIncompatTag = rootVisualElement.Q<VisualElement>("incompatibilityTag");
+      if (existingIncompatTag != null)
+      {
+        rootVisualElement.Remove(existingIncompatTag);
+      }
+
+      // Check for incompatibility
+      bool isIncompatible = false;
+      if (serializedObject != null)
+      {
+        int version = serializedObject.FindProperty("version").intValue;
+        if (version > Constants.MAX_VRCFURY_VERSION_DATA)
+        {
+          isIncompatible = true;
+        }
+        else if (version > Constants.MAX_VRCFURY_VERSION_IMPORT && version <= Constants.MAX_VRCFURY_VERSION_DATA)
+        {
+          // For version 3, we need to check the content type
+          if (version == 3)
+          {
+            var contentProperty = serializedObject.FindProperty("content");
+            if (contentProperty != null)
+            {
+              var contentType = contentProperty.managedReferenceFullTypename;
+              if (!string.IsNullOrEmpty(contentType))
+              {
+                var contentClassName = contentType.Split('.').Last();
+                if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
+                {
+                  isIncompatible = true;
+                }
+                else if (Constants.COMPATIBLE_VRCFURY_FEATURES.Any(x => x.Key == contentClassName))
+                {
+                  var compatibleVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+                    .First(x => x.Key == contentClassName)
+                    .Value;
+                  isIncompatible = version > compatibleVersion;
+                }
+                else
+                {
+                  isIncompatible = true; // Unknown feature type
+                }
+              }
+              else
+              {
+                isIncompatible = true; // Corrupted component
+              }
+            }
+          }
+          else
+          {
+            isIncompatible = true;
+          }
+        }
       }
 
       if (devModeEnabled)
       {
-        // load the devMode uss from resources
+        // Load and apply dev mode stylesheet
         var devModeStyleSheet = Resources.Load<StyleSheet>(
           Constants.PROGRAM_DISPLAY_NAME + "/DevMode/UnityStyleSheets/VRCFuryInspector-Dev"
         );
 
+        // Add incompatibility tag only if the component is actually incompatible
+        if (isIncompatible)
+        {
+          var incompatTag = new VisualElement();
+          incompatTag.name = "incompatibilityTag";
+          incompatTag.Add(new Label("Incompatible Component"));
+          rootVisualElement.Add(incompatTag);
+        }
+
         // check if there is already a devModeTag VisualElement
         var devModeTagVisualElementExists = rootVisualElement.Q<VisualElement>("devModeTag");
 
-        // if there is not already a devModeTag VisualElement
         if (devModeTagVisualElementExists == null)
         {
           // apply the devModeStyleSheet to the rootVisualElement
@@ -489,15 +631,9 @@ namespace uk.novavoidhowl.dev.cvrfury
 
           // create a new VisualElement
           var devModeTagVisualElement = new VisualElement();
-
-          // set the name of the devModeTagVisualElement to allow styling
           devModeTagVisualElement.name = "devModeTag";
-
-          // add the devModeTagVisualElement to the rootVisualElement
-          rootVisualElement.Add(devModeTagVisualElement);
-
-          // set the text of the devModeTagVisualElement to 'Dev Mode Enabled'
           devModeTagVisualElement.Add(new Label("Dev Mode Enabled"));
+          rootVisualElement.Add(devModeTagVisualElement);
         }
 
         // check if there is already a defaultEditorContainer VisualElement
@@ -579,22 +715,249 @@ namespace uk.novavoidhowl.dev.cvrfury
       }
       else
       {
-        // devmode not enabled so do a cleanup of the devmode elements
-
-        // find and remove all instances of the devModeTagVisualElement
+        // Clean up dev mode elements
         var devModeTagVisualElements = rootVisualElement.Query<VisualElement>("devModeTag").ToList();
-        foreach (var devModeTagVisualElement in devModeTagVisualElements)
+        foreach (var element in devModeTagVisualElements)
         {
-          rootVisualElement.Remove(devModeTagVisualElement);
+          rootVisualElement.Remove(element);
         }
 
-        // find and remove all instances of the defaultEditorContainer
         var defaultEditorContainers = rootVisualElement.Query<VisualElement>("defaultEditorContainer").ToList();
-        foreach (var defaultEditorContainer in defaultEditorContainers)
+        foreach (var container in defaultEditorContainers)
         {
-          rootVisualElement.Remove(defaultEditorContainer);
+          rootVisualElement.Remove(container);
+        }
+
+        // Re-run the compatibility checks
+        if (serializedObject != null)
+        {
+          int version = serializedObject.FindProperty("version").intValue;
+          // Re-run your existing compatibility check code here
+          // This is the code block that checks versions and adds error elements
+          // Copy the compatibility check logic from your CreateInspectorGUI method
+          if (version > Constants.MAX_VRCFURY_VERSION_DATA)
+          {
+            // create a new visual element of the error type
+            var errorVisualElement = new VisualElement();
+
+            // set the name of the errorVisualElement to allow styling
+            errorVisualElement.name = "errorVisualElement";
+
+            // add the errorVisualElement to the rootVisualElement
+            rootVisualElement.Add(errorVisualElement);
+
+            // if it is, add a warning to the rootVisualElement
+            var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Data Store Version");
+            warningTitleLabel.AddToClassList("warning-title");
+            errorVisualElement.Add(warningTitleLabel);
+            errorVisualElement.Add(
+              new Label(
+                "This VRCFury component is not compatible with" + " the currently installed version of CVRFury."
+              )
+            );
+            errorVisualElement.Add(
+              new Label(
+                "Note the converted copy of prefab will likely have a corrupted datastore now so please delete it"
+              )
+            );
+            errorVisualElement.Add(
+              new Label(
+                "Please check that it was not made with a version later than " + Constants.MAX_VRCFURY_DATA_USER_VERSION
+              )
+            );
+            errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+            // add button to open the documentation
+            var openDocumentationButton = new Button(() =>
+            {
+              Application.OpenURL(Constants.DOCS_URL);
+            });
+            openDocumentationButton.text = "Open Documentation";
+            errorVisualElement.Add(openDocumentationButton);
+          }
+          else if (version > Constants.MAX_VRCFURY_VERSION_IMPORT)
+          {
+            // if the version is v3 we need to check what type of component is in the 'content' variable
+            if (version == 3)
+            {
+              // get the content property from the serializedObject
+              var contentProperty = serializedObject.FindProperty("content");
+
+              // get the type of the content property
+              var contentType = contentProperty.managedReferenceFullTypename;
+
+              // check if the content is null/empty if it is show an error saying the component is corrupted
+              if (string.IsNullOrEmpty(contentType))
+              {
+                // create a new visual element of the error type
+                var errorVisualElement = new VisualElement();
+
+                // set the name of the errorVisualElement to allow styling
+                errorVisualElement.name = "errorVisualElement";
+
+                // add the errorVisualElement to the rootVisualElement
+                rootVisualElement.Add(errorVisualElement);
+
+                // if it is, add a warning to the rootVisualElement
+                var warningTitleLabel = new Label("WARNING: Corrupted VRCFury Component");
+                warningTitleLabel.AddToClassList("warning-title");
+                errorVisualElement.Add(warningTitleLabel);
+                errorVisualElement.Add(new Label("This VRCFury component is corrupted and cannot be loaded."));
+              }
+              else
+              {
+                // ok so now we have a valid content type, we need to check what it is
+
+                // get the last part of the content type string (short class name)
+                var contentClassName = contentType.Split('.').Last();
+
+                // debug log the content type
+                CoreLogDebug("Content Type class: " + contentClassName);
+
+                // check if tthe contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
+                if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
+                {
+                  // ok this is a feature we don't support at all (not just a version issue)
+                  // create a new visual element for the unsupported feature
+                }
+                else
+                {
+                  // only render detail errors on supported features
+
+                  // compare the contentClassName to the COMPATIBLE_VRCFURY_FEATURES KeyValuePair list to see if it is compatible
+                  // first check if the contentClassName is in the COMPATIBLE_VRCFURY_FEATURES list
+                  if (Constants.COMPATIBLE_VRCFURY_FEATURES.Any(x => x.Key == contentClassName))
+                  {
+                    // get the version from the COMPATIBLE_VRCFURY_FEATURES list
+                    var compatibleVersion = Constants.COMPATIBLE_VRCFURY_FEATURES
+                      .First(x => x.Key == contentClassName)
+                      .Value;
+
+                    // check if the version is compatible
+                    if (version > compatibleVersion)
+                    {
+                      // create a new visual element of the error type
+                      var errorVisualElement = new VisualElement();
+
+                      // set the name of the errorVisualElement to allow styling
+                      errorVisualElement.name = "errorVisualElement";
+
+                      // add the errorVisualElement to the rootVisualElement
+                      rootVisualElement.Add(errorVisualElement);
+
+                      // if it is, add a warning to the rootVisualElement
+                      var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                      warningTitleLabel.AddToClassList("warning-title");
+                      errorVisualElement.Add(warningTitleLabel);
+                      errorVisualElement.Add(
+                        new Label(
+                          "This VRCFury component is not import compatible with"
+                            + " the currently installed version of CVRFury."
+                        )
+                      );
+                      errorVisualElement.Add(
+                        new Label(
+                          "Please check that it was not made with a version later than "
+                            + Constants.MAX_VRCFURY_IMPORT_USER_VERSION
+                        )
+                      );
+                      errorVisualElement.Add(
+                        new Label(
+                          "Note you can review the data store of this component by setting the inspector to debug mode."
+                        )
+                      );
+                      errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+                      // add button to open the documentation
+                      var openDocumentationButton = new Button(() =>
+                      {
+                        Application.OpenURL(Constants.DOCS_URL);
+                      });
+                      openDocumentationButton.text = "Open Documentation";
+                      errorVisualElement.Add(openDocumentationButton);
+                    }
+                  }
+                  else
+                  {
+                    // error as the contentClassName is not in the COMPATIBLE_VRCFURY_FEATURES list, could be its new
+                    // feature that is not supported yet. need to display a warning
+                    // create a new visual element of the error type
+                    var errorVisualElement = new VisualElement();
+
+                    // set the name of the errorVisualElement to allow styling
+                    errorVisualElement.name = "errorVisualElement";
+
+                    // add the errorVisualElement to the rootVisualElement
+                    rootVisualElement.Add(errorVisualElement);
+
+                    // if it is, add a warning to the rootVisualElement
+                    var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                    warningTitleLabel.AddToClassList("warning-title");
+                    errorVisualElement.Add(warningTitleLabel);
+                    errorVisualElement.Add(
+                      new Label(
+                        "This VRCFury component '"
+                          + contentClassName
+                          + "' is not import compatible with"
+                          + " the currently installed version of CVRFury."
+                      )
+                    );
+                    errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+                    // add button to open the documentation
+                    var openDocumentationButton = new Button(() =>
+                    {
+                      Application.OpenURL(Constants.DOCS_URL);
+                    });
+                    openDocumentationButton.text = "Open Documentation";
+                    errorVisualElement.Add(openDocumentationButton);
+                  }
+                }
+              }
+            }
+            else
+            {
+              // create a new visual element of the error type
+              var errorVisualElement = new VisualElement();
+
+              // set the name of the errorVisualElement to allow styling
+              errorVisualElement.name = "errorVisualElement";
+
+              // add the errorVisualElement to the rootVisualElement
+              rootVisualElement.Add(errorVisualElement);
+
+              // if it is, add a warning to the rootVisualElement
+              var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+              warningTitleLabel.AddToClassList("warning-title");
+              errorVisualElement.Add(warningTitleLabel);
+              errorVisualElement.Add(
+                new Label(
+                  "This VRCFury component is not import compatible with"
+                    + " the currently installed version of CVRFury."
+                )
+              );
+              errorVisualElement.Add(
+                new Label(
+                  "Please check that it was not made with a version later than "
+                    + Constants.MAX_VRCFURY_IMPORT_USER_VERSION
+                )
+              );
+              errorVisualElement.Add(
+                new Label(
+                  "Note you can review the data store of this component by setting the inspector to debug mode."
+                )
+              );
+              errorVisualElement.Add(new Label("Please check the CVRFury documentation for more information."));
+              // add button to open the documentation
+              var openDocumentationButton = new Button(() =>
+              {
+                Application.OpenURL(Constants.DOCS_URL);
+              });
+              openDocumentationButton.text = "Open Documentation";
+              errorVisualElement.Add(openDocumentationButton);
+            }
+          }
         }
       }
+
+      rootVisualElement.MarkDirtyRepaint();
       Repaint();
     }
 
@@ -612,10 +975,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       return types;
     }
 
-    private static void SetComponentTopBarV3(
-      VisualElement componentTypeVisualElement,
-      SerializedObject serializedObject
-    )
+    private void SetComponentTopBarV3(VisualElement componentTypeVisualElement, SerializedObject serializedObject)
     {
       /// get the content property from the serializedObject
       var contentProperty = serializedObject.FindProperty("content");
@@ -629,15 +989,100 @@ namespace uk.novavoidhowl.dev.cvrfury
         // get the last part of the content type string (short class name)
         var contentClassName = contentType.Split('.').Last();
 
-        // ok we have the content class name, now we can add a banner to show the
-        // user what type of component it is
-
         // render the component type banner
         componentTypeVisualElement.Add(CreateComponentTopBar("VRCFury Datastore  |  " + contentClassName));
+
+        // If this is a Toggle component, add the action count summary to the main component body
+        if (contentClassName == "Toggle")
+        {
+          // Create the summary after all the default content
+          var summaryContainer = AddActionCountSummary(contentProperty);
+          if (summaryContainer != null)
+          {
+            rootVisualElement.Add(summaryContainer);
+          }
+        }
       }
     }
 
+    private VisualElement AddActionCountSummary(SerializedProperty contentProperty)
+    {
+      // Get the state property from the toggle
+      var stateProperty = contentProperty.FindPropertyRelative("state");
+      if (stateProperty == null)
+        return null;
 
+      // Get the actions list
+      var actionsProperty = stateProperty.FindPropertyRelative("actions");
+      if (actionsProperty == null)
+        return null;
+
+      // Create a dictionary to store counts of each action type
+      Dictionary<string, int> actionCounts = new Dictionary<string, int>();
+
+      // Count each type of action
+      for (int i = 0; i < actionsProperty.arraySize; i++)
+      {
+        var actionProperty = actionsProperty.GetArrayElementAtIndex(i);
+        string actionType = actionProperty.managedReferenceFullTypename?.Split('.').Last();
+        if (!string.IsNullOrEmpty(actionType))
+        {
+          if (!actionCounts.ContainsKey(actionType))
+          {
+            actionCounts[actionType] = 0;
+          }
+          actionCounts[actionType]++;
+        }
+      }
+
+      // If we have any actions, create the summary section
+      if (actionCounts.Count > 0)
+      {
+        // Create container
+        var container = new VisualElement();
+        container.name = "actionSummaryContainer";
+        container.AddToClassList("action-summary-container");
+        container.style.flexGrow = 1;
+        container.style.flexDirection = FlexDirection.Column;
+
+        // Add header
+        var header = new Label("Action Types Summary:");
+        header.AddToClassList("action-summary-header");
+        container.Add(header);
+
+        // Add counts for each action type
+        foreach (var kvp in actionCounts.OrderBy(x => x.Key))
+        {
+          var countLabel = new Label($"{kvp.Key}: {kvp.Value}");
+          countLabel.AddToClassList("action-count-label");
+          container.Add(countLabel);
+        }
+
+        // Add total count
+        var totalCount = actionCounts.Values.Sum();
+        var totalLabel = new Label($"Total Actions: {totalCount}");
+        totalLabel.AddToClassList("action-total-label");
+        container.Add(totalLabel);
+
+        return container;
+      }
+
+      return null;
+    }
+
+    // Add this helper method to show/hide the button
+    private void SetActionButtonVisible(bool visible, string buttonText = "")
+    {
+      var actionButton = rootVisualElement?.Q<Button>("VRCFuryStubCoverActionButton");
+      if (actionButton != null)
+      {
+        actionButton.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        if (!string.IsNullOrEmpty(buttonText))
+        {
+          actionButton.text = buttonText;
+        }
+      }
+    }
   }
 }
 #endif

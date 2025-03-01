@@ -8,6 +8,7 @@ using System.Reflection;
 
 namespace uk.novavoidhowl.dev.cvrfury.runtime
 {
+  [DoNotShowOnList] // needs to be reviewed, not sure if this is needed any more
   [Serializable]
   public class parametersLink : CVRFuryModule
   {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:engine="UnityEngine.UIElements"
+    xmlns:editor="UnityEditor.UIElements">
+    <engine:Box class="overlay-container">
+        <engine:Label name="object-name" text="Selected Avatar: None"/>
+        <engine:Box name="component-counter" style="flex-direction: row;">
+            <engine:Label name="object-vrcfury-count" text="VRCFury Components: N/A"/>
+            <engine:Label name="object-dsu-count" text="CVRFury DSUs: N/A"/>
+        </engine:Box>
+    </engine:Box>
+</engine:UXML>

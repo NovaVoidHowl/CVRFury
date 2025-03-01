@@ -1,0 +1,186 @@
+.cvr-fury-buttons-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 10px;
+}
+
+.cvr-fury-button {
+  margin: 5px;
+  padding: 8px;
+  background-color: #444444;
+  border-width: 1px;
+  border-color: #646464;
+  border-radius: 3px;
+  -unity-text-align: middle-center;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.cvr-fury-button:hover {
+  background-color: #555555;
+}
+
+.cvr-fury-button:active {
+  background-color: #333333;
+}
+
+.cvr-fury-button:disabled {
+  opacity: 0.5;
+  background-color: #3a3a3a;
+}
+
+.spacer {
+  height: 10px;
+}
+
+.stores-container {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #303030;
+  border-radius: 12px 12px 0px 0px;
+  border-width: 1px;
+  border-color: #404040;
+  flex-grow: 1;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.stores-header {
+  font-size: 12px;
+  -unity-font-style: bold;
+  margin-bottom: 5px;
+  -unity-text-align: middle-center;
+}
+
+.unity-list-view {
+  height: auto;
+  min-height: 10px;
+  background-color: var(--unity-colors-default-background);
+  overflow: hidden;
+  width: 100%;
+  flex-grow: 1;
+  flex-shrink: 1;
+  margin: 0;
+  padding: 4px 8px;
+}
+
+/* Remove any width constraints that might be affecting positioning */
+.unity-object-field {
+  padding-left: 2px;
+  padding-right: 2px;
+  width: auto;
+  min-height: 18px;
+  flex-grow: 1;
+  flex-shrink: 0;
+}
+
+.unity-object-field__warning {
+  position: absolute;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+}
+
+.unity-list-view__item {
+  height: 20px;
+  min-height: 20px;
+  padding: 2px 0;
+  margin: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.unity-object-field-display {
+  height: 18px;
+  min-height: 18px;
+}
+
+.unity-object-field-display__icon {
+  width: 16px;
+  height: 16px;
+  margin: 1px;
+}
+
+.unity-object-field-display__label {
+  font-size: 11px;
+  -unity-text-align: middle-left;
+  padding-left: 4px;
+}
+
+.unity-object-field__selector {
+  width: 18px;
+  height: 18px;
+}
+
+/* Ensure the object field input doesn't resize for the warning */
+.unity-object-field__input {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 1;
+  flex-grow: 1;
+}
+
+/* `.warning-container` is primarily controlled in code from CVRFuryMenuStoreEditor */
+
+.warning-container {
+  position: absolute;
+  right: 4px;
+  top: 1px;
+  width: 16px;
+  height: 16px;
+}
+
+.warning-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.parameter-field.unity-object-field.empty-slot .unity-object-field__input {
+  border-color: rgb(200, 0, 0);
+  border-width: 1px;
+}
+
+.parameter-field.unity-object-field.warning-state .unity-object-field__input {
+  border-width: 1px;
+  border-color: rgb(230, 200, 0);
+}
+
+/* Ensure the object field container properly fills width */
+.unity-base-field__input {
+  flex-grow: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.parameter-field {
+  margin: 0;
+  padding: 2px 4px;
+  width: 100%;
+  height: 18px;
+  min-height: 18px;
+  min-width: 0;
+  flex-shrink: 1;
+  flex-grow: 1;
+}
+
+.unity-object-field__input {
+  left: 4px;
+  min-width: 0;
+  max-width: 99.8%;
+  height: 18px;
+  flex-shrink: 1;
+  flex-grow: 1;
+}
+
+.unity-list-view {
+  padding-left: 0px;
+  padding-right: 1px;
+}
+
+.stores-list {
+  /* currently empty */
+}

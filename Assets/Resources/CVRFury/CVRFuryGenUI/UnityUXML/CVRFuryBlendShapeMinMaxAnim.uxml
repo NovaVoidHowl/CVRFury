@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements">
+  <ui:VisualElement class="root-container">
+    <ui:VisualElement name="objectsContainer" class="objects-container">
+      <!-- Root Game Object Field-->
+      <editor:ObjectField name="rootGameObjectField" label="Root Game Object" />
+      <!-- Mesh Renderer Field -->
+      <editor:ObjectField name="meshRendererField" label="Mesh Renderer" />
+    </ui:VisualElement>
+    
+    <!-- BlendShape Container -->
+    <ui:VisualElement name="blendShapeContainer" class="blend-shape-container">
+        <!-- PopupField will be added programmatically -->
+    </ui:VisualElement>
+    
+    <!-- Path Container -->
+    <ui:VisualElement class="path-container">
+        <ui:TextField name="animationPathField" label="Animation Path" />
+        <ui:TextField name="animationNameField" label="Animation Name" />
+    </ui:VisualElement>
+
+
+    
+    <!-- Generate Button -->
+    <ui:Button name="generateButton" text="Generate" class="generate-button" />
+  </ui:VisualElement>
+</UXML>

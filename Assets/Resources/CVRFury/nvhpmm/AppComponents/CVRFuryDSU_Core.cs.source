@@ -1,4 +1,4 @@
-// { "version": "0.2.13" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
+// { "version": "1.1.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -10,6 +10,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
+using DoNotShowOnListAttribute = uk.novavoidhowl.dev.cvrfury.packagecore.DoNotShowOnListAttribute;
 using uk.novavoidhowl.dev.cvrfury.runtime;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime;
@@ -25,7 +26,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
   [CustomEditor(typeof(CVRFuryDataStorageUnit))]
   public partial class CVRFuryDataStorageUnitEditor : Editor
   {
-
     // dev mode enabled
     bool devModeEnabled = false;
 
@@ -105,47 +105,45 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         logo.style.backgroundImage = logoTexture;
       }
 
-
       // get the gameObject this component is attached to
-      var DSUgameObject = ((CVRFuryDataStorageUnit) target).gameObject;
+      var DSUgameObject = ((CVRFuryDataStorageUnit)target).gameObject;
 
-      // get the parent of the DSUgameObject
-      var DSUparent = DSUgameObject.transform.parent;
+      // Start from this object's transform and traverse up
+      Transform currentTransform = DSUgameObject.transform;
+      CVRAvatar avatarComponent = null;
 
-      // check if the parent is null
-      if (DSUparent == null)
+      // Keep checking upwards until we either find a CVRAvatar or reach the root
+      while (currentTransform != null)
       {
-        // if the parent is null do nothing, as the DSU object is likely in the root of the scene
+        avatarComponent = currentTransform.GetComponent<CVRAvatar>();
+        if (avatarComponent != null)
+          break;
+        currentTransform = currentTransform.parent;
       }
-      else
+
+      // If we found a CVRAvatar component anywhere in the hierarchy
+      if (avatarComponent != null)
       {
-        // if the parent is not null,
+        // get the CVRFuryDataStorageUnitStatusAvatarLinkButton Button VisualElement
+        var CVRFuryDataStorageUnitStatusAvatarLinkButton = rootVisualElement.Q<Button>(
+          "CVRFuryDataStorageUnitStatusAvatarLinkButton"
+        );
+        // make the CVRFuryDataStorageUnitStatusAvatarLinkButton Button VisualElement visible
+        CVRFuryDataStorageUnitStatusAvatarLinkButton.style.display = DisplayStyle.Flex;
 
-        // check if the parent has a CVRAvatar component
-        if (DSUparent.GetComponent<CVRAvatar>() != null)
+        // set the button to select the gameObject the CVRAvatar component is attached to
+        CVRFuryDataStorageUnitStatusAvatarLinkButton.clickable.clicked += () =>
         {
-          // if the parent has a CVRAvatar component,
-          // get the CVRFuryDataStorageUnitStatusAvatarLinkButton Button VisualElement
-          var CVRFuryDataStorageUnitStatusAvatarLinkButton =
-            rootVisualElement.Q<Button>("CVRFuryDataStorageUnitStatusAvatarLinkButton");
-          // make the CVRFuryDataStorageUnitStatusAvatarLinkButton Button VisualElement visible
-          CVRFuryDataStorageUnitStatusAvatarLinkButton.style.display = DisplayStyle.Flex;
+          Selection.activeGameObject = avatarComponent.gameObject;
+        };
 
-          // set the button to select the gameObject the CVRAvatar component is attached to
-          CVRFuryDataStorageUnitStatusAvatarLinkButton.clickable.clicked += () =>
-          {
-            Selection.activeGameObject = DSUparent.gameObject;
-          };
+        // get the CVRFuryDataStorageUnitStatusAvatarLinkContent Label VisualElement
+        var CVRFuryDataStorageUnitStatusAvatarLinkContent = rootVisualElement.Q<Label>(
+          "CVRFuryDataStorageUnitStatusAvatarLinkContent"
+        );
 
-          // get the CVRFuryDataStorageUnitStatusAvatarLinkContent Label VisualElement
-          var CVRFuryDataStorageUnitStatusAvatarLinkContent =
-            rootVisualElement.Q<Label>("CVRFuryDataStorageUnitStatusAvatarLinkContent");
-
-          // set the text of the CVRFuryDataStorageUnitStatusAvatarLinkContent Label VisualElement to 'Active'
-          CVRFuryDataStorageUnitStatusAvatarLinkContent.text = "Active";
-
-        }
-
+        // set the text of the CVRFuryDataStorageUnitStatusAvatarLinkContent Label VisualElement to 'Active'
+        CVRFuryDataStorageUnitStatusAvatarLinkContent.text = "Active";
       }
 
       // Apply the StyleSheet
@@ -156,10 +154,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Call UpdateUI after creating the UI
       UpdateUI(devModeEnabled);
 
-
       return rootVisualElement;
     }
-
 
     private void OnEnable()
     {
@@ -168,27 +164,48 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
     private void devModeSubscribe()
     {
-      if (target is CVRFuryDataStorageUnit cvrFuryDataStorageUnit && cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      // Exit if target is null
+      if (target == null)
+        return;
+
+      var cvrFuryDataStorageUnit = target as CVRFuryDataStorageUnit;
+      if (cvrFuryDataStorageUnit == null)
+        return;
+
+      var gameObject = cvrFuryDataStorageUnit.gameObject;
+      if (gameObject == null)
+        return;
+
+      var devModeEnabler = gameObject.GetComponent<CVRFuryDevModeEnabler>();
+      if (devModeEnabler != null)
       {
-        var CVRFuryDevModeEnabler = cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>();
-        CVRFuryDevModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
-        devModeEnabled = CVRFuryDevModeEnabler.DevModeEnabled;
+        if (devModeEnabler.OnDevModeChanged == null)
+        {
+          devModeEnabler.OnDevModeChanged = new CVRFuryDevModeEnabler.BoolEvent();
+        }
+        devModeEnabler.OnDevModeChanged.AddListener(UpdateUI);
+        devModeEnabled = devModeEnabler.DevModeEnabled;
       }
     }
 
     private void OnDisable()
     {
-      // check if target is null
+      // Exit if target is null
       if (target == null)
-      {
-        // if target is null, return
         return;
-      }
 
-      if (target is CVRFuryDataStorageUnit cvrFuryDataStorageUnit && cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>() != null)
+      var cvrFuryDataStorageUnit = target as CVRFuryDataStorageUnit;
+      if (cvrFuryDataStorageUnit == null)
+        return;
+
+      var gameObject = cvrFuryDataStorageUnit.gameObject;
+      if (gameObject == null)
+        return;
+
+      var devModeEnabler = gameObject.GetComponent<CVRFuryDevModeEnabler>();
+      if (devModeEnabler != null && devModeEnabler.OnDevModeChanged != null)
       {
-        var CVRFuryDevModeEnabler = cvrFuryDataStorageUnit.gameObject.GetComponent<CVRFuryDevModeEnabler>();
-        CVRFuryDevModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
+        devModeEnabler.OnDevModeChanged.RemoveListener(UpdateUI);
       }
     }
 
@@ -207,11 +224,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // update data on ui TODO: move this bit to a function -----------------------------------------------------------
 
       // get the CVRFuryDataStorageUnitStatusDataContent Label VisualElement
-      var CVRFuryDataStorageUnitStatusDataContent =
-        rootVisualElement.Q<Label>("CVRFuryDataStorageUnitStatusDataContent");
+      var CVRFuryDataStorageUnitStatusDataContent = rootVisualElement.Q<Label>(
+        "CVRFuryDataStorageUnitStatusDataContent"
+      );
 
       // get the number of modules in the modules in this DSU
-      var numberOfModules = ((CVRFuryDataStorageUnit) target).modules.modules.Count;
+      var numberOfModules = ((CVRFuryDataStorageUnit)target).modules.modules.Count;
 
       // set the text of the CVRFuryDataStorageUnitStatusDataContent Label VisualElement to the number of modules
       CVRFuryDataStorageUnitStatusDataContent.text = numberOfModules.ToString() + " Modules Stored";
@@ -219,20 +237,18 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // update data on ui  END ----------------------------------------------------------------------------------------
 
       // supported features import
-      #if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_CORE
+#if NVH_CVRFURY_EXISTS_COMP_DSU_IMPORT_CORE
       importVRCFuryFeaturesViaUI();
-      #endif
+#endif
 
       renderDevModeUI();
       Repaint();
     }
 
-
     private void renderDevModeUI()
     {
       if (devModeEnabled)
       {
-
         // load the devMode uss from resources
         var devModeStyleSheet = Resources.Load<StyleSheet>(
           Constants.PROGRAM_DISPLAY_NAME + "/DevMode/UnityStyleSheets/CVRFuryDataStorageUnitInspector-Dev"
@@ -252,7 +268,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
           // set the name of the devModeTagVisualElement to allow styling
           devModeTagVisualElement.name = "devModeTag";
-
 
           // add the devModeTagVisualElement to the rootVisualElement
           rootVisualElement.Add(devModeTagVisualElement);
@@ -290,8 +305,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           defaultEditorContainer.Add(moduleAdderContainer);
 
           // Get all types that are subclasses of CVRFuryModule
-          List<Type> moduleTypes = Assembly.GetAssembly(typeof(CVRFuryModule)).GetTypes()
-            .Where(t => t.IsSubclassOf(typeof(CVRFuryModule)) && !t.IsAbstract).ToList();
+          List<Type> moduleTypes = Assembly
+            .GetAssembly(typeof(CVRFuryModule))
+            .GetTypes()
+            .Where(
+              t =>
+                t.IsSubclassOf(typeof(CVRFuryModule))
+                && !t.IsAbstract
+                && !t.IsDefined(typeof(DoNotShowOnListAttribute), false)
+            )
+            .ToList();
 
           // Convert the types to their string names for the dropdown
           List<string> moduleTypeNames = moduleTypes.Select(t => t.Name).ToList();
@@ -312,14 +335,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
             newModule.unityVersion = ParseUnityVersion(Application.unityVersion);
             newModule.CVRCCKVersion = ParseCCKVersion();
 
-
-            ((CVRFuryDataStorageUnit) target).modules.modules.Add(newModule);
+            ((CVRFuryDataStorageUnit)target).modules.modules.Add(newModule);
             UpdateUI(devModeEnabled);
           });
           moduleAdderButton.name = "moduleAdderButton";
           moduleAdderButton.text = "Add Module";
           moduleAdderContainer.Add(moduleAdderButton);
-
         }
       }
       else
@@ -342,11 +363,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-
     private CVRFurySemVer ParseCCKVersion()
     {
       string version = uk.novavoidhowl.dev.cvrfury.deployable.CVRFury_CCKLink.GetCCKVersion();
-      string buildId = uk.novavoidhowl.dev.cvrfury.deployable.CVRFury_CCKLink.GetCCKBuildNumber();
       var type = uk.novavoidhowl.dev.cvrfury.deployable.CVRFury_CCKLink.GetCCKReleaseType();
 
       var versionParts = version.Split('.');
@@ -354,10 +373,17 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       var minor = versionParts.Length > 1 ? int.Parse(versionParts[1]) : 0;
       var patch = versionParts.Length > 2 ? int.Parse(versionParts[2]) : 0;
 
-      var metadata = type + " (" + buildId + ")";
+      var metadata = type;
 
-      return new CVRFurySemVer { major = major, minor = minor, patch = patch, metadata = metadata };
+      return new CVRFurySemVer
+      {
+        major = major,
+        minor = minor,
+        patch = patch,
+        metadata = metadata
+      };
     }
+
     private CVRFurySemVer ParseCVRFuryVersion()
     {
       string path = "Packages/" + Constants.PACKAGE_NAME + "/package.json";
@@ -374,7 +400,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       var patch = int.Parse(metadataSplit[0]);
       var metadata = metadataSplit.Length > 1 ? metadataSplit[1] : "";
 
-      return new CVRFurySemVer { major = major, minor = minor, patch = patch, metadata = metadata };
+      return new CVRFurySemVer
+      {
+        major = major,
+        minor = minor,
+        patch = patch,
+        metadata = metadata
+      };
     }
 
     private CVRFurySemVer ParseUnityVersion(string unityVersion)
@@ -385,10 +417,14 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       var patch = int.Parse(versionParts[2].Split('f')[0]);
       var metadata = versionParts[2].Split('f')[1];
 
-      return new CVRFurySemVer { major = major, minor = minor, patch = patch, metadata = metadata };
+      return new CVRFurySemVer
+      {
+        major = major,
+        minor = minor,
+        patch = patch,
+        metadata = metadata
+      };
     }
-
-
   }
 }
 #endif

@@ -8,7 +8,6 @@ using System.Reflection;
 
 namespace uk.novavoidhowl.dev.cvrfury.runtime
 {
-
   [Serializable]
   public class armatureLink : CVRFuryModuleLinker
   {
@@ -36,6 +35,5 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public List<HumanBodyBones> fallbackBones = new List<HumanBodyBones>();
 
     // end basic mode vars
-
   }
 }

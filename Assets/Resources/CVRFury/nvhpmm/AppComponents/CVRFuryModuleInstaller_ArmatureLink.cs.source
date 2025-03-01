@@ -1,4 +1,4 @@
-// { "version": "0.7.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
+// { "version": "0.7.1" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_AL", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -453,7 +453,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           // go over the game objects under the DSUObject and using the addonBoneNamesListPreStrip and addonBoneNamesList
           // rename the game objects to match the addonBoneNamesList, to get rid of the suffix/prefixs
           // get list of all the game objects under the DSUObject
-          List<GameObject> gameObjectsUnderDSUObject = DSUObject.GetComponentsInChildren<Transform>().Select(t => t.gameObject).ToList();
+          List<GameObject> gameObjectsUnderDSUObject = DSUObject
+            .GetComponentsInChildren<Transform>()
+            .Select(t => t.gameObject)
+            .ToList();
 
           // for each entry in addonBoneNamesListPreStrip find the counterpart in addonBoneNamesList (they will have the same index)
           // and rename the related game object from gameObjectsUnderDSUObject to match the addonBoneNamesList entry
@@ -483,11 +486,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           addonBoneNames = new List<BoneData>();
           foreach (Transform bone in addonBones)
           {
-            addonBoneNames.Add(new BoneData { name = bone.name, parentName = bone.parent != null ? bone.parent.name : "" });
+            addonBoneNames.Add(
+              new BoneData { name = bone.name, parentName = bone.parent != null ? bone.parent.name : "" }
+            );
           }
           // ensure that any 'bone' in the addonBones list whose name matches that of the armatureRoot is removed
           addonBoneNames.RemoveAll(b => b.name == armatureRoot.name);
-          
         }
 
         // debug print the addonBoneNamesList after stripping the suffix
@@ -1081,7 +1085,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
       #endregion
-
     }
 
     private void performReparentRoot(
@@ -1186,11 +1189,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CoreLogDebug("[ArmatureLink] newAddonObjectToLinkPath: " + newAddonObjectToLinkPath);
     }
 
-
-
-
-
-    private void AnimationPathFix(CVRAvatar avatar, GameObject targetAvatar, int DSUNumber, GameObject DSUObject, armatureLink armatureLinkModule)
+    private void AnimationPathFix(
+      CVRAvatar avatar,
+      GameObject targetAvatar,
+      int DSUNumber,
+      GameObject DSUObject,
+      armatureLink armatureLinkModule
+    )
     {
       // there are 2 types of animation paths that need to be sorted out
       // 1. the paths in the animation files that are relative to the armature
@@ -1213,7 +1218,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         DSUObjectName = DSUObjectName.Replace(".CVRFury", "");
       }
       // remove the `[CVRF_D*]_` prefix from the DSUObjectName
-      DSUObjectName = DSUObjectName.Replace("[CVRF_D"+DSUNumber+"]_", "");
+      DSUObjectName = DSUObjectName.Replace("[CVRF_D" + DSUNumber + "]_", "");
 
       CoreLogDebug("[ArmatureLink][animation rebind] DSUObjectName processed: " + DSUObjectName);
 
@@ -1485,11 +1490,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
     }
 
-
-
-
-
-
     private void GameObjectCleanup(GameObject DSUObject)
     {
       // clean up any surplus gameObjects under the DSU object that are not needed
@@ -1616,8 +1616,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         }
       }
     }
-
-
 
     // -----------------------------------------------------------------------------------------------------------------
     #region Helper Functions/structs

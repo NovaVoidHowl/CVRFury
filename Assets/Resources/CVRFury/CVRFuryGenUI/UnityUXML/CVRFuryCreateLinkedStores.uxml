@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements">
+  <ui:VisualElement class="root-container">
+    <ui:VisualElement class="input-container">
+      <ui:TextField name="nameField" label="Name"/>
+      <ui:Toggle name="createMenuStoreToggle" label="Create Menu Store"/>
+      <ui:Toggle name="createParamStoreToggle" label="Create Parameter Store"/>
+      <ui:Toggle name="createControllerToggle" label="Create Controller"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="warningContainer" class="warning-container">
+      <ui:Label name="warningLabel" class="warning-text"/>
+    </ui:VisualElement>
+    <ui:VisualElement class="button-container">
+      <ui:Button name="cancelButton" text="Cancel" class="dialog-button"/>
+      <ui:Button name="confirmButton" text="Create" class="confirm-button"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</UXML>
