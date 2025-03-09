@@ -36,20 +36,47 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
       public string ComponentIdentifier { get; set; }
       public string HeaderText { get; set; }
       public string DebugModeIdentifier { get; set; }
+      public string Prefix { get; set; }
+      public Color PrefixColour { get; set; }
+      public Color HeaderBackgroundColour { get; set; }
 
-      public ComponentConfig(string editorName, string componentIdentifier, string headerText)
+      public ComponentConfig(
+        string editorName,
+        string componentIdentifier,
+        string headerText,
+        string prefix,
+        Color prefixColour,
+        Color headerBackgroundColour
+      )
       {
         EditorName = editorName;
         ComponentIdentifier = componentIdentifier;
         HeaderText = headerText;
         DebugModeIdentifier = $"GenericInspector_{componentIdentifier}_";
+        Prefix = prefix;
+        PrefixColour = prefixColour;
+        HeaderBackgroundColour = headerBackgroundColour;
       }
     }
 
     private static readonly ComponentConfig[] ComponentConfigs = new[]
     {
-      new ComponentConfig("Component Dev Mode Enabler", "CVRFuryDevModeEnablerEditor", "CVRFury Dev Mode Enabler"),
-      new ComponentConfig("Data Storage Unit", "CVRFuryDataStorageUnitBase", "CVRFury DSU"),
+      new ComponentConfig(
+        "Component Dev Mode Enabler",
+        "CVRFuryDevModeEnablerEditor",
+        "Dev Mode Enabler",
+        "CVR Fury",
+        Constants.CVRFURY_HEADER_PREFIX_COLOUR,
+        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR
+      ),
+      new ComponentConfig(
+        "Data Storage Unit",
+        "CVRFuryDataStorageUnitBase",
+        "DSU",
+        "CVR Fury",
+        Constants.CVRFURY_HEADER_PREFIX_COLOUR,
+        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR
+      ),
       // Add more components here as needed
     };
 
@@ -287,7 +314,15 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
               if (!headerMapping.ContainsKey(componentId) || !targetContainer.Contains(headerMapping[componentId]))
               {
                 CollectLog($"Creating/Updating header for {componentId} in editor element");
-                CreateOrUpdateHeader(targetContainer, componentId, headerContainer, config.HeaderText);
+                CreateOrUpdateHeader(
+                  targetContainer,
+                  componentId,
+                  headerContainer,
+                  config.HeaderText,
+                  config.Prefix,
+                  config.PrefixColour,
+                  config.HeaderBackgroundColour
+                );
               }
             }
           }
@@ -349,7 +384,10 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
       VisualElement targetContainer,
       string componentId,
       VisualElement headerReference,
-      string headerText
+      string headerText,
+      string prefix,
+      Color prefixColour,
+      Color backgroundColour
     )
     {
       CollectLog($"Creating header for {componentId}");
@@ -370,13 +408,14 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
           left = 21,
           right = 74,
           height = 21,
-          backgroundColor = new Color(0.125f, 0.125f, 0.125f),
-          paddingLeft = 28,
-          paddingTop = 4,
+          backgroundColor = backgroundColour,
+          paddingLeft = 10,
+          paddingTop = 0,
           unityTextAlign = TextAnchor.MiddleLeft,
           color = Color.white,
           opacity = 1,
           display = DisplayStyle.Flex,
+          flexDirection = FlexDirection.Row,
           borderBottomRightRadius = 10,
           borderTopRightRadius = 10
         }
@@ -384,8 +423,19 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
 
       customHeader.AddToClassList("cvr-fury-custom-header-overlay");
 
-      var label = new Label(headerText) { style = { fontSize = 12, unityFontStyleAndWeight = FontStyle.Bold } };
+      var prefixLabel = new Label(prefix)
+      {
+        style =
+        {
+          fontSize = 12,
+          unityFontStyleAndWeight = FontStyle.Bold,
+          color = prefixColour,
+          marginRight = 4
+        }
+      };
+      customHeader.Add(prefixLabel);
 
+      var label = new Label(headerText) { style = { fontSize = 12, unityFontStyleAndWeight = FontStyle.Bold } };
       customHeader.Add(label);
 
       // Insert the custom header right after the original header
