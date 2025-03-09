@@ -30,9 +30,32 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
     private static readonly int totalUpdateFrames = 5; // Check for 5 frames after selection change
     private static StringBuilder logCollector = new StringBuilder();
 
+    private class ComponentConfig
+    {
+      public string EditorName { get; set; }
+      public string ComponentIdentifier { get; set; }
+      public string HeaderText { get; set; }
+      public string DebugModeIdentifier { get; set; }
+
+      public ComponentConfig(string editorName, string componentIdentifier, string headerText)
+      {
+        EditorName = editorName;
+        ComponentIdentifier = componentIdentifier;
+        HeaderText = headerText;
+        DebugModeIdentifier = $"GenericInspector_{componentIdentifier}_";
+      }
+    }
+
+    private static readonly ComponentConfig[] ComponentConfigs = new[]
+    {
+      new ComponentConfig("Component Dev Mode Enabler", "CVRFuryDevModeEnablerEditor", "CVRFury Dev Mode Enabler"),
+      new ComponentConfig("Data Storage Unit", "CVRFuryDataStorageUnitBase", "CVRFury DSU"),
+      // Add more components here as needed
+    };
+
     static InspectorOverlay()
     {
-      Debug.Log("CVRFury: Inspector Overlay Initializing");
+      CoreLogDebug("CVRFury: Inspector Overlay Initializing");
       inspectorWindowType = typeof(EditorWindow).Assembly.GetType("UnityEditor.InspectorWindow");
 
       EditorApplication.delayCall += () =>
@@ -56,7 +79,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
 
     private static void InitializeOverlay()
     {
-      Debug.Log("CVRFury: Initializing Overlay");
+      CoreLogDebug("CVRFury: Initializing Overlay");
 
       // Remove any existing callbacks to prevent duplicates
       Selection.selectionChanged -= OnSelectionChanged;
@@ -83,7 +106,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
 
     private static void OnAfterAssemblyReload()
     {
-      Debug.Log("CVRFury: After Assembly Reload");
+      CoreLogDebug("CVRFury: After Assembly Reload");
       InitializeOverlay();
     }
 
@@ -143,7 +166,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
 
     private static void OnSelectionChanged()
     {
-      Debug.Log("CVRFury: Selection Changed - Scheduling Updates");
+      CoreLogDebug("CVRFury: Selection Changed - Scheduling Updates");
       pendingUpdateFrames = totalUpdateFrames;
 
       // Add multiple delayed updates to catch the inspector rebuild
@@ -162,7 +185,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
       if (inspectorWindowType == null)
         return;
 
-      Debug.Log("CVRFury: Updating Headers");
+      CoreLogDebug("CVRFury: Updating Headers");
 
       // Clean up any invalid entries
       var invalidKeys = headerMapping.Keys.Where(key => headerMapping[key]?.panel == null).ToList();
@@ -235,38 +258,37 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
 
         CollectLog("Starting detailed inspector analysis");
 
-        // Look for EditorElements that contain our component - handle both naming patterns
-        var editorElements = window.rootVisualElement
-          .Query<VisualElement>()
-          .Where(
-            e =>
-              e.name == "Component Dev Mode Enabler"
-              || (e.name?.StartsWith("GenericInspector_CVRFuryDevModeEnabler_") == true)
-          )
-          .ToList();
-
-        CollectLog($"Found {editorElements.Count} Component Dev Mode Enabler elements");
-
-        foreach (var editorElement in editorElements)
+        foreach (var config in ComponentConfigs)
         {
-          // Find the header container - fixed query
-          var headerContainer = editorElement
-            .Query<IMGUIContainer>()
-            .Where(e => e.name != null && (e.name == "Component Dev Mode EnablerHeader" || e.name.EndsWith("Header")))
-            .ToList()
-            .FirstOrDefault();
+          // Look for EditorElements that contain our component - handle both naming patterns
+          var editorElements = window.rootVisualElement
+            .Query<VisualElement>()
+            .Where(e => e.name == config.EditorName || (e.name?.StartsWith(config.DebugModeIdentifier) == true))
+            .ToList();
 
-          if (headerContainer != null)
+          CollectLog($"Found {editorElements.Count} {config.EditorName} elements");
+
+          foreach (var editorElement in editorElements)
           {
-            var componentId = $"{editorElement.GetHashCode()}_{GetElementPath(editorElement)}";
-            activeComponents.Add(componentId);
+            // Find the header container - fixed query
+            var headerContainer = editorElement
+              .Query<IMGUIContainer>()
+              .Where(e => e.name != null && (e.name == $"{config.EditorName}Header" || e.name.EndsWith("Header")))
+              .ToList()
+              .FirstOrDefault();
 
-            // Use the parent of the header container
-            var targetContainer = headerContainer.parent;
-            if (!headerMapping.ContainsKey(componentId) || !targetContainer.Contains(headerMapping[componentId]))
+            if (headerContainer != null)
             {
-              CollectLog($"Creating/Updating header for {componentId} in editor element");
-              CreateOrUpdateHeader(targetContainer, componentId, headerContainer);
+              var componentId = $"{editorElement.GetHashCode()}_{GetElementPath(editorElement)}";
+              activeComponents.Add(componentId);
+
+              // Use the parent of the header container
+              var targetContainer = headerContainer.parent;
+              if (!headerMapping.ContainsKey(componentId) || !targetContainer.Contains(headerMapping[componentId]))
+              {
+                CollectLog($"Creating/Updating header for {componentId} in editor element");
+                CreateOrUpdateHeader(targetContainer, componentId, headerContainer, config.HeaderText);
+              }
             }
           }
         }
@@ -305,7 +327,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
     {
       if (logCollector.Length > 0)
       {
-        Debug.Log($"CVRFury Inspector Analysis Report:\n{logCollector}");
+        CoreLogDebug($"CVRFury Inspector Analysis Report:\n{logCollector}");
         logCollector.Clear();
       }
     }
@@ -326,7 +348,8 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
     private static void CreateOrUpdateHeader(
       VisualElement targetContainer,
       string componentId,
-      VisualElement headerReference
+      VisualElement headerReference,
+      string headerText
     )
     {
       CollectLog($"Creating header for {componentId}");
@@ -345,7 +368,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
           position = Position.Absolute,
           top = headerReference.worldBound.y - headerReference.parent.worldBound.y,
           left = 21,
-          right = 60,
+          right = 74,
           height = 21,
           backgroundColor = new Color(0.125f, 0.125f, 0.125f),
           paddingLeft = 28,
@@ -353,16 +376,15 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
           unityTextAlign = TextAnchor.MiddleLeft,
           color = Color.white,
           opacity = 1,
-          display = DisplayStyle.Flex
+          display = DisplayStyle.Flex,
+          borderBottomRightRadius = 10,
+          borderTopRightRadius = 10
         }
       };
 
       customHeader.AddToClassList("cvr-fury-custom-header-overlay");
 
-      var label = new Label("CVRFury Dev Mode Enabler")
-      {
-        style = { fontSize = 12, unityFontStyleAndWeight = FontStyle.Bold }
-      };
+      var label = new Label(headerText) { style = { fontSize = 12, unityFontStyleAndWeight = FontStyle.Bold } };
 
       customHeader.Add(label);
 
@@ -382,25 +404,6 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
           }
         }
       };
-    }
-
-    private static void FindEditorsInHierarchy(VisualElement element, List<VisualElement> results)
-    {
-      if (element == null)
-        return;
-
-      // Check if this element is our target
-      if (element.name?.Contains("CVRFuryDevModeEnablerEditor") == true)
-      {
-        results.Add(element);
-        CollectLog($"Found editor element at depth {GetElementDepth(element)}: {element.name}");
-      }
-
-      // Recursively check all children
-      foreach (var child in element.Children())
-      {
-        FindEditorsInHierarchy(child, results);
-      }
     }
 
     private static void DebugVisualElementHierarchy(VisualElement element, int depth = 0)
