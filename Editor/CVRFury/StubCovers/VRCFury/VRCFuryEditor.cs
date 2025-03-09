@@ -453,10 +453,9 @@ namespace uk.novavoidhowl.dev.cvrfury
       if (actionButton != null)
       {
         // Set up click handler
-        actionButton.clicked += () =>
-        {
+        actionButton.clicked += () => {
           // Handle button click here
-          Debug.Log("Action button clicked");
+          // Debug.Log("Action button clicked"); // Debug log to confirm button click
         };
       }
       // subscribe to the CVRFuryDevModeEnabler component
