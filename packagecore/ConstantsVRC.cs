@@ -1,11 +1,29 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
   public static partial class Constants
   {
+    // colour data for VRC component headers
+    public static readonly Color VRC_HEADER_PREFIX_COLOUR = new Color(
+      hexadecimalToColour("#0060ff").r,
+      hexadecimalToColour("#0060ff").g,
+      hexadecimalToColour("#0060ff").b
+    );
+    public static readonly Color VRC_HEADER_BACKGROUND_COLOUR = new Color(
+      hexadecimalToColour("#202020").r,
+      hexadecimalToColour("#202020").g,
+      hexadecimalToColour("#202020").b
+    );
+    public static readonly Color VRC_HEADER_BACKGROUND_HOVER_COLOUR = new Color(
+      hexadecimalToColour("#262a2b").r,
+      hexadecimalToColour("#262a2b").g,
+      hexadecimalToColour("#262a2b").b
+    );
+
     public static readonly ReadOnlyCollection<string> VRCSTUB_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
       new List<string>
       {

@@ -47,7 +47,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public static readonly string GITHUB_CLONE_BASE_URL = "https://github.com/NovaVoidHowl/CVRFury.git";
 
     public static readonly Color CVRFURY_HEADER_PREFIX_COLOUR = new Color(0.8f, 0.4f, 0f);
-    public static readonly Color CVRFURY_HEADER_BACKGROUND_COLOUR = new Color(0.125f, 0.125f, 0.125f);
+    public static readonly Color CVRFURY_HEADER_BACKGROUND_HOVER_COLOUR = new Color(0.125f, 0.125f, 0.125f);
+    public static readonly Color CVRFURY_HEADER_BACKGROUND_COLOUR = new Color(0.100f, 0.100f, 0.100f);
 
     public static readonly ReadOnlyCollection<string> CVRFURY_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
       new List<string>

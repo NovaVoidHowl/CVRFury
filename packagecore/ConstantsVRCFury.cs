@@ -14,9 +14,14 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       hexadecimalToColour("#ffb125").b
     );
     public static readonly Color VRCFURY_HEADER_BACKGROUND_COLOUR = new Color(
-      hexadecimalToColour("#363636").r,
-      hexadecimalToColour("#363636").g,
-      hexadecimalToColour("#363636").b
+      hexadecimalToColour("#111111").r,
+      hexadecimalToColour("#111111").g,
+      hexadecimalToColour("#111111").b
+    );
+    public static readonly Color VRCFURY_HEADER_BACKGROUND_HOVER_COLOUR = new Color(
+      hexadecimalToColour("#202030").r,
+      hexadecimalToColour("#202030").g,
+      hexadecimalToColour("#202030").b
     );
 
     // note this is not the main version number but rather a breaking change counter,

@@ -13,7 +13,7 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 namespace uk.novavoidhowl.dev.cvrfury.inspector
 {
   [InitializeOnLoad]
-  public static class InspectorOverlay
+  public static partial class InspectorOverlay
   {
     private static Dictionary<string, VisualElement> headerMapping = new Dictionary<string, VisualElement>();
     private static System.Type inspectorWindowType;
@@ -42,6 +42,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
       public string Prefix { get; set; }
       public Color PrefixColour { get; set; }
       public Color HeaderBackgroundColour { get; set; }
+      public Color HeaderBackgroundColourHover { get; set; }
       public DisplayMode Mode { get; set; }
 
       public ComponentConfig(
@@ -51,6 +52,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         string prefix,
         Color prefixColour,
         Color headerBackgroundColour,
+        Color headerBackgroundColourHover,
         DisplayMode mode
       )
       {
@@ -61,41 +63,10 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         Prefix = prefix;
         PrefixColour = prefixColour;
         HeaderBackgroundColour = headerBackgroundColour;
+        HeaderBackgroundColourHover = headerBackgroundColourHover;
         Mode = mode;
       }
     }
-
-    private static readonly ComponentConfig[] ComponentConfigs = new[]
-    {
-      new ComponentConfig(
-        "Component Dev Mode Enabler",
-        "CVRFuryDevModeEnablerEditor",
-        "Dev Mode Enabler",
-        "CVR Fury",
-        Constants.CVRFURY_HEADER_PREFIX_COLOUR,
-        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR,
-        DisplayMode.Normal
-      ),
-      new ComponentConfig(
-        "Data Storage Unit",
-        "CVRFuryDataStorageUnitBase",
-        "DSU",
-        "CVR Fury",
-        Constants.CVRFURY_HEADER_PREFIX_COLOUR,
-        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR,
-        DisplayMode.Both
-      ),
-      new ComponentConfig(
-        "VRC Fury (Script)",
-        "VRCFuryStubBase",
-        "VRC Fury Component",
-        "VRC Fury",
-        Constants.VRCFURY_HEADER_PREFIX_COLOUR,
-        Constants.VRCFURY_HEADER_BACKGROUND_COLOUR,
-        DisplayMode.Debug
-      ),
-      // Add more components here as needed
-    };
 
     static InspectorOverlay()
     {
@@ -355,7 +326,8 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
                   config.HeaderText,
                   config.Prefix,
                   config.PrefixColour,
-                  config.HeaderBackgroundColour
+                  config.HeaderBackgroundColour,
+                  config.HeaderBackgroundColourHover
                 );
               }
             }
@@ -429,7 +401,8 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
       string headerText,
       string prefix,
       Color prefixColour,
-      Color backgroundColour
+      Color backgroundColour,
+      Color backgroundColourHover
     )
     {
       CollectLog($"Creating header for {componentId}");
@@ -448,7 +421,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
           position = Position.Absolute,
           top = headerReference.worldBound.y - headerReference.parent.worldBound.y,
           left = 21,
-          right = 74,
+          right = 64,
           height = 21,
           backgroundColor = backgroundColour,
           paddingLeft = 10,
@@ -458,10 +431,30 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
           opacity = 1,
           display = DisplayStyle.Flex,
           flexDirection = FlexDirection.Row,
-          borderBottomRightRadius = 10,
-          borderTopRightRadius = 10
+          overflow = Overflow.Hidden,
+          textOverflow = TextOverflow.Ellipsis
         }
       };
+
+      headerReference.RegisterCallback<MouseEnterEvent>(evt =>
+      {
+        customHeader.style.backgroundColor = new StyleColor(backgroundColourHover); // Change to desired hover color
+      });
+
+      headerReference.RegisterCallback<MouseLeaveEvent>(evt =>
+      {
+        customHeader.style.backgroundColor = new StyleColor(backgroundColour); // Revert to original color
+      });
+
+      customHeader.RegisterCallback<MouseEnterEvent>(evt =>
+      {
+        customHeader.style.backgroundColor = new StyleColor(backgroundColourHover); // Change to desired hover color
+      });
+
+      customHeader.RegisterCallback<MouseLeaveEvent>(evt =>
+      {
+        customHeader.style.backgroundColor = new StyleColor(backgroundColour); // Revert to original color
+      });
 
       customHeader.AddToClassList("cvr-fury-custom-header-overlay");
 
