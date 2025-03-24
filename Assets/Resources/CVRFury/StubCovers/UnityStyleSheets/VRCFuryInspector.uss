@@ -73,17 +73,13 @@
   left: 20px;
   right: 68px;
   height: 20px;
-  /* background-color: #3E3E3E; */
-  background-color: #202020;
-}
-#componentTypeVisualElement:hover{
-  background-color: #202030;
 }
 
 #topBarContent{
   position: relative;
-  top: 2px;
   padding-left: 10px;
+  flex-direction: row;
+  display: flex;
 }
 
 #unsupportedVisualElement{

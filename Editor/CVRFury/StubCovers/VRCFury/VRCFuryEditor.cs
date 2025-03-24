@@ -86,7 +86,7 @@ namespace uk.novavoidhowl.dev.cvrfury
       int version = serializedObject.FindProperty("version").intValue;
 
       // add an element to show the version of the VRCFury component
-      var versionLabel = new Label("Datastore Version: " + version);
+      var versionLabel = new Label("Data Store Version: " + version);
       if (version > Constants.MAX_VRCFURY_VERSION_DATA)
       {
         versionLabel.AddToClassList("version-error-label");
@@ -112,7 +112,15 @@ namespace uk.novavoidhowl.dev.cvrfury
       switch (version)
       {
         case 2:
-          componentTypeVisualElement.Add(CreateComponentTopBar("VRCFury Datastore"));
+          componentTypeVisualElement.Add(
+            CreateComponentTopBar(
+              "VRC Fury",
+              "Data Store",
+              Constants.VRCFURY_HEADER_PREFIX_COLOUR,
+              Constants.VRCFURY_HEADER_BACKGROUND_COLOUR,
+              Constants.VRCFURY_HEADER_BACKGROUND_HOVER_COLOUR
+            )
+          );
           // debug print to say we are in version 2
           CoreLogDebug("VRCFury component version 2 - top bar set");
           break;
@@ -120,7 +128,15 @@ namespace uk.novavoidhowl.dev.cvrfury
           SetComponentTopBarV3(componentTypeVisualElement, serializedObject);
           break;
         default:
-          componentTypeVisualElement.Add(CreateComponentTopBar("VRCFury Datastore | Unsupported Version : " + version));
+          componentTypeVisualElement.Add(
+            CreateComponentTopBar(
+              "VRC Fury",
+              "Data Store | Unsupported Version : " + version,
+              Constants.VRCFURY_HEADER_PREFIX_COLOUR,
+              Constants.VRCFURY_HEADER_BACKGROUND_COLOUR,
+              Constants.VRCFURY_HEADER_BACKGROUND_HOVER_COLOUR
+            )
+          );
           break; // do nothing
       }
 
@@ -237,15 +253,15 @@ namespace uk.novavoidhowl.dev.cvrfury
           rootVisualElement.Add(errorVisualElement);
 
           // if it is, add a warning to the rootVisualElement
-          var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Data Store Version");
+          var warningTitleLabel = new Label("WARNING: Incompatible VRC Fury Data Store Version");
           warningTitleLabel.AddToClassList("warning-title");
           errorVisualElement.Add(warningTitleLabel);
           errorVisualElement.Add(
-            new Label("This VRCFury component is not compatible with" + " the currently installed version of CVRFury.")
+            new Label("This VRC Fury component is not compatible with" + " the currently installed version of CVRFury.")
           );
           errorVisualElement.Add(
             new Label(
-              "Note the converted copy of prefab will likely have a corrupted datastore now so please delete it"
+              "Note the converted copy of prefab will likely have a corrupted data store now so please delete it"
             )
           );
           errorVisualElement.Add(
@@ -289,10 +305,10 @@ namespace uk.novavoidhowl.dev.cvrfury
                 rootVisualElement.Add(errorVisualElement);
 
                 // if it is, add a warning to the rootVisualElement
-                var warningTitleLabel = new Label("WARNING: Corrupted VRCFury Component");
+                var warningTitleLabel = new Label("WARNING: Corrupted VRC Fury Component");
                 warningTitleLabel.AddToClassList("warning-title");
                 errorVisualElement.Add(warningTitleLabel);
-                errorVisualElement.Add(new Label("This VRCFury component is corrupted and cannot be loaded."));
+                errorVisualElement.Add(new Label("This VRC Fury component is corrupted and cannot be loaded."));
               }
               else
               {
@@ -304,7 +320,7 @@ namespace uk.novavoidhowl.dev.cvrfury
                 // debug log the content type
                 CoreLogDebug("Content Type class: " + contentClassName);
 
-                // check if tthe contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
+                // check if the contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
                 if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
                 {
                   // ok this is a feature we don't support at all (not just a version issue)
@@ -336,12 +352,12 @@ namespace uk.novavoidhowl.dev.cvrfury
                       rootVisualElement.Add(errorVisualElement);
 
                       // if it is, add a warning to the rootVisualElement
-                      var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                      var warningTitleLabel = new Label("WARNING: Incompatible VRC Fury Import Version");
                       warningTitleLabel.AddToClassList("warning-title");
                       errorVisualElement.Add(warningTitleLabel);
                       errorVisualElement.Add(
                         new Label(
-                          "This VRCFury component is not import compatible with"
+                          "This VRC Fury component is not import compatible with"
                             + " the currently installed version of CVRFury."
                         )
                       );
@@ -380,12 +396,12 @@ namespace uk.novavoidhowl.dev.cvrfury
                     rootVisualElement.Add(errorVisualElement);
 
                     // if it is, add a warning to the rootVisualElement
-                    var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                    var warningTitleLabel = new Label("WARNING: Incompatible VRC Fury Import Version");
                     warningTitleLabel.AddToClassList("warning-title");
                     errorVisualElement.Add(warningTitleLabel);
                     errorVisualElement.Add(
                       new Label(
-                        "This VRCFury component '"
+                        "This VRC Fury component '"
                           + contentClassName
                           + "' is not import compatible with"
                           + " the currently installed version of CVRFury."
@@ -415,12 +431,12 @@ namespace uk.novavoidhowl.dev.cvrfury
               rootVisualElement.Add(errorVisualElement);
 
               // if it is, add a warning to the rootVisualElement
-              var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+              var warningTitleLabel = new Label("WARNING: Incompatible VRC Fury Import Version");
               warningTitleLabel.AddToClassList("warning-title");
               errorVisualElement.Add(warningTitleLabel);
               errorVisualElement.Add(
                 new Label(
-                  "This VRCFury component is not import compatible with"
+                  "This VRC Fury component is not import compatible with"
                     + " the currently installed version of CVRFury."
                 )
               );
@@ -664,7 +680,7 @@ namespace uk.novavoidhowl.dev.cvrfury
           defaultEditorContainer.Add(featureAdderContainer);
 
           // add label for the feature adder to say its for V2 VRCFury features
-          var featureAdderLabel = new Label("V2 VRCFury Feature adder controls");
+          var featureAdderLabel = new Label("V2 VRC Fury Feature adder controls");
           featureAdderContainer.Add(featureAdderLabel);
 
           // add dropdown for feature type
@@ -746,17 +762,17 @@ namespace uk.novavoidhowl.dev.cvrfury
             rootVisualElement.Add(errorVisualElement);
 
             // if it is, add a warning to the rootVisualElement
-            var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Data Store Version");
+            var warningTitleLabel = new Label("WARNING: Incompatible VRC Fury Data Store Version");
             warningTitleLabel.AddToClassList("warning-title");
             errorVisualElement.Add(warningTitleLabel);
             errorVisualElement.Add(
               new Label(
-                "This VRCFury component is not compatible with" + " the currently installed version of CVRFury."
+                "This VRC Fury component is not compatible with" + " the currently installed version of CVRFury."
               )
             );
             errorVisualElement.Add(
               new Label(
-                "Note the converted copy of prefab will likely have a corrupted datastore now so please delete it"
+                "Note the converted copy of prefab will likely have a corrupted data store now so please delete it"
               )
             );
             errorVisualElement.Add(
@@ -797,10 +813,10 @@ namespace uk.novavoidhowl.dev.cvrfury
                 rootVisualElement.Add(errorVisualElement);
 
                 // if it is, add a warning to the rootVisualElement
-                var warningTitleLabel = new Label("WARNING: Corrupted VRCFury Component");
+                var warningTitleLabel = new Label("WARNING: Corrupted VRC Fury Component");
                 warningTitleLabel.AddToClassList("warning-title");
                 errorVisualElement.Add(warningTitleLabel);
-                errorVisualElement.Add(new Label("This VRCFury component is corrupted and cannot be loaded."));
+                errorVisualElement.Add(new Label("This VRC Fury component is corrupted and cannot be loaded."));
               }
               else
               {
@@ -844,12 +860,12 @@ namespace uk.novavoidhowl.dev.cvrfury
                       rootVisualElement.Add(errorVisualElement);
 
                       // if it is, add a warning to the rootVisualElement
-                      var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                      var warningTitleLabel = new Label("WARNING: Incompatible VRC Fury Import Version");
                       warningTitleLabel.AddToClassList("warning-title");
                       errorVisualElement.Add(warningTitleLabel);
                       errorVisualElement.Add(
                         new Label(
-                          "This VRCFury component is not import compatible with"
+                          "This VRC Fury component is not import compatible with"
                             + " the currently installed version of CVRFury."
                         )
                       );
@@ -888,12 +904,12 @@ namespace uk.novavoidhowl.dev.cvrfury
                     rootVisualElement.Add(errorVisualElement);
 
                     // if it is, add a warning to the rootVisualElement
-                    var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+                    var warningTitleLabel = new Label("WARNING: Incompatible VRC Fury Import Version");
                     warningTitleLabel.AddToClassList("warning-title");
                     errorVisualElement.Add(warningTitleLabel);
                     errorVisualElement.Add(
                       new Label(
-                        "This VRCFury component '"
+                        "This VRC Fury component '"
                           + contentClassName
                           + "' is not import compatible with"
                           + " the currently installed version of CVRFury."
@@ -928,7 +944,7 @@ namespace uk.novavoidhowl.dev.cvrfury
               errorVisualElement.Add(warningTitleLabel);
               errorVisualElement.Add(
                 new Label(
-                  "This VRCFury component is not import compatible with"
+                  "This VRC Fury component is not import compatible with"
                     + " the currently installed version of CVRFury."
                 )
               );
@@ -989,7 +1005,15 @@ namespace uk.novavoidhowl.dev.cvrfury
         var contentClassName = contentType.Split('.').Last();
 
         // render the component type banner
-        componentTypeVisualElement.Add(CreateComponentTopBar("VRCFury Datastore  |  " + contentClassName));
+        componentTypeVisualElement.Add(
+          CreateComponentTopBar(
+            "VRC Fury",
+            "Data Store  |  " + contentClassName,
+            Constants.VRCFURY_HEADER_PREFIX_COLOUR,
+            Constants.VRCFURY_HEADER_BACKGROUND_COLOUR,
+            Constants.VRCFURY_HEADER_BACKGROUND_HOVER_COLOUR
+          )
+        );
 
         // If this is a Toggle component, add the action count summary to the main component body
         if (contentClassName == "Toggle")
