@@ -356,7 +356,13 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     // Top bar for the components in the inspector
 
-    public static VisualElement CreateComponentTopBar(String title)
+    public static VisualElement CreateComponentTopBar(
+      String prefix,
+      String title,
+      Color prefixColour,
+      Color backgroundColour,
+      Color hoverColour
+    )
     {
       // Create a new VisualElement
       var topBar = new VisualElement();
@@ -365,6 +371,37 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       topBar.name = "topBar";
       // allow clicking through
       topBar.pickingMode = PickingMode.Ignore;
+
+      // set size of the topBar
+      topBar.style.height = 21;
+      // set left/right pos
+      topBar.style.left = 0;
+      topBar.style.right = 64;
+      // set padding
+      topBar.style.paddingLeft = 0;
+      topBar.style.top = 0;
+      // set text alignment
+      topBar.style.unityTextAlign = TextAnchor.MiddleLeft;
+      // set opacity
+      topBar.style.opacity = 1;
+      // set text overflow
+      topBar.style.overflow = Overflow.Hidden;
+      topBar.style.textOverflow = TextOverflow.Ellipsis;
+
+      // set flex direction
+      topBar.style.flexDirection = FlexDirection.Row;
+      // set display
+      topBar.style.display = DisplayStyle.Flex;
+
+      // set font size
+      topBar.style.fontSize = 12;
+      // set font style
+      topBar.style.unityFontStyleAndWeight = FontStyle.Bold;
+      // set font colour
+      topBar.style.color = Color.white;
+
+      // Add a background color to the topBar
+      topBar.style.backgroundColor = backgroundColour;
 
       // create a visual element for the topBar content
       var topBarContent = new VisualElement();
@@ -377,11 +414,42 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       // Add the topBarContent to the topBar
       topBar.Add(topBarContent);
 
+      var prefixLabel = new Label(prefix)
+      {
+        style =
+        {
+          fontSize = 12,
+          unityFontStyleAndWeight = FontStyle.Bold,
+          color = prefixColour,
+          marginRight = 4
+        }
+      };
+
+      topBarContent.Add(prefixLabel);
       // Add a label to the topBar to show the component type
       var label = new Label(title);
       label.pickingMode = PickingMode.Ignore; // allow clicking through
       label.style.unityFontStyleAndWeight = FontStyle.Bold; // Make the label text bold
       topBarContent.Add(label);
+
+      // Register hover events on the topBar and topBarContent
+      topBar.RegisterCallback<MouseEnterEvent>(evt =>
+      {
+        topBar.style.backgroundColor = hoverColour;
+      });
+      topBar.RegisterCallback<MouseLeaveEvent>(evt =>
+      {
+        topBar.style.backgroundColor = backgroundColour;
+      });
+
+      topBarContent.RegisterCallback<MouseEnterEvent>(evt =>
+      {
+        topBar.style.backgroundColor = hoverColour;
+      });
+      topBarContent.RegisterCallback<MouseLeaveEvent>(evt =>
+      {
+        topBar.style.backgroundColor = backgroundColour;
+      });
 
       return topBar;
     }
