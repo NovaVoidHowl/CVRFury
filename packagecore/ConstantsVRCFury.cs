@@ -1,11 +1,24 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
 namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
   public static partial class Constants
   {
+    // colour data for VRCFury component headers
+    public static readonly Color VRCFURY_HEADER_PREFIX_COLOUR = new Color(
+      hexadecimalToColour("#ffb125").r,
+      hexadecimalToColour("#ffb125").g,
+      hexadecimalToColour("#ffb125").b
+    );
+    public static readonly Color VRCFURY_HEADER_BACKGROUND_COLOUR = new Color(
+      hexadecimalToColour("#363636").r,
+      hexadecimalToColour("#363636").g,
+      hexadecimalToColour("#363636").b
+    );
+
     // note this is not the main version number but rather a breaking change counter,
     // up to version 1.744 it was 2, and then after that it was 3
     public static readonly int MAX_VRCFURY_VERSION_DATA = 3;
@@ -37,17 +50,18 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     );
 
     // the int is the highest version of VRCFury datastore that is supported for data import for that feature
-    public static readonly ReadOnlyCollection<KeyValuePair<string, int>> COMPATIBLE_VRCFURY_FEATURES = new ReadOnlyCollection<KeyValuePair<string, int>>(
-      new List<KeyValuePair<string, int>>
-      {
-        new KeyValuePair<string, int>("ApplyDuringUpload", 3),
-        new KeyValuePair<string, int>("FullController", 3),
-        new KeyValuePair<string, int>("ArmatureLink", 3),
-        new KeyValuePair<string, int>("ShowInFirstPerson", 3),
-        new KeyValuePair<string, int>("DeleteDuringUpload", 3),
-        new KeyValuePair<string, int>("Gizmo", 3)
-      }
-    );
+    public static readonly ReadOnlyCollection<KeyValuePair<string, int>> COMPATIBLE_VRCFURY_FEATURES =
+      new ReadOnlyCollection<KeyValuePair<string, int>>(
+        new List<KeyValuePair<string, int>>
+        {
+          new KeyValuePair<string, int>("ApplyDuringUpload", 3),
+          new KeyValuePair<string, int>("FullController", 3),
+          new KeyValuePair<string, int>("ArmatureLink", 3),
+          new KeyValuePair<string, int>("ShowInFirstPerson", 3),
+          new KeyValuePair<string, int>("DeleteDuringUpload", 3),
+          new KeyValuePair<string, int>("Gizmo", 3)
+        }
+      );
     public static readonly ReadOnlyCollection<string> CVR_INCOMPATIBLE_VRCFURY_FEATURES =
       new ReadOnlyCollection<string>(new List<string> { "SetIcon", "SecurityLock" });
     public static readonly ReadOnlyCollection<string> BLOCK_LISTED_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
