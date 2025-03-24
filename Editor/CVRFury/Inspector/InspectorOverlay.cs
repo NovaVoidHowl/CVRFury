@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using uk.novavoidhowl.dev.cvrfury.runtime;
@@ -25,6 +26,13 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
     private static readonly int totalUpdateFrames = 5; // Check for 5 frames after selection change
     private static StringBuilder logCollector = new StringBuilder();
 
+    public enum DisplayMode
+    {
+      Debug,
+      Normal,
+      Both
+    }
+
     private class ComponentConfig
     {
       public string EditorName { get; set; }
@@ -34,6 +42,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
       public string Prefix { get; set; }
       public Color PrefixColour { get; set; }
       public Color HeaderBackgroundColour { get; set; }
+      public DisplayMode Mode { get; set; }
 
       public ComponentConfig(
         string editorName,
@@ -41,7 +50,8 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         string headerText,
         string prefix,
         Color prefixColour,
-        Color headerBackgroundColour
+        Color headerBackgroundColour,
+        DisplayMode mode
       )
       {
         EditorName = editorName;
@@ -51,6 +61,7 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         Prefix = prefix;
         PrefixColour = prefixColour;
         HeaderBackgroundColour = headerBackgroundColour;
+        Mode = mode;
       }
     }
 
@@ -62,7 +73,8 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         "Dev Mode Enabler",
         "CVR Fury",
         Constants.CVRFURY_HEADER_PREFIX_COLOUR,
-        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR
+        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR,
+        DisplayMode.Normal
       ),
       new ComponentConfig(
         "Data Storage Unit",
@@ -70,16 +82,17 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         "DSU",
         "CVR Fury",
         Constants.CVRFURY_HEADER_PREFIX_COLOUR,
-        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR
+        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR,
+        DisplayMode.Both
       ),
-      // VRCFury
       new ComponentConfig(
         "VRC Fury (Script)",
         "VRCFuryStubBase",
         "VRC Fury Component",
         "VRC Fury",
         Constants.VRCFURY_HEADER_PREFIX_COLOUR,
-        Constants.VRCFURY_HEADER_BACKGROUND_COLOUR
+        Constants.VRCFURY_HEADER_BACKGROUND_COLOUR,
+        DisplayMode.Debug
       ),
       // Add more components here as needed
     };
@@ -218,7 +231,9 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         return;
       }
 
-      if (EditorPrefs.GetBool(Constants.INSPECTOR_OVERLAY_DEBUG_PREF, false))
+      bool isDebugEnabled = EditorPrefs.GetBool(Constants.INSPECTOR_OVERLAY_DEBUG_PREF, false);
+
+      if (isDebugEnabled)
       {
         CoreLogDebug("CVRFury: Updating Headers");
       }
@@ -294,8 +309,18 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
 
         CollectLog("Starting detailed inspector analysis");
 
+        bool isDebugMode = InspectorModeChecker.IsInspectorInDebugMode(window);
+
+        CollectLog($"Inspector is in {(isDebugMode ? "Debug" : "Normal")} mode");
+
         foreach (var config in ComponentConfigs)
         {
+          // Check if the config should be displayed in the current mode
+          if ((config.Mode == DisplayMode.Debug && !isDebugMode) || (config.Mode == DisplayMode.Normal && isDebugMode))
+          {
+            continue;
+          }
+
           // Look for EditorElements that contain our component - handle both naming patterns
           var editorElements = window.rootVisualElement
             .Query<VisualElement>()
@@ -536,6 +561,29 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
       // Toggle the checked state
       Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, false));
       return true;
+    }
+  }
+
+  public static class InspectorModeChecker
+  {
+    public static bool IsInspectorInDebugMode(EditorWindow inspectorWindow)
+    {
+      if (inspectorWindow == null)
+        return false;
+
+      var inspectorType = inspectorWindow.GetType();
+      var inspectorModeField = inspectorType.GetField(
+        "m_InspectorMode",
+        BindingFlags.NonPublic | BindingFlags.Instance
+      );
+
+      if (inspectorModeField != null)
+      {
+        var inspectorMode = (InspectorMode)inspectorModeField.GetValue(inspectorWindow);
+        return inspectorMode == InspectorMode.Debug;
+      }
+
+      return false;
     }
   }
 }
