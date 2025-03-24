@@ -1,8 +1,3 @@
-// This needs reviewing as its not managing to find the correct elements to add the overlay to
-// after the selection changes. It may be that the elements are not being found in the hierarchy
-// as expected, could be some sort of race condition or timing issue.
-
-
 // #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
@@ -76,6 +71,15 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         "CVR Fury",
         Constants.CVRFURY_HEADER_PREFIX_COLOUR,
         Constants.CVRFURY_HEADER_BACKGROUND_COLOUR
+      ),
+      // VRCFury
+      new ComponentConfig(
+        "VRC Fury (Script)",
+        "VRCFuryStubBase",
+        "VRC Fury Component",
+        "VRC Fury",
+        Constants.VRCFURY_HEADER_PREFIX_COLOUR,
+        Constants.VRCFURY_HEADER_BACKGROUND_COLOUR
       ),
       // Add more components here as needed
     };
@@ -210,9 +214,14 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
     private static void UpdateHeaders()
     {
       if (inspectorWindowType == null)
+      {
         return;
+      }
 
-      CoreLogDebug("CVRFury: Updating Headers");
+      if (EditorPrefs.GetBool(Constants.INSPECTOR_OVERLAY_DEBUG_PREF, false))
+      {
+        CoreLogDebug("CVRFury: Updating Headers");
+      }
 
       // Clean up any invalid entries
       var invalidKeys = headerMapping.Keys.Where(key => headerMapping[key]?.panel == null).ToList();
@@ -360,9 +369,17 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
 
     private static void FlushLogs()
     {
+      // Check if the debug preference is enabled
+      bool isDebugEnabled = EditorPrefs.GetBool(Constants.INSPECTOR_OVERLAY_DEBUG_PREF, false);
+
       if (logCollector.Length > 0)
       {
-        CoreLogDebug($"CVRFury Inspector Analysis Report:\n{logCollector}");
+        if (isDebugEnabled)
+        {
+          // Output the logs if debug is enabled
+          CoreLogDebug($"CVRFury Inspector Analysis Report:\n{logCollector}");
+        }
+        // Clear the log collector regardless of the debug state
         logCollector.Clear();
       }
     }
@@ -496,6 +513,29 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
     public static void MarkAsCustomStyled(this VisualElement element)
     {
       element.userData = CustomStyleKey;
+    }
+  }
+
+  public class InspectorOverlayMenu
+  {
+    private const string MENU_PATH =
+      "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Debug/Development/Overlays/Inspector Overlay Debug";
+    private const string EDITOR_PREFS_KEY = Constants.INSPECTOR_OVERLAY_DEBUG_PREF;
+
+    [MenuItem(MENU_PATH)]
+    private static void ToggleInspectorOverlayDebug()
+    {
+      // Toggle the value
+      bool currentValue = EditorPrefs.GetBool(EDITOR_PREFS_KEY, false);
+      EditorPrefs.SetBool(EDITOR_PREFS_KEY, !currentValue);
+    }
+
+    [MenuItem(MENU_PATH, true)]
+    private static bool ToggleInspectorOverlayDebugValidation()
+    {
+      // Toggle the checked state
+      Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, false));
+      return true;
     }
   }
 }

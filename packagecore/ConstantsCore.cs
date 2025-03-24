@@ -16,6 +16,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public const string AVATAR_OVERLAY_STATE_PREF = "AVATAR_OVERLAY_STATE";
     public const string HIERARCHY_ICONS_STATE_PREF = "HIERARCHY_ICONS_STATE";
     public const string CLEANUP_DISABLE_PREF = "CVRFURY_CLEANUP_DISABLE";
+    public const string INSPECTOR_OVERLAY_DEBUG_PREF = "CVRFURY_INSPECTOR_OVERLAY_DEBUG";
 
     public const string SCRIPTING_DEFINE_SYMBOL = "NVH_CVRFURY_EXISTS";
     public const string PACKAGE_NAME = "uk.novavoidhowl.dev.cvrfury";
