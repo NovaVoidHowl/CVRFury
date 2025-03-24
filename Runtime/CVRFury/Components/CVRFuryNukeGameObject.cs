@@ -18,6 +18,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     // bool to enable the nuke (default is false, safeguard incase user adds this component to a gameobject by mistake)
     [HideInInspector]
     public bool nukeEnabled = false;
+
     [HideInInspector]
     public int DSUNumber = 0;
   }

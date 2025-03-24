@@ -154,7 +154,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           "EyeTrackingActive",
           "ExpressionTrackingActive",
           "LipTrackingActive"
-
         }
       );
 
@@ -323,7 +322,5 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       );
 
     // ref https://docs.vrcft.io/docs/tutorial-avatars/tutorial-avatars-extras/parameters
-
   }
-
 }

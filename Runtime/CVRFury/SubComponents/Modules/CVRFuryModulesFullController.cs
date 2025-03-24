@@ -14,7 +14,8 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public fullControllerModule()
       : base("fullControllerModule") { }
 
-    public bool verbatimMode = false; 
+    public bool verbatimMode = false;
+
     // if true all animation controllers in this module will have their layers copied as is no rewrites etc
     // note variable names will not be rewritten in this mode
     public List<RuntimeAnimatorController> controllers;
@@ -59,5 +60,4 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       public float smoothingDuration = 0.2f;
     }
   }
-
 }

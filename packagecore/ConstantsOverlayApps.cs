@@ -11,12 +11,12 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         new List<string>
         {
           "ToggleEditMode", // bool
-          "ToggleWindows",  // bool
+          "ToggleWindows", // bool
           "ToggleKeyboard", // bool
-          "MediaPlaying",   // bool
-          "LowestBattery",  // float
+          "MediaPlaying", // bool
+          "LowestBattery", // float
           "CurrentProfile", // int
-          "hmdBattery",      // float
+          "hmdBattery", // float
           "leftControllerBattery", // float
           "rightControllerBattery", // float
           "averageControllerBattery", // float
@@ -34,25 +34,25 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       new ReadOnlyCollection<string>(
         new List<string>
         {
-          "isOverlayOpen",    // bool
-          "isKeyboardOpen",   // bool
-          "isWristVisible",   // bool
-          "openOverlayCount"  // int
+          "isOverlayOpen", // bool
+          "isKeyboardOpen", // bool
+          "isWristVisible", // bool
+          "openOverlayCount" // int
         }
       );
+
     // https://github.com/galister/wlx-overlay-s/blob/main/src/backend/osc.rs
 
     public static readonly ReadOnlyCollection<string> ALWAYS_GLOBAL_PARAMETERS_FROM_XSOVERLAY =
       new ReadOnlyCollection<string>(
         new List<string>
         {
-          "isOverlayOpen",    // bool
-          "isKeyboardOpen",   // bool
-          "isWristVisible"   // bool
+          "isOverlayOpen", // bool
+          "isKeyboardOpen", // bool
+          "isWristVisible" // bool
         }
       );
 
     // https://xsoverlay.vercel.app/
-
   }
 }

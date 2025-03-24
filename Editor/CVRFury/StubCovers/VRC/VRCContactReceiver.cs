@@ -11,7 +11,8 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 namespace uk.novavoidhowl.dev.cvrfury
 {
   [CustomEditor(typeof(VRCContactReceiver))]
-  public class VRCContactReceiverEditor : VRCGeneralStubEditor {
+  public class VRCContactReceiverEditor : VRCGeneralStubEditor
+  {
     protected override string componentTypeSuffix => "Contact Receiver";
   }
 }

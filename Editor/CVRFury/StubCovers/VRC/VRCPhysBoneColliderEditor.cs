@@ -11,7 +11,8 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 namespace uk.novavoidhowl.dev.cvrfury
 {
   [CustomEditor(typeof(VRCPhysBoneCollider))]
-  public class VRCPhysBoneColliderEditor : VRCGeneralStubEditor {
+  public class VRCPhysBoneColliderEditor : VRCGeneralStubEditor
+  {
     protected override string componentTypeSuffix => "PhysBone Collider";
   }
 }

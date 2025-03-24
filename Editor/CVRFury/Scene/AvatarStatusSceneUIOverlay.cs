@@ -13,7 +13,7 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
     private static int overlayWidth = 400; // Width of the overlay box in pixels (must match the uss file)
     private static SceneUIOverlay instance;
     private VisualElement rootVisualElement;
-    private VisualElement overlayContainer; // Add this line
+    private VisualElement overlayContainer;
     private Label objectNameLabel;
     private Label vrcFuryCountLabel;
     private Label dsuCountLabel;

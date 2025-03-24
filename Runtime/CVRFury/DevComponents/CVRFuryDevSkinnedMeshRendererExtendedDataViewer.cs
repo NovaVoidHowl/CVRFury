@@ -13,6 +13,5 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   public class CVRFuryDevSkinnedMeshRendererExtendedDataViewer : MonoBehaviour
   {
     public bool foldoutState = false;
-
   }
 }

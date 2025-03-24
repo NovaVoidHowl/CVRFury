@@ -78,13 +78,14 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         {
           CVR = "#IsLocal",
           NeedsParameterStream = true,
-          ParameterStreamPairs =
-            new List<CRVParameterStreamPair> {
-              new CRVParameterStreamPair {
-                TargetParmName = "#DeviceMode",
-                ParameterStreamSource = CVRFuryParameterStreamEntry.Type.DeviceMode
-              },
+          ParameterStreamPairs = new List<CRVParameterStreamPair>
+          {
+            new CRVParameterStreamPair
+            {
+              TargetParmName = "#DeviceMode",
+              ParameterStreamSource = CVRFuryParameterStreamEntry.Type.DeviceMode
             },
+          },
           NeedsAnimator = true,
           NeedsMod = false,
           ModURL = "",
@@ -99,13 +100,14 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         {
           CVR = "Viseme",
           NeedsParameterStream = true,
-          ParameterStreamPairs =
-            new List<CRVParameterStreamPair> {
-              new CRVParameterStreamPair {
-                TargetParmName = "Viseme",
-                ParameterStreamSource = CVRFuryParameterStreamEntry.Type.VisemeLevel
-              },
+          ParameterStreamPairs = new List<CRVParameterStreamPair>
+          {
+            new CRVParameterStreamPair
+            {
+              TargetParmName = "Viseme",
+              ParameterStreamSource = CVRFuryParameterStreamEntry.Type.VisemeLevel
             },
+          },
           NeedsAnimator = false,
           NeedsMod = false,
           ModURL = "",
@@ -246,13 +248,14 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         {
           CVR = "Upright",
           NeedsParameterStream = true,
-          ParameterStreamPairs =
-            new List<CRVParameterStreamPair> {
-              new CRVParameterStreamPair {
-                TargetParmName = "Upright",
-                ParameterStreamSource = CVRFuryParameterStreamEntry.Type.AvatarUpright
-              },
+          ParameterStreamPairs = new List<CRVParameterStreamPair>
+          {
+            new CRVParameterStreamPair
+            {
+              TargetParmName = "Upright",
+              ParameterStreamSource = CVRFuryParameterStreamEntry.Type.AvatarUpright
             },
+          },
           NeedsAnimator = false,
           NeedsMod = false,
           ModURL = "",
@@ -557,13 +560,14 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         {
           CVR = "MuteSelf",
           NeedsParameterStream = true,
-          ParameterStreamPairs =
-            new List<CRVParameterStreamPair> {
-              new CRVParameterStreamPair {
-                TargetParmName = "MuteSelf",
-                ParameterStreamSource = CVRFuryParameterStreamEntry.Type.LocalPlayerMuted
-              },
+          ParameterStreamPairs = new List<CRVParameterStreamPair>
+          {
+            new CRVParameterStreamPair
+            {
+              TargetParmName = "MuteSelf",
+              ParameterStreamSource = CVRFuryParameterStreamEntry.Type.LocalPlayerMuted
             },
+          },
           NeedsAnimator = false,
           NeedsMod = false,
           ModURL = "",
@@ -631,6 +635,4 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public string TargetParmName { get; set; }
     public CVRFuryParameterStreamEntry.Type ParameterStreamSource { get; set; }
   }
-
-
 }
