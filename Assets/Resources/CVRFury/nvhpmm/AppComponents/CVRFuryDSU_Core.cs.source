@@ -1,4 +1,4 @@
-// { "version": "1.1.2" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
+// { "version": "1.1.3" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -106,7 +106,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       }
 
       // get the gameObject this component is attached to
-      var DSUgameObject = ((CVRFuryDataStorageUnit)target).gameObject;
+      var DSUgameObject = ((CVRFuryDataStorageUnit)target)?.gameObject;
+
+      if (DSUgameObject == null)
+      {
+        return rootVisualElement;
+      }
 
       // Start from this object's transform and traverse up
       Transform currentTransform = DSUgameObject.transform;
@@ -213,9 +218,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     {
       devModeEnabled = newValue;
 
-      if (rootVisualElement == null)
+      if (rootVisualElement == null || target == null)
       {
-        // if the rootVisualElement is null, return
+        // if the rootVisualElement or target is null, return
         return;
       }
 
@@ -295,7 +300,10 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
           var defaultEditor = CreateEditor(target);
           var defaultEditorIMGUIContainer = new IMGUIContainer(() =>
           {
-            defaultEditor.OnInspectorGUI();
+            if (target != null)
+            {
+              defaultEditor.OnInspectorGUI();
+            }
           });
           defaultEditorContainer.Add(defaultEditorIMGUIContainer);
 
