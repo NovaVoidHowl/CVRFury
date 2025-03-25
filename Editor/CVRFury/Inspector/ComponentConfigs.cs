@@ -1,4 +1,4 @@
-// #if UNITY_EDITOR
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -183,4 +183,4 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
     };
   }
 }
-//#endif
+#endif

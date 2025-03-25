@@ -19,7 +19,6 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
   public static class CoreUtils
   {
-#if UNITY_EDITOR
     public static Color hexadecimalToColour(string hex)
     {
       hex = hex.Replace("#", "");
@@ -28,6 +27,8 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
       return new Color32(r, g, b, 255);
     }
+
+#if UNITY_EDITOR
 
     public static void CoreLog(object message)
     {
