@@ -67,8 +67,18 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           new KeyValuePair<string, int>("Gizmo", 3)
         }
       );
+
+    // this set of features are not compatible with CVR Fury and should be removed by the user
     public static readonly ReadOnlyCollection<string> CVR_INCOMPATIBLE_VRCFURY_FEATURES =
       new ReadOnlyCollection<string>(new List<string> { "SetIcon", "SecurityLock" });
+
+    // this set of features are not needed for import in to CVR Fury as they there functionality is natively handled
+    // by CVR Fury
+    public static readonly ReadOnlyCollection<string> CVR_UN_NEEDED_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
+      new List<string> { "AnchorOverrideFix", "AnchorOverrideFix2" }
+    );
+
+    // this set of features are blocked from being imported in to CVR Fury as they are not supported
     public static readonly ReadOnlyCollection<string> BLOCK_LISTED_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
       new List<string>
       {

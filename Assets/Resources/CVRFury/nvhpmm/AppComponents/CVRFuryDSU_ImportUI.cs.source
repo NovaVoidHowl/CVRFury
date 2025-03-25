@@ -1,4 +1,4 @@
-// { "version": "0.1.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_UI", dependencies: [], type: "Editor"}
+// { "version": "0.2.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_COMP_DSU_IMPORT_UI", dependencies: [], type: "Editor"}
 #if UNITY_EDITOR
 using System;
 using System.IO;
@@ -50,7 +50,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // ensure the the Data Import UI is turned on
         CVRFuryDataStorageUnitDataImport.style.display = DisplayStyle.Flex;
         CoreLogDebug("Import UI turned on");
-        
+
         // int to count up the number of compatible VRC Fury features
         int compatibleFeatures = 0;
         // int for the total number of VRC Fury features
@@ -209,6 +209,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
               // if the featureClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
               if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(featureClassName))
+              {
+                // set the class of the featureClassNameLabel Label to allow styling
+                featureClassNameLabel.AddToClassList("featureClassNameLabelNotOK");
+              }
+
+              // if the featureClassName is in the CVR_UN_NEEDED_VRCFURY_FEATURES list
+              if (Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(featureClassName))
               {
                 // set the class of the featureClassNameLabel Label to allow styling
                 featureClassNameLabel.AddToClassList("featureClassNameLabelNotOK");

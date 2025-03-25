@@ -162,6 +162,76 @@ namespace uk.novavoidhowl.dev.cvrfury
           // get the last part of the content type string (short class name)
           var contentClassNameBanner = contentTypeBanner.Split('.').Last();
 
+          // check if the contentClassNameBanner is in the CVR_UN_NEEDED_VRCFURY_FEATURES list
+          if (Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(contentClassNameBanner))
+          {
+            // ok this is a feature we don't need to import as its functionality is natively handled by CVR Fury
+            // create a new visual element for the unsupported feature
+            var unsupportedVisualElement = new VisualElement();
+
+            // set the name of the unsupportedVisualElement to allow styling
+            unsupportedVisualElement.name = "unsupportedVisualElement";
+
+            // add the unsupportedVisualElement to the rootVisualElement
+            rootVisualElement.Add(unsupportedVisualElement);
+
+            // add label to the unsupportedVisualElement to say its an unsupported feature
+            var unsupportedTitleLabel = new Label("UN-NEEDED");
+
+            // add the unsupportedTitleLabel to the unsupportedVisualElement
+            unsupportedVisualElement.Add(unsupportedTitleLabel);
+
+            // get the visual element named VRCFuryStubCoverContent1
+            var content1 = rootVisualElement.Q<VisualElement>("VRCFuryStubCoverContent1");
+
+            //get the visual element named VRCFuryStubCoverContent2
+            var content2 = rootVisualElement.Q<VisualElement>("VRCFuryStubCoverContent2");
+
+            // get the VRCFuryStubCoverTitle visual element
+            var title = rootVisualElement.Q<Label>("VRCFuryStubCoverTitle");
+
+            // set the text of the title to the contentClassNameBanner
+            title.text = "Un-Needed VRCFury Component";
+
+            // get VRCFuryStubCoverContent1 visual element
+            var content1Banner = rootVisualElement.Q<Label>("VRCFuryStubCoverContent1");
+
+            // set the text of the content1Banner
+            content1Banner.text = "This feature is natively handled by Fury, this component is not needed.";
+
+            // get the VRCFuryStubCoverContent2 visual element
+            var content2Banner = rootVisualElement.Q<Label>("VRCFuryStubCoverContent2");
+
+            // set the text of the content2Banner
+            content2Banner.text = "";
+
+            // Show and configure the action button
+            SetActionButtonVisible(true, "Remove Component");
+            var removeButton = rootVisualElement.Q<Button>("VRCFuryStubCoverActionButton");
+            if (removeButton != null)
+            {
+              removeButton.clicked += () =>
+              {
+                // Get the VRCFury component
+                var vrcFury = target as VRCFury;
+                // Cache the gameObject reference before destroying the component
+                var gameObject = vrcFury.gameObject;
+
+                // Record the object for undo
+                Undo.DestroyObjectImmediate(vrcFury);
+
+                // Mark the parent object as dirty after component removal
+                if (gameObject != null)
+                {
+                  EditorUtility.SetDirty(gameObject);
+                }
+              };
+            }
+
+            // add the unsupportedVisualElement to the rootVisualElement
+            rootVisualElement.Add(unsupportedVisualElement);
+          }
+
           // check if the contentClassNameBanner is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
           if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassNameBanner))
           {
@@ -205,7 +275,7 @@ namespace uk.novavoidhowl.dev.cvrfury
             title.text = "Unsupported VRCFury Feature";
 
             // Show and configure the action button
-            SetActionButtonVisible(true, "Remove Unsupported Feature");
+            SetActionButtonVisible(true, "Remove Unsupported Component");
             var removeButton = rootVisualElement.Q<Button>("VRCFuryStubCoverActionButton");
             if (removeButton != null)
             {
@@ -321,10 +391,13 @@ namespace uk.novavoidhowl.dev.cvrfury
                 CoreLogDebug("Content Type class: " + contentClassName);
 
                 // check if the contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
-                if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
+                if (
+                  Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName)
+                  || Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(contentClassName)
+                )
                 {
                   // ok this is a feature we don't support at all (not just a version issue)
-                  // create a new visual element for the unsupported feature
+                  // content of the UI for this component will already be set to ask the user to remove it
                 }
                 else
                 {
@@ -591,7 +664,10 @@ namespace uk.novavoidhowl.dev.cvrfury
               if (!string.IsNullOrEmpty(contentType))
               {
                 var contentClassName = contentType.Split('.').Last();
-                if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
+                if (
+                  Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName)
+                  || Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(contentClassName)
+                )
                 {
                   isIncompatible = true;
                 }
@@ -829,10 +905,13 @@ namespace uk.novavoidhowl.dev.cvrfury
                 CoreLogDebug("Content Type class: " + contentClassName);
 
                 // check if tthe contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
-                if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
+                if (
+                  Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName)
+                  || Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(contentClassName)
+                )
                 {
                   // ok this is a feature we don't support at all (not just a version issue)
-                  // create a new visual element for the unsupported feature
+                  // content of the UI for this component will already be set to ask the user to remove it
                 }
                 else
                 {

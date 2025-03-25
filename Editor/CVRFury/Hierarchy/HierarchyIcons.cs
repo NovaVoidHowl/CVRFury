@@ -242,6 +242,9 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
           var contentClassName = contentProperty.managedReferenceFullTypename.Split('.').Last();
           if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
             return true;
+
+          if (Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(contentClassName))
+            return true;
         }
       }
       return false;
