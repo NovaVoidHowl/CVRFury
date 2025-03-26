@@ -23,31 +23,31 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public bool dataLoadFailed = false;
 
     // list of colliders for the avatar bones (supported in VRC data sets)
-    public ColliderConfig collider_fingerLittleR;
-    public ColliderConfig collider_fingerRingR;
-    public ColliderConfig collider_fingerMiddleR;
-    public ColliderConfig collider_fingerIndexR;
-    public ColliderConfig collider_fingerLittleL;
-    public ColliderConfig collider_fingerRingL;
-    public ColliderConfig collider_fingerMiddleL;
-    public ColliderConfig collider_fingerIndexL;
-    public ColliderConfig collider_handL;
-    public ColliderConfig collider_handR;
-    public ColliderConfig collider_footL;
-    public ColliderConfig collider_footR;
-    public ColliderConfig collider_torso;
-    public ColliderConfig collider_head;
+    public ColliderConfig collider_fingerLittleR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_fingerRingR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_fingerMiddleR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_fingerIndexR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_fingerLittleL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_fingerRingL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_fingerMiddleL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_fingerIndexL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_handL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_handR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_footL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_footR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_torso = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_head = new ColliderConfig { state = ColliderConfig.State.Disabled };
 
     // extra colliders for the avatar (supported in CVRFury data sets)
-    public ColliderConfig collider_hips;
-    public ColliderConfig collider_upperLegL;
-    public ColliderConfig collider_upperLegR;
-    public ColliderConfig collider_lowerLegL;
-    public ColliderConfig collider_lowerLegR;
-    public ColliderConfig collider_upperArmL;
-    public ColliderConfig collider_upperArmR;
-    public ColliderConfig collider_lowerArmL;
-    public ColliderConfig collider_lowerArmR;
+    public ColliderConfig collider_hips = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_upperLegL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_upperLegR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_lowerLegL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_lowerLegR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_upperArmL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_upperArmR = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_lowerArmL = new ColliderConfig { state = ColliderConfig.State.Disabled };
+    public ColliderConfig collider_lowerArmR = new ColliderConfig { state = ColliderConfig.State.Disabled };
 
     [System.Serializable]
     public struct ColliderConfig
@@ -59,8 +59,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
       public float height;
       public Vector3 position;
       public Quaternion rotation;
-
-      public Vector3 axis { get; }
+      public Vector3 axis;
 
       public enum State
       {
