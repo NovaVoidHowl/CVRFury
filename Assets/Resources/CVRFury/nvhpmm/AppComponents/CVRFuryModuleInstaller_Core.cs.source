@@ -1,4 +1,4 @@
-// { "version": "0.55.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.55.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -211,9 +211,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the path to the temp items folder
       string tempItemsFolderPath = Constants.ASSETS_MANAGED_FOLDER_GENERATED + uploadedObject.name + "/temp_items";
 
-      #if NVH_CVRFURY_DEV_SAVE_DEBUG_ON_BUILD
+#if NVH_CVRFURY_DEV_SAVE_DEBUG_ON_BUILD
       // this is to save a copy of the uploaded object with the modules applied as a prefab during upload
-      
+
       // get current epoch time
       long epochTicks = DateTime.UtcNow.Ticks - DateTime.Parse("01/01/1970 00:00:00").Ticks;
       // convert to seconds
@@ -222,10 +222,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       string epochTime = epochTicks.ToString();
 
       // save a prefab of the uploaded object
-      PrefabUtility.SaveAsPrefabAsset(uploadedObject,
-                                      tempItemsFolderPath + "/" + uploadedObject.name + "-" + epochTime + ".prefab");
-      #endif // NVH_CVRFURY_DEV_SAVE_DEBUG_ON_BUILD
+      PrefabUtility.SaveAsPrefabAsset(
+        uploadedObject,
+        tempItemsFolderPath + "/" + uploadedObject.name + "-" + epochTime + ".prefab"
+      );
 
+#endif // NVH_CVRFURY_DEV_SAVE_DEBUG_ON_BUILD
 
       // log that the module installation has been completed
       CoreLog("Module installation completed");
@@ -2967,14 +2969,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       File.AppendAllText(reportPath, timestamp + message + "\n");
     }
 
-
     /// <summary>
     /// This function is to generate a report file to store details of the build process for given module type
     /// </summary>
     public static string generateReportFile(string avatarName, int DSUNumber, string moduleType)
     {
       // invoke creation of the generatedItemsFolder and tempItemsPath
-      var (generatedItemsFolder, tempItemsPath) = CVRFuryModuleInstaller.BuildGeneratedItemsFolder(avatarName, DSUNumber);
+      var (generatedItemsFolder, tempItemsPath) = CVRFuryModuleInstaller.BuildGeneratedItemsFolder(
+        avatarName,
+        DSUNumber
+      );
       // create the report file path based on the generatedItemsFolder
       string reportPath = generatedItemsFolder + "/" + moduleType + "_report.txt";
       // check if the report file exists and create it if it doesn't
