@@ -110,6 +110,12 @@
   margin-bottom: 10px;
 }
 
+#CollidersConfigTitle .config-button{
+  height: 30px;
+  margin: 5px;
+  border-radius: 4px;
+}
+
 .collider-foldout {
   margin: 2px 0;
   background-color: rgba(40, 40, 40, 0.3);

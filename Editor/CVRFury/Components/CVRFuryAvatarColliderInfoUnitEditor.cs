@@ -2,6 +2,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -148,6 +149,8 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
   {
     private bool showColliders = false;
     private Button showCollidersButton;
+    private Button saveConfigButton;
+    private Button loadConfigButton;
     private VisualElement collidersConfigSection;
     private Dictionary<string, Foldout> colliderFoldouts = new Dictionary<string, Foldout>();
     private Dictionary<string, string> mirrorPairs = new Dictionary<string, string>();
@@ -185,6 +188,102 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       "collider_fingerLittleL",
       "collider_fingerLittleR"
     };
+
+    // Serializable classes for JSON export/import
+    [Serializable]
+    private class ColliderConfigData
+    {
+      public string state;
+      public bool isMirrored;
+      public float radius;
+      public float height;
+      public Vector3Data position;
+      public QuaternionData rotation;
+      public string transformPath;
+    }
+
+    [Serializable]
+    private class Vector3Data
+    {
+      public float x;
+      public float y;
+      public float z;
+
+      public Vector3Data(Vector3 v)
+      {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+      }
+
+      public Vector3 ToVector3()
+      {
+        return new Vector3(x, y, z);
+      }
+    }
+
+    [Serializable]
+    private class QuaternionData
+    {
+      public float x;
+      public float y;
+      public float z;
+      public float w;
+
+      public QuaternionData(Quaternion q)
+      {
+        x = q.x;
+        y = q.y;
+        z = q.z;
+        w = q.w;
+      }
+
+      public Quaternion ToQuaternion()
+      {
+        return new Quaternion(x, y, z, w);
+      }
+    }
+
+    // Modified class using serializable collections instead of Dictionary
+    [Serializable]
+    private class ColliderPresetData
+    {
+      public string presetName;
+      public string version = "1.0";
+      public List<ColliderEntry> colliderEntries = new List<ColliderEntry>();
+
+      [Serializable]
+      public class ColliderEntry
+      {
+        public string name;
+        public ColliderConfigData data;
+
+        public ColliderEntry(string name, ColliderConfigData data)
+        {
+          this.name = name;
+          this.data = data;
+        }
+      }
+
+      // Helper methods to work like a dictionary
+      public void AddCollider(string name, ColliderConfigData data)
+      {
+        colliderEntries.Add(new ColliderEntry(name, data));
+      }
+
+      public Dictionary<string, ColliderConfigData> ToDictionary()
+      {
+        Dictionary<string, ColliderConfigData> result = new Dictionary<string, ColliderConfigData>();
+        foreach (ColliderEntry entry in colliderEntries)
+        {
+          if (!string.IsNullOrEmpty(entry.name) && entry.data != null)
+          {
+            result[entry.name] = entry.data;
+          }
+        }
+        return result;
+      }
+    }
 
     private readonly Dictionary<string, string> colliderDisplayNames = new Dictionary<string, string>()
     {
@@ -350,8 +449,225 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
         CreateColliderUI(collidersConfigSection, colliderName);
       }
 
+      // Get the CollidersTitle element
+      VisualElement collidersTitle = root.Q("CollidersConfigTitle");
+
+      // Create container for title and buttons to be on the same line
+      VisualElement buttonsContainer = new VisualElement();
+      buttonsContainer.style.flexDirection = FlexDirection.Row;
+      buttonsContainer.style.justifyContent = Justify.FlexEnd;
+      buttonsContainer.style.alignItems = Align.Center;
+      buttonsContainer.style.marginBottom = 5;
+
+      // Create Save Config button
+      saveConfigButton = new Button(SaveConfigToJson) { text = "Save Config" };
+      saveConfigButton.AddToClassList("config-button");
+      saveConfigButton.style.marginRight = 5;
+      buttonsContainer.Add(saveConfigButton);
+
+      // Create Load Config button
+      loadConfigButton = new Button(LoadConfigFromJson) { text = "Load Config" };
+      loadConfigButton.AddToClassList("config-button");
+      buttonsContainer.Add(loadConfigButton);
+
+      // Add the title container to the appropriate place in the hierarchy
+      collidersTitle.Add(buttonsContainer);
+
       // Return the finished inspector UI
       return root;
+    }
+
+    // Save the current collider configuration to a JSON file (updated method)
+    private void SaveConfigToJson()
+    {
+      string avatarName = ((CVRFuryAvatarColliderInfoUnit)target).gameObject.name;
+      string defaultPath = Path.Combine(Application.dataPath, $"{avatarName}_collider_preset.json");
+      string path = EditorUtility.SaveFilePanel(
+        "Save Collider Preset",
+        Path.GetDirectoryName(defaultPath),
+        Path.GetFileName(defaultPath),
+        "json"
+      );
+
+      if (string.IsNullOrEmpty(path))
+      {
+        // User canceled the save dialog
+        return;
+      }
+
+      try
+      {
+        CVRFuryAvatarColliderInfoUnit targetComponent = (CVRFuryAvatarColliderInfoUnit)target;
+        GameObject avatarRoot = targetComponent.gameObject;
+
+        ColliderPresetData presetData = new ColliderPresetData { presetName = avatarName + " Colliders" };
+
+        // Save each collider configuration
+        foreach (string colliderName in colliderNames)
+        {
+          // Use reflection to get the collider property
+          var fieldInfo = typeof(CVRFuryAvatarColliderInfoUnit).GetField(colliderName);
+          if (fieldInfo == null)
+            continue;
+
+          var colliderConfig = (CVRFuryAvatarColliderInfoUnit.ColliderConfig)fieldInfo.GetValue(targetComponent);
+
+          // Skip completely empty/unset colliders
+          if (
+            colliderConfig.state == CVRFuryAvatarColliderInfoUnit.ColliderConfig.State.Disabled
+            && colliderConfig.transform == null
+            && colliderConfig.radius <= 0
+            && colliderConfig.height <= 0
+          )
+          {
+            continue;
+          }
+
+          ColliderConfigData configData = new ColliderConfigData
+          {
+            state = colliderConfig.state.ToString(),
+            isMirrored = colliderConfig.isMirrored,
+            radius = colliderConfig.radius,
+            height = colliderConfig.height,
+            position = new Vector3Data(colliderConfig.position),
+            rotation = new QuaternionData(colliderConfig.rotation)
+          };
+
+          // Store transform path relative to avatar root if it exists
+          if (colliderConfig.transform != null)
+          {
+            configData.transformPath = GetRelativePath(avatarRoot.transform, colliderConfig.transform);
+          }
+
+          presetData.AddCollider(colliderName, configData);
+        }
+
+        // Serialize to JSON and write to file
+        string json = JsonUtility.ToJson(presetData, true);
+        File.WriteAllText(path, json);
+
+        CoreLog($"Collider configuration saved to {path}");
+      }
+      catch (Exception e)
+      {
+        CoreLogError($"Error saving collider configuration: {e.Message}");
+        Debug.LogException(e); // Log full exception for debugging
+      }
+    }
+
+    // Get the transform path relative to an ancestor
+    private string GetRelativePath(Transform root, Transform target)
+    {
+      if (target == root)
+        return "";
+
+      string path = target.name;
+      Transform parent = target.parent;
+
+      while (parent != null && parent != root)
+      {
+        path = parent.name + "/" + path;
+        parent = parent.parent;
+      }
+
+      return path;
+    }
+
+    // Load collider configuration from a JSON file (updated method)
+    private void LoadConfigFromJson()
+    {
+      string path = EditorUtility.OpenFilePanel("Load Collider Preset", Application.dataPath, "json");
+
+      if (string.IsNullOrEmpty(path))
+      {
+        // User canceled the load dialog
+        return;
+      }
+
+      try
+      {
+        string json = File.ReadAllText(path);
+
+        // Parse the JSON directly to our serialization-friendly structure
+        ColliderPresetData presetData = JsonUtility.FromJson<ColliderPresetData>(json);
+        if (presetData == null)
+        {
+          CoreLogError("Failed to parse JSON file. The file may be corrupted or have an invalid format.");
+          return;
+        }
+
+        // Convert from our serialization structure to a dictionary for easier access
+        Dictionary<string, ColliderConfigData> colliderDataDict = presetData.ToDictionary();
+
+        CVRFuryAvatarColliderInfoUnit targetComponent = (CVRFuryAvatarColliderInfoUnit)target;
+        GameObject avatarRoot = targetComponent.gameObject;
+
+        Undo.RecordObject(targetComponent, "Load Collider Configuration");
+
+        // Process each collider in the preset
+        foreach (var entry in colliderDataDict)
+        {
+          string colliderName = entry.Key;
+          ColliderConfigData configData = entry.Value;
+
+          // Use reflection to get and set the collider property
+          var fieldInfo = typeof(CVRFuryAvatarColliderInfoUnit).GetField(colliderName);
+          if (fieldInfo == null)
+            continue;
+
+          var colliderConfig = (CVRFuryAvatarColliderInfoUnit.ColliderConfig)fieldInfo.GetValue(targetComponent);
+
+          // Set enum state by parsing the string
+          if (Enum.TryParse(configData.state, out CVRFuryAvatarColliderInfoUnit.ColliderConfig.State state))
+          {
+            colliderConfig.state = state;
+          }
+
+          colliderConfig.isMirrored = configData.isMirrored;
+          colliderConfig.radius = configData.radius;
+          colliderConfig.height = configData.height;
+
+          if (configData.position != null)
+            colliderConfig.position = configData.position.ToVector3();
+
+          if (configData.rotation != null)
+            colliderConfig.rotation = configData.rotation.ToQuaternion();
+
+          // Resolve transform reference if path exists
+          if (!string.IsNullOrEmpty(configData.transformPath))
+          {
+            Transform foundTransform = avatarRoot.transform.Find(configData.transformPath);
+            colliderConfig.transform = foundTransform;
+          }
+
+          // Set the updated config back to the component
+          fieldInfo.SetValue(targetComponent, colliderConfig);
+        }
+
+        // Update the serialized object and UI
+        serializedObject.Update();
+
+        // Update all UI elements
+        foreach (string colliderName in colliderNames)
+        {
+          UpdateColliderUI(colliderName);
+
+          // Update mirror toggle values
+          if (mirrorToggles.ContainsKey(colliderName))
+          {
+            mirrorToggles[colliderName].UpdateFromProperty();
+          }
+        }
+
+        EditorUtility.SetDirty(targetComponent);
+        CoreLog($"Collider configuration loaded from {path}");
+        SceneView.RepaintAll();
+      }
+      catch (Exception e)
+      {
+        CoreLogError($"Error loading collider configuration: {e.Message}");
+        Debug.LogException(e); // Log full exception for debugging
+      }
     }
 
     private void CreateColliderUI(VisualElement parent, string colliderName)
