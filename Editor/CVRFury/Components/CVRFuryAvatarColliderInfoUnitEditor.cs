@@ -1024,6 +1024,11 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       SerializedProperty sourceProp = serializedObject.FindProperty(sourceColliderName);
       SerializedProperty targetProp = serializedObject.FindProperty(targetColliderName);
 
+      // Copy state
+      SerializedProperty sourceState = sourceProp.FindPropertyRelative("state");
+      SerializedProperty targetState = targetProp.FindPropertyRelative("state");
+      targetState.enumValueIndex = sourceState.enumValueIndex;
+
       // Copy radius and height
       targetProp.FindPropertyRelative("radius").floatValue = sourceProp.FindPropertyRelative("radius").floatValue;
       targetProp.FindPropertyRelative("height").floatValue = sourceProp.FindPropertyRelative("height").floatValue;
@@ -1195,8 +1200,11 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       {
         // Apply position offset in local space
         position += rotation * collider.position;
-        // Combine rotations
-        rotation *= collider.rotation;
+        // Combine rotations - validate quaternion before using it
+        if (IsValidQuaternion(collider.rotation))
+        {
+          rotation *= collider.rotation;
+        }
       }
 
       // Set color based on mirrored state
@@ -1216,6 +1224,14 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       // Draw label with (mirrored) suffix if applicable
       string displayLabel = collider.isMirrored ? $"{label} (mirrored)" : label;
       Handles.Label(position, displayLabel);
+    }
+
+    // Helper method to validate quaternions
+    private bool IsValidQuaternion(Quaternion q)
+    {
+      // Check if quaternion has non-zero magnitude
+      float magnitudeSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+      return magnitudeSq > 1e-6f; // Small epsilon to account for floating-point precision
     }
 
     private void DrawWireCapsule(Vector3 position, Quaternion rotation, float radius, float height)
