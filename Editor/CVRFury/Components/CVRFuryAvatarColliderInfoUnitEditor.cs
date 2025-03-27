@@ -545,6 +545,18 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       radiusField.RegisterValueChangedCallback(evt =>
       {
         serializedObject.ApplyModifiedProperties();
+
+        // If this is the source of a mirror, update the mirrored collider
+        if (mirrorPairs.ContainsKey(colliderName))
+        {
+          string pairedCollider = mirrorPairs[colliderName];
+          SerializedProperty pairedProp = serializedObject.FindProperty(pairedCollider);
+          if (pairedProp.FindPropertyRelative("isMirrored").boolValue)
+          {
+            SyncMirroredProperties(colliderName, pairedCollider);
+          }
+        }
+
         UpdateStatusLabel(colliderName);
         SceneView.RepaintAll();
       });
@@ -557,6 +569,18 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       heightField.RegisterValueChangedCallback(evt =>
       {
         serializedObject.ApplyModifiedProperties();
+
+        // If this is the source of a mirror, update the mirrored collider
+        if (mirrorPairs.ContainsKey(colliderName))
+        {
+          string pairedCollider = mirrorPairs[colliderName];
+          SerializedProperty pairedProp = serializedObject.FindProperty(pairedCollider);
+          if (pairedProp.FindPropertyRelative("isMirrored").boolValue)
+          {
+            SyncMirroredProperties(colliderName, pairedCollider);
+          }
+        }
+
         UpdateStatusLabel(colliderName);
         SceneView.RepaintAll();
       });
@@ -574,6 +598,18 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       positionField.RegisterValueChangedCallback(evt =>
       {
         serializedObject.ApplyModifiedProperties();
+
+        // If this is the source of a mirror, update the mirrored collider
+        if (mirrorPairs.ContainsKey(colliderName))
+        {
+          string pairedCollider = mirrorPairs[colliderName];
+          SerializedProperty pairedProp = serializedObject.FindProperty(pairedCollider);
+          if (pairedProp.FindPropertyRelative("isMirrored").boolValue)
+          {
+            SyncMirroredProperties(colliderName, pairedCollider);
+          }
+        }
+
         SceneView.RepaintAll();
       });
       customPropsContainer.Add(positionField);
@@ -586,8 +622,19 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       {
         // Update the quaternion value when euler angles change
         rotationProp.quaternionValue = Quaternion.Euler(evt.newValue);
-        // Apply changes to make them persistent
         serializedObject.ApplyModifiedProperties();
+
+        // If this is the source of a mirror, update the mirrored collider
+        if (mirrorPairs.ContainsKey(colliderName))
+        {
+          string pairedCollider = mirrorPairs[colliderName];
+          SerializedProperty pairedProp = serializedObject.FindProperty(pairedCollider);
+          if (pairedProp.FindPropertyRelative("isMirrored").boolValue)
+          {
+            SyncMirroredProperties(colliderName, pairedCollider);
+          }
+        }
+
         SceneView.RepaintAll();
       });
       customPropsContainer.Add(rotationField);
@@ -634,8 +681,6 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
       SerializedProperty colliderProp = serializedObject.FindProperty(colliderName);
       bool isMirrored = colliderProp.FindPropertyRelative("isMirrored").boolValue;
-      var state = (CVRFuryAvatarColliderInfoUnit.ColliderConfig.State)
-        colliderProp.FindPropertyRelative("state").enumValueIndex;
 
       // Get properties container from dictionary instead of using Q method
       if (propertiesContainers.TryGetValue(colliderName, out VisualElement propertiesContainer))
@@ -645,23 +690,35 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
         // Find custom props container within the properties container
         VisualElement customPropsContainer = propertiesContainer.Q(".custom-properties-container");
-
-        // Show/hide custom properties based on state
-        if (customPropsContainer != null)
-        {
-          customPropsContainer.style.display =
-            state == CVRFuryAvatarColliderInfoUnit.ColliderConfig.State.Custom ? DisplayStyle.Flex : DisplayStyle.None;
-
-          // Update rotation field with current values if it exists
-          Vector3Field rotationField = customPropsContainer.Q<Vector3Field>(null, className: null);
-          if (rotationField != null && rotationField.label == "Rotation (Euler Angles)")
-          {
-            SerializedProperty rotationProp = colliderProp.FindPropertyRelative("rotation");
-            rotationField.value = rotationProp.quaternionValue.eulerAngles;
-          }
-        }
       }
       UpdateStatusLabel(colliderName);
+    }
+
+    private void SyncMirroredProperties(string sourceColliderName, string targetColliderName)
+    {
+      SerializedProperty sourceProp = serializedObject.FindProperty(sourceColliderName);
+      SerializedProperty targetProp = serializedObject.FindProperty(targetColliderName);
+
+      // Copy radius and height
+      targetProp.FindPropertyRelative("radius").floatValue = sourceProp.FindPropertyRelative("radius").floatValue;
+      targetProp.FindPropertyRelative("height").floatValue = sourceProp.FindPropertyRelative("height").floatValue;
+
+      // Copy position with mirrored X coordinate
+      SerializedProperty sourcePos = sourceProp.FindPropertyRelative("position");
+      SerializedProperty targetPos = targetProp.FindPropertyRelative("position");
+      targetPos.vector3Value = new Vector3(
+        -sourcePos.vector3Value.x,
+        sourcePos.vector3Value.y,
+        sourcePos.vector3Value.z
+      );
+
+      // Copy rotation with mirrored X and Z rotations
+      SerializedProperty sourceRot = sourceProp.FindPropertyRelative("rotation");
+      SerializedProperty targetRot = targetProp.FindPropertyRelative("rotation");
+      Vector3 sourceEuler = sourceRot.quaternionValue.eulerAngles;
+      targetRot.quaternionValue = Quaternion.Euler(-sourceEuler.x, sourceEuler.y, -sourceEuler.z);
+
+      serializedObject.ApplyModifiedProperties();
     }
 
     private void UpdateMirrorState(string colliderName, bool isMirrored)
@@ -669,6 +726,12 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       if (mirrorPairs.ContainsKey(colliderName))
       {
         string pairedCollider = mirrorPairs[colliderName];
+
+        // If enabling mirror, sync properties from source to target
+        if (isMirrored)
+        {
+          SyncMirroredProperties(pairedCollider, colliderName);
+        }
 
         // Update the UI state
         UpdateColliderUI(colliderName);
@@ -701,14 +764,23 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
         return;
       }
 
+      // check if the collider is mirrored
+      if (colliderProp.FindPropertyRelative("isMirrored").boolValue)
+      {
+        statusLabels[colliderName].text = "MIRRORED";
+        statusLabels[colliderName].style.color = new StyleColor(new Color(0.3f, 0.8f, 1f)); // Light blue color
+        return;
+      }
+
       List<string> warnings = new List<string>();
 
       if (transformProp.objectReferenceValue == null)
       {
         warnings.Add("No Transform");
       }
-      if (radiusProp.floatValue <= 0 || heightProp.floatValue <= 0)
+      if (radiusProp.floatValue <= 0)
       {
+        // note no need to look for heightProp.floatValue <= 0 as zero is a valid value for height
         warnings.Add("Zero Size");
       }
 
@@ -776,31 +848,26 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
     private void DrawCollider(CVRFuryAvatarColliderInfoUnit.ColliderConfig collider, string label)
     {
       // Skip if disabled or transform is null
-      if (
-        collider.state == CVRFuryAvatarColliderInfoUnit.ColliderConfig.State.Disabled
-        || (
-          collider.transform == null && collider.state == CVRFuryAvatarColliderInfoUnit.ColliderConfig.State.Automatic
-        )
-      )
+      if (collider.state == CVRFuryAvatarColliderInfoUnit.ColliderConfig.State.Disabled || collider.transform == null)
+      {
         return;
-
-      // Determine position and rotation
-      Vector3 position = Vector3.zero;
-      Quaternion rotation = Quaternion.identity;
-
-      if (collider.state == CVRFuryAvatarColliderInfoUnit.ColliderConfig.State.Automatic && collider.transform != null)
-      {
-        position = collider.transform.position;
-        rotation = collider.transform.rotation;
       }
-      else if (collider.state == CVRFuryAvatarColliderInfoUnit.ColliderConfig.State.Custom)
+      // Determine base position and rotation from transform
+      Vector3 position = collider.transform ? collider.transform.position : Vector3.zero;
+      Quaternion rotation = collider.transform ? collider.transform.rotation : Quaternion.identity;
+
+      // Apply offsets regardless of state (except when disabled)
+      if (collider.state != CVRFuryAvatarColliderInfoUnit.ColliderConfig.State.Disabled)
       {
-        position = collider.position;
-        rotation = collider.rotation;
+        // Apply position offset in local space
+        position += rotation * collider.position;
+        // Combine rotations
+        rotation *= collider.rotation;
       }
 
-      // Draw a wireframe capsule
-      Handles.color = Color.green;
+      // Set color based on mirrored state
+      Handles.color = collider.isMirrored ? Color.cyan : Color.green;
+
       Matrix4x4 originalMatrix = Handles.matrix;
 
       // Set matrix for the capsule with proper position and rotation
@@ -812,17 +879,36 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       // Restore original matrix
       Handles.matrix = originalMatrix;
 
-      // Draw label
-      Handles.Label(position, label);
+      // Draw label with (mirrored) suffix if applicable
+      string displayLabel = collider.isMirrored ? $"{label} (mirrored)" : label;
+      Handles.Label(position, displayLabel);
     }
 
     private void DrawWireCapsule(Vector3 position, Quaternion rotation, float radius, float height)
     {
-      if (radius <= 0 || height <= 0)
+      if (radius <= 0)
         return;
 
-      // Calculate capsule height excluding the hemisphere caps
+      // Ensure height is never negative
+      height = Mathf.Max(0, height);
+
+      // Calculate the actual height of the cylinder part (can be 0)
       float cylinderHeight = Mathf.Max(0, height - 2 * radius);
+
+      // When height is 0 or less than 2*radius, just draw a sphere
+      if (cylinderHeight <= 0)
+      {
+        // Draw complete sphere
+        Handles.DrawWireArc(Vector3.zero, Vector3.forward, Vector3.right, 180, radius);
+        Handles.DrawWireArc(Vector3.zero, Vector3.forward, Vector3.left, 180, radius);
+        Handles.DrawWireArc(Vector3.zero, Vector3.right, Vector3.back, 180, radius);
+        Handles.DrawWireArc(Vector3.zero, Vector3.right, Vector3.forward, 180, radius);
+        Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius);
+        Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius);
+        return;
+      }
+
+      // If we have actual height, draw full capsule
       Vector3 upperSphere = new Vector3(0, cylinderHeight / 2, 0);
       Vector3 lowerSphere = new Vector3(0, -cylinderHeight / 2, 0);
 
@@ -835,7 +921,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       Handles.DrawWireArc(lowerSphere, Vector3.right, Vector3.forward, 180, radius);
       Handles.DrawWireDisc(lowerSphere, Vector3.up, radius);
 
-      // Draw connecting lines for the cylinder part
+      // Draw connecting lines
       Handles.DrawLine(upperSphere + Vector3.right * radius, lowerSphere + Vector3.right * radius);
       Handles.DrawLine(upperSphere + Vector3.left * radius, lowerSphere + Vector3.left * radius);
       Handles.DrawLine(upperSphere + Vector3.forward * radius, lowerSphere + Vector3.forward * radius);
