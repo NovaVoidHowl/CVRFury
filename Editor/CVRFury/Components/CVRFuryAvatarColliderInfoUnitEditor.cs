@@ -74,9 +74,6 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       // Register callbacks
       RegisterCallback<ClickEvent>(OnClick);
       RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
-
-      // Remove TrackPropertyValue call
-      // this.TrackPropertyValue<bool>(nameof(value), UpdateVisualState);
     }
 
     private void OnAttachToPanel(AttachToPanelEvent evt)
@@ -687,9 +684,6 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       {
         // Disable all children of properties container when mirrored
         propertiesContainer.SetEnabled(!isMirrored);
-
-        // Find custom props container within the properties container
-        VisualElement customPropsContainer = propertiesContainer.Q(".custom-properties-container");
       }
       UpdateStatusLabel(colliderName);
     }
@@ -786,7 +780,6 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
       statusLabels[colliderName].text = warnings.Count > 0 ? $"({string.Join(", ", warnings)})" : "";
       statusLabels[colliderName].style.color = new StyleColor(new Color(1, 0.7f, 0)); // Warning orange color
-      statusLabels[colliderName].AddToClassList("status-label");
     }
 
     private void ToggleShowColliders()
