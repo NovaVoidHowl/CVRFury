@@ -952,6 +952,21 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       });
       customPropsContainer.Add(rotationField);
 
+      // Add update method to the rotation field to keep it in sync with the serialized property
+      rotationField.RegisterCallback<AttachToPanelEvent>(evt =>
+      {
+        // Create a schedule to update the field value from the property
+        rotationField.schedule
+          .Execute(() =>
+          {
+            if (rotationProp != null && rotationProp.serializedObject != null)
+            {
+              rotationField.SetValueWithoutNotify(rotationProp.quaternionValue.eulerAngles);
+            }
+          })
+          .Every(100); // Update every 100ms
+      });
+
       // Initial update of the UI based on current state
       UpdateColliderUI(colliderName);
       // Update status label initially
@@ -1022,13 +1037,23 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
         sourcePos.vector3Value.z
       );
 
-      // Copy rotation with mirrored X and Z rotations
+      // Copy rotation exactly as is without mirroring
       SerializedProperty sourceRot = sourceProp.FindPropertyRelative("rotation");
       SerializedProperty targetRot = targetProp.FindPropertyRelative("rotation");
-      Vector3 sourceEuler = sourceRot.quaternionValue.eulerAngles;
-      targetRot.quaternionValue = Quaternion.Euler(-sourceEuler.x, sourceEuler.y, -sourceEuler.z);
+
+      // Simply use the same quaternion as the source
+      targetRot.quaternionValue = sourceRot.quaternionValue;
 
       serializedObject.ApplyModifiedProperties();
+
+      // Force the Inspector to redraw to show the updated values
+      EditorUtility.SetDirty(serializedObject.targetObject);
+
+      // Force Unity to repaint the inspector
+      if (EditorWindow.focusedWindow != null)
+      {
+        EditorWindow.focusedWindow.Repaint();
+      }
     }
 
     private void UpdateMirrorState(string colliderName, bool isMirrored)
