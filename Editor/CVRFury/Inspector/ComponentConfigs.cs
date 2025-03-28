@@ -47,6 +47,16 @@ namespace uk.novavoidhowl.dev.cvrfury.inspector
         Constants.CVRFURY_HEADER_BACKGROUND_HOVER_COLOUR,
         DisplayMode.Both
       ),
+      new ComponentConfig(
+        "Avatar Configuration",
+        "CVRFuryAvatarConfiguration",
+        "Avatar Configuration Options",
+        "CVR Fury",
+        Constants.CVRFURY_HEADER_PREFIX_COLOUR,
+        Constants.CVRFURY_HEADER_BACKGROUND_COLOUR,
+        Constants.CVRFURY_HEADER_BACKGROUND_HOVER_COLOUR,
+        DisplayMode.Both
+      ),
       // VRC Fury components
       new ComponentConfig(
         "VRC Fury (Script)",

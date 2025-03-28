@@ -1,0 +1,157 @@
+#CVRFuryAvatarConfigurationEditor {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  padding-bottom: 10px;
+  width: 100%;
+}
+#Banner{
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#Banner #CoverTitle{
+  font-size: 20px;
+  margin: 10px;
+  }
+#Banner #Content1{
+  font-size: 12px;
+  }
+
+#CVRFuryAvatarConfigurationEditor #logo{
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 64px;
+  height: 32px;
+}
+
+#Status{
+  height: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding-top: 10px;
+}
+
+#Status #AvatarLinkTitle{
+  font-size: 12px;
+  margin-right: 10px;
+  -unity-font-style: bold;
+}
+
+#Status #AvatarLinkContent{
+  font-size: 12px;
+  }
+
+
+#ConfigOptions{
+  padding-top: 20px;
+  padding-bottom: 10px;
+}
+
+#ConfigOptions .colliders-section{
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-width: 1px;
+  border-color: #666666;
+  border-radius: 4px;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+#ConfigOptions .feature-toggles-section{
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-width: 1px;
+  border-color: #666666;
+  border-radius: 4px;
+  margin-top: 10px;
+  margin-bottom: 6px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.cvr-fury-inspector{
+
+  background-color: #444444;
+  margin-left: -15px;
+  margin-right: -10px;
+}
+
+
+/* Custom Switch Toggle Styles */
+.switch-toggle {
+  margin-bottom: 6px;
+}
+
+.switch-toggle-container {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start; /* Left align contents */
+}
+
+.switch-toggle-label {
+  margin-right: 8px;
+  flex-grow: 0; /* Don't expand to fill space */
+  width: auto; /* Let the label take its natural width */
+  min-width: 160px; /* Set a minimum width for consistent alignment */
+}
+
+.switch-toggle-track {
+  width: 40px;
+  height: 20px;
+  border-radius: 10px;
+  background-color: #666666;
+  transition: background-color 0.2s;
+  position: relative;
+  margin-left: 4px; /* Small margin from label */
+}
+
+.switch-toggle-knob {
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background-color: white;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.2s;
+}
+
+.switch-toggle-track-active {
+  background-color: #2196F3;
+}
+
+.switch-toggle-knob-active {
+  left: 22px;
+}
+
+/* Hover effects */
+.switch-toggle:hover .switch-toggle-track {
+  background-color: #777777;
+}
+
+.switch-toggle:hover .switch-toggle-track-active {
+  background-color: #0A7AD6;
+}
+
+/* Disabled Section Styles */
+.disabled-section {
+  opacity: 0.6;
+  pointer-events: none;  /* This prevents interaction with the elements */
+}
+
+.disabled-section-header {
+  background-color: #555555;
+  padding: 4px;
+  margin-bottom: 6px;
+  border-radius: 2px;
+  -unity-font-style: bold;
+  color: #cccccc;
+}
