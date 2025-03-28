@@ -116,8 +116,8 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       featureTogglesSection.AddToClassList("feature-toggles-section");
 
       // Create the toggle for enableDirectTreeOptimizer
-      var enableDirectTreeOptimizerProperty = serializedObject.FindProperty("enableDirectTreeOptimizer");
-      var enableDirectTreeOptimizerToggle = new SwitchToggle("Direct Tree Optimizer");
+      var enableDirectTreeOptimizerProperty = serializedObject.FindProperty("enableDirectTreeOptimiser");
+      var enableDirectTreeOptimizerToggle = new SwitchToggle("Direct Tree Optimiser");
       enableDirectTreeOptimizerToggle.BindProperty(enableDirectTreeOptimizerProperty);
       enableDirectTreeOptimizerToggle.RegisterValueChangedCallback(evt =>
       {
@@ -125,11 +125,11 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
         serializedObject.ApplyModifiedProperties();
       });
       featureTogglesSection.Add(enableDirectTreeOptimizerToggle);
-      switchToggles["enableDirectTreeOptimizer"] = enableDirectTreeOptimizerToggle;
+      switchToggles["enableDirectTreeOptimiser"] = enableDirectTreeOptimizerToggle;
 
       // Create the toggle for enableBlendShapeOptimizer
-      var enableBlendShapeOptimizerProperty = serializedObject.FindProperty("enableBlendShapeOptimizer");
-      var enableBlendShapeOptimizerToggle = new SwitchToggle("Blend Shape Optimizer");
+      var enableBlendShapeOptimizerProperty = serializedObject.FindProperty("enableBlendShapeOptimiser");
+      var enableBlendShapeOptimizerToggle = new SwitchToggle("Blend Shape Optimiser");
       enableBlendShapeOptimizerToggle.BindProperty(enableBlendShapeOptimizerProperty);
       enableBlendShapeOptimizerToggle.RegisterValueChangedCallback(evt =>
       {
@@ -137,7 +137,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
         serializedObject.ApplyModifiedProperties();
       });
       featureTogglesSection.Add(enableBlendShapeOptimizerToggle);
-      switchToggles["enableBlendShapeOptimizer"] = enableBlendShapeOptimizerToggle;
+      switchToggles["enableBlendShapeOptimiser"] = enableBlendShapeOptimizerToggle;
 
       // Create the toggle for enableBlinking
       var enableBlinkingProperty = serializedObject.FindProperty("enableBlinking");
@@ -298,6 +298,12 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
     private void OnUndoRedo()
     {
+      RefreshToggleValues();
+    }
+
+    // Public method to refresh toggle values from properties
+    public void RefreshToggleValues()
+    {
       serializedObject.Update();
 
       // Update all toggle values from properties
@@ -305,6 +311,31 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
       {
         kvp.Value.UpdateFromProperty();
       }
+    }
+
+    // Add this to ensure the inspector refreshes when returning to it
+    public override void OnInspectorGUI()
+    {
+      serializedObject.Update();
+      base.OnInspectorGUI();
+    }
+
+    // Static method to refresh any avatar config editor
+    public static void RefreshAllAvatarConfigEditors()
+    {
+      // Find all open editor windows
+      var windows = Resources.FindObjectsOfTypeAll<EditorWindow>();
+      foreach (var window in windows)
+      {
+        if (window.titleContent.text == "Inspector")
+        {
+          // Force the inspector to repaint
+          window.Repaint();
+        }
+      }
+
+      // Force Unity to refresh all inspectors
+      UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
     }
   }
 }

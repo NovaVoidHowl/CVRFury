@@ -105,6 +105,13 @@
   width: 90%;
 }
 
+.transfer-button{
+  height: 30px;
+  margin: 5px;
+  border-radius: 4px;
+  width: 96%;
+}
+
 .version-label {
   position: absolute;
   top: 0px;

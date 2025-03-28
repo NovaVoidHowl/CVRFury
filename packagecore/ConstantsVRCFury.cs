@@ -64,7 +64,12 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
           new KeyValuePair<string, int>("ArmatureLink", 3),
           new KeyValuePair<string, int>("ShowInFirstPerson", 3),
           new KeyValuePair<string, int>("DeleteDuringUpload", 3),
-          new KeyValuePair<string, int>("Gizmo", 3)
+          new KeyValuePair<string, int>("Gizmo", 3),
+          new KeyValuePair<string, int>("UnlimitedParameters", 3),
+          new KeyValuePair<string, int>("MmdCompatibility", 3),
+          new KeyValuePair<string, int>("Blinking", 3),
+          new KeyValuePair<string, int>("BlendshapeOptimizer", 3),
+          new KeyValuePair<string, int>("DirectTreeOptimizer", 3),
         }
       );
 
@@ -77,6 +82,18 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public static readonly ReadOnlyCollection<string> CVR_UN_NEEDED_VRCFURY_FEATURES = new ReadOnlyCollection<string>(
       new List<string> { "AnchorOverrideFix", "AnchorOverrideFix2" }
     );
+
+    public static readonly ReadOnlyCollection<string> CVR_FURY_AVATAR_CONFIG_SUPPORTED_COMPONENTS =
+      new ReadOnlyCollection<string>(
+        new List<string>
+        {
+          "UnlimitedParameters",
+          "MmdCompatibility",
+          "Blinking",
+          "BlendshapeOptimizer",
+          "DirectTreeOptimizer"
+        }
+      );
 
     // this set of features are blocked from being imported in to CVR Fury as they are not supported
     public static readonly ReadOnlyCollection<string> BLOCK_LISTED_VRCFURY_FEATURES = new ReadOnlyCollection<string>(

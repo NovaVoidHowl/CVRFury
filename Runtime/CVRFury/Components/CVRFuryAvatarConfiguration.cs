@@ -29,10 +29,10 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
 
     // bools to enable/disable VRCFury related per-avatar features
     [SerializeField]
-    public bool enableDirectTreeOptimizer = false;
+    public bool enableDirectTreeOptimiser = false;
 
     [SerializeField]
-    public bool enableBlendShapeOptimizer = false;
+    public bool enableBlendShapeOptimiser = false;
 
     [SerializeField]
     public bool enableBlinking = false;

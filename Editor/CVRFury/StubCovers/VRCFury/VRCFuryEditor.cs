@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VF.Model;
@@ -904,7 +905,7 @@ namespace uk.novavoidhowl.dev.cvrfury
                 // debug log the content type
                 CoreLogDebug("Content Type class: " + contentClassName);
 
-                // check if tthe contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
+                // check if the contentClassName is in the CVR_INCOMPATIBLE_VRCFURY_FEATURES list
                 if (
                   Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName)
                   || Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(contentClassName)
@@ -1018,7 +1019,7 @@ namespace uk.novavoidhowl.dev.cvrfury
               rootVisualElement.Add(errorVisualElement);
 
               // if it is, add a warning to the rootVisualElement
-              var warningTitleLabel = new Label("WARNING: Incompatible VRCFury Import Version");
+              var warningTitleLabel = new Label("WARNING: Incompatible VRC Fury Import Version");
               warningTitleLabel.AddToClassList("warning-title");
               errorVisualElement.Add(warningTitleLabel);
               errorVisualElement.Add(
@@ -1104,7 +1105,138 @@ namespace uk.novavoidhowl.dev.cvrfury
             rootVisualElement.Add(summaryContainer);
           }
         }
+
+        // If this is in the Avatar config components list (Constants.CVR_FURY_AVATAR_CONFIG_SUPPORTED_COMPONENTS),
+        // add the transfer to CVRFury avatar config button
+        if (Constants.CVR_FURY_AVATAR_CONFIG_SUPPORTED_COMPONENTS.Contains(contentClassName))
+        {
+          // find the VRCFuryStubCoverContent1 Label
+          var contentLabel = rootVisualElement.Q<Label>("VRCFuryStubCoverContent1");
+          // find the VRCFuryStubCoverContent2 Label
+          var contentLabel2 = rootVisualElement.Q<Label>("VRCFuryStubCoverContent2");
+
+          // set the text value of contentLabel
+          contentLabel.text = "This VRCFury component contains per avatar settings.";
+          contentLabel2.text =
+            "Please click the following button to transfer the data to the\n"
+            + "CVRFury Avatar Config component linked to this avatar.";
+
+          // Create the button
+          var transferButton = new Button(() =>
+          {
+            // Handle the transfer logic here
+            CoreLogDebug("Transfer to CVRFury Avatar Config button clicked");
+
+            // Cache the VRCFury component and its GameObject before removing
+            var vrcFury = target as VRCFury;
+            var gameObject = vrcFury.gameObject;
+
+            // Transfer the data first
+            enableAvatarConfigFeature(contentClassName);
+
+            var avatarConfig = gameObject.GetComponent<CVRFuryAvatarConfiguration>();
+            if (avatarConfig != null)
+            {
+              EditorUtility.SetDirty(avatarConfig);
+              uk.novavoidhowl.dev.cvrfury.editor.components.CVRFuryAvatarConfigurationEditor.RefreshAllAvatarConfigEditors();
+
+              foreach (var activeEditor in ActiveEditorTracker.sharedTracker.activeEditors)
+              {
+                if (activeEditor.target == avatarConfig)
+                {
+                  activeEditor.Repaint();
+                }
+              }
+
+              // Remove the VRCFury component with undo support
+              Undo.DestroyObjectImmediate(vrcFury);
+
+              // Mark the GameObject dirty after component removal
+              EditorUtility.SetDirty(gameObject);
+
+              EditorApplication.delayCall += () =>
+              {
+                Selection.activeGameObject = null;
+                EditorApplication.delayCall += () =>
+                {
+                  Selection.activeGameObject = avatarConfig.gameObject;
+                };
+              };
+            }
+          });
+
+          transferButton.text = "Transfer to CVRFury Avatar Config";
+          transferButton.AddToClassList("transfer-button");
+
+          // Add the button to the component type visual element
+          rootVisualElement.Add(transferButton);
+        }
       }
+    }
+
+    private void enableAvatarConfigFeature(String contentClassName)
+    {
+      // Add debug logging to see exact content class name
+      CoreLogDebug("Attempting to transfer VRCFury feature: '" + contentClassName + "'");
+
+      // check if there is CVRFuryAvatarConfiguration component on the gameobject
+      var avatarConfig = ((VRCFury)target).GetComponent<CVRFuryAvatarConfiguration>();
+
+      // if not add one (must have been the first feature component to be transferred)
+      if (avatarConfig == null)
+      {
+        avatarConfig = ((VRCFury)target).gameObject.AddComponent<CVRFuryAvatarConfiguration>();
+      }
+
+      // depending on the class name set the related bool to true
+      SerializedObject serializedConfig = new SerializedObject(avatarConfig);
+      SerializedProperty propertyToChange = null;
+
+      // Handle both US/UK spelling differences by using case-insensitive comparison
+      // and translating from US spelling (VRCFury) to UK spelling (CVRFury)
+      switch (contentClassName.ToLowerInvariant())
+      {
+        case "directtreeoptimizer":
+          propertyToChange = serializedConfig.FindProperty("enableDirectTreeOptimiser"); // Note UK spelling with 's'
+          break;
+        case "blendshapeoptimizer":
+          propertyToChange = serializedConfig.FindProperty("enableBlendShapeOptimiser"); // Note UK spelling with 's'
+          break;
+        case "blinking":
+          propertyToChange = serializedConfig.FindProperty("enableBlinking");
+          break;
+        case "mmdcompatibility":
+          propertyToChange = serializedConfig.FindProperty("enableMMDCompatibility");
+          break;
+        case "unlimitedparameters":
+          propertyToChange = serializedConfig.FindProperty("enableUnlimitedParameters");
+          break;
+        default:
+          Debug.LogWarning("Unknown content class name: '" + contentClassName + "'");
+          break;
+      }
+
+      // Save the changes to the component
+      if (propertyToChange != null)
+      {
+        CoreLogDebug("Setting property: " + propertyToChange.propertyPath + " to true");
+        propertyToChange.boolValue = true;
+        serializedConfig.ApplyModifiedProperties();
+      }
+      else
+      {
+        CoreLogError("Failed to find matching property for feature: " + contentClassName);
+      }
+
+      EditorUtility.SetDirty(avatarConfig);
+
+      if (!EditorApplication.isPlaying)
+      {
+        EditorSceneManager.MarkSceneDirty(avatarConfig.gameObject.scene);
+      }
+
+      uk.novavoidhowl.dev.cvrfury.editor.components.CVRFuryAvatarConfigurationEditor.RefreshAllAvatarConfigEditors();
+      Repaint();
     }
 
     private VisualElement AddActionCountSummary(SerializedProperty contentProperty)

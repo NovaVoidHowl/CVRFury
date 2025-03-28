@@ -4,7 +4,8 @@
       "VRCFury",
       "uk.novavoidhowl.dev.cvrfury.packagecore",
       "uk.novavoidhowl.dev.vrcstub",
-      "uk.novavoidhowl.dev.cvrfury.runtime"
+      "uk.novavoidhowl.dev.cvrfury.runtime",
+      "uk.novavoidhowl.dev.cvrfury.editor.components"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
