@@ -213,6 +213,9 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
 
     private void SetupMirrorPairs()
     {
+      // Clear existing mirror pairs to prevent duplicates
+      mirrorPairs.Clear();
+
       // Define which colliders mirror each other
       mirrorPairs.Add("collider_handL", "collider_handR");
       mirrorPairs.Add("collider_handR", "collider_handL");
