@@ -9,6 +9,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   ///
   /// </summary>
   [DisallowMultipleComponent]
+  [RequireComponent(typeof(CVRFuryAvatarConfiguration))]
   [AddComponentMenu("CVRFury/System/Avatar Collider Info Unit")]
   public class CVRFuryAvatarColliderInfoUnit : MonoBehaviour
   {
