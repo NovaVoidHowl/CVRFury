@@ -1,4 +1,4 @@
-// { "version": "0.55.1" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.56.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1243,6 +1243,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         return;
       }
 
+      // check if the bodyMesh is a child of the uploadedObject
+      if (bodyMesh.transform.root != uploadedObject.transform.root)
+      {
+        // set the dataLoadFailed flag to true
+        avatarInfoUnit.dataLoadFailed = true;
+
+        // console print to say that the armature paths have not been set
+        CoreLogCritical("BodyMesh is not a child of the uploadedObject, armature paths not set");
+        // debug log that the avatar armature path setter has finished
+        CoreLogDebug("[Avatar armature path setter] finished");
+        return;
+      }
+
       // get the root bone object from the bodyMesh
       var rootBone = bodyMesh.rootBone;
 
@@ -1782,14 +1795,35 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // get the AvatarInfoUnit component from the uploadedObject
       CVRFuryAvatarInfoUnit avatarInfoUnit = uploadedObject.GetComponent<CVRFuryAvatarInfoUnit>();
 
+      // get the name of the uploadedObject
+      string uploadedObjectName = uploadedObject.name;
+
       // get the common string from the avatarInfoUnit.avatarArmaturePaths list
       string commonPath = GetCommonPath(avatarInfoUnit.avatarArmaturePaths);
 
       // get the first part of the common path
       string firstPart = commonPath.Split('/')[0];
 
+      // if the uploadedObjectName is not in the first part of the common path
+      if (!firstPart.Contains(uploadedObjectName))
+      {
+        // debug log that the uploadedObjectName is not in the first part of the common path
+        CoreLogError(
+          "[Nuke Pruner] uploadedObjectName not in first part of common path\n"
+            + "uploadedObjectName: "
+            + uploadedObjectName
+            + "\n"
+            + "commonPath: "
+            + commonPath
+            + "\n"
+            + "firstPart: "
+            + firstPart
+        );
+      }
+
       // get the game object from the first part of the common path
       var firstPartObject = uploadedObject.transform.Find(firstPart);
+      CoreLogDebug("[EX][Nuke Pruner] First part object: " + firstPartObject);
 
       // remove the CVRFuryNukeGameObject components from the first part object and all its children (inc disabled)
       var nukeComponentsAvatarArmature = firstPartObject.GetComponentsInChildren<CVRFuryNukeGameObject>(true);
