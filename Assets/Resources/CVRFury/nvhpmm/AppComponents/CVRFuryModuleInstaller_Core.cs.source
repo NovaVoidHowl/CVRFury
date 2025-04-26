@@ -1,4 +1,4 @@
-// { "version": "0.56.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.57.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1803,23 +1803,6 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // get the first part of the common path
       string firstPart = commonPath.Split('/')[0];
-
-      // if the uploadedObjectName is not in the first part of the common path
-      if (!firstPart.Contains(uploadedObjectName))
-      {
-        // debug log that the uploadedObjectName is not in the first part of the common path
-        CoreLogError(
-          "[Nuke Pruner] uploadedObjectName not in first part of common path\n"
-            + "uploadedObjectName: "
-            + uploadedObjectName
-            + "\n"
-            + "commonPath: "
-            + commonPath
-            + "\n"
-            + "firstPart: "
-            + firstPart
-        );
-      }
 
       // get the game object from the first part of the common path
       var firstPartObject = uploadedObject.transform.Find(firstPart);
