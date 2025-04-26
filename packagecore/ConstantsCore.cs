@@ -63,6 +63,7 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryDSUInfoUnit",
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryGismoAnchor",
         "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryAvatarColliderInfoUnit",
+        "uk.novavoidhowl.dev.cvrfury.runtime.CVRFuryAvatarConfiguration",
       }
     );
     public static readonly ReadOnlyCollection<string> CVRFURY_DEP_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
