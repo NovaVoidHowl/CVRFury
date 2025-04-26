@@ -9,5 +9,9 @@
             <engine:Label name="object-vrcfury-count" text="VRCFury Components: N/A"/>
             <engine:Label name="object-dsu-count" text="CVRFury DSUs: N/A"/>
         </engine:Box>
+        <engine:Box name="avatar-error" style="flex-direction: column;" class="avatar-error-box">
+            <engine:Label name="error-list-title" text="Avatar Errors" class="error-list-title"/>
+            <engine:Label name="error-list" text="Avatar Errors: N/A"/>
+        </engine:Box>
     </engine:Box>
 </engine:UXML>

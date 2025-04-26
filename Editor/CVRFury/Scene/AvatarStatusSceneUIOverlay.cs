@@ -2,6 +2,8 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
+using System.Linq;
+using System.Collections.Generic;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 
@@ -18,6 +20,8 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
     private Label vrcFuryCountLabel;
     private Label dsuCountLabel;
     private VisualElement componentCounterBox;
+    private Label errorListLabel;
+    private VisualElement avatarError;
     private bool uiInitialized = false;
     private bool uiAttached = false;
     private double playModeExitTime;
@@ -159,6 +163,8 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
           vrcFuryCountLabel = rootVisualElement.Q<Label>("object-vrcfury-count");
           dsuCountLabel = rootVisualElement.Q<Label>("object-dsu-count");
           componentCounterBox = rootVisualElement.Q<VisualElement>("component-counter");
+          errorListLabel = rootVisualElement.Q<Label>("error-list");
+          avatarError = rootVisualElement.Q<VisualElement>("avatar-error");
 
           uiInitialized = true;
           CoreLogDebug($"UI elements initialized and ready for attachment");
@@ -315,25 +321,34 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
             if (avatarRoot != null)
             {
               objectNameLabel.text = $"Selected Avatar: {avatarRoot.name}";
-              overlayContainer.RemoveFromClassList("border-red"); // Use overlayContainer instead
-              overlayContainer.AddToClassList("border-green"); // Use overlayContainer instead
+              overlayContainer.RemoveFromClassList("border-avatar-not-selected");
+              overlayContainer.RemoveFromClassList("border-avatar-error-condition");
+              overlayContainer.AddToClassList("border-avatar-ok");
               componentCounterBox.style.display = DisplayStyle.Flex;
             }
             else
             {
               objectNameLabel.text = "Selected: Not an Avatar";
-              overlayContainer.RemoveFromClassList("border-green"); // Use overlayContainer instead
-              overlayContainer.AddToClassList("border-red"); // Use overlayContainer instead
+              overlayContainer.RemoveFromClassList("border-avatar-ok");
+              overlayContainer.RemoveFromClassList("border-avatar-error-condition");
+              overlayContainer.AddToClassList("border-avatar-not-selected");
               componentCounterBox.style.display = DisplayStyle.None;
             }
           }
           else
           {
             objectNameLabel.text = "Selected Avatar: None";
-            overlayContainer.RemoveFromClassList("border-green");
-            overlayContainer.AddToClassList("border-red");
+            overlayContainer.RemoveFromClassList("border-avatar-ok");
+            overlayContainer.RemoveFromClassList("border-avatar-error-condition");
+            overlayContainer.AddToClassList("border-avatar-not-selected");
             componentCounterBox.style.display = DisplayStyle.None;
           }
+        }
+
+        if (errorListLabel != null)
+        {
+          errorListLabel.style.display = DisplayStyle.None;
+          avatarError.style.display = DisplayStyle.None;
         }
 
         // Only update component counts if we have a valid avatar
@@ -349,6 +364,124 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
           {
             int dsuCount = CountComponentsByNameInChildren(avatarRoot, "CVRFuryDataStorageUnit");
             dsuCountLabel.text = $"CVRFury DSUs: {dsuCount}";
+          }
+
+          // Errors reporting section
+          bool hasErrors = false;
+          string errorMessage = "";
+
+          // Body/Face mesh check
+          // check if the avatar has a bodyMesh set
+          if (avatarRoot.GetComponent("CVRAvatar") != null)
+          {
+            var avatar = avatarRoot.GetComponent("CVRAvatar");
+            if (avatar != null)
+            {
+              // Access bodyMesh as a field
+              var bodyMeshField = avatar
+                .GetType()
+                .GetField(
+                  "bodyMesh",
+                  System.Reflection.BindingFlags.Public
+                    | System.Reflection.BindingFlags.NonPublic
+                    | System.Reflection.BindingFlags.Instance
+                );
+
+              if (bodyMeshField != null)
+              {
+                try
+                {
+                  var bodyMeshValue = bodyMeshField.GetValue(avatar);
+
+                  if (bodyMeshValue == null)
+                  {
+                    hasErrors = true;
+                    errorMessage += "\nBody mesh is not set.";
+                  }
+                  else
+                  {
+                    // Additional check in case bodyMesh is an empty reference or default value
+                    bool isValidMesh = false;
+                    // Declare meshObj at a higher scope so it's available for the child check
+                    UnityEngine.Object meshObj = null;
+
+                    if (bodyMeshValue is UnityEngine.Object tempMeshObj)
+                    {
+                      // Check if it's actually a valid Unity Object reference
+                      meshObj = tempMeshObj; // Store in the outer variable
+                      isValidMesh = meshObj != null && meshObj != default;
+                    }
+
+                    // check if the gameObject the mesh is attached to is a child of the avatar
+                    if (meshObj != null && meshObj is SkinnedMeshRenderer skinnedMeshRenderer)
+                    {
+                      GameObject meshGameObject = skinnedMeshRenderer.gameObject;
+                      if (meshGameObject.transform.IsChildOf(avatarRoot.transform))
+                      {
+                        // is valid mesh and is a child of the avatar
+                      }
+                      else
+                      {
+                        hasErrors = true;
+                        errorMessage += "\nBody mesh is not on a child gameObject of the Avatar.";
+                      }
+                    }
+                    else
+                    {
+                      hasErrors = true;
+                      errorMessage += "\nBody mesh is not a valid. [ref.id=sr-01].";
+                      //Body mesh is not a valid SkinnedMeshRenderer reference
+                    }
+                  }
+                }
+                catch (System.Exception e)
+                {
+                  hasErrors = true;
+                  errorMessage += "\nError checking body mesh: " + e.Message;
+                }
+              }
+              else
+              {
+                hasErrors = true;
+                errorMessage +=
+                  "\nCCK Link ERROR: Could not evaluate body mesh field\nPlease check the CCK version and CVR Fury version compatibility.";
+              }
+            }
+          }
+
+          // Error output section
+          // set the state of the error list box depending on the error state
+          if (errorListLabel != null)
+          {
+            if (hasErrors)
+            {
+              // for every \n in the error message, add a - directly after it
+              errorMessage = errorMessage.Replace("\n", "\n- ");
+
+              // remove the first \n from the error message
+              if (errorMessage.StartsWith("\n"))
+              {
+                errorMessage = errorMessage.Substring(1);
+              }
+
+              errorListLabel.text = errorMessage;
+              errorListLabel.style.display = DisplayStyle.Flex;
+              avatarError.style.display = DisplayStyle.Flex;
+
+              // Apply animated border for error condition
+              overlayContainer.RemoveFromClassList("border-avatar-not-selected");
+              overlayContainer.RemoveFromClassList("border-avatar-ok");
+              overlayContainer.AddToClassList("border-avatar-error-condition");
+            }
+            else
+            {
+              // Remove the animated border when no errors
+              overlayContainer.RemoveFromClassList("border-avatar-error-condition");
+
+              // Make sure to properly apply the green border (OK state)
+              overlayContainer.RemoveFromClassList("border-avatar-not-selected");
+              overlayContainer.AddToClassList("border-avatar-ok");
+            }
           }
         }
       }
@@ -508,19 +641,20 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
     }
   }
 
+  [InitializeOnLoad]
   public class UIOverlayOptionMenu
   {
     private const string MENU_PATH = "NVH/" + Constants.PROGRAM_DISPLAY_NAME + "/Options/Avatar Info Overlay Enable";
     private const string EDITOR_PREFS_KEY = Constants.AVATAR_OVERLAY_STATE_PREF;
 
     [MenuItem(MENU_PATH, false, -100)]
-    private static void ToggleAvatarInfoOverlay()
+    static void ToggleAvatarInfoOverlay()
     {
       SceneUIOverlay.HandleOverlayToggle();
     }
 
     [MenuItem(MENU_PATH, true, -100)]
-    private static bool ToggleAvatarInfoOverlayValidation()
+    static bool ToggleAvatarInfoOverlayValidation()
     {
       // Toggle the checked state, using true as the default
       Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, true));
