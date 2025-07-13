@@ -317,6 +317,22 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
         return true;
       }
 
+      // Check Animator component and avatar
+      var animatorComponent = gameObject.GetComponent<Animator>();
+      if (animatorComponent != null)
+      {
+        if (animatorComponent.avatar == null)
+        {
+          // Animator Avatar is not set - this is a warning
+          return true;
+        }
+      }
+      else
+      {
+        // Animator component is missing - this is an ERROR (should be enforced by CVRAvatar)
+        return true;
+      }
+
       return false;
     }
 

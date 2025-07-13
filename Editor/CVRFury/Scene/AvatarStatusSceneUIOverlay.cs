@@ -455,6 +455,22 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
             }
           }
 
+          // Animator Avatar check
+          var animatorComponent = avatarRoot.GetComponent<Animator>();
+          if (animatorComponent != null)
+          {
+            if (animatorComponent.avatar == null)
+            {
+              hasWarnings = true;
+              warningMessage += "\nAnimator Avatar is not set.";
+            }
+          }
+          else
+          {
+            hasErrors = true;
+            errorMessage += "\nAnimator component is missing.";
+          }
+
           // Error and warning output section
           // Handle error display
           if (errorListLabel != null)
