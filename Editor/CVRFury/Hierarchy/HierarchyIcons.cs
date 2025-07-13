@@ -281,25 +281,33 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
 
         var bodyMeshValue = bodyMeshField.GetValue(avatar);
 
-        if (bodyMeshValue == null)
+        // Check for null or Unity's "null" object reference
+        if (bodyMeshValue == null || (bodyMeshValue is UnityEngine.Object unityObj && unityObj == null))
         {
-          // Body mesh is not set
+          // Body mesh is not set - this is a warning
           return true;
         }
-
-        // Check if bodyMesh is a valid SkinnedMeshRenderer and is a child of the avatar
-        if (bodyMeshValue is SkinnedMeshRenderer skinnedMeshRenderer)
+        else if (bodyMeshValue is UnityEngine.Object meshObj && meshObj != null)
         {
-          GameObject meshGameObject = skinnedMeshRenderer.gameObject;
-          if (!meshGameObject.transform.IsChildOf(gameObject.transform))
+          // Now check if it's a SkinnedMeshRenderer
+          if (meshObj is SkinnedMeshRenderer skinnedMeshRenderer)
           {
-            // Body mesh is not on a child gameObject of the Avatar
+            GameObject meshGameObject = skinnedMeshRenderer.gameObject;
+            if (!meshGameObject.transform.IsChildOf(gameObject.transform))
+            {
+              // Body mesh is not on a child gameObject of the Avatar - ERROR
+              return true;
+            }
+          }
+          else
+          {
+            // Body mesh is not a valid SkinnedMeshRenderer reference - ERROR
             return true;
           }
         }
         else
         {
-          // Body mesh is not a valid SkinnedMeshRenderer reference
+          // bodyMeshValue is some other unexpected type - WARNING
           return true;
         }
       }

@@ -24,6 +24,15 @@
   transition-delay: 0s;
 }
 
+.border-avatar-warning-condition {
+  border-color: rgb(255, 165, 0);
+  border-width: 2px;
+  transition-property: border-color;
+  transition-duration: .5s;
+  transition-timing-function: ease-in-out;
+  transition-delay: 0s;
+}
+
 .border-avatar-error-condition {
   border-color: rgb(255, 0, 0);
   border-width: 2px;
@@ -39,11 +48,22 @@ Label {
   -unity-text-align: middle-left;
 }
 
+.avatar-warning-box {
+  border-width: 1px 0px 0px 0px;
+  border-color: rgb(206, 146, 98);
+  padding-top: 4px;
+  margin-top: 4px;
+}
+
 .avatar-error-box {
   border-width: 1px 0px 0px 0px;
   border-color: rgb(180, 98, 98);
   padding-top: 4px;
   margin-top: 4px;
+}
+
+.warning-list-title {
+  -unity-font-style: bold;
 }
 
 .error-list-title {

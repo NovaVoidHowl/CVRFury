@@ -22,6 +22,8 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
     private VisualElement componentCounterBox;
     private Label errorListLabel;
     private VisualElement avatarError;
+    private Label warningListLabel;
+    private VisualElement avatarWarning;
     private bool uiInitialized = false;
     private bool uiAttached = false;
     private double playModeExitTime;
@@ -165,6 +167,8 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
           componentCounterBox = rootVisualElement.Q<VisualElement>("component-counter");
           errorListLabel = rootVisualElement.Q<Label>("error-list");
           avatarError = rootVisualElement.Q<VisualElement>("avatar-error");
+          warningListLabel = rootVisualElement.Q<Label>("warning-list");
+          avatarWarning = rootVisualElement.Q<VisualElement>("avatar-warning");
 
           uiInitialized = true;
           CoreLogDebug($"UI elements initialized and ready for attachment");
@@ -351,6 +355,12 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
           avatarError.style.display = DisplayStyle.None;
         }
 
+        if (warningListLabel != null)
+        {
+          warningListLabel.style.display = DisplayStyle.None;
+          avatarWarning.style.display = DisplayStyle.None;
+        }
+
         // Only update component counts if we have a valid avatar
         if (avatarRoot != null)
         {
@@ -366,9 +376,11 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
             dsuCountLabel.text = $"CVRFury DSUs: {dsuCount}";
           }
 
-          // Errors reporting section
+          // Errors and warnings reporting section
           bool hasErrors = false;
+          bool hasWarnings = false;
           string errorMessage = "";
+          string warningMessage = "";
 
           // Body/Face mesh check
           // check if the avatar has a bodyMesh set
@@ -393,32 +405,21 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
                 {
                   var bodyMeshValue = bodyMeshField.GetValue(avatar);
 
-                  if (bodyMeshValue == null)
+                  // Check for null or Unity's "null" object reference
+                  if (bodyMeshValue == null || (bodyMeshValue is UnityEngine.Object unityObj && unityObj == null))
                   {
-                    hasErrors = true;
-                    errorMessage += "\nBody mesh is not set.";
+                    hasWarnings = true;
+                    warningMessage += "\nBody mesh is not set.";
                   }
-                  else
+                  else if (bodyMeshValue is UnityEngine.Object meshObj && meshObj != null)
                   {
-                    // Additional check in case bodyMesh is an empty reference or default value
-                    bool isValidMesh = false;
-                    // Declare meshObj at a higher scope so it's available for the child check
-                    UnityEngine.Object meshObj = null;
-
-                    if (bodyMeshValue is UnityEngine.Object tempMeshObj)
-                    {
-                      // Check if it's actually a valid Unity Object reference
-                      meshObj = tempMeshObj; // Store in the outer variable
-                      isValidMesh = meshObj != null && meshObj != default;
-                    }
-
-                    // check if the gameObject the mesh is attached to is a child of the avatar
-                    if (meshObj != null && meshObj is SkinnedMeshRenderer skinnedMeshRenderer)
+                    // Now check if it's a SkinnedMeshRenderer
+                    if (meshObj is SkinnedMeshRenderer skinnedMeshRenderer)
                     {
                       GameObject meshGameObject = skinnedMeshRenderer.gameObject;
                       if (meshGameObject.transform.IsChildOf(avatarRoot.transform))
                       {
-                        // is valid mesh and is a child of the avatar
+                        // is valid mesh and is a child of the avatar - all good
                       }
                       else
                       {
@@ -429,9 +430,14 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
                     else
                     {
                       hasErrors = true;
-                      errorMessage += "\nBody mesh is not a valid. [ref.id=sr-01].";
-                      //Body mesh is not a valid SkinnedMeshRenderer reference
+                      errorMessage += "\nBody mesh is not a valid SkinnedMeshRenderer. [ref.id=sr-01]";
                     }
+                  }
+                  else
+                  {
+                    // bodyMeshValue is some other type that we don't expect
+                    hasWarnings = true;
+                    warningMessage += "\nBody mesh reference is invalid or corrupted.";
                   }
                 }
                 catch (System.Exception e)
@@ -449,8 +455,8 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
             }
           }
 
-          // Error output section
-          // set the state of the error list box depending on the error state
+          // Error and warning output section
+          // Handle error display
           if (errorListLabel != null)
           {
             if (hasErrors)
@@ -467,21 +473,65 @@ namespace uk.novavoidhowl.dev.cvrfury.scene
               errorListLabel.text = errorMessage;
               errorListLabel.style.display = DisplayStyle.Flex;
               avatarError.style.display = DisplayStyle.Flex;
-
-              // Apply animated border for error condition
-              overlayContainer.RemoveFromClassList("border-avatar-not-selected");
-              overlayContainer.RemoveFromClassList("border-avatar-ok");
-              overlayContainer.AddToClassList("border-avatar-error-condition");
             }
             else
             {
-              // Remove the animated border when no errors
-              overlayContainer.RemoveFromClassList("border-avatar-error-condition");
-
-              // Make sure to properly apply the green border (OK state)
-              overlayContainer.RemoveFromClassList("border-avatar-not-selected");
-              overlayContainer.AddToClassList("border-avatar-ok");
+              errorListLabel.style.display = DisplayStyle.None;
+              avatarError.style.display = DisplayStyle.None;
             }
+          }
+
+          // Handle warning display
+          if (warningListLabel != null)
+          {
+            if (hasWarnings)
+            {
+              // for every \n in the warning message, add a - directly after it
+              warningMessage = warningMessage.Replace("\n", "\n- ");
+
+              // remove the first \n from the warning message
+              if (warningMessage.StartsWith("\n"))
+              {
+                warningMessage = warningMessage.Substring(1);
+              }
+
+              warningListLabel.text = warningMessage;
+              warningListLabel.style.display = DisplayStyle.Flex;
+              avatarWarning.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+              warningListLabel.style.display = DisplayStyle.None;
+              avatarWarning.style.display = DisplayStyle.None;
+            }
+          }
+
+          // Set border styling based on the most severe condition
+          if (hasErrors)
+          {
+            // Apply animated border for error condition
+            overlayContainer.RemoveFromClassList("border-avatar-not-selected");
+            overlayContainer.RemoveFromClassList("border-avatar-ok");
+            overlayContainer.RemoveFromClassList("border-avatar-warning-condition");
+            overlayContainer.AddToClassList("border-avatar-error-condition");
+          }
+          else if (hasWarnings)
+          {
+            // Apply warning border
+            overlayContainer.RemoveFromClassList("border-avatar-not-selected");
+            overlayContainer.RemoveFromClassList("border-avatar-ok");
+            overlayContainer.RemoveFromClassList("border-avatar-error-condition");
+            overlayContainer.AddToClassList("border-avatar-warning-condition");
+          }
+          else
+          {
+            // Remove the animated border when no errors or warnings
+            overlayContainer.RemoveFromClassList("border-avatar-error-condition");
+            overlayContainer.RemoveFromClassList("border-avatar-warning-condition");
+
+            // Make sure to properly apply the green border (OK state)
+            overlayContainer.RemoveFromClassList("border-avatar-not-selected");
+            overlayContainer.AddToClassList("border-avatar-ok");
           }
         }
       }
