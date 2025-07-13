@@ -38,7 +38,6 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
 {
   public partial class ToolSetup : EditorWindow
   {
-
     private VisualElement renderAppComponents(string scriptingDefines)
     {
       // create a new section root element
@@ -130,7 +129,6 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
           + appComponent
           + ".source";
 
-
         // check if the source file is runtime or editor
         string appComponentType = getTypeOfAppComponentFromFile(sourceFile);
         switch (appComponentType)
@@ -146,7 +144,6 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
             targetFile = targetFileBase + "Editor/" + appComponent;
             break;
         }
-
 
         // Clone the UXML for each dependency
         var templateContainer = appComponentVisualTree.CloneTree();

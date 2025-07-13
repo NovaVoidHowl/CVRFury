@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns="UnityEngine.UIElements">
+<VisualElement name="CVRFuryAvatarColliderInfoUnitEditor">
+    <VisualElement name="logo">
+    </VisualElement>
+    <VisualElement name="Banner">
+      <Label name="CoverTitle" text="Avatar Configuration" />
+      <Label name="Content1" text="This Component stores data about CVR Fury options for the linked avatar" />
+    </VisualElement>
+    <VisualElement name="Status">
+      <Label name="AvatarLinkTitle" text="Avatar Link Status : " />
+      <Label name="AvatarLinkContent" text="Inactive" />
+    </VisualElement>
+
+    <VisualElement name="ConfigOptions">
+      
+    </VisualElement>
+
+</VisualElement>
+</UXML>

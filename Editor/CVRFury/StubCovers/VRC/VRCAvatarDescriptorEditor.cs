@@ -11,7 +11,8 @@ using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 namespace uk.novavoidhowl.dev.cvrfury
 {
   [CustomEditor(typeof(VRCAvatarDescriptor))]
-  public class VRCAvatarDescriptorEditor : VRCGeneralStubEditor {
+  public class VRCAvatarDescriptorEditor : VRCGeneralStubEditor
+  {
     protected override string componentTypeSuffix => "Avatar Descriptor";
   }
 }

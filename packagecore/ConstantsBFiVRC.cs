@@ -54,7 +54,5 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       );
 
     // ref https://github.com/ChilloutCharles/BrainFlowsIntoVRChat
-
   }
-
 }

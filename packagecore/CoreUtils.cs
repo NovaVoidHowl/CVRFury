@@ -19,6 +19,15 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 {
   public static class CoreUtils
   {
+    public static Color hexadecimalToColour(string hex)
+    {
+      hex = hex.Replace("#", "");
+      byte r = byte.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+      byte g = byte.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+      byte b = byte.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+      return new Color32(r, g, b, 255);
+    }
+
 #if UNITY_EDITOR
 
     public static void CoreLog(object message)
@@ -348,7 +357,13 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
 
     // Top bar for the components in the inspector
 
-    public static VisualElement CreateComponentTopBar(String title)
+    public static VisualElement CreateComponentTopBar(
+      String prefix,
+      String title,
+      Color prefixColour,
+      Color backgroundColour,
+      Color hoverColour
+    )
     {
       // Create a new VisualElement
       var topBar = new VisualElement();
@@ -357,6 +372,37 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       topBar.name = "topBar";
       // allow clicking through
       topBar.pickingMode = PickingMode.Ignore;
+
+      // set size of the topBar
+      topBar.style.height = 21;
+      // set left/right pos
+      topBar.style.left = 0;
+      topBar.style.right = 64;
+      // set padding
+      topBar.style.paddingLeft = 0;
+      topBar.style.top = 0;
+      // set text alignment
+      topBar.style.unityTextAlign = TextAnchor.MiddleLeft;
+      // set opacity
+      topBar.style.opacity = 1;
+      // set text overflow
+      topBar.style.overflow = Overflow.Hidden;
+      topBar.style.textOverflow = TextOverflow.Ellipsis;
+
+      // set flex direction
+      topBar.style.flexDirection = FlexDirection.Row;
+      // set display
+      topBar.style.display = DisplayStyle.Flex;
+
+      // set font size
+      topBar.style.fontSize = 12;
+      // set font style
+      topBar.style.unityFontStyleAndWeight = FontStyle.Bold;
+      // set font colour
+      topBar.style.color = Color.white;
+
+      // Add a background color to the topBar
+      topBar.style.backgroundColor = backgroundColour;
 
       // create a visual element for the topBar content
       var topBarContent = new VisualElement();
@@ -369,11 +415,42 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       // Add the topBarContent to the topBar
       topBar.Add(topBarContent);
 
+      var prefixLabel = new Label(prefix)
+      {
+        style =
+        {
+          fontSize = 12,
+          unityFontStyleAndWeight = FontStyle.Bold,
+          color = prefixColour,
+          marginRight = 4
+        }
+      };
+
+      topBarContent.Add(prefixLabel);
       // Add a label to the topBar to show the component type
       var label = new Label(title);
       label.pickingMode = PickingMode.Ignore; // allow clicking through
       label.style.unityFontStyleAndWeight = FontStyle.Bold; // Make the label text bold
       topBarContent.Add(label);
+
+      // Register hover events on the topBar and topBarContent
+      topBar.RegisterCallback<MouseEnterEvent>(evt =>
+      {
+        topBar.style.backgroundColor = hoverColour;
+      });
+      topBar.RegisterCallback<MouseLeaveEvent>(evt =>
+      {
+        topBar.style.backgroundColor = backgroundColour;
+      });
+
+      topBarContent.RegisterCallback<MouseEnterEvent>(evt =>
+      {
+        topBar.style.backgroundColor = hoverColour;
+      });
+      topBarContent.RegisterCallback<MouseLeaveEvent>(evt =>
+      {
+        topBar.style.backgroundColor = backgroundColour;
+      });
 
       return topBar;
     }
@@ -401,6 +478,136 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
       // Toggle the checked state
       Menu.SetChecked(MENU_PATH, EditorPrefs.GetBool(EDITOR_PREFS_KEY, false));
       return true;
+    }
+  }
+
+  // Custom SwitchToggle class that creates a mobile-style toggle switch
+  public class SwitchToggle : BindableElement, INotifyValueChanged<bool>
+  {
+    private VisualElement track;
+    private VisualElement knob;
+    private Label label;
+    private bool _value;
+    private SerializedProperty _boundProperty;
+
+    public bool value
+    {
+      get { return _value; }
+      set
+      {
+        if (_value != value)
+        {
+          bool previousValue = _value;
+          _value = value;
+          UpdateVisualState();
+          using (ChangeEvent<bool> evt = ChangeEvent<bool>.GetPooled(previousValue, _value))
+          {
+            evt.target = this;
+            SendEvent(evt);
+          }
+        }
+      }
+    }
+
+    // Event that clients can subscribe to
+    public event EventCallback<ChangeEvent<bool>> onValueChanged;
+
+    public SwitchToggle(string labelText = null)
+    {
+      AddToClassList("switch-toggle");
+
+      // Create container for the label and toggle
+      var container = new VisualElement();
+      container.AddToClassList("switch-toggle-container");
+      hierarchy.Add(container);
+
+      // Add label if provided
+      if (!string.IsNullOrEmpty(labelText))
+      {
+        label = new Label(labelText);
+        label.AddToClassList("switch-toggle-label");
+        container.Add(label);
+      }
+
+      // Create toggle track
+      track = new VisualElement();
+      track.AddToClassList("switch-toggle-track");
+      container.Add(track);
+
+      // Create toggle knob
+      knob = new VisualElement();
+      knob.AddToClassList("switch-toggle-knob");
+      track.Add(knob);
+
+      // Register callbacks
+      RegisterCallback<ClickEvent>(OnClick);
+      RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
+    }
+
+    private void OnAttachToPanel(AttachToPanelEvent evt)
+    {
+      UpdateVisualState();
+    }
+
+    private void OnClick(ClickEvent evt)
+    {
+      value = !_value;
+      evt.StopPropagation();
+    }
+
+    private void UpdateVisualState()
+    {
+      if (_value)
+      {
+        track.AddToClassList("switch-toggle-track-active");
+        knob.AddToClassList("switch-toggle-knob-active");
+      }
+      else
+      {
+        track.RemoveFromClassList("switch-toggle-track-active");
+        knob.RemoveFromClassList("switch-toggle-knob-active");
+      }
+    }
+
+    public void RegisterValueChangedCallback(EventCallback<ChangeEvent<bool>> callback)
+    {
+      onValueChanged += callback;
+      RegisterCallback<ChangeEvent<bool>>(callback);
+    }
+
+    public void UnregisterValueChangedCallback(EventCallback<ChangeEvent<bool>> callback)
+    {
+      onValueChanged -= callback;
+      UnregisterCallback<ChangeEvent<bool>>(callback);
+    }
+
+    // Implementation of INotifyValueChanged<bool>
+    public void SetValueWithoutNotify(bool newValue)
+    {
+      if (_value != newValue)
+      {
+        _value = newValue;
+        UpdateVisualState();
+      }
+    }
+
+    // Add method to bind to a SerializedProperty
+    public void BindProperty(SerializedProperty property)
+    {
+      _boundProperty = property;
+      if (_boundProperty != null)
+      {
+        SetValueWithoutNotify(_boundProperty.boolValue);
+      }
+    }
+
+    // Method to update value from bound property
+    public void UpdateFromProperty()
+    {
+      if (_boundProperty != null && _boundProperty.serializedObject != null)
+      {
+        SetValueWithoutNotify(_boundProperty.boolValue);
+      }
     }
   }
 #endif

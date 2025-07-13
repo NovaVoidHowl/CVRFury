@@ -53,7 +53,7 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       overlayIconContent = EditorGUIUtility.IconContent("console.warnicon");
       if (overlayIconContent != null)
       {
-        overlayIconContent.tooltip = "VRCFury Issue";
+        overlayIconContent.tooltip = "CVRFury/VRCFury Issue";
       }
 
       EditorApplication.hierarchyWindowItemOnGUI += DrawHierarchyItem;
@@ -201,6 +201,10 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
 
     private static bool CheckForIssues(GameObject gameObject)
     {
+      // Check for CVRAvatar body mesh issues first
+      if (HasCVRAvatarBodyMeshIssues(gameObject))
+        return true;
+
       var vrcFuryComponents = gameObject.GetComponents<VRCFury>();
       if (vrcFuryComponents == null || vrcFuryComponents.Length == 0)
         return false;
@@ -242,8 +246,93 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
           var contentClassName = contentProperty.managedReferenceFullTypename.Split('.').Last();
           if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
             return true;
+
+          if (Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(contentClassName))
+            return true;
         }
       }
+      return false;
+    }
+
+    private static bool HasCVRAvatarBodyMeshIssues(GameObject gameObject)
+    {
+      // Check if this object has a CVRAvatar component
+      var avatar = gameObject.GetComponent("CVRAvatar");
+      if (avatar == null)
+        return false;
+
+      try
+      {
+        // Access bodyMesh as a field
+        var bodyMeshField = avatar
+          .GetType()
+          .GetField(
+            "bodyMesh",
+            System.Reflection.BindingFlags.Public
+              | System.Reflection.BindingFlags.NonPublic
+              | System.Reflection.BindingFlags.Instance
+          );
+
+        if (bodyMeshField == null)
+        {
+          // CCK compatibility issue
+          return true;
+        }
+
+        var bodyMeshValue = bodyMeshField.GetValue(avatar);
+
+        // Check for null or Unity's "null" object reference
+        if (bodyMeshValue == null || (bodyMeshValue is UnityEngine.Object unityObj && unityObj == null))
+        {
+          // Body mesh is not set - this is a warning
+          return true;
+        }
+        else if (bodyMeshValue is UnityEngine.Object meshObj && meshObj != null)
+        {
+          // Now check if it's a SkinnedMeshRenderer
+          if (meshObj is SkinnedMeshRenderer skinnedMeshRenderer)
+          {
+            GameObject meshGameObject = skinnedMeshRenderer.gameObject;
+            if (!meshGameObject.transform.IsChildOf(gameObject.transform))
+            {
+              // Body mesh is not on a child gameObject of the Avatar - ERROR
+              return true;
+            }
+          }
+          else
+          {
+            // Body mesh is not a valid SkinnedMeshRenderer reference - ERROR
+            return true;
+          }
+        }
+        else
+        {
+          // bodyMeshValue is some other unexpected type - WARNING
+          return true;
+        }
+      }
+      catch (System.Exception)
+      {
+        // Error checking body mesh
+        return true;
+      }
+
+      // Check Animator component and avatar
+      var animatorComponent = gameObject.GetComponent<Animator>();
+      if (animatorComponent != null)
+      {
+        if (animatorComponent.avatar == null)
+        {
+          // Animator Avatar is not set - this is a warning
+          return true;
+        }
+      }
+      else
+      {
+        // Animator component is missing - this is an ERROR (should be enforced by CVRAvatar)
+        return true;
+      }
+
       return false;
     }
 

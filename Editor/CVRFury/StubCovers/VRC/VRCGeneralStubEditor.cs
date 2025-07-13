@@ -69,27 +69,6 @@ namespace uk.novavoidhowl.dev.cvrfury
       // Apply the StyleSheet
       rootVisualElement.styleSheets.Add(stylesheet);
 
-
-
-      #region component type banner logic
-
-      // create a new visual element of the component type banner
-      var componentTypeVisualElement = new VisualElement();
-
-      // set the name of the componentTypeVisualElement to allow styling
-      componentTypeVisualElement.name = "componentTypeVisualElement";
-      // allow clicking through
-      componentTypeVisualElement.pickingMode = PickingMode.Ignore;
-
-      componentTypeVisualElement.Add(CreateComponentTopBar("VRC Component | " + componentTypeSuffix));
-
-
-
-      // add the componentTypeVisualElement to the rootVisualElement
-      rootVisualElement.Add(componentTypeVisualElement);
-
-      #endregion //component type banner logic
-
       return rootVisualElement;
     }
   }

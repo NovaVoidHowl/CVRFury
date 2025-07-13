@@ -1,4 +1,4 @@
-// Version 2.1.1
+// Version 2.1.2
 // editor only script to manage the dependencies
 #if UNITY_EDITOR
 
@@ -365,7 +365,7 @@ namespace uk.novavoidhowl.dev.cvrfury.nvhpmm
         catch (JsonReaderException ex)
         {
           CoreLog(ex.Message);
-          CoreLog("suspect legacy format internal package"+ firstLine);
+          CoreLog("suspect legacy format internal package" + firstLine);
 
           // if it does not parse as json, then it is not the line we want
           // set dict to null, so we can see that it is not valid

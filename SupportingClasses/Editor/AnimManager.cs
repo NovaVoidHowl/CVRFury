@@ -11,7 +11,11 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
 {
   public static class Animation
   {
-    public static AnimationClip rewriteAnimationClipCurvePaths(AnimationClip clip, string oldPathString, string newPathString)
+    public static AnimationClip rewriteAnimationClipCurvePaths(
+      AnimationClip clip,
+      string oldPathString,
+      string newPathString
+    )
     {
       //console print to say we are rewriting animation clip curve paths
       CoreLog("Rewriting animation clip curve paths");
@@ -21,9 +25,9 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
       // get the curve bindings from the clip
       EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
 
-
       // list of tuples to hold the old and new curve bindings
-      List<System.Tuple<EditorCurveBinding, EditorCurveBinding>> curveBindingsPairs = new List<System.Tuple<EditorCurveBinding, EditorCurveBinding>>();
+      List<System.Tuple<EditorCurveBinding, EditorCurveBinding>> curveBindingsPairs =
+        new List<System.Tuple<EditorCurveBinding, EditorCurveBinding>>();
 
       //console print the curve bindings count
       CoreLogDebug("Number of curveBindings: " + curveBindings.Length);
@@ -46,7 +50,7 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
           string replacementFullPath = curveBinding.path.Replace(oldPathString, newPathString);
 
           // console print to say we are replacing the path for the curve binding
-          CoreLogDebug("Replacing path "+ curveBinding.path +" with "+ replacementFullPath +" for curve binding");
+          CoreLogDebug("Replacing path " + curveBinding.path + " with " + replacementFullPath + " for curve binding");
 
           // if it does, create a new curve binding with the replaced path
           EditorCurveBinding newCurveBinding = new EditorCurveBinding
@@ -57,8 +61,9 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
           };
 
           // add the old and new curve bindings to the list
-          curveBindingsPairs.Add(new System.Tuple<EditorCurveBinding, EditorCurveBinding>(curveBinding, newCurveBinding));
-
+          curveBindingsPairs.Add(
+            new System.Tuple<EditorCurveBinding, EditorCurveBinding>(curveBinding, newCurveBinding)
+          );
         }
         else
         {
@@ -99,9 +104,8 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
         }
       }
 
-
       //console print that we are setting the new curve bindings to the clip
-      CoreLog("Setting the new curve bindings to the clip: "  + clip.name);
+      CoreLog("Setting the new curve bindings to the clip: " + clip.name);
 
       // loop through the curve bindings pairs and set the new curve bindings to the clip
       foreach (System.Tuple<EditorCurveBinding, EditorCurveBinding> curveBindingsPair in curveBindingsPairs)
@@ -123,7 +127,6 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
       {
         CoreLogDebug("newCurveBinding.path: " + curveBinding.path);
       }
-
 
       // return the clip
       return clip;
