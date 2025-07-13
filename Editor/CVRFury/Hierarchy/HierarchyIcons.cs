@@ -53,7 +53,7 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       overlayIconContent = EditorGUIUtility.IconContent("console.warnicon");
       if (overlayIconContent != null)
       {
-        overlayIconContent.tooltip = "VRCFury Issue";
+        overlayIconContent.tooltip = "CVRFury/VRCFury Issue";
       }
 
       EditorApplication.hierarchyWindowItemOnGUI += DrawHierarchyItem;
@@ -201,6 +201,10 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
 
     private static bool CheckForIssues(GameObject gameObject)
     {
+      // Check for CVRAvatar body mesh issues first
+      if (HasCVRAvatarBodyMeshIssues(gameObject))
+        return true;
+
       var vrcFuryComponents = gameObject.GetComponents<VRCFury>();
       if (vrcFuryComponents == null || vrcFuryComponents.Length == 0)
         return false;
@@ -247,6 +251,64 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
             return true;
         }
       }
+      return false;
+    }
+
+    private static bool HasCVRAvatarBodyMeshIssues(GameObject gameObject)
+    {
+      // Check if this object has a CVRAvatar component
+      var avatar = gameObject.GetComponent("CVRAvatar");
+      if (avatar == null)
+        return false;
+
+      try
+      {
+        // Access bodyMesh as a field
+        var bodyMeshField = avatar
+          .GetType()
+          .GetField(
+            "bodyMesh",
+            System.Reflection.BindingFlags.Public
+              | System.Reflection.BindingFlags.NonPublic
+              | System.Reflection.BindingFlags.Instance
+          );
+
+        if (bodyMeshField == null)
+        {
+          // CCK compatibility issue
+          return true;
+        }
+
+        var bodyMeshValue = bodyMeshField.GetValue(avatar);
+
+        if (bodyMeshValue == null)
+        {
+          // Body mesh is not set
+          return true;
+        }
+
+        // Check if bodyMesh is a valid SkinnedMeshRenderer and is a child of the avatar
+        if (bodyMeshValue is SkinnedMeshRenderer skinnedMeshRenderer)
+        {
+          GameObject meshGameObject = skinnedMeshRenderer.gameObject;
+          if (!meshGameObject.transform.IsChildOf(gameObject.transform))
+          {
+            // Body mesh is not on a child gameObject of the Avatar
+            return true;
+          }
+        }
+        else
+        {
+          // Body mesh is not a valid SkinnedMeshRenderer reference
+          return true;
+        }
+      }
+      catch (System.Exception)
+      {
+        // Error checking body mesh
+        return true;
+      }
+
       return false;
     }
 
