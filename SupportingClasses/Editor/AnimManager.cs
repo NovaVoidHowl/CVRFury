@@ -39,7 +39,12 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
       string replacePattern = "/" + newSegment + "/";
       if (fullPath.Contains(searchPattern))
       {
-        return fullPath.Replace(searchPattern, replacePattern);
+        // Only replace the first occurrence to avoid issues with repeated segment names
+        int index = fullPath.IndexOf(searchPattern);
+        if (index >= 0)
+        {
+          return fullPath.Substring(0, index) + replacePattern + fullPath.Substring(index + searchPattern.Length);
+        }
       }
 
       // Handle case where the old segment is at the end of the path
@@ -48,12 +53,33 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
         return fullPath.Substring(0, fullPath.Length - oldSegment.Length) + newSegment;
       }
 
-      // If no exact matches found, fallback to the original behavior for partial matches
-      // but log a warning
+      // Enhanced fallback: try to replace only the first occurrence of oldSegment that is a complete path segment
+      // Split the path and reconstruct it, replacing only the first matching segment
+      string[] pathSegments = fullPath.Split('/');
+      bool replaced = false;
+      
+      for (int i = 0; i < pathSegments.Length && !replaced; i++)
+      {
+        if (pathSegments[i] == oldSegment)
+        {
+          pathSegments[i] = newSegment;
+          replaced = true;
+          CoreLogDebug(
+            $"Replaced path segment '{oldSegment}' with '{newSegment}' at position {i} in path '{fullPath}'"
+          );
+        }
+      }
+
+      if (replaced)
+      {
+        return string.Join("/", pathSegments);
+      }
+
+      // If no exact segment matches found, log a warning and return original path unchanged
       CoreLogDebug(
-        $"Warning: No exact path segment match found for '{oldSegment}' in '{fullPath}', using fallback replacement"
+        $"Warning: No exact path segment match found for '{oldSegment}' in '{fullPath}', returning original path unchanged"
       );
-      return fullPath.Replace(oldSegment, newSegment);
+      return fullPath;
     }
 
     public static AnimationClip rewriteAnimationClipCurvePaths(
