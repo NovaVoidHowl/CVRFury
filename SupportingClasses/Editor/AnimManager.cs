@@ -11,6 +11,51 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
 {
   public static class Animation
   {
+    /// <summary>
+    /// Replaces a path segment in an animation curve binding path, handling spaces properly
+    /// and only replacing complete path segments or prefixes
+    /// </summary>
+    /// <param name="fullPath">The complete path to modify</param>
+    /// <param name="oldSegment">The path segment to replace</param>
+    /// <param name="newSegment">The new path segment</param>
+    /// <returns>The modified path</returns>
+    private static string ReplacePathSegment(string fullPath, string oldSegment, string newSegment)
+    {
+      if (string.IsNullOrEmpty(oldSegment))
+        return fullPath;
+
+      // Handle case where we're replacing the entire path
+      if (fullPath == oldSegment)
+        return newSegment;
+
+      // Handle case where the old segment is at the beginning of the path
+      if (fullPath.StartsWith(oldSegment + "/"))
+      {
+        return newSegment + fullPath.Substring(oldSegment.Length);
+      }
+
+      // Handle case where the old segment is a complete path segment in the middle
+      string searchPattern = "/" + oldSegment + "/";
+      string replacePattern = "/" + newSegment + "/";
+      if (fullPath.Contains(searchPattern))
+      {
+        return fullPath.Replace(searchPattern, replacePattern);
+      }
+
+      // Handle case where the old segment is at the end of the path
+      if (fullPath.EndsWith("/" + oldSegment))
+      {
+        return fullPath.Substring(0, fullPath.Length - oldSegment.Length) + newSegment;
+      }
+
+      // If no exact matches found, fallback to the original behavior for partial matches
+      // but log a warning
+      CoreLogDebug(
+        $"Warning: No exact path segment match found for '{oldSegment}' in '{fullPath}', using fallback replacement"
+      );
+      return fullPath.Replace(oldSegment, newSegment);
+    }
+
     public static AnimationClip rewriteAnimationClipCurvePaths(
       AnimationClip clip,
       string oldPathString,
@@ -46,8 +91,8 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
         if (curveBinding.path.Contains(oldPathString))
         {
           // generate a new path string by replacing the old path string with the new path string
-          // in the curve binding's path
-          string replacementFullPath = curveBinding.path.Replace(oldPathString, newPathString);
+          // in the curve binding's path, but only replace at the start or as complete path segments
+          string replacementFullPath = ReplacePathSegment(curveBinding.path, oldPathString, newPathString);
 
           // console print to say we are replacing the path for the curve binding
           CoreLogDebug("Replacing path " + curveBinding.path + " with " + replacementFullPath + " for curve binding");
@@ -82,8 +127,12 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
         if (objectReferenceCurveBinding.path.Contains(oldPathString))
         {
           // generate a new path string by replacing the old path string with the new path string
-          // in the object reference curve binding's path
-          string replacementFullPath = objectReferenceCurveBinding.path.Replace(oldPathString, newPathString);
+          // in the object reference curve binding's path, but only replace at the start or as complete path segments
+          string replacementFullPath = ReplacePathSegment(
+            objectReferenceCurveBinding.path,
+            oldPathString,
+            newPathString
+          );
 
           // create a new object reference curve binding with the replaced path
           EditorCurveBinding newObjectReferenceCurveBinding = new EditorCurveBinding
