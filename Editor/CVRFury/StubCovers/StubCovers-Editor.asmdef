@@ -3,7 +3,6 @@
     "references": [
       "VRCFury",
       "uk.novavoidhowl.dev.cvrfury.packagecore",
-      "uk.novavoidhowl.dev.vrcstub",
       "uk.novavoidhowl.dev.cvrfury.runtime",
       "uk.novavoidhowl.dev.cvrfury.editor.components"
     ],
@@ -12,6 +11,12 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
+      "VRCAVstub.dll",
+      "VRCPBstub.dll",
+      "VRCPConStub.dll",
+      "VRCPCstub.dll",
+      "VRCPMstub.dll",
+      "VRCPstub.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [],
