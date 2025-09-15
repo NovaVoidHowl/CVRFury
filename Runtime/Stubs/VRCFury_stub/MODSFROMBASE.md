@@ -40,7 +40,13 @@ Not included
 
 VRCFury.asmdef :
 
-- add 'uk.novavoidhowl.dev.vrcstub' to references
+- add stub dlls to precompiledReferences
+   -  "VRCAVstub.dll"
+   -  "VRCPBstub.dll"
+   -  "VRCPConStub.dll"
+   -  "VRCPCstub.dll"
+   -  "VRCPMstub.dll"
+   -  "VRCPstub.dll"
 
 - remove from precompiledReferences 'VRCSDKBase.dll'
 
@@ -109,11 +115,7 @@ VRCFuryPlayComponent.cs:
 
 Feature.cs :
 
-- remove 'using VRC.SDK3.Avatars.Components;'
-
 - remove 'using VRC.SDK3.Avatars.ScriptableObjects;'
-
-- remove 'using VRC.SDK3.Dynamics.PhysBone.Components;'
 
 - remove `[Obsolete]` tag from 'fallbackBones'
 
@@ -121,19 +123,6 @@ Feature.cs :
 
 - remove `[Obsolete]` tag from 'boneOnAvatar'
 
-- add 'using uk.novavoidhowl.dev.vrcstub;'
-
-GuidWrapper.cs :
-
-- remove 'using VRC.SDK3.Avatars.ScriptableObjects;'
-
-- add 'using uk.novavoidhowl.dev.vrcstub;'
-
-StateAction.cs :
-
-- remove 'using VRC.SDK3.Dynamics.PhysBone.Components;'
-
-- add 'using uk.novavoidhowl.dev.vrcstub;'
 
 ## SPS
 

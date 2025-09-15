@@ -2,7 +2,9 @@ using System;
 using UnityEngine;
 using VF.Upgradeable;
 using Object = UnityEngine.Object;
-using uk.novavoidhowl.dev.vrcstub;
+
+// following is provided by the VRC Stub dlls included in the CVRFury project
+using VRC.SDK3.Avatars.ScriptableObjects;
 
 namespace VF.Model
 {

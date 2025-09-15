@@ -2,14 +2,20 @@
   "name": "VRCFury",
   "references": [
       "VrcfEditorOnly",
-      "JsonComponent",
-      "uk.novavoidhowl.dev.vrcstub"
+      "JsonComponent"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
+  "overrideReferences": true,
+  "precompiledReferences": [
+      "VRCAVstub.dll",
+      "VRCPBstub.dll",
+      "VRCPConStub.dll",
+      "VRCPCstub.dll",
+      "VRCPMstub.dll",
+      "VRCPstub.dll"
+  ],
   "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": []

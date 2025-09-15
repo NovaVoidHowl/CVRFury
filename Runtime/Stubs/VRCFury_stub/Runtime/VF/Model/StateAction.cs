@@ -4,7 +4,9 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using VF.Component;
 using VF.Upgradeable;
-using uk.novavoidhowl.dev.vrcstub;
+
+// following is provided by the VRC Stub dlls included in the CVRFury project
+using VRC.SDK3.Dynamics.PhysBone.Components;
 
 namespace VF.Model.StateAction
 {

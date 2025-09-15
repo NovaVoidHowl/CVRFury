@@ -5,7 +5,10 @@ using UnityEngine;
 using VF.Component;
 using VF.Model.StateAction;
 using VF.Upgradeable;
-using uk.novavoidhowl.dev.vrcstub;
+
+// following is provided by the VRC Stub dlls included in the CVRFury project
+using VRC.SDK3.Avatars.Components;
+using VRC.SDK3.Dynamics.PhysBone.Components;
 
 // Notes for the future:
 // Don't ever remove a class -- it will break the entire list of SerializedReferences that contained it
