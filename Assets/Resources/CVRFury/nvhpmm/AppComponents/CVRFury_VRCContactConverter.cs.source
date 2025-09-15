@@ -1,4 +1,4 @@
-// { "version": "0.0.4" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_CONTACT_CONVERT", dependencies: [], type: "Editor"}
+// { "version": "0.0.6" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_VRC_CONTACT_CONVERT", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 
@@ -15,12 +15,13 @@ using ABI.CCK.Scripts.Editor;
 using ABI.CCK.Scripts;
 using ABI.CCK.Components;
 
-using uk.novavoidhowl.dev.vrcstub;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.packagecore;
 
-
+// following is provided by the VRC Stub dlls included in the CVRFury project
+using VRC.SDK3.Dynamics.Contact.Components;
+using VRC.Dynamics;
 
 namespace uk.novavoidhowl.dev.cvrfury.deployable
 {
@@ -29,7 +30,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public static void ConvertSenderToPointer(string pathToPrefab)
     {
       // Lock file processing
-      string lockFilePath = pathToPrefab+"_ConvertSenderToPointer.lock";
+      string lockFilePath = pathToPrefab + "_ConvertSenderToPointer.lock";
       File.Create(lockFilePath).Dispose();
 
       CoreLogDebug($"Converting VRCContactSender to CVRPointer on {pathToPrefab}");
@@ -69,12 +70,12 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       foreach (var sender in senders)
       {
         senderCounter++;
-        CoreLogDebug($"Converting VRCContactSender to CVRPointer for {sender.gameObject.name}, {senderCounter}\n"+
-                     $"shapeType: {sender.shapeType}\n"+
-                     $"position: {sender.position}\n"+
-                     $"rotation: {sender.rotation}\n"+
-                     $"radius: {sender.radius}\n"+
-                     $"height: {sender.height}\n"+
+        CoreLogDebug($"Converting VRCContactSender to CVRPointer for {sender.gameObject.name}, {senderCounter}\n" +
+                     $"shapeType: {sender.shapeType}\n" +
+                     $"position: {sender.position}\n" +
+                     $"rotation: {sender.rotation}\n" +
+                     $"radius: {sender.radius}\n" +
+                     $"height: {sender.height}\n" +
                      $"collisionTags: {string.Join(", ", sender.collisionTags)}");
 
         // get the game object the sender is attached to
@@ -144,7 +145,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CoreLogDebug($"Converted VRCContactSender to CVRPointer for {pathToPrefab}");
 
       // nuke the prefab's .meta file
-      File.Delete(pathToPrefab+".meta");
+      File.Delete(pathToPrefab + ".meta");
 
       // Force Asset Database to save and refresh
       AssetDatabase.SaveAssets();
@@ -159,7 +160,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Delete the lock file
       File.Delete(lockFilePath);
       // remove meta file
-      File.Delete(lockFilePath+".meta");
+      File.Delete(lockFilePath + ".meta");
 
       CoreLogDebug($"Lock file removed: {lockFilePath}");
 
@@ -168,7 +169,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
     public static void ConvertReceiverToTrigger(string pathToPrefab)
     {
       // Lock file processing
-      string lockFilePath = pathToPrefab+"_ConvertReceiverToTrigger.lock";
+      string lockFilePath = pathToPrefab + "_ConvertReceiverToTrigger.lock";
       File.Create(lockFilePath).Dispose();
 
       CoreLogDebug($"Converting VRCContactReceiver to CVRAdvancedAvatarSettingsTrigger for {pathToPrefab}");
@@ -210,16 +211,16 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         bool okToRemoveReceiver = true;
 
         receiverCounter++;
-        CoreLogDebug($"Converting VRCContactReceiver to CVRAdvancedAvatarSettingsTrigger for {receiver.gameObject.name}, {receiverCounter}\n"+
-                     $"shapeType: {receiver.shapeType}\n"+
-                     $"position: {receiver.position}\n"+
-                     $"rotation: {receiver.rotation}\n"+
-                     $"radius: {receiver.radius}\n"+
-                     $"height: {receiver.height}\n"+
-                     $"collisionTags: {string.Join(", ", receiver.collisionTags)}\n"+
-                     $"receiverType: {receiver.receiverType}\n"+
-                     $"parameter: {receiver.parameter}\n"+
-                     $"allowSelf: {receiver.allowSelf}\n"+
+        CoreLogDebug($"Converting VRCContactReceiver to CVRAdvancedAvatarSettingsTrigger for {receiver.gameObject.name}, {receiverCounter}\n" +
+                     $"shapeType: {receiver.shapeType}\n" +
+                     $"position: {receiver.position}\n" +
+                     $"rotation: {receiver.rotation}\n" +
+                     $"radius: {receiver.radius}\n" +
+                     $"height: {receiver.height}\n" +
+                     $"collisionTags: {string.Join(", ", receiver.collisionTags)}\n" +
+                     $"receiverType: {receiver.receiverType}\n" +
+                     $"parameter: {receiver.parameter}\n" +
+                     $"allowSelf: {receiver.allowSelf}\n" +
                      $"allowOthers: {receiver.allowOthers}");
 
         // get the game object the receiver is attached to
@@ -288,7 +289,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         // for each collision tag in the receiver add it to the temporary list
         foreach (var collisionTag in receiver.collisionTags)
         {
-            tempAllowedTypes.Add(collisionTag);
+          tempAllowedTypes.Add(collisionTag);
         }
 
         // Assign the list as an array to allowedTypes
@@ -390,7 +391,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         }
 
 
-        if(okToRemoveReceiver)
+        if (okToRemoveReceiver)
         {
           // destroy the receiver component
           Object.DestroyImmediate(receiver);
@@ -410,7 +411,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       CoreLogDebug($"Converted VRCContactReceiver to CVRAdvancedAvatarSettingsTrigger for {pathToPrefab}");
 
       // nuke the prefab's .meta file
-      File.Delete(pathToPrefab+".meta");
+      File.Delete(pathToPrefab + ".meta");
 
       // Force Asset Database to save and refresh
       AssetDatabase.SaveAssets();
@@ -425,7 +426,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // Delete the lock file
       File.Delete(lockFilePath);
       // remove meta file
-      File.Delete(lockFilePath+".meta");
+      File.Delete(lockFilePath + ".meta");
 
       CoreLogDebug($"Lock file removed: {lockFilePath}");
 
