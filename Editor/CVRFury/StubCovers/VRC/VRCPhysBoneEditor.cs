@@ -4,9 +4,11 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using uk.novavoidhowl.dev.vrcstub;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
+
+// VRC PhysBone components provided by compiled stub DLLs
+using VRC.SDK3.Dynamics.PhysBone.Components;
 
 namespace uk.novavoidhowl.dev.cvrfury
 {
