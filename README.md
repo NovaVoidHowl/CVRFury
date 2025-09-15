@@ -61,6 +61,9 @@ The aim of this project is to create a tool kit that can process VRCFury support
 
 **Please see the [CVRFury docs site](https://docs.cvrfury.uk/) for install/setup guidance and further information**
 
+> [!NOTE]
+> $\textsf{\color{blue} This\ application\ is\ not\ created\ by\ or\ affiliated\ with\ ChilloutVR\ or\ the\ ChilloutVR\ team\ in\ any\ way\}$
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
