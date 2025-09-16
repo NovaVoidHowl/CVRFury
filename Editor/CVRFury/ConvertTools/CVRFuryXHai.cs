@@ -34,7 +34,6 @@ using UnityEngine;
 using UnityEngine.Animations;
 using Object = UnityEngine.Object;
 
-using uk.novavoidhowl.dev.vrcstub;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.packagecore;

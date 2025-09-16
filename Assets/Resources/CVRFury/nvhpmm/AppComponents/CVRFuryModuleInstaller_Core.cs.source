@@ -1,4 +1,4 @@
-// { "version": "0.57.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
+// { "version": "0.58.0" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_MI_CORE", dependencies: ["_MI_CORE_UI"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -24,7 +24,6 @@ using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using uk.novavoidhowl.dev.cvrfury.packagecore;
-using uk.novavoidhowl.dev.vrcstub;
 
 // dynamic namespace loads
 #if MAGICACLOTH2

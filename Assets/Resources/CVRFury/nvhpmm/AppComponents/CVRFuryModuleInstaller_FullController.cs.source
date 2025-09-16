@@ -1,4 +1,4 @@
-// { "version": "0.8.4" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.10.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -21,11 +21,13 @@ using ABI.CCK.Components;
 using Constants = uk.novavoidhowl.dev.cvrfury.packagecore.Constants;
 using uk.novavoidhowl.dev.cvrfury.packagecore;
 using uk.novavoidhowl.dev.cvrfury.runtime;
-using uk.novavoidhowl.dev.vrcstub;
 using static uk.novavoidhowl.dev.cvrfury.packagecore.CoreUtils;
 using static uk.novavoidhowl.dev.cvrfury.deployable.ReportBuilderSupport;
 using static uk.novavoidhowl.dev.cvrfury.supporting_classes.editor.Animation;
 using static uk.novavoidhowl.dev.cvrfury.supporting_classes.runtime.General;
+
+// The following are provided as part of the VRCStubs included in this package
+using VRC.SDK3.Avatars.Components;
 
 /// <summary>
 /// fullController Module
