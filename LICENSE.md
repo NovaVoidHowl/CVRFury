@@ -15,4 +15,3 @@ The subfolders containing said code have a separate LICENCE.md in their root.
 The following are under the MIT Licence as the code from which they are derived is under that Licence
 
 - CVRFuryXA3M_AnimatorCloner.cs.source
-- CVRFuryXHai.cs is under MIT Licence
