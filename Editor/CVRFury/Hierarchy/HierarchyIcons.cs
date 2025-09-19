@@ -16,13 +16,24 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
     public const string EDITOR_PREFS_KEY = Constants.HIERARCHY_ICONS_STATE_PREF;
   }
 
+  public enum IssueType
+  {
+    None,
+    Warning,
+    Error
+  }
+
   [InitializeOnLoad]
   public static class HierarchyIcons
   {
-    private static Dictionary<int, bool> gameObjectIssueCache = new Dictionary<int, bool>();
+    private static Dictionary<int, IssueType> gameObjectIssueCache = new Dictionary<int, IssueType>();
+    private static Dictionary<int, IssueType> childIssueCache = new Dictionary<int, IssueType>();
     private static bool isInitialized = false;
-    private static GUIContent overlayIconContent;
+    private static GUIContent warningIconContent;
+    private static GUIContent errorIconContent;
+    private static GUIContent arrowIconContent;
     private static float iconSize = 16f;
+    private static float arrowSize = 12f;
     private static Dictionary<VRCFury, SerializedObject> serializedObjectCache =
       new Dictionary<VRCFury, SerializedObject>();
     private static readonly int MaxCacheSize = 100; // Prevent unbounded growth
@@ -50,10 +61,31 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
 
       CoreLogDebug("Initializing Hierarchy Icons");
 
-      overlayIconContent = EditorGUIUtility.IconContent("console.warnicon");
-      if (overlayIconContent != null)
+      warningIconContent = EditorGUIUtility.IconContent("console.warnicon");
+      if (warningIconContent != null)
       {
-        overlayIconContent.tooltip = "CVRFury/VRCFury Issue";
+        warningIconContent.tooltip = "CVRFury/VRCFury Warning";
+      }
+
+      errorIconContent = EditorGUIUtility.IconContent("console.erroricon");
+      if (errorIconContent != null)
+      {
+        errorIconContent.tooltip = "CVRFury/VRCFury Error - VRC Stub Component Detected";
+      }
+
+      // Create arrow icon content using a built-in Unity icon
+      arrowIconContent = EditorGUIUtility.IconContent("tab_next@2x");
+      if (arrowIconContent == null)
+      {
+        arrowIconContent = EditorGUIUtility.IconContent("forward@2x");
+      }
+      if (arrowIconContent == null)
+      {
+        arrowIconContent = EditorGUIUtility.IconContent("d_forward");
+      }
+      if (arrowIconContent != null)
+      {
+        arrowIconContent.tooltip = "Issue found in child objects";
       }
 
       EditorApplication.hierarchyWindowItemOnGUI += DrawHierarchyItem;
@@ -93,7 +125,10 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       serializedObjectCache.Clear();
 
       gameObjectIssueCache.Clear();
-      overlayIconContent = null;
+      childIssueCache.Clear();
+      warningIconContent = null;
+      errorIconContent = null;
+      arrowIconContent = null;
       isInitialized = false;
       CoreLogDebug("Hierarchy Icons Cleaned Up");
     }
@@ -113,6 +148,7 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       EditorApplication.delayCall += () =>
       {
         gameObjectIssueCache.Clear();
+        childIssueCache.Clear();
         EditorApplication.RepaintHierarchyWindow();
       };
     }
@@ -155,11 +191,13 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       // Clear cache entries for this object and its parents
       var instanceID = gameObject.GetInstanceID();
       gameObjectIssueCache.Remove(instanceID);
+      childIssueCache.Remove(instanceID);
 
       var parent = gameObject.transform.parent;
       while (parent != null)
       {
         gameObjectIssueCache.Remove(parent.gameObject.GetInstanceID());
+        childIssueCache.Remove(parent.gameObject.GetInstanceID());
         parent = parent.parent;
       }
 
@@ -182,15 +220,51 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
         if (gameObject == null)
           return;
 
-        if (!gameObjectIssueCache.TryGetValue(instanceID, out bool hasIssues))
+        // Check for direct issues on this GameObject
+        if (!gameObjectIssueCache.TryGetValue(instanceID, out IssueType directIssueType))
         {
-          hasIssues = CheckForIssues(gameObject);
-          gameObjectIssueCache[instanceID] = hasIssues;
+          directIssueType = CheckForIssues(gameObject);
+          gameObjectIssueCache[instanceID] = directIssueType;
         }
 
-        if (hasIssues)
+        // Check for issues in child objects
+        if (!childIssueCache.TryGetValue(instanceID, out IssueType childIssueType))
         {
-          GUI.Label(new Rect(selectionRect.xMax - iconSize, selectionRect.y, iconSize, iconSize), overlayIconContent);
+          childIssueType = CheckForChildIssues(gameObject);
+          childIssueCache[instanceID] = childIssueType;
+        }
+
+        // Draw the direct issue icon if there is one
+        if (directIssueType != IssueType.None)
+        {
+          GUIContent iconContent = directIssueType == IssueType.Error ? errorIconContent : warningIconContent;
+          GUI.Label(new Rect(selectionRect.xMax - iconSize, selectionRect.y, iconSize, iconSize), iconContent);
+        }
+        // Draw child issue icon with arrow if there are child issues but no direct issues
+        else if (childIssueType != IssueType.None)
+        {
+          // Draw the issue icon for child problems
+          GUIContent iconContent = childIssueType == IssueType.Error ? errorIconContent : warningIconContent;
+          // Create a copy of the icon content with a custom tooltip for child issues
+          GUIContent childIconContent = new GUIContent(
+            iconContent.image,
+            childIssueType == IssueType.Error
+              ? "CVRFury/VRCFury Error found in child objects"
+              : "CVRFury/VRCFury Warning found in child objects"
+          );
+          GUI.Label(
+            new Rect(selectionRect.xMax - iconSize - arrowSize, selectionRect.y, iconSize, iconSize),
+            childIconContent
+          );
+
+          // Draw the arrow indicator
+          if (arrowIconContent != null)
+          {
+            GUI.Label(
+              new Rect(selectionRect.xMax - arrowSize, selectionRect.y + 2, arrowSize, arrowSize),
+              arrowIconContent
+            );
+          }
         }
       }
       catch (System.Exception e)
@@ -199,15 +273,20 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       }
     }
 
-    private static bool CheckForIssues(GameObject gameObject)
+    private static IssueType CheckForIssues(GameObject gameObject)
     {
-      // Check for CVRAvatar body mesh issues first
+      // Check for VRC stub components first - these are errors
+      var issueType = CheckForVRCStubComponents(gameObject);
+      if (issueType == IssueType.Error)
+        return IssueType.Error;
+
+      // Check for CVRAvatar body mesh issues
       if (HasCVRAvatarBodyMeshIssues(gameObject))
-        return true;
+        return IssueType.Warning;
 
       var vrcFuryComponents = gameObject.GetComponents<VRCFury>();
       if (vrcFuryComponents == null || vrcFuryComponents.Length == 0)
-        return false;
+        return IssueType.None;
 
       foreach (var vrcFury in vrcFuryComponents)
       {
@@ -235,23 +314,85 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
 
         var version = serializedObject.FindProperty("version").intValue;
         if (version > Constants.MAX_VRCFURY_VERSION_DATA)
-          return true;
+          return IssueType.Warning;
 
         if (version == 3)
         {
           var contentProperty = serializedObject.FindProperty("content");
           if (contentProperty == null || string.IsNullOrEmpty(contentProperty.managedReferenceFullTypename))
-            return true;
+            return IssueType.Warning;
 
           var contentClassName = contentProperty.managedReferenceFullTypename.Split('.').Last();
           if (Constants.CVR_INCOMPATIBLE_VRCFURY_FEATURES.Contains(contentClassName))
-            return true;
+            return IssueType.Warning;
 
           if (Constants.CVR_UN_NEEDED_VRCFURY_FEATURES.Contains(contentClassName))
-            return true;
+            return IssueType.Warning;
         }
       }
-      return false;
+      return IssueType.None;
+    }
+
+    private static IssueType CheckForChildIssues(GameObject gameObject)
+    {
+      if (gameObject == null || gameObject.transform.childCount == 0)
+        return IssueType.None;
+
+      IssueType highestIssue = IssueType.None;
+
+      // Recursively check all children (limited depth to prevent performance issues)
+      return CheckForChildIssuesRecursive(gameObject, 0, 10); // Max depth of 10 levels
+    }
+
+    private static IssueType CheckForChildIssuesRecursive(GameObject gameObject, int currentDepth, int maxDepth)
+    {
+      if (gameObject == null || currentDepth >= maxDepth)
+        return IssueType.None;
+
+      IssueType highestIssue = IssueType.None;
+
+      // Check all direct children
+      for (int i = 0; i < gameObject.transform.childCount; i++)
+      {
+        GameObject child = gameObject.transform.GetChild(i).gameObject;
+        if (child == null)
+          continue;
+
+        // Check for direct issues on this child
+        IssueType childDirectIssue = CheckForIssues(child);
+        if (childDirectIssue == IssueType.Error)
+          return IssueType.Error; // Return early if we find an error
+
+        if (childDirectIssue == IssueType.Warning && highestIssue == IssueType.None)
+          highestIssue = IssueType.Warning;
+
+        // Recursively check this child's children
+        IssueType childNestedIssue = CheckForChildIssuesRecursive(child, currentDepth + 1, maxDepth);
+        if (childNestedIssue == IssueType.Error)
+          return IssueType.Error; // Return early if we find an error
+
+        if (childNestedIssue == IssueType.Warning && highestIssue == IssueType.None)
+          highestIssue = IssueType.Warning;
+      }
+
+      return highestIssue;
+    }
+
+    private static IssueType CheckForVRCStubComponents(GameObject gameObject)
+    {
+      var components = gameObject.GetComponents<Component>();
+      foreach (var component in components)
+      {
+        if (component == null)
+          continue;
+
+        string typeName = component.GetType().FullName;
+        if (Constants.VRCSTUB_COMPONENTS_TO_REMOVE.Contains(typeName))
+        {
+          return IssueType.Error;
+        }
+      }
+      return IssueType.None;
     }
 
     private static bool HasCVRAvatarBodyMeshIssues(GameObject gameObject)
@@ -295,13 +436,13 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
             GameObject meshGameObject = skinnedMeshRenderer.gameObject;
             if (!meshGameObject.transform.IsChildOf(gameObject.transform))
             {
-              // Body mesh is not on a child gameObject of the Avatar - ERROR
+              // Body mesh is not on a child gameObject of the Avatar - WARNING (changed from ERROR)
               return true;
             }
           }
           else
           {
-            // Body mesh is not a valid SkinnedMeshRenderer reference - ERROR
+            // Body mesh is not a valid SkinnedMeshRenderer reference - WARNING (changed from ERROR)
             return true;
           }
         }
@@ -329,7 +470,7 @@ namespace uk.novavoidhowl.dev.cvrfury.hierarchy
       }
       else
       {
-        // Animator component is missing - this is an ERROR (should be enforced by CVRAvatar)
+        // Animator component is missing - this is a WARNING (changed from ERROR)
         return true;
       }
 
