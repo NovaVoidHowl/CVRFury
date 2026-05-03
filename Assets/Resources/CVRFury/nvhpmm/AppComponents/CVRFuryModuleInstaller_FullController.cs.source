@@ -1,4 +1,4 @@
-// { "version": "0.10.0" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.11.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1042,6 +1042,7 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
         // section to handle CVR Fury Menu Store
         // check and see if the module has any menus
+        CoreLog("[CVRFury Menu] menus.Count = " + (module as fullControllerModule).menus.Count);
         if ((module as fullControllerModule).menus.Count > 0)
         {
           // check if the perModuleParametersPairToRename is null and if so init it
@@ -1100,6 +1101,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
               // now we can access the menu's properties
               // load the menu's menuItems
               List<menuParameter> menuItems = menu.menuItems;
+
+              CoreLog("[CVRFury Menu] '" + menu.name + "' has " + menuItems.Count + " top-level item(s), prefix='" + prefix + "'");
 
               // loop through the menuItems
               foreach (menuParameter menuItem in menuItems)
@@ -1172,6 +1175,19 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
                     break;
 
+                  case "subMenuParameter":
+                    // cast the menuItem to a subMenuParameter
+                    subMenuParameter subMenuParam = menuItem as subMenuParameter;
+                    // call the ProcessSubMenuParameter function to handle the subMenu parameter
+                    ProcessSubMenuParameter(
+                      subMenuParam,
+                      prefix,
+                      CVRAdvancedAvatarMenuList,
+                      perModuleParametersPairToRename
+                    );
+
+                    break;
+
                   default:
                     // if the menuItem is not valid, log an error to the console
                     CoreLogError("Unknown menu item type: " + menuItem.MenuParameterType);
@@ -1214,6 +1230,13 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
         //   CoreLog("toggleParam: " + (module as fullControllerModule).toggleParam);
         // }
         #endregion
+
+        // mark the avatar component dirty so Unity serializes the updated menu settings list
+        CoreLog("[CVRFury Menu] Marking avatar dirty. Total settings entries now: " + advancedAvatarSettings.settings.Count);
+        EditorUtility.SetDirty(avatar);
+
+        // if the avatar is part of a prefab instance, record the property modification so it is persisted
+        PrefabUtility.RecordPrefabInstancePropertyModifications(avatar);
       }
       else
       {
@@ -1873,6 +1896,103 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // add the CVRAdvancedSettingsEntry to the CVRAdvancedAvatarMenuList
       CVRAdvancedAvatarMenuList.Add(threeDJoystickEntry);
+    }
+
+    #endregion
+
+    #region ProcessSubMenuParameter
+
+    private void ProcessSubMenuParameter(
+      subMenuParameter subMenuParam,
+      string prefix,
+      List<CVRAdvancedSettingsEntry> CVRAdvancedAvatarMenuList,
+      Dictionary<string, string> perModuleParametersPairToRename
+    )
+    {
+      // log the subMenu parameter's name to the console
+      CoreLog("subMenuParam.name: " + subMenuParam.name);
+
+      // build the sub-menu prefix by appending the subMenu name and a slash
+      string subPrefix = prefix + subMenuParam.name + "/";
+
+      // check if the subMenuParameter has a subMenuStore assigned
+      if (subMenuParam.subMenuStore == null)
+      {
+        CoreLogWarning("subMenuParam.subMenuStore is null for: " + subMenuParam.name + " - skipping");
+        return;
+      }
+
+      // loop through the menu items in the subMenuStore and process each one
+      foreach (menuParameter menuItem in subMenuParam.subMenuStore.menuItems)
+      {
+        switch (menuItem.MenuParameterType)
+        {
+          case "toggleParameter":
+            toggleParameter toggleParam = menuItem as toggleParameter;
+            ProcessToggleParameter(
+              toggleParam,
+              subPrefix,
+              CVRAdvancedAvatarMenuList,
+              perModuleParametersPairToRename
+            );
+            break;
+
+          case "dropdownParameter":
+            dropdownParameter dropdownParam = menuItem as dropdownParameter;
+            ProcessDropdownParameter(
+              dropdownParam,
+              subPrefix,
+              CVRAdvancedAvatarMenuList,
+              perModuleParametersPairToRename
+            );
+            break;
+
+          case "sliderParameter":
+            sliderParameter sliderParam = menuItem as sliderParameter;
+            ProcessSliderParameter(
+              sliderParam,
+              subPrefix,
+              CVRAdvancedAvatarMenuList,
+              perModuleParametersPairToRename
+            );
+            break;
+
+          case "twoDJoystickParameter":
+            twoDJoystickParameter twoDJoystickParam = menuItem as twoDJoystickParameter;
+            ProcessTwoDJoystickParameter(
+              twoDJoystickParam,
+              subPrefix,
+              CVRAdvancedAvatarMenuList,
+              perModuleParametersPairToRename
+            );
+            break;
+
+          case "threeDJoystickParameter":
+            threeDJoystickParameter threeDJoystickParam = menuItem as threeDJoystickParameter;
+            ProcessThreeDJoystickParameter(
+              threeDJoystickParam,
+              subPrefix,
+              CVRAdvancedAvatarMenuList,
+              perModuleParametersPairToRename
+            );
+            break;
+
+          case "subMenuParameter":
+            // recurse into nested sub-menus
+            subMenuParameter nestedSubMenuParam = menuItem as subMenuParameter;
+            ProcessSubMenuParameter(
+              nestedSubMenuParam,
+              subPrefix,
+              CVRAdvancedAvatarMenuList,
+              perModuleParametersPairToRename
+            );
+            break;
+
+          default:
+            CoreLogError("Unknown menu item type in sub-menu '" + subMenuParam.name + "': " + menuItem.MenuParameterType);
+            break;
+        }
+      }
     }
 
     #endregion
