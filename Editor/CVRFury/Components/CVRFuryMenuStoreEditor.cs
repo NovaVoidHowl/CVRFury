@@ -74,6 +74,9 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
               case "threeDJoystickParameter":
                 height += CalculateThreeDJoystickParameterBlockHeight();
                 break;
+              case "subMenuParameter":
+                height += CalculateSubMenuParameterBlockHeight();
+                break;
               case "inputSingleParameter":
                 // TODO: Add height for InputSingleParameter - no obvious use case, so not implemented
                 break;
@@ -150,6 +153,7 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
             DrawSliderParameterFields(shortTypeName, element, rect);
             DrawTwoDJoystickParameterFields(shortTypeName, element, rect);
             DrawThreeDJoystickParameterFields(shortTypeName, element, rect);
+            DrawSubMenuParameterFields(shortTypeName, element, rect);
 
             // TODO:
             // DrawMaterialColorParameterFields(shortTypeName, element, rect); - complexity due to gameObject references
@@ -749,7 +753,8 @@ namespace uk.novavoidhowl.dev.cvrfury.editor.components
         ["dropdownParameter"] = CalculateDropdownParameterBlockHeight(),
         ["sliderParameter"] = CalculateSliderParameterBlockHeight(),
         ["twoDJoystickParameter"] = CalculateTwoDJoystickParameterBlockHeight(),
-        ["threeDJoystickParameter"] = CalculateThreeDJoystickParameterBlockHeight()
+        ["threeDJoystickParameter"] = CalculateThreeDJoystickParameterBlockHeight(),
+        ["subMenuParameter"] = CalculateSubMenuParameterBlockHeight()
       };
 
       return heightMap.TryGetValue(shortTypeName, out float height)
