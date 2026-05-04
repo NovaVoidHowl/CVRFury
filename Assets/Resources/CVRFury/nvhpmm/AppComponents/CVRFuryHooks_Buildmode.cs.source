@@ -1,4 +1,4 @@
-// { "version": "0.0.6" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_HOOK_BUILD", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"], type: "Editor"}
+// { "version": "0.0.7" , "canInstall": true , "optional": false , "defineSymbolSuffix": "_HOOK_BUILD", dependencies: ["NVH_CVRFURY_EXISTS_MI_CORE"], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using System;
@@ -42,6 +42,8 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // show a progress bar to indicate that the modules have been installed
       DisplayProgressBarAndSleep("CVRFury Module Installation", "Completed install", 1, 2000);
+      // clear the progress bar so it does not linger in CCK4 (which no longer enters play mode)
+      EditorUtility.ClearProgressBar();
 
     }
 
