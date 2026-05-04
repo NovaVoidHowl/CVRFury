@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns="UnityEngine.UIElements">
+<VisualElement name="ComponentValidatorWindow" class="window-root">
+    
+    <!-- Header -->
+    <VisualElement name="Header" class="header">
+        <Label name="Title" text="CVRFury Component Validator" class="header-title" />
+        <VisualElement name="StatusIcons" class="status-icons">
+            <VisualElement name="ErrorStatus" class="status-item">
+                <VisualElement name="ErrorIcon" class="status-icon error-icon" />
+                <Label name="ErrorCount" text="0" class="status-count" />
+            </VisualElement>
+            <VisualElement name="WarningStatus" class="status-item">
+                <VisualElement name="WarningIcon" class="status-icon warning-icon" />
+                <Label name="WarningCount" text="0" class="status-count" />
+            </VisualElement>
+            <VisualElement name="SuccessStatus" class="status-item">
+                <VisualElement name="SuccessIcon" class="status-icon success-icon" />
+                <Label name="SuccessText" text="OK" class="status-count" />
+            </VisualElement>
+        </VisualElement>
+    </VisualElement>
+
+    <!-- Controls -->
+    <VisualElement name="Controls" class="controls">
+        <VisualElement name="ObjectSelection" class="control-row">
+            <uie:ObjectField name="RootObjectField" label="Root Object" type="UnityEngine.GameObject" class="root-object-field" />
+            <Button name="UseSelectedButton" text="Use Selected" class="use-selected-button" />
+        </VisualElement>
+        
+        <VisualElement name="FilterControls" class="control-row">
+            <Toggle name="ShowErrorsToggle" label="Show Errors" value="true" class="filter-toggle" />
+            <Toggle name="ShowWarningsToggle" label="Show Warnings" value="true" class="filter-toggle" />
+            <Toggle name="AutoRefreshToggle" label="Auto Refresh (Experimental)" value="true" class="filter-toggle" />
+            <Button name="RefreshButton" text="Refresh" class="refresh-button" />
+        </VisualElement>
+    </VisualElement>
+
+    <!-- Search and Filters -->
+    <VisualElement name="SearchSection" class="search-section">
+        <VisualElement name="SearchRow" class="search-row">
+            <uie:ToolbarSearchField name="SearchField" class="search-field" />
+            <Button name="ClearSearchButton" text="×" class="clear-search-button" />
+            <Button name="ExpandAllButton" text="Expand All" class="expand-button" />
+        </VisualElement>
+    </VisualElement>
+
+    <!-- Issues List -->
+    <VisualElement name="IssuesContainer" class="issues-container">
+        <ScrollView name="IssuesScrollView" class="issues-scroll">
+            <VisualElement name="NoIssuesMessage" class="no-issues-message">
+                <Label name="NoIssuesLabel" text="Select a root object to validate its components." class="no-issues-text" />
+            </VisualElement>
+            <VisualElement name="IssuesContent" class="issues-content" />
+        </ScrollView>
+    </VisualElement>
+
+</VisualElement>
+</UXML>

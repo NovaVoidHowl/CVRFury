@@ -1,0 +1,247 @@
+/* Component Validator Window Styles */
+
+.window-root {
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 8px;
+}
+
+/* Header Styles */
+.header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-bottom-width: 1px;
+    border-color: #444444;
+    margin-bottom: 8px;
+}
+
+.header-title {
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.status-icons {
+    flex-direction: row;
+    align-items: center;
+}
+
+.status-item {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.status-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+}
+
+.error-icon {
+    background-image: resource('console.erroricon');
+}
+
+.warning-icon {
+    background-image: resource('console.warnicon');
+}
+
+.success-icon {
+    background-image: resource('TestPassed');
+}
+
+.status-count {
+    font-size: 12px;
+    min-width: 20px;
+}
+
+/* Controls Styles */
+.controls {
+    margin-bottom: 8px;
+}
+
+.control-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.root-object-field {
+    flex-grow: 1;
+    margin-right: 8px;
+    min-width: 200px;
+}
+
+.use-selected-button {
+    min-width: 100px;
+    height: 20px;
+}
+
+.filter-toggle {
+    margin-right: 16px;
+    min-width: 90px;
+}
+
+.refresh-button {
+    margin-left: auto;
+    min-width: 80px;
+    height: 20px;
+}
+
+/* Search Section Styles */
+.search-section {
+    margin-bottom: 8px;
+}
+
+.search-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.search-field {
+    flex-grow: 1;
+    margin-right: 8px;
+}
+
+.clear-search-button {
+    width: 24px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+.expand-button {
+    min-width: 100px;
+    height: 20px;
+}
+
+/* Issues Container Styles */
+.issues-container {
+    flex-grow: 1;
+    border-width: 1px;
+    border-color: #444444;
+    border-radius: 4px;
+}
+
+.issues-scroll {
+    flex-grow: 1;
+}
+
+.issues-content {
+    flex-direction: column;
+    padding: 4px;
+}
+
+.no-issues-message {
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.no-issues-text {
+    font-size: 12px;
+    color: #AAAAAA;
+    text-align: middle-center;
+}
+
+/* Issue Group Styles */
+.issue-group {
+    margin-bottom: 8px;
+    border-width: 1px;
+    border-color: #555555;
+    border-radius: 4px;
+    padding: 4px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.issue-group-header {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px;
+    cursor: link;
+}
+
+.issue-group-header:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.issue-group-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+}
+
+.issue-group-title {
+    font-size: 12px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.issue-group-content {
+    margin-left: 24px;
+    margin-top: 4px;
+}
+
+/* Individual Issue Styles */
+.issue-item {
+    flex-direction: column;
+    padding: 6px;
+    margin-bottom: 4px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.issue-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.issue-path {
+    font-size: 11px;
+    color: #88AAFF;
+    cursor: link;
+    margin-bottom: 2px;
+}
+
+.issue-path:hover {
+    color: #AACCFF;
+    text-decoration: underline;
+}
+
+.issue-description {
+    font-size: 11px;
+    color: #CCCCCC;
+    white-space: normal;
+}
+
+/* Error/Warning specific colors */
+.error-group .issue-group-title {
+    color: #FF8888;
+}
+
+.warning-group .issue-group-title {
+    color: #FFDD88;
+}
+
+/* Hidden state */
+.hidden {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+    .control-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .root-object-field {
+        margin-right: 0;
+        margin-bottom: 4px;
+    }
+    
+    .use-selected-button {
+        margin-bottom: 4px;
+    }
+}

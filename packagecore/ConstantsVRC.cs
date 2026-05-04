@@ -27,12 +27,26 @@ namespace uk.novavoidhowl.dev.cvrfury.packagecore
     public static readonly ReadOnlyCollection<string> VRCSTUB_COMPONENTS_TO_REMOVE = new ReadOnlyCollection<string>(
       new List<string>
       {
-        "uk.novavoidhowl.dev.vrcstub.VRCAvatarParameterDriver",
-        "uk.novavoidhowl.dev.vrcstub.VRCAvatarDescriptor",
-        "uk.novavoidhowl.dev.vrcstub.VRCPhysBone",
-        "uk.novavoidhowl.dev.vrcstub.VRCPhysBoneCollider",
-        "uk.novavoidhowl.dev.vrcstub.VRCContactReceiver",
-        "uk.novavoidhowl.dev.vrcstub.VRCContactSender",
+        // from VRCAVstub
+        "VRC.SDK3.Avatars.Components.VRCAvatarDescriptor",
+        "VRC.SDK3.Avatars.Components.VRCAvatarParameterDriver",
+        "VRC.SDK3.Avatars.Components.VRCHeadChop",
+        "VRC.SDK3.Avatars.Components.VRCSpatialAudioSource",
+        // from VRCPBstub
+        "VRC.SDK3.Dynamics.PhysBone.Components.VRCPhysBone",
+        "VRC.SDK3.Dynamics.PhysBone.Components.VRCPhysBoneCollider",
+        // from VRCPConStub
+        "VRC.SDK3.Dynamics.Constraint.Components.VRCAimConstraint",
+        "VRC.SDK3.Dynamics.Constraint.Components.VRCLookAtConstraint",
+        "VRC.SDK3.Dynamics.Constraint.Components.VRCParentConstraint",
+        "VRC.SDK3.Dynamics.Constraint.Components.VRCPositionConstraint",
+        "VRC.SDK3.Dynamics.Constraint.Components.VRCRotationConstraint",
+        "VRC.SDK3.Dynamics.Constraint.Components.VRCScaleConstraint",
+        // from VRCPCstub
+        "VRC.SDK3.Dynamics.Contact.Components.VRCContactReceiver",
+        "VRC.SDK3.Dynamics.Contact.Components.VRCContactSender",
+        // from VRCPMstub
+        "VRC.Core.PipelineManager",
       }
     );
 

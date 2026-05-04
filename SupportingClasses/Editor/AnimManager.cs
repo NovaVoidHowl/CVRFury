@@ -11,6 +11,77 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
 {
   public static class Animation
   {
+    /// <summary>
+    /// Replaces a path segment in an animation curve binding path, handling spaces properly
+    /// and only replacing complete path segments or prefixes
+    /// </summary>
+    /// <param name="fullPath">The complete path to modify</param>
+    /// <param name="oldSegment">The path segment to replace</param>
+    /// <param name="newSegment">The new path segment</param>
+    /// <returns>The modified path</returns>
+    private static string ReplacePathSegment(string fullPath, string oldSegment, string newSegment)
+    {
+      if (string.IsNullOrEmpty(oldSegment))
+        return fullPath;
+
+      // Handle case where we're replacing the entire path
+      if (fullPath == oldSegment)
+        return newSegment;
+
+      // Handle case where the old segment is at the beginning of the path
+      if (fullPath.StartsWith(oldSegment + "/"))
+      {
+        return newSegment + fullPath.Substring(oldSegment.Length);
+      }
+
+      // Handle case where the old segment is a complete path segment in the middle
+      string searchPattern = "/" + oldSegment + "/";
+      string replacePattern = "/" + newSegment + "/";
+      if (fullPath.Contains(searchPattern))
+      {
+        // Only replace the first occurrence to avoid issues with repeated segment names
+        int index = fullPath.IndexOf(searchPattern);
+        if (index >= 0)
+        {
+          return fullPath.Substring(0, index) + replacePattern + fullPath.Substring(index + searchPattern.Length);
+        }
+      }
+
+      // Handle case where the old segment is at the end of the path
+      if (fullPath.EndsWith("/" + oldSegment))
+      {
+        return fullPath.Substring(0, fullPath.Length - oldSegment.Length) + newSegment;
+      }
+
+      // Enhanced fallback: try to replace only the first occurrence of oldSegment that is a complete path segment
+      // Split the path and reconstruct it, replacing only the first matching segment
+      string[] pathSegments = fullPath.Split('/');
+      bool replaced = false;
+      
+      for (int i = 0; i < pathSegments.Length && !replaced; i++)
+      {
+        if (pathSegments[i] == oldSegment)
+        {
+          pathSegments[i] = newSegment;
+          replaced = true;
+          CoreLogDebug(
+            $"Replaced path segment '{oldSegment}' with '{newSegment}' at position {i} in path '{fullPath}'"
+          );
+        }
+      }
+
+      if (replaced)
+      {
+        return string.Join("/", pathSegments);
+      }
+
+      // If no exact segment matches found, log a warning and return original path unchanged
+      CoreLogDebug(
+        $"Warning: No exact path segment match found for '{oldSegment}' in '{fullPath}', returning original path unchanged"
+      );
+      return fullPath;
+    }
+
     public static AnimationClip rewriteAnimationClipCurvePaths(
       AnimationClip clip,
       string oldPathString,
@@ -46,8 +117,8 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
         if (curveBinding.path.Contains(oldPathString))
         {
           // generate a new path string by replacing the old path string with the new path string
-          // in the curve binding's path
-          string replacementFullPath = curveBinding.path.Replace(oldPathString, newPathString);
+          // in the curve binding's path, but only replace at the start or as complete path segments
+          string replacementFullPath = ReplacePathSegment(curveBinding.path, oldPathString, newPathString);
 
           // console print to say we are replacing the path for the curve binding
           CoreLogDebug("Replacing path " + curveBinding.path + " with " + replacementFullPath + " for curve binding");
@@ -82,8 +153,12 @@ namespace uk.novavoidhowl.dev.cvrfury.supporting_classes.editor
         if (objectReferenceCurveBinding.path.Contains(oldPathString))
         {
           // generate a new path string by replacing the old path string with the new path string
-          // in the object reference curve binding's path
-          string replacementFullPath = objectReferenceCurveBinding.path.Replace(oldPathString, newPathString);
+          // in the object reference curve binding's path, but only replace at the start or as complete path segments
+          string replacementFullPath = ReplacePathSegment(
+            objectReferenceCurveBinding.path,
+            oldPathString,
+            newPathString
+          );
 
           // create a new object reference curve binding with the replaced path
           EditorCurveBinding newObjectReferenceCurveBinding = new EditorCurveBinding

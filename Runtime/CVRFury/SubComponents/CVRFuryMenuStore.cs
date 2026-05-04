@@ -135,6 +135,21 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
     public string zValuePostfix = "-z";
   }
 
+  public class subMenuParameter : menuParameter
+  {
+    public subMenuParameter()
+      : base("subMenuParameter") { }
+
+    /// <summary>
+    /// Reference to the child CVRFuryMenuStore that represents this sub-menu.
+    /// At compile time CVRFury prepends this node's 'name' as a path segment to all
+    /// leaf menu items inside the linked store.
+    /// Note: MachineName / forceMachineName are inherited from menuParameter but are
+    /// not applicable for this type - the 'name' field is used solely as a menu path label.
+    /// </summary>
+    public CVRFuryMenuStore subMenuStore;
+  }
+
   //// Notes for future development ------------------------------------------------------------------------------------
 
   //// More to be added, this is the list of menu items that will be available
@@ -144,6 +159,7 @@ namespace uk.novavoidhowl.dev.cvrfury.runtime
   //   Slider - done
   //   2DJoystick - done
   //   3DJoystick - done
+  //   SubMenu - done (via subMenuParameter)
   //   InputSingle -- not added as its not clear what this would be used for
   //   InputVector2 -- not added as its not clear what this would be used for
   //   InputVector3 -- not added as its not clear what this would be used for
