@@ -1,4 +1,4 @@
-// { "version": "0.11.5" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
+// { "version": "0.11.6" , "canInstall": true , "optional": true , "defineSymbolSuffix": "_MI_FC", dependencies: [], type: "Editor"}
 // #if UNITY_EDITOR && CVR_CCK_EXISTS
 
 using Math = System.Math;
@@ -1596,6 +1596,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the toggle parameter's name with the prefix
       toggleEntry.name = prefix + toggleParam.name;
 
+      // unlink the display name from the machine name so the path prefix is independent of the parameter name
+      toggleEntry.unlinkNameFromMachineName = true;
+
       // process the toggle parameter's MachineName, based on the perModuleParametersPairToRename list
       toggleEntry.machineName = ProcessParameterMachineName(perModuleParametersPairToRename, toggleParam.MachineName);
 
@@ -1646,6 +1649,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // set the CVRAdvancedSettingsEntry's name to the dropdown parameter's name with the prefix
       dropdownEntry.name = prefix + dropdownParam.name;
+
+      // unlink the display name from the machine name so the path prefix is independent of the parameter name
+      dropdownEntry.unlinkNameFromMachineName = true;
 
       // process the dropdownEntry parameter's MachineName, based on the perModuleParametersPairToRename list
       dropdownEntry.machineName = ProcessParameterMachineName(
@@ -1758,6 +1764,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
       // set the CVRAdvancedSettingsEntry's name to the slider parameter's name with the prefix
       sliderEntry.name = prefix + sliderParam.name;
 
+      // unlink the display name from the machine name so the path prefix is independent of the parameter name
+      sliderEntry.unlinkNameFromMachineName = true;
+
       // process the slider parameter's MachineName, based on the perModuleParametersPairToRename list
       sliderEntry.machineName = ProcessParameterMachineName(perModuleParametersPairToRename, sliderParam.MachineName);
 
@@ -1792,6 +1801,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // set the CVRAdvancedSettingsEntry's name to the twoDJoystick parameter's name with the prefix
       twoDJoystickEntry.name = prefix + twoDJoystickParam.name;
+
+      // unlink the display name from the machine name so the path prefix is independent of the parameter name
+      twoDJoystickEntry.unlinkNameFromMachineName = true;
 
       // process the twoDJoystick parameter's MachineName, based on the perModuleParametersPairToRename list
       twoDJoystickEntry.machineName = ProcessParameterMachineName(
@@ -1848,6 +1860,9 @@ namespace uk.novavoidhowl.dev.cvrfury.deployable
 
       // set the CVRAdvancedSettingsEntry's name to the threeDJoystick parameter's name with the prefix
       threeDJoystickEntry.name = prefix + threeDJoystickParam.name;
+
+      // unlink the display name from the machine name so the path prefix is independent of the parameter name
+      threeDJoystickEntry.unlinkNameFromMachineName = true;
 
       // process the threeDJoystick parameter's MachineName, based on the perModuleParametersPairToRename list
       threeDJoystickEntry.machineName = ProcessParameterMachineName(
