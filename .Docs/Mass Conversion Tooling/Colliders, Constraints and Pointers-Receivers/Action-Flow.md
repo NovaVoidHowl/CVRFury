@@ -1,6 +1,16 @@
 # Mass Conversion Tooling Action Flow
 
-Last updated: 2026-06-07 5:36PM
+Last updated: 2026-06-07 8:50PM
+
+Status: Complete for package `0.255.0-dev`.
+
+Completed feature set:
+
+- Shared contact conversion API and updated contact inspectors.
+- Shared PhysBone collider conversion API and updated collider inspector.
+- Shared VRC constraint conversion API and updated constraint inspectors.
+- MassActions editor tooling for hierarchy scan, grouped queue selection, target control, batch conversion, and collider
+  source cleanup.
 
 ## Purpose
 
@@ -49,14 +59,20 @@ Shared API namespaces:
 
 Current state:
 
-- Contact sender conversion is private inspector code and removes the source component after success.
-- Contact receiver conversion is private inspector code and removes the source component after success.
-- PhysBone collider conversion is private inspector code, supports update-or-create reconversion, and uses
-  `CVRFuryConvertedColliderMarker` to scope converted collider ownership.
-- VRC constraint conversion is private inspector code, adds the matching Unity constraint component, copies settings,
-  and removes the source VRC constraint after success.
-- Inspector conversion methods currently mix conversion work with inspector-only UI behaviors such as dialogs and
-  button refresh.
+- Contact sender conversion is exposed through `VRCContactConversionActions` and removes the source component after
+  success.
+- Contact receiver conversion is exposed through `VRCContactConversionActions` and removes the source component after
+  success.
+- PhysBone collider conversion is exposed through `VRCPhysBoneColliderConversionActions`, supports update-or-create
+  reconversion, and uses `CVRFuryConvertedColliderMarker` to scope converted collider ownership.
+- VRC constraint conversion is exposed through `VRCConstraintConversionActions`, adds the matching Unity constraint
+  component, copies settings, and removes the source VRC constraint after success.
+- Inspector conversion methods are thin wrappers around shared conversion APIs. Inspector-only behaviors such as dialogs
+  and button refresh stay outside the core conversion work.
+- The MassActions window is implemented in `Editor/CVRFury/MassActions/MassConversionWindow.cs` and uses direct
+  compile-time references from `CVRFURYMassActions.asmdef` to the packaged converter DLLs.
+- The `Convert All Visible` execution path remains in code for future queue filtering/search support, but its toolbar
+  button is currently hidden.
 
 ## Implementation Principle
 
@@ -120,6 +136,11 @@ Contact API class names:
 - `VRCContactConversionAvailability`
 - `VRCContactConversionGuidance`
 
+The contact API version is owned by `APIVersion` in `VRCPCUIAndConverter/Common/APIVersion.cs`, currently `1.0.0`.
+`VRCContactConversionActions.ApiVersion` forwards to that shared version source. Contact inspectors should display this
+as `API Version` alongside the existing stub and UI versions. Future callers can use the API version to detect old or
+incompatible converter DLLs.
+
 The PhysBone collider converter DLL should expose something equivalent to:
 
 ```csharp
@@ -155,7 +176,12 @@ Collider API class names:
 - `VRCPhysBoneColliderConversionResult`
 - `VRCPhysBoneColliderConversionAvailability`
 - `VRCPhysBoneColliderConversionGuidance`
-- `VRCPhysBoneColliderTarget`
+- `PhysBoneColliderTarget`
+
+The collider API version is owned by `APIVersion` in `VRCPBUIAndConverter/Common/APIVersion.cs`, currently `1.0.0`.
+`VRCPhysBoneColliderConversionActions.ApiVersion` forwards to that shared version source. PhysBone collider inspectors
+should display this as `API Version` alongside the existing stub and UI versions. Future callers can use the API version
+to detect old or incompatible converter DLLs.
 
 The VRC constraint converter DLL should expose something equivalent to:
 
@@ -191,6 +217,11 @@ Constraint API class names:
 - `VRCConstraintConversionAvailability`
 - `VRCConstraintConversionGuidance`
 - `VRCConstraintKind`
+
+The constraint API version is owned by `APIVersion` in `VRCPConUIAndConverter/Common/APIVersion.cs`, currently `1.0.0`.
+`VRCConstraintConversionActions.ApiVersion` forwards to that shared version source. Constraint inspectors should display
+this as `API` alongside the existing stub and UI versions. Future callers can use the API version to detect old or
+incompatible converter DLLs.
 
 API requirements:
 
@@ -342,6 +373,8 @@ Expected enum values:
 
 - Collider rows call the shared collider action with the selected target flags.
 - Successful collider conversion should preserve the source `VRCPhysBoneCollider`.
+- The mass window may offer a separate cleanup command that removes source `VRCPhysBoneCollider` components from rows
+  that already converted successfully.
 - Existing owned conversions should be updated in place.
 - Owned conversions must remain scoped with `CVRFuryConvertedColliderMarker`.
 - Warnings from MC1/MC2 approximation or plane orientation should be returned to the row summary.
@@ -357,32 +390,34 @@ Expected enum values:
 
 ## Implementation Checklist
 
-- [ ] Extract contact sender conversion into a public/static shared action in `VRCPCUIAndConverter`.
-- [ ] Extract contact receiver conversion into a public/static shared action in `VRCPCUIAndConverter`.
-- [ ] Update contact inspectors to call the shared actions and show dialogs from returned results.
-- [ ] Extract PhysBone collider conversion into a public/static shared action in `VRCPBUIAndConverter`.
-- [ ] Update PhysBone collider inspector to call the shared action and keep inspector-only panel refresh local.
-- [ ] Extract VRC constraint conversions into a public/static shared action in `VRCPConUIAndConverter`.
-- [ ] Update constraint inspectors to call the shared action and show dialogs from returned results.
-- [ ] Add structured availability/result/options types to the compiled converter assemblies.
-- [ ] Build converter DLLs from `CVRFury-Compiled-Components`.
-- [ ] Copy updated DLLs into `Astrawolf-01/Packages/uk_novavoidhowl_dev_cvrfury/Compiled/VRCConverter`.
-- [ ] Add `Editor/CVRFury/MassActions/CVRFURYMassActions.asmdef`.
-- [ ] Add compile-time asmdef references from `CVRFURYMassActions.asmdef` to `VRCPCConverter.dll` and
+- [x] Extract contact sender conversion into a public/static shared action in `VRCPCUIAndConverter`.
+- [x] Extract contact receiver conversion into a public/static shared action in `VRCPCUIAndConverter`.
+- [x] Update contact inspectors to call the shared actions and show dialogs from returned results.
+- [x] Extract PhysBone collider conversion into a public/static shared action in `VRCPBUIAndConverter`.
+- [x] Update PhysBone collider inspector to call the shared action and keep inspector-only panel refresh local.
+- [x] Extract VRC constraint conversions into a public/static shared action in `VRCPConUIAndConverter`.
+- [x] Update constraint inspectors to call the shared action and show dialogs from returned results.
+- [x] Add structured availability/result/options types to the compiled converter assemblies.
+- [x] Build converter DLLs from `CVRFury-Compiled-Components`.
+- [x] Copy updated DLLs into `Astrawolf-01/Packages/uk_novavoidhowl_dev_cvrfury/Compiled/VRCConverter`.
+- [x] Add `Editor/CVRFury/MassActions/CVRFURYMassActions.asmdef`.
+- [x] Add compile-time asmdef references from `CVRFURYMassActions.asmdef` to `VRCPCConverter.dll` and
   `VRCPBConverter.dll` and `VRCPConConverter.dll`.
-- [ ] Add the mass converter editor window to `Editor/CVRFury/MassActions` using namespace
+- [x] Add the mass converter editor window to `Editor/CVRFury/MassActions` using namespace
   `uk.novavoidhowl.dev.cvrfury.massactions`.
-- [ ] Add root object picker and hierarchy scanner.
-- [ ] Add grouped queue UI for senders, receivers, colliders, and constraints.
-- [ ] Add per-row selection, select-all, and result state.
-- [ ] Add per-collider target toggles or selector.
-- [ ] Add apply-collider-targets-to-selected behavior.
-- [ ] Add Convert selected execution path.
-- [ ] Add Convert all visible execution path.
-- [ ] Add summary counts for found, selected, converted, skipped, failed, and source removed.
-- [ ] Validate in Unity with CVR CCK available.
-- [ ] Validate missing-package behavior for Dynamic Bone, MC1, and MC2.
-- [ ] Update `Plan.md` or this file with final API names after implementation.
+- [x] Add GameObject hierarchy context menu entry for opening the mass converter with the selected root.
+- [x] Add root object picker and hierarchy scanner.
+- [x] Add grouped queue UI for senders, receivers, colliders, and constraints.
+- [x] Add per-row selection, select-all, and result state.
+- [x] Add per-collider target toggles or selector.
+- [x] Add apply-collider-targets-to-selected behavior.
+- [x] Add Convert selected execution path.
+- [x] Add Convert all visible execution path.
+- [x] Add post-conversion cleanup action for removing successfully converted VRC PhysBone Collider source components.
+- [x] Add summary counts for found, selected, converted, skipped, failed, and source removed.
+- [x] Validate in Unity with CVR CCK available.
+- [x] Validate missing-package behavior for Dynamic Bone, MC1, and MC2.
+- [x] Update `Plan.md` or this file with final API names after implementation.
 
 ## Notes While Implementing
 
@@ -412,3 +447,43 @@ Update this section as work progresses. Use `YYYY-MM-DD h:mmAM/PM` for each entr
   reference to `VRCPConConverter.dll`.
 - 2026-06-07 5:36PM: Renamed the docs folder to
   `.Docs/Mass Conversion Tooling/Colliders, Constraints and Pointers-Receivers` now that constraints are in scope.
+- 2026-06-07 5:46PM: Completed the first contact API block. Added `VRCContactConversionActions`,
+  `VRCContactConversionOptions`, `VRCContactConversionResult`, `VRCContactConversionAvailability`, and
+  `VRCContactConversionGuidance`; updated contact sender/receiver inspectors to call the shared API; added displayed
+  contact API version `1.0.0`; built `VRCPCConverter.dll` and copied it into the Unity package for testing.
+- 2026-06-07 5:53PM: Moved contact API version ownership into `VRCPCUIAndConverter/Common/APIVersion.cs`, kept
+  `VRCContactConversionActions.ApiVersion` as a forwarding convenience, and bumped contact UI version from `2.2.0` to
+  `2.3.0`.
+- 2026-06-07 6:10PM: Completed the PhysBone collider API block. Added `VRCPhysBoneColliderConversionActions`,
+  `VRCPhysBoneColliderConversionOptions`, `VRCPhysBoneColliderConversionResult`,
+  `VRCPhysBoneColliderConversionAvailability`, `VRCPhysBoneColliderConversionGuidance`, and `PhysBoneColliderTarget`;
+  moved DB/MC1/MC2 conversion behavior out of the inspector; added displayed collider API version `1.0.0`; bumped
+  PhysBone collider UI version from `2.2.1` to `2.3.0`; built `VRCPBConverter.dll` and copied it into the Unity package
+  for testing.
+- 2026-06-07 7:33PM: Completed the VRC constraint API block. Added `VRCConstraintConversionActions`,
+  `VRCConstraintConversionOptions`, `VRCConstraintConversionResult`, `VRCConstraintConversionAvailability`,
+  `VRCConstraintConversionGuidance`, and `VRCConstraintKind`; moved Aim, LookAt, Parent, Position, Rotation, and Scale
+  conversion behavior out of the inspectors; added displayed constraint API version `1.0.0`; bumped constraint UI
+  version from `2.0.0` to `2.1.0`; built `VRCPConConverter.dll` and copied it into the Unity package for testing.
+- 2026-06-07 7:49PM: Added `Editor/CVRFury/MassActions`, `CVRFURYMassActions.asmdef`, and the initial
+  `MassConversionWindow` shell in namespace `uk.novavoidhowl.dev.cvrfury.massactions`. The asmdef directly references
+  `VRCPCConverter.dll`, `VRCPBConverter.dll`, `VRCPConConverter.dll`, and the packaged VRC stub DLLs needed by their
+  public API signatures. The starter window displays the loaded contact, collider, and constraint API versions so Unity
+  can verify the compile-time references before scanner and executor work begins.
+- 2026-06-07 7:59PM: Added the first functional MassActions UI block. `MassConversionWindow` now has a root object
+  picker, use-selection button, hierarchy scan including inactive children, grouped queue rows for contact senders,
+  contact receivers, PhysBone colliders, and VRC constraints, per-row selection and status state, select-all/select-none
+  controls, per-collider target toggles, batch apply-to-selected collider target controls, and summary counts for found,
+  selected, ready, skipped, converted, failed, and source-removed rows.
+- 2026-06-07 8:11PM: Added the MassActions execution block. `MassConversionWindow` now has `Convert Selected` and
+  `Convert All Visible` buttons, wraps each button press in a single undo group, executes one row at a time through the
+  shared compiled conversion APIs, catches per-row exceptions, maps successful destructive contact/constraint rows to
+  `SourceRemoved`, maps successful collider rows to `Converted`, and exposes a `GameObject/CVRFury/Component Mass
+  Converter` hierarchy context menu entry that opens the window with the selected GameObject as the root.
+- 2026-06-07 8:24PM: Added a post-conversion collider cleanup command. `Remove Converted VRC Colliders` removes source
+  `VRCPhysBoneCollider` components only from collider rows that have already converted successfully, wraps the cleanup in
+  one undo group, and marks cleaned rows as `SourceRemoved`.
+- 2026-06-07 8:50PM: Wrapped up the plan/action-flow docs for package `0.255.0-dev`. The completed release contains
+  three updated converter DLL feature blocks plus the new MassActions tooling. Unity testing confirmed package-dependent
+  collider targets gray out correctly when Dynamic Bone, MagicaCloth 1, or MagicaCloth 2 are unavailable; conversion
+  triggers work; row status refresh after conversion and collider source cleanup behaves as expected.

@@ -1,5 +1,14 @@
 # Mass Conversion Tooling Plan
 
+Status: Complete for package `0.255.0-dev`.
+
+Implemented feature set:
+
+- Shared contact conversion API and updated contact inspectors.
+- Shared PhysBone collider conversion API and updated collider inspector.
+- Shared VRC constraint conversion API and updated constraint inspectors.
+- MassActions editor tooling for scanning, selecting, batch converting, and post-conversion collider cleanup.
+
 ## Goal
 
 Add a bulk conversion UI that lets the user pick a root object, scan the hierarchy, select multiple source components,
@@ -34,15 +43,15 @@ Constraint converters are also in scope and currently live in:
 
 ## Core Idea
 
-The new UI should act as a queue builder and executor, not as a second converter.
+The new UI acts as a queue builder and executor, not as a second converter.
 
-That means it should:
+That means it:
 
 - scan a chosen root object
 - find all convertible components in the hierarchy
 - let the user select some or all items
 - let the user choose the collider target type where needed
-- call the already-built inspector conversion logic for each selected item
+- call the shared compiled conversion APIs used by the inspectors for each selected item
 
 ## Important Behavior Rules
 
@@ -79,8 +88,11 @@ Recommended behavior:
 4. Per-row selection checkbox.
 5. Per-row target type selector for colliders.
 6. Convert selected button.
-7. Convert all visible button.
-8. Summary area showing how many items were found, selected, converted, skipped, or failed.
+7. Summary area showing how many items were found, selected, ready, converted, skipped, failed, or source removed.
+8. Post-conversion cleanup button for removing successfully converted source VRC PhysBone Collider components.
+
+The `Convert all visible` path exists in code for future queue filtering/search support, but its toolbar button is hidden
+for this first completed pass.
 
 ## Suggested Data Model
 
@@ -102,11 +114,12 @@ This keeps the UI and execution logic separate from the inspector conversion cod
 
 1. User chooses a root object.
 2. Tool scans the hierarchy and creates queue items.
-3. User filters, selects, and sets target types.
+3. User selects rows and sets target types.
 4. Tool groups the queued items by conversion kind.
-5. Tool invokes the existing inspector conversion methods one item at a time.
+5. Tool invokes the shared compiled conversion APIs one item at a time.
 6. Tool reports success or failure per item.
-7. Tool refreshes the scan if the source components were removed by conversion.
+7. Tool marks rows whose source components were removed as `SourceRemoved`.
+8. User may remove successfully converted source VRC PhysBone Collider components with the cleanup action.
 
 ## Handling Colliders
 
@@ -137,8 +150,8 @@ source VRC constraint component.
 
 ## Reuse Strategy
 
-The implementation should expose the existing conversion logic through callable methods or a shared service layer so
-that both the inspector UI and the bulk tool use the same behavior.
+The implementation exposes the existing conversion logic through callable shared APIs so that both the inspector UI and
+the bulk tool use the same behavior.
 
 That avoids:
 
@@ -148,12 +161,16 @@ That avoids:
 
 ## Suggested Build Order
 
-1. Define a shared conversion API for the existing inspectors.
-2. Add the bulk scan and queue model.
-3. Add the bulk UI for contacts, receivers, and constraints.
-4. Add collider target selection in the queue UI.
-5. Add batch execution and result reporting.
-6. Add polish such as filtering, expand/collapse, and select-all controls.
+Completed build order:
+
+1. Defined shared conversion APIs for contacts, PhysBone colliders, and VRC constraints.
+2. Updated the existing inspectors to call those shared APIs.
+3. Added the MassActions assembly, window, and direct converter DLL references.
+4. Added the bulk scan and queue model.
+5. Added grouped queue UI for contacts, receivers, colliders, and constraints.
+6. Added collider target selection and apply-to-selected target behavior.
+7. Added batch execution, row result reporting, undo grouping, and source-removal status handling.
+8. Added post-conversion cleanup for successfully converted VRC PhysBone Collider source components.
 
 ## Risks
 
@@ -178,13 +195,17 @@ The tool is successful if it lets the user:
 - see every convertible supported VRC constraint under that root
 - choose which items to convert
 - choose collider target types when needed
-- run the existing conversions in batch without visiting each GameObject manually
+- run the shared conversions in batch without visiting each GameObject manually
+- remove converted source VRC PhysBone Collider components as a separate cleanup action
+
+All success criteria above have been implemented and validated in Unity for the available package setup. Missing
+Dynamic Bone, MagicaCloth 1, and MagicaCloth 2 packages correctly disable unavailable collider target options.
 
 ## Final Points
 
-Keep the bulk tool thin and procedural.
+The completed bulk tool stays thin and procedural.
 
-Use the current inspectors as the source of truth for conversion behavior, and make the new window responsible only for
-discovery, selection, and dispatch.
+The shared compiled conversion APIs are the source of truth for conversion behavior, and the MassActions window is
+responsible for discovery, selection, dispatch, result display, and optional collider source cleanup.
 
 That gives the user mass conversion without duplicating the conversion logic already in the component UI.
