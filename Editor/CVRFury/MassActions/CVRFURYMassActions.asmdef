@@ -1,0 +1,25 @@
+{
+  "name": "uk.novavoidhowl.dev.cvrfury.massactions",
+  "references": [
+    "uk.novavoidhowl.dev.cvrfury.packagecore"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "VRCPCConverter.dll",
+    "VRCPBConverter.dll",
+    "VRCPConConverter.dll",
+    "VRCPCstub.dll",
+    "VRCPBstub.dll",
+    "VRCPConStub.dll",
+    "VRCPstub.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
